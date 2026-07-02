@@ -15,6 +15,72 @@ export interface BlogPost {
 
 export const blogPosts: BlogPost[] = [
   {
+    slug: 'microchip-e-brinco-eletronico-rfid-precos',
+    title: 'Microchip ou brinco eletrônico RFID? Tipos, preços e como escolher',
+    excerpt:
+      'A diferença entre brinco eletrônico e microchip, os preços reais do microchip ICAR e dos leitores RFID, e como escolher o kit certo para identificar e rastrear o seu rebanho.',
+    date: '2026-07-02',
+    category: 'Rastreabilidade',
+    segment: 'geral',
+    readTime: 7,
+    content: `
+## Microchip ou brinco eletrônico: qual usar?
+
+**Resposta direta:** os dois são identificação eletrônica por RFID — o que muda é o **formato**. O **brinco eletrônico** fica na orelha, é visível de longe, mas pode cair, rasgar ou ser trocado. O **microchip** é aplicado sob a pele com uma seringa: é permanente, não cai e não dá para violar — por isso é o padrão para rastreabilidade confiável. Na Seabra trabalhamos com **microchip certificado ICAR** (ISO 11784/11785, FDX-B) e com os **leitores** para ler esse chip no campo.
+
+## Brinco x microchip na prática
+
+| | Brinco eletrônico | Microchip (implante) |
+| --- | --- | --- |
+| Onde fica | Orelha (externo) | Sob a pele |
+| Leitura à distância | Boa | Curta (encostar o leitor) |
+| Cai ou se perde | Pode | Não |
+| Violável / troca | Mais fácil | Praticamente não |
+| Vida útil | Limitada | Permanente |
+
+Para quem quer **rastreabilidade que não some**, o microchip leva vantagem: uma aplicação e o animal fica identificado para sempre.
+
+## Microchip RFID ICAR — preços
+
+O microchip da Seabra é **2,12 × 12 mm**, frequência **134,2 kHz**, padrão **ISO 11784/11785 (FDX-B)** com certificação **ICAR**, aplicado com **seringa**. O preço por unidade cai conforme a quantidade (pedido mínimo de 10 unidades):
+
+| Quantidade | Preço por unidade |
+| --- | --- |
+| 10 a 19 | R$ 11,60 |
+| 20 a 59 | R$ 10,90 |
+| 60 a 99 | R$ 10,40 |
+| 100 a 199 | R$ 9,80 |
+| 200 a 999 | R$ 9,20 |
+| 1.000 ou mais | R$ 8,50 |
+
+## Leitores RFID — qual escolher
+
+De nada adianta o chip sem um leitor. São três opções, conforme a sua rotina:
+
+| Leitor | Conexão | Preço |
+| --- | --- | --- |
+| Leitor RFID FDX-B | USB | R$ 180 |
+| Leitor RFID FDX-B c/ Bluetooth | Bluetooth + USB | R$ 280 |
+| Leitor bastão RFID | Bluetooth (longo alcance) | R$ 4.950 |
+
+- **Leitor USB (R$ 180):** o mais econômico. Encosta no animal e envia a leitura pelo cabo — ideal para uso fixo, no computador.
+- **Leitor com Bluetooth (R$ 280):** lê e manda direto para o celular/app, sem fio. Melhor custo-benefício para o dia a dia no campo.
+- **Leitor bastão (R$ 4.950):** haste longa para ler sem se abaixar, em curral e no manejo de muitos animais.
+
+> Valores de referência (PJ), sujeitos a alteração — confira condições e disponibilidade em [Microchips e Leitores RFID](/pt/vendas/produtos) ou [fale com a gente](/pt/contato).
+
+## Microchip + software: rastreabilidade que funciona
+
+O chip identifica; o **software** dá sentido ao número. Com o leitor Bluetooth lendo o microchip direto no [sistema de gestão de rebanho](/pt/pequenos-ruminantes), cada animal puxa a própria ficha — [caprinos e ovinos](/pt/solucoes/caprinos/leite) ou [bovinos de corte](/pt/bovinos-corte) — com histórico, sanidade e produção, sem digitar identificação na mão.
+
+## Quanto vale a pena?
+
+Faça a conta pelo custo por animal, não pela nota: o microchip sai por **R$ 8,50 a R$ 11,60** conforme a quantidade — uma vez na vida do animal. Some um leitor a partir de **R$ 180** e você tem rastreabilidade eletrônica completa. Para começar, o pedido mínimo é de **10 microchips**.
+
+Quer montar o kit certo para o seu rebanho? [Veja os produtos](/pt/vendas/produtos) ou [fale com a gente](/pt/contato).
+`,
+  },
+  {
     slug: 'planilha-ou-software-gestao-de-rebanho',
     title: 'Planilha ou software de gestão de rebanho? Comparativo real',
     excerpt:
