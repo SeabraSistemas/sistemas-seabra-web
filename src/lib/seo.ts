@@ -1,7 +1,7 @@
 import { locales, defaultLocale } from '@/i18n/config';
 
-/** Origem canônica do site (sem barra final). Espelha o metadataBase do layout. */
-export const SITE_URL = 'https://sistemaseabra.com.br';
+/** Origem canônica do site (com www — apex redireciona pra www). Espelha o metadataBase do layout. */
+export const SITE_URL = 'https://www.sistemaseabra.com.br';
 
 /** URL absoluta de um caminho num locale específico (ex.: localizedUrl('pt', '/blog')). */
 export function localizedUrl(locale: string, path = ''): string {

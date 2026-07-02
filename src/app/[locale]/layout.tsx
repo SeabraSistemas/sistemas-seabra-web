@@ -16,7 +16,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://sistemaseabra.com.br'),
+  metadataBase: new URL('https://www.sistemaseabra.com.br'),
   title: {
     default: 'Seabra Solutions — Tecnologia para Pecuária de Precisão',
     template: '%s | Seabra Solutions',

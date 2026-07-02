@@ -7,4 +7,4 @@ Disallow: /planos
 Disallow: /planos-es
 Disallow: /planos-en
 
-Sitemap: https://sistemaseabra.com.br/sitemap.xml
+Sitemap: https://www.sistemaseabra.com.br/sitemap.xml
