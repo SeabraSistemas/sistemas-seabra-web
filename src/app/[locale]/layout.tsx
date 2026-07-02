@@ -8,6 +8,7 @@ import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { WhatsAppButton } from '@/components/shared/WhatsAppButton';
 import { OrganizationJsonLd, WebSiteJsonLd } from '@/components/seo/JsonLd';
+import { GoogleAnalytics } from '@/components/analytics/GoogleAnalytics';
 import '../globals.css';
 
 const inter = Inter({
@@ -87,6 +88,7 @@ export default async function LocaleLayout({
   return (
     <html lang={locale} className="dark">
       <body className={`${inter.variable} font-sans antialiased`}>
+        <GoogleAnalytics />
         <OrganizationJsonLd />
         <WebSiteJsonLd />
         <NextIntlClientProvider messages={messages}>
