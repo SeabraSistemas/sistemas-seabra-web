@@ -50,10 +50,14 @@ export const metadata: Metadata = {
     description: 'Tecnologia para pecuária de precisão.',
     images: ['/images/logo.png'],
   },
-  // Token de verificação do Google Search Console (definir NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION
-  // no ambiente; enquanto ausente, nenhuma meta tag é emitida).
+  // Token de verificação do Google Search Console (propriedade sob sistemaseabra@gmail.com).
+  // Fica hardcoded como fallback porque a Vercel (conta do sócio) não está acessível para
+  // definir env vars; se a env var existir um dia, ela tem prioridade. Token não é segredo
+  // (aparece publicamente no HTML de qualquer forma).
   verification: {
-    google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
+    google:
+      process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION ||
+      'xSHog5VZdsQ4-vJcL4Ca30YXDoJNFuTFT0kMgENM7AE',
   },
 };
 
