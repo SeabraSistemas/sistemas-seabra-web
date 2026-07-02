@@ -15,6 +15,56 @@ export interface BlogPost {
 
 export const blogPosts: BlogPost[] = [
   {
+    slug: 'como-implementar-rastreabilidade-no-rebanho',
+    title: 'Rastreabilidade no rebanho: passo a passo para começar',
+    excerpt:
+      'Os 4 passos para rastrear o rebanho do zero — identificação eletrônica, cadastro, leitor e software — e como começar por um lote, sem complicar.',
+    date: '2026-07-02',
+    category: 'Rastreabilidade',
+    segment: 'geral',
+    readTime: 6,
+    content: `
+## Como implementar rastreabilidade no rebanho?
+
+**Resposta direta:** rastreabilidade é conseguir contar a história de cada animal — quem é, de quem veio, o que recebeu e quanto produziu. Para ter isso são quatro passos: (1) escolher uma **identificação eletrônica** que não se perca, (2) **aplicar e cadastrar** cada animal, (3) ter um **leitor** para o campo e (4) **registrar tudo num software** que cruza os dados. Dá para começar pequeno e crescer.
+
+## Por que rastrear o rebanho
+
+Rastreabilidade não é burocracia — é o que separa o "achismo" da decisão com dado:
+
+- **Sanidade:** saber exatamente quais animais receberam cada tratamento e respeitar as carências.
+- **Genética:** ligar produção e desempenho à ascendência para selecionar melhor.
+- **Comercialização:** comprovar origem e manejo agrega valor e abre mercado.
+- **Conformidade:** estar pronto para as exigências de rastreabilidade, que só crescem.
+
+## Passo 1 — Identificação eletrônica que não se perde
+
+Tudo começa por dar a cada animal um número único e permanente. O **microchip RFID** (implante) é o mais confiável: não cai, não é violável e segue o padrão internacional **ISO/ICAR**. É a base de todo o resto. [Veja os microchips e leitores](/pt/vendas/produtos).
+
+## Passo 2 — Aplicar e cadastrar cada animal
+
+Aplicado o chip, cadastre o animal: número, categoria, data de nascimento e origem. Esse cadastro é o "RG" do animal — a partir daqui, tudo o que acontecer com ele fica ligado a esse número.
+
+## Passo 3 — Um leitor para o campo
+
+O leitor traz o número na hora, sem digitar. Um **leitor com Bluetooth** envia a leitura direto para o celular, o que acelera o manejo e elimina erro de anotação.
+
+## Passo 4 — Um software que amarra tudo
+
+O número sozinho não decide nada. É o **software de gestão de rebanho** que transforma leituras em histórico e indicadores: cada animal ganha uma ficha viva com sanidade, reprodução e produção. Na [Seabra Solutions](/pt/pequenos-ruminantes) o sistema é sob medida para [caprinos e ovinos](/pt/solucoes/caprinos/leite) ou [bovinos de corte](/pt/bovinos-corte), e funciona **offline** — você registra no campo e sincroniza depois.
+
+## Por onde começar (kit mínimo)
+
+Não precisa rastrear o rebanho inteiro de uma vez. Um começo enxuto:
+
+- **Microchips** para o primeiro lote (pedido mínimo de 10 unidades).
+- **Um leitor** — o Bluetooth é o melhor custo-benefício para o dia a dia.
+- **O software** para registrar e acompanhar.
+
+Comece por um lote, ganhe rotina e expanda. Quer ajuda para montar o primeiro kit? [Fale com a gente](/pt/contato).
+`,
+  },
+  {
     slug: 'microchip-e-brinco-eletronico-rfid-precos',
     title: 'Microchip ou brinco eletrônico RFID? Tipos, preços e como escolher',
     excerpt:
