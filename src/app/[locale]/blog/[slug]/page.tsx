@@ -6,6 +6,8 @@ import { ArrowLeft, Calendar, Clock, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { blogPosts, getPostBySlug } from '@/data/blog-posts';
 import { WHATSAPP_NUMBER } from '@/lib/whatsapp';
+import { JsonLd } from '@/components/seo/JsonLd';
+import { SITE_URL, localizedUrl } from '@/lib/seo';
 
 interface PageProps {
   params: Promise<{ locale: string; slug: string }>;
@@ -24,6 +26,9 @@ export async function generateMetadata({ params }: PageProps) {
   return {
     title: `${post.title} | Seabra Solutions`,
     description: post.excerpt,
+    // Posts existem só em pt: canonical aponta sempre para a versão pt,
+    // evitando conteúdo duplicado nas URLs /es e /en.
+    alternates: { canonical: localizedUrl('pt', `/blog/${post.slug}`) },
   };
 }
 
@@ -47,8 +52,38 @@ export default async function BlogPostPage({ params }: PageProps) {
 
   const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(tWhatsapp('defaultMessage'))}`;
 
+  const postUrl = localizedUrl('pt', `/blog/${post.slug}`);
+
   return (
     <div className="section-padding">
+      <JsonLd
+        data={[
+          {
+            '@context': 'https://schema.org',
+            '@type': 'BlogPosting',
+            headline: post.title,
+            description: post.excerpt,
+            datePublished: post.date,
+            dateModified: post.date,
+            inLanguage: 'pt-BR',
+            mainEntityOfPage: postUrl,
+            author: { '@type': 'Person', name: 'Felipe Seabra' },
+            publisher: {
+              '@type': 'Organization',
+              name: 'Seabra Solutions',
+              logo: { '@type': 'ImageObject', url: `${SITE_URL}/images/logo.png` },
+            },
+          },
+          {
+            '@context': 'https://schema.org',
+            '@type': 'BreadcrumbList',
+            itemListElement: [
+              { '@type': 'ListItem', position: 1, name: 'Blog', item: localizedUrl('pt', '/blog') },
+              { '@type': 'ListItem', position: 2, name: post.title, item: postUrl },
+            ],
+          },
+        ]}
+      />
       <div className="max-w-3xl mx-auto px-4">
         {/* Back link */}
         <Link

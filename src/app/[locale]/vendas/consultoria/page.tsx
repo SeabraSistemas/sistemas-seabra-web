@@ -3,6 +3,8 @@ import { ConsultoriaHero } from '@/components/vendas/ConsultoriaHero';
 import { ConsultorProfile } from '@/components/vendas/ConsultorProfile';
 import { ConsultoriaServicos } from '@/components/vendas/ConsultoriaServicos';
 import { VendasCTA } from '@/components/vendas/VendasCTA';
+import { JsonLd } from '@/components/seo/JsonLd';
+import { SITE_URL } from '@/lib/seo';
 
 interface PageProps {
   params: Promise<{ locale: string }>;
@@ -22,8 +24,25 @@ export default async function ConsultoriaPage({ params }: PageProps) {
   const { locale } = await params;
   setRequestLocale(locale);
 
+  const t = await getTranslations({ locale, namespace: 'vendas.consultoria' });
+
   return (
     <>
+      <JsonLd
+        data={{
+          '@context': 'https://schema.org',
+          '@type': 'Service',
+          serviceType: 'Consultoria em pequenos ruminantes (caprinos e ovinos)',
+          name: t('metaTitle'),
+          description: t('metaDescription'),
+          areaServed: 'BR',
+          provider: {
+            '@type': 'Organization',
+            name: 'Seabra Solutions',
+            url: SITE_URL,
+          },
+        }}
+      />
       <ConsultoriaHero />
       <ConsultorProfile />
       <ConsultoriaServicos />

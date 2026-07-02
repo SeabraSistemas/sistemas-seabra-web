@@ -7,6 +7,7 @@ import { locales, type Locale } from '@/i18n/config';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { WhatsAppButton } from '@/components/shared/WhatsAppButton';
+import { OrganizationJsonLd, WebSiteJsonLd } from '@/components/seo/JsonLd';
 import '../globals.css';
 
 const inter = Inter({
@@ -49,6 +50,11 @@ export const metadata: Metadata = {
     description: 'Tecnologia para pecuária de precisão.',
     images: ['/images/logo.png'],
   },
+  // Token de verificação do Google Search Console (definir NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION
+  // no ambiente; enquanto ausente, nenhuma meta tag é emitida).
+  verification: {
+    google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
+  },
 };
 
 export function generateStaticParams() {
@@ -77,6 +83,8 @@ export default async function LocaleLayout({
   return (
     <html lang={locale} className="dark">
       <body className={`${inter.variable} font-sans antialiased`}>
+        <OrganizationJsonLd />
+        <WebSiteJsonLd />
         <NextIntlClientProvider messages={messages}>
           <div className="flex min-h-screen flex-col">
             <Header />

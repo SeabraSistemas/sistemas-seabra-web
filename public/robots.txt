@@ -6,3 +6,5 @@ Disallow: /apresentacao-en
 Disallow: /planos
 Disallow: /planos-es
 Disallow: /planos-en
+
+Sitemap: https://sistemaseabra.com.br/sitemap.xml
