@@ -15,6 +15,248 @@ export interface BlogPost {
 
 export const blogPosts: BlogPost[] = [
   {
+    slug: 'como-escolher-software-caprinos-ovinos',
+    title: 'Como escolher um software de gestão para caprinos e ovinos',
+    excerpt:
+      'Os critérios que importam na hora de escolher um sistema para pequenos ruminantes — e por que software genérico de gado não serve para caprino e ovino.',
+    date: '2026-07-02',
+    category: 'Gestão',
+    segment: 'caprinos',
+    readTime: 6,
+    content: `
+## Que software escolher para caprinos e ovinos?
+
+**Resposta direta:** escolha um sistema pensado para **pequenos ruminantes** — não um software genérico de gado adaptado. Ele precisa dar conta de controle leiteiro individual, manejo reprodutivo (estação de monta e IA), sanidade e vermifugação, indicadores zootécnicos e funcionar **offline** no campo. E, tão importante quanto, ter suporte de quem entende do setor.
+
+## 6 critérios que realmente importam
+
+- **Feito para pequeno ruminante:** categorias, índices e manejos de caprino e ovino, não de boi "reaproveitado".
+- **Ficha individual do animal:** histórico completo de cada matriz e reprodutor.
+- **Reprodução organizada:** estação de monta, coberturas, IA e diagnóstico de gestação com alertas.
+- **Controle leiteiro individual:** produção por animal para decidir seleção e descarte.
+- **Funciona offline:** você registra no curral sem sinal e sincroniza depois.
+- **Suporte de gente do setor:** quem atende entende de manejo, não só de tela.
+
+## Cuidado com o software genérico de gado
+
+Muitos sistemas foram feitos para bovinos e "servem" para caprino no improviso. O problema aparece nos detalhes: categorias que não batem, índices que não fazem sentido e relatórios que você não usa. Para pequeno ruminante, o específico rende muito mais.
+
+## Um sistema sob medida
+
+Na [Seabra Solutions](/pt/pequenos-ruminantes) o sistema é montado para o seu tipo de produção — [caprinos e ovinos de leite](/pt/solucoes/caprinos/leite) ou [de corte](/pt/solucoes/ovinos/corte) — e integra com [microchip e leitor RFID](/pt/vendas/produtos) para identificar cada animal sem digitar. Antes de decidir, [fale com a gente](/pt/contato) e veja funcionando na sua realidade.
+`,
+  },
+  {
+    slug: 'vale-a-pena-consultoria-caprinocultura',
+    title: 'Vale a pena contratar consultoria em caprinocultura?',
+    excerpt:
+      'Quando a consultoria em caprinos e ovinos se paga, o que ela resolve no manejo, nutrição e reprodução, e como ela rende mais quando combinada com dados.',
+    date: '2026-07-02',
+    category: 'Gestão',
+    segment: 'caprinos',
+    readTime: 6,
+    content: `
+## Consultoria em caprinocultura vale a pena?
+
+**Resposta direta:** vale quando você quer sair do improviso e não sabe onde está perdendo. Um bom consultor organiza manejo, nutrição, reprodução, sanidade e gestão — e o retorno aparece em mais produção e menos perdas. O ganho é maior quando a consultoria trabalha com **dados do rebanho**, não com achismo.
+
+## O que uma consultoria resolve
+
+- **Nutrição:** dietas ajustadas à categoria e à fase, sem desperdício.
+- **Reprodução:** estação de monta, protocolos e diagnóstico para concentrar e aumentar os partos.
+- **Sanidade:** protocolos de vermifugação e vacinação no momento certo.
+- **Gestão:** o que medir, como decidir e onde cortar custo.
+
+## Quando contratar
+
+- Você sente que "perde dinheiro" mas não sabe onde.
+- A produtividade estacionou.
+- Vai começar ou expandir e quer acertar de primeira.
+
+## O retorno vem em número
+
+Consultoria não é gasto quando reduz mortalidade, encurta o intervalo entre partos e aumenta a produção por matriz. E rende ainda mais quando o rebanho é acompanhado por um [sistema de gestão](/pt/pequenos-ruminantes): o consultor decide com o dado real, não com estimativa.
+
+## Consultoria com quem é do setor
+
+A [consultoria da Seabra](/pt/vendas/consultoria) é feita por quem vive a caprinocultura e a ovinocultura — presencial ou remota, ligada ao sistema que acompanha o seu rebanho. Quer avaliar o seu caso? [Fale com a gente](/pt/contato).
+`,
+  },
+  {
+    slug: 'quanto-leite-produz-uma-cabra-por-dia',
+    title: 'Quanto leite produz uma cabra por dia (e como aumentar)',
+    excerpt:
+      'Quanto uma cabra leiteira produz por dia por raça, o que faz a produção subir e por que sem medir animal por animal não dá para melhorar.',
+    date: '2026-07-02',
+    category: 'Manejo',
+    segment: 'caprinos',
+    readTime: 6,
+    content: `
+## Quanto leite uma cabra produz por dia?
+
+**Resposta direta:** depende da **raça, da fase da lactação, da nutrição e do manejo**. Cabras leiteiras especializadas produzem, em média, de **2 a 4 litros por dia** no pico da lactação; mestiças e sem raça definida ficam bem abaixo. A raça dá o teto; o manejo decide quanto desse teto você alcança.
+
+## Produção média por raça
+
+| Raça | Produção média por dia* |
+| --- | --- |
+| Saanen | 3 a 4 L |
+| Parda Alpina | 2,5 a 3,5 L |
+| Toggenburg | 2 a 3 L |
+| Murciano-Granadina | 1,5 a 2,5 L (leite mais rico em sólidos) |
+| Mestiças / SRD | 0,5 a 1,5 L |
+
+*Valores de referência no pico da lactação — variam muito com genética, nutrição e manejo.
+
+## O que faz a produção subir
+
+- **Genética:** matrizes e reprodutores selecionados por produção.
+- **Nutrição:** dieta equilibrada para a exigência da lactação.
+- **Conforto e sanidade:** ordenha bem feita, controle de mastite e ambiente adequado.
+- **Reprodução em dia:** intervalo entre partos curto mantém o rebanho em lactação.
+
+## Sem medir, não dá para aumentar
+
+A média do rebanho esconde as melhores e as piores cabras. Com **controle leiteiro individual** você enxerga a produção de cada matriz e decide seleção e descarte com base em número. É o que um [sistema para caprinos de leite](/pt/solucoes/caprinos/leite) faz por você — e que a [planilha não entrega](/pt/blog/planilha-ou-software-gestao-de-rebanho) com a mesma precisão.
+
+Quer acompanhar a produção do seu rebanho de perto? [Fale com a gente](/pt/contato).
+`,
+  },
+  {
+    slug: 'indicadores-criador-cabra-leiteira',
+    title: 'Indicadores que todo criador de cabra leiteira deveria acompanhar',
+    excerpt:
+      'Os índices zootécnicos que mostram se o rebanho leiteiro vai bem — produção, reprodução, sanidade e custo — e por que calcular na mão não escala.',
+    date: '2026-07-02',
+    category: 'Gestão',
+    segment: 'caprinos',
+    readTime: 6,
+    content: `
+## Quais indicadores acompanhar no rebanho leiteiro?
+
+**Resposta direta:** os que ligam **produção, reprodução, sanidade e custo**. Sem eles, você administra no escuro. Os essenciais são: produção por cabra e por lactação, persistência de lactação, intervalo entre partos, prolificidade, taxa de desmame, mortalidade, qualidade do leite (CCS) e custo por litro.
+
+## Os indicadores essenciais
+
+- **Produção por cabra e por lactação:** quem produz e quanto — base da seleção.
+- **Persistência de lactação:** quanto tempo a cabra mantém a produção.
+- **Intervalo entre partos:** quanto menor, mais leite ao longo do ano.
+- **Prolificidade e taxa de desmame:** quantos cabritos nascem e sobrevivem.
+- **Mortalidade:** o indicador que mais consome margem quando ignorado.
+- **Qualidade do leite (CCS):** sanidade do úbere e valor do produto.
+- **Custo por litro:** o número que diz se a operação fecha.
+
+## Por que a conta na mão não escala
+
+Cada indicador desses exige cruzar registros de vários animais ao longo do tempo. Numa [planilha isso vira retrabalho](/pt/blog/planilha-ou-software-gestao-de-rebanho) e erro. Um [sistema para caprinos de leite](/pt/solucoes/caprinos/leite) calcula tudo sozinho a partir dos lançamentos do dia a dia — e ainda mostra [a produção de cada cabra](/pt/blog/quanto-leite-produz-uma-cabra-por-dia).
+
+Quer ver seus indicadores prontos, sem montar fórmula? [Fale com a gente](/pt/pequenos-ruminantes).
+`,
+  },
+  {
+    slug: 'custo-por-arroba-confinamento-como-calcular',
+    title: 'Custo por arroba no confinamento: como calcular e reduzir',
+    excerpt:
+      'A fórmula do custo por arroba, o que mais pesa (dieta e boi magro) e como reduzir com conversão, GMD e dados — sem depender só do preço da nota.',
+    date: '2026-07-02',
+    category: 'Gestão',
+    segment: 'bovinos',
+    readTime: 6,
+    content: `
+## Como calcular o custo por arroba no confinamento?
+
+**Resposta direta:** custo por arroba produzida = **custo total do período dividido pelas arrobas ganhas no cocho**. Some tudo o que entrou (dieta, sanidade, operação e o boi magro na entrada) e divida pelas arrobas que o lote realmente produziu. O que derruba esse custo é conversão alimentar, ganho de peso e comprar bem — e você só melhora o que mede.
+
+## O que mais pesa no custo
+
+- **Dieta:** o maior componente. Avalie pelo **custo por arroba ganha**, não pelo preço da tonelada.
+- **Boi magro na entrada:** o preço de compra define boa parte do resultado.
+- **Tempo de cocho:** dias a mais sem ganho proporcional encarecem a arroba.
+- **Sanidade e manejo:** perdas e refugos jogam o custo para cima.
+
+## Como reduzir
+
+- **Melhore a conversão e o GMD:** dieta ajustada rende mais arroba por quilo de ração.
+- **Escolha o volumoso pelo custo do ganho:** às vezes o mais barato por tonelada é o mais caro por arroba — veja o caso da [silagem de Capiaçu](/pt/blog/brs-capiacu-silagem-pros-contras) e da [qualidade da fibra](/pt/blog/qualidade-fibra-bovinos-corte-confinamento).
+- **Acompanhe por lote:** compare grupos e corte o que não performa.
+
+## Sem dados, o custo fica invisível
+
+Pesagens, consumo e GMD por lote são o que revelam o custo real da arroba. Um [sistema para bovinos de corte](/pt/bovinos-corte) transforma esses lançamentos em custo por arroba e projeção de abate — decisão pelo resultado no gancho, não pelo preço na nota.
+
+Quer enxergar o custo por arroba do seu confinamento? [Fale com a gente](/pt/contato).
+`,
+  },
+  {
+    slug: 'rfid-obrigatorio-brasil-rastreabilidade-bovina',
+    title: 'RFID é obrigatório no Brasil? O que muda para você',
+    excerpt:
+      'O que já é exigido em identificação e rastreabilidade animal no Brasil, para onde a regra caminha e por que se antecipar com ID eletrônica compensa.',
+    date: '2026-07-02',
+    category: 'Rastreabilidade',
+    segment: 'geral',
+    readTime: 6,
+    content: `
+## RFID é obrigatório no Brasil?
+
+**Resposta direta:** para a maioria dos produtores, a identificação individual eletrônica ainda é **voluntária** hoje. Mas ela já é **obrigatória para quem exporta** (dentro do SISBOV/ERAS), e o Brasil tem um **plano nacional de rastreabilidade** que caminha para tornar a identificação individual de bovinos obrigatória de forma **gradual** nos próximos anos. Quem se antecipa larga na frente — e não só por causa da lei.
+
+## O que já vale hoje
+
+- **Exportação:** propriedades em cadeias habilitadas para exportar seguem o **SISBOV**, com identificação individual e rastreabilidade.
+- **Demais produtores:** a identificação individual eletrônica ainda é opcional na maior parte do país.
+
+## Para onde a regra caminha
+
+O poder público vem estruturando um **plano nacional de rastreabilidade individual** de bovinos e búfalos, com implementação prevista em fases ao longo dos próximos anos. A direção é clara: mais rastreabilidade, não menos.
+
+> As regras mudam e variam por estado e por cadeia. Confirme sempre as exigências atuais junto ao **MAPA** e à defesa agropecuária do seu estado.
+
+## Por que antecipar (não é só cumprir lei)
+
+- **Sanidade e manejo:** identificar cada animal melhora tratamento, seleção e controle.
+- **Valor comercial:** origem comprovada abre mercado e agrega valor.
+- **Menos susto:** implantar com calma hoje é mais barato do que correr quando virar exigência.
+
+## Como se preparar
+
+Comece pela base: [identificação eletrônica com microchip ICAR](/pt/vendas/produtos) e um [sistema de gestão](/pt/pequenos-ruminantes) que guarde o histórico de cada animal. Quando a exigência chegar, você já estará pronto — e no meio tempo ganha em gestão. [Fale com a gente](/pt/contato).
+`,
+  },
+  {
+    slug: 'calendario-manejo-reprodutivo-caprinos',
+    title: 'Calendário de manejo reprodutivo de caprinos',
+    excerpt:
+      'Como organizar a reprodução do rebanho caprino num calendário — estação de monta, cobertura, diagnóstico e parto — para concentrar nascimentos e não perder datas.',
+    date: '2026-07-02',
+    category: 'Reprodução',
+    segment: 'caprinos',
+    readTime: 6,
+    content: `
+## Como montar o calendário reprodutivo do rebanho caprino?
+
+**Resposta direta:** organize a reprodução em **estação de monta**, com datas para cada etapa: preparar as fêmeas, cobrir (monta ou IA), diagnosticar a gestação, preparar o parto e desmamar. Trabalhar com calendário concentra os nascimentos, facilita o manejo e evita que datas importantes passem batido.
+
+## Por que trabalhar com estação de monta
+
+Reprodução espalhada o ano todo significa partos a qualquer hora, lotes desiguais e manejo caótico. Concentrar em estações organiza mão de obra, alimentação e comercialização — e deixa o rebanho mais produtivo.
+
+## As etapas do calendário
+
+- **Preparar as fêmeas:** condição corporal adequada antes da monta.
+- **Cobertura:** monta natural ou inseminação. Vale conhecer a [inseminação em tempo flexível (IATFx)](/pt/blog/inseminacao-artificial-tempo-flexivel-caprinos), que pode elevar a taxa de gestação.
+- **Diagnóstico de gestação:** confirme a prenhez para não perder tempo com fêmeas vazias.
+- **Preparo do parto:** nutrição e ambiente nas semanas finais.
+- **Parto e desmame:** registre os nascimentos e planeje o desmame.
+
+## Alertas que evitam perder a data
+
+O calendário só funciona se alguém lembrar das datas. Um [sistema para caprinos](/pt/solucoes/caprinos/leite) transforma cada etapa em **alerta automático** — fim de estação, diagnóstico, parto, desmame — para o manejo não escapar. É o [manejo reprodutivo saindo da planilha](/pt/blog/planilha-ou-software-gestao-de-rebanho) e virando rotina.
+
+Quer organizar a reprodução do seu rebanho? [Fale com a gente](/pt/pequenos-ruminantes).
+`,
+  },
+  {
     slug: 'como-implementar-rastreabilidade-no-rebanho',
     title: 'Rastreabilidade no rebanho: passo a passo para começar',
     excerpt:
