@@ -22,8 +22,9 @@ export function OrganizationJsonLd() {
         logo: `${SITE_URL}/images/logo.png`,
         description:
           'Sistemas sob medida para gestão de rebanhos — pequenos ruminantes e bovinos de corte, com suporte de quem é do setor.',
-        // TODO: adicionar URLs reais das redes (Instagram, etc.) para reforçar a entidade no Google.
-        sameAs: [],
+        // Redes oficiais (reforçam a entidade/marca no Google). Adicionar outras (Facebook,
+        // LinkedIn, YouTube) aqui conforme forem criadas.
+        sameAs: ['https://www.instagram.com/sistemaseabra'],
       }}
     />
   );
