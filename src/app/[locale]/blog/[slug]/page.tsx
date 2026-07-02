@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation';
 import { Link } from '@/i18n/routing';
 import { ArrowLeft, Calendar, Clock, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { blogPosts, getPostBySlug } from '@/data/blog-posts';
+import { blogPosts, getPostBySlug, postLocales } from '@/data/blog-posts';
 import { WHATSAPP_NUMBER } from '@/lib/whatsapp';
 import { JsonLd } from '@/components/seo/JsonLd';
 import { SITE_URL, localizedUrl } from '@/lib/seo';
@@ -20,17 +20,30 @@ export async function generateStaticParams() {
 }
 
 export async function generateMetadata({ params }: PageProps) {
-  const { slug } = await params;
-  const post = getPostBySlug(slug);
+  const { locale, slug } = await params;
+  const post = getPostBySlug(slug, locale);
 
   if (!post) return {};
+
+  const hasEs = postLocales(slug).includes('es');
+  // pt sempre tem conteúdo; es só quando traduzido. Demais locales (en) apontam para pt.
+  const canonicalLocale = locale === 'es' && hasEs ? 'es' : 'pt';
 
   return {
     title: `${post.title} | Seabra Solutions`,
     description: post.excerpt,
-    // Posts existem só em pt: canonical aponta sempre para a versão pt,
-    // evitando conteúdo duplicado nas URLs /es e /en.
-    alternates: { canonical: localizedUrl('pt', `/blog/${post.slug}`) },
+    alternates: {
+      canonical: localizedUrl(canonicalLocale, `/blog/${slug}`),
+      // Só emite hreflang pt<->es quando existe a versão es (evita alternates quebrados).
+      ...(hasEs
+        ? {
+            languages: {
+              pt: localizedUrl('pt', `/blog/${slug}`),
+              es: localizedUrl('es', `/blog/${slug}`),
+            },
+          }
+        : {}),
+    },
   };
 }
 
@@ -46,7 +59,7 @@ export default async function BlogPostPage({ params }: PageProps) {
   const { locale, slug } = await params;
   setRequestLocale(locale);
 
-  const post = getPostBySlug(slug);
+  const post = getPostBySlug(slug, locale);
   if (!post) notFound();
 
   const t = await getTranslations({ locale, namespace: 'blog' });
@@ -54,7 +67,10 @@ export default async function BlogPostPage({ params }: PageProps) {
 
   const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(tWhatsapp('defaultMessage'))}`;
 
-  const postUrl = localizedUrl('pt', `/blog/${post.slug}`);
+  const hasEs = postLocales(slug).includes('es');
+  const contentLocale = locale === 'es' && hasEs ? 'es' : 'pt';
+  const inLanguage = contentLocale === 'es' ? 'es' : 'pt-BR';
+  const postUrl = localizedUrl(contentLocale, `/blog/${post.slug}`);
 
   return (
     <div className="section-padding">
@@ -67,7 +83,7 @@ export default async function BlogPostPage({ params }: PageProps) {
             description: post.excerpt,
             datePublished: post.date,
             dateModified: post.date,
-            inLanguage: 'pt-BR',
+            inLanguage,
             mainEntityOfPage: postUrl,
             author: { '@type': 'Person', name: 'Felipe Seabra' },
             publisher: {
@@ -80,7 +96,7 @@ export default async function BlogPostPage({ params }: PageProps) {
             '@context': 'https://schema.org',
             '@type': 'BreadcrumbList',
             itemListElement: [
-              { '@type': 'ListItem', position: 1, name: 'Blog', item: localizedUrl('pt', '/blog') },
+              { '@type': 'ListItem', position: 1, name: 'Blog', item: localizedUrl(contentLocale, '/blog') },
               { '@type': 'ListItem', position: 2, name: post.title, item: postUrl },
             ],
           },

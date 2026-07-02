@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next';
 import { locales, defaultLocale } from '@/i18n/config';
-import { blogPosts } from '@/data/blog-posts';
+import { blogPosts, postLocales } from '@/data/blog-posts';
 import { localizedUrl, alternateLanguages } from '@/lib/seo';
 
 /**
@@ -40,13 +40,35 @@ export default function sitemap(): MetadataRoute.Sitemap {
     })),
   );
 
-  // Blog: conteúdo só em pt -> indexar apenas a URL pt (sem alternates es/en quebrados).
-  const blog: MetadataRoute.Sitemap = blogPosts.map((post) => ({
-    url: localizedUrl(defaultLocale, `/blog/${post.slug}`),
-    lastModified: post.date ? new Date(post.date) : now,
-    changeFrequency: 'monthly' as const,
-    priority: 0.6,
-  }));
+  // Blog: pt sempre; es apenas para posts traduzidos (com hreflang recíproco).
+  // Posts sem tradução ficam pt-only (sem alternates es/en quebrados).
+  const blog: MetadataRoute.Sitemap = blogPosts.flatMap((post) => {
+    const lastModified = post.date ? new Date(post.date) : now;
+    const path = `/blog/${post.slug}`;
+
+    if (postLocales(post.slug).includes('es')) {
+      const languages = {
+        pt: localizedUrl('pt', path),
+        es: localizedUrl('es', path),
+      };
+      return (['pt', 'es'] as const).map((loc) => ({
+        url: localizedUrl(loc, path),
+        lastModified,
+        changeFrequency: 'monthly' as const,
+        priority: 0.6,
+        alternates: { languages },
+      }));
+    }
+
+    return [
+      {
+        url: localizedUrl(defaultLocale, path),
+        lastModified,
+        changeFrequency: 'monthly' as const,
+        priority: 0.6,
+      },
+    ];
+  });
 
   return [...institutional, ...blog];
 }

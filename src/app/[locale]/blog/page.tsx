@@ -3,7 +3,7 @@ import { getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/routing';
 import { Card, CardContent } from '@/components/ui/card';
 import { ArrowRight } from 'lucide-react';
-import { blogPosts } from '@/data/blog-posts';
+import { blogPosts, getPostBySlug } from '@/data/blog-posts';
 
 interface PageProps {
   params: Promise<{ locale: string }>;
@@ -48,7 +48,9 @@ export default async function BlogPage({ params }: PageProps) {
 
         {/* Posts Grid */}
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {blogPosts.map((post) => (
+          {blogPosts.map((base) => {
+            const post = getPostBySlug(base.slug, locale) ?? base;
+            return (
             <Link key={post.slug} href={`/blog/${post.slug}`} className="group block">
               <Card className="h-full border-gray-200 hover:border-primary/30 transition-all hover:shadow-md">
                 <CardContent className="p-6 flex flex-col h-full">
@@ -80,7 +82,8 @@ export default async function BlogPage({ params }: PageProps) {
                 </CardContent>
               </Card>
             </Link>
-          ))}
+            );
+          })}
         </div>
 
         {blogPosts.length === 0 && (

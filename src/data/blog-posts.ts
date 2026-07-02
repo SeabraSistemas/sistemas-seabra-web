@@ -1,3 +1,5 @@
+import { blogPostsEs } from './blog-posts-es';
+
 export interface BlogPost {
   slug: string;
   title: string;
@@ -1482,8 +1484,23 @@ Com a Seabra Solutions, você gerencia sua ovinocultura leiteira com a precisão
   },
 ];
 
-export function getPostBySlug(slug: string): BlogPost | undefined {
-  return blogPosts.find((post) => post.slug === slug);
+/**
+ * Post por slug, com tradução ES aplicada quando `locale === 'es'` e houver tradução.
+ * Sem tradução (ou outro locale), devolve o conteúdo pt base.
+ */
+export function getPostBySlug(slug: string, locale?: string): BlogPost | undefined {
+  const base = blogPosts.find((post) => post.slug === slug);
+  if (!base) return undefined;
+  if (locale === 'es') {
+    const es = blogPostsEs[slug];
+    if (es) return { ...base, title: es.title, excerpt: es.excerpt, content: es.content };
+  }
+  return base;
+}
+
+/** Locales com conteúdo próprio para o slug: sempre 'pt', mais 'es' se houver tradução. */
+export function postLocales(slug: string): ('pt' | 'es')[] {
+  return blogPostsEs[slug] ? ['pt', 'es'] : ['pt'];
 }
 
 export function getPostsBySegment(segment: string): BlogPost[] {
