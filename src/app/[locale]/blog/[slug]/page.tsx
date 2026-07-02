@@ -8,6 +8,8 @@ import { blogPosts, getPostBySlug } from '@/data/blog-posts';
 import { WHATSAPP_NUMBER } from '@/lib/whatsapp';
 import { JsonLd } from '@/components/seo/JsonLd';
 import { SITE_URL, localizedUrl } from '@/lib/seo';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface PageProps {
   params: Promise<{ locale: string; slug: string }>;
@@ -122,33 +124,8 @@ export default async function BlogPostPage({ params }: PageProps) {
         </header>
 
         {/* Content */}
-        <article className="prose prose-gray max-w-none prose-headings:text-gray-900 prose-h2:text-2xl prose-h2:mt-10 prose-h2:mb-4 prose-p:text-gray-600 prose-p:leading-relaxed prose-li:text-gray-600 prose-strong:text-gray-900 prose-ul:space-y-1">
-          {post.content.split('\n').map((line, i) => {
-            const trimmed = line.trim();
-
-            if (trimmed.startsWith('## ')) {
-              return <h2 key={i}>{trimmed.replace('## ', '')}</h2>;
-            }
-
-            if (trimmed.startsWith('- **')) {
-              const match = trimmed.match(/^- \*\*(.+?)\*\*:?\s*(.*)$/);
-              if (match) {
-                return (
-                  <div key={i} className="flex gap-2 ml-4 mb-2">
-                    <span className="text-primary mt-1">·</span>
-                    <p className="text-gray-600 m-0">
-                      <strong className="text-gray-900">{match[1]}</strong>
-                      {match[2] ? `: ${match[2]}` : ''}
-                    </p>
-                  </div>
-                );
-              }
-            }
-
-            if (trimmed.length === 0) return null;
-
-            return <p key={i}>{trimmed}</p>;
-          })}
+        <article className="prose prose-gray max-w-none prose-headings:text-gray-900 prose-h2:text-2xl prose-h2:mt-10 prose-h2:mb-4 prose-h3:text-xl prose-h3:mt-8 prose-h3:mb-3 prose-p:text-gray-600 prose-p:leading-relaxed prose-li:text-gray-600 prose-strong:text-gray-900 prose-ul:space-y-1 prose-a:text-primary prose-a:font-medium prose-a:no-underline hover:prose-a:underline prose-table:text-sm prose-th:text-gray-900">
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{post.content}</ReactMarkdown>
         </article>
 
         {/* Source */}

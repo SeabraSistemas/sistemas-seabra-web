@@ -15,6 +15,73 @@ export interface BlogPost {
 
 export const blogPosts: BlogPost[] = [
   {
+    slug: 'planilha-ou-software-gestao-de-rebanho',
+    title: 'Planilha ou software de gestão de rebanho? Comparativo real',
+    excerpt:
+      'Até quando a planilha resolve e quando o software passa a valer mais do que custa. Comparativo direto, com tabela, para quem cria caprinos, ovinos ou gado de corte.',
+    date: '2026-07-02',
+    category: 'Gestão',
+    segment: 'geral',
+    readTime: 6,
+    content: `
+## Planilha ou software: qual escolher?
+
+**Resposta direta:** a planilha dá conta no começo — poucos animais, um único responsável. A partir do momento em que você precisa de **histórico individual, alertas de manejo, controle sanitário e reprodutivo e indicadores confiáveis para decidir**, um software de gestão de rebanho passa a valer mais do que custa: corta erro de digitação, evita perda de dados e devolve o tempo gasto reorganizando abas.
+
+A pergunta certa não é "planilha ou software", e sim **até quando a planilha te atende** — e quanto você perde por ficar nela tempo demais.
+
+## O que a planilha resolve (e onde trava)
+
+Planilha (Excel, Google Sheets) é barata, flexível e todo mundo sabe usar. Num rebanho pequeno, ela anota nascimentos, coberturas e produção sem problema. O gargalo aparece com o **crescimento** e com a **rotina de campo**:
+
+- **Erro humano:** uma célula digitada errado contamina os cálculos e ninguém percebe.
+- **Sem alertas:** a planilha não avisa que uma fêmea está no fim da gestação ou que um lote precisa de vermífugo.
+- **Histórico individual difícil:** acompanhar a vida de um animal (partos, tratamentos, produção) vira uma caça entre abas.
+- **Um por vez:** dois funcionários editando geram versões conflitantes.
+- **Nada de campo:** você anota no papel e re-digita depois — retrabalho e mais erro.
+
+## Comparativo: planilha x software de gestão de rebanho
+
+| Critério | Planilha | Software de gestão |
+| --- | --- | --- |
+| Custo inicial | Baixo ou zero | Assinatura |
+| Curva de aprendizado | Baixa | Baixa a média |
+| Histórico individual do animal | Manual e trabalhoso | Automático |
+| Alertas de manejo e sanidade | Não | Sim |
+| Indicadores zootécnicos prontos | Você monta na mão | Calculados sozinho |
+| Registro no campo (offline) | Não | Sim |
+| Vários usuários ao mesmo tempo | Conflita | Simultâneo |
+| Risco de perder dados | Alto | Backup na nuvem |
+| Integração com brinco/RFID | Não | Sim |
+
+## Quando a planilha ainda é suficiente
+
+Vale ser honesto com o momento da operação. A planilha continua ok se:
+
+- Você tem **poucos animais** e um único responsável.
+- Não precisa de **alertas** nem de indicadores automáticos.
+- O rebanho **não deve crescer** no curto prazo.
+
+Se é o seu caso, ótimo — economize e siga. Mas se você já "perde o fio" do rebanho, é sinal de que passou da hora de trocar.
+
+## O que muda com um software na prática
+
+- **Cada animal tem uma ficha:** partos, coberturas, tratamentos e produção num lugar só.
+- **O sistema lembra por você:** protocolos reprodutivos, vacinas e desmames viram alertas.
+- **Você decide com número:** intervalo entre partos, produção por fêmea, ganho médio diário e custo aparecem prontos.
+- **O campo entra direto:** registre pelo celular, mesmo sem internet, e sincronize depois.
+- **Rastreabilidade real:** com [brinco eletrônico e microchip RFID](/pt/vendas/produtos), a identificação deixa de depender de anotação manual.
+
+## Já tenho tudo na planilha — e agora?
+
+Dá para migrar sem recomeçar do zero: um bom sistema importa seus dados atuais. Na [Seabra Solutions](/pt/pequenos-ruminantes), o sistema é **sob medida** para o seu tipo de produção — [caprinos e ovinos de leite ou corte](/pt/solucoes/caprinos/leite) e [bovinos de corte](/pt/bovinos-corte) — com suporte de quem entende do setor, não só de software.
+
+## Conclusão
+
+Planilha não é "errado": é um bom primeiro passo. Só que ela cobra um preço escondido em erro, retrabalho e decisão no escuro. Quando o rebanho cresce, o software de gestão deixa de ser gasto e vira **ferramenta que se paga**. Quer ver como ficaria na sua realidade? [Fale com a gente](/pt/contato).
+`,
+  },
+  {
     slug: 'inseminacao-artificial-tempo-flexivel-caprinos',
     title: 'Inseminação Artificial em Tempo Flexível (IATFx) em Caprinos',
     excerpt: 'Conheça a técnica desenvolvida pela Embrapa que pode elevar em até 15% a taxa de gestação no seu rebanho caprino.',
