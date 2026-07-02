@@ -60,6 +60,9 @@ export const metadata: Metadata = {
       process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION ||
       'xSHog5VZdsQ4-vJcL4Ca30YXDoJNFuTFT0kMgENM7AE',
   },
+  alternates: {
+    types: { 'application/rss+xml': '/feed.xml' },
+  },
 };
 
 export function generateStaticParams() {
