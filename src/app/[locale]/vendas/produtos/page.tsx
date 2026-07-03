@@ -3,6 +3,8 @@ import { RFIDProducts } from '@/components/vendas/RFIDProducts';
 import { JsonLd } from '@/components/seo/JsonLd';
 import { SITE_URL } from '@/lib/seo';
 import { rfidProducts } from '@/data/rfid-products';
+import { produtosFaq } from '@/data/produtos-faq';
+import { RelatedArticles } from '@/components/blog/RelatedArticles';
 
 interface PageProps {
   params: Promise<{ locale: string }>;
@@ -63,10 +65,52 @@ export default async function ProdutosPage({ params }: PageProps) {
     }),
   };
 
+  const faq = produtosFaq[locale as 'pt' | 'es' | 'en'] ?? produtosFaq.pt;
+  const faqSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faq.items.map((item) => ({
+      '@type': 'Question',
+      name: item.q,
+      acceptedAnswer: { '@type': 'Answer', text: item.a },
+    })),
+  };
+
   return (
     <>
-      <JsonLd data={itemList} />
+      <JsonLd data={[itemList, faqSchema]} />
       <RFIDProducts />
+
+      <section className="section-padding">
+        <div className="max-w-3xl mx-auto px-4">
+          <h2 className="text-2xl font-semibold text-gray-900 mb-6">{faq.title}</h2>
+          <div className="space-y-3">
+            {faq.items.map((item, i) => (
+              <details
+                key={i}
+                className="group rounded-xl border border-gray-200 p-4 open:bg-gray-50 transition-colors"
+              >
+                <summary className="flex cursor-pointer list-none items-center justify-between font-medium text-gray-900">
+                  {item.q}
+                  <span className="ml-4 text-primary transition-transform group-open:rotate-45">
+                    +
+                  </span>
+                </summary>
+                <p className="mt-3 leading-relaxed text-muted-foreground">{item.a}</p>
+              </details>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <RelatedArticles
+        slugs={[
+          'microchip-e-brinco-eletronico-rfid-precos',
+          'como-implementar-rastreabilidade-no-rebanho',
+          'rfid-obrigatorio-brasil-rastreabilidade-bovina',
+        ]}
+        locale={locale}
+      />
     </>
   );
 }

@@ -3,6 +3,7 @@ import { ConsultoriaHero } from '@/components/vendas/ConsultoriaHero';
 import { ConsultorProfile } from '@/components/vendas/ConsultorProfile';
 import { ConsultoriaServicos } from '@/components/vendas/ConsultoriaServicos';
 import { VendasCTA } from '@/components/vendas/VendasCTA';
+import { RelatedArticles } from '@/components/blog/RelatedArticles';
 import { JsonLd } from '@/components/seo/JsonLd';
 import { SITE_URL } from '@/lib/seo';
 
@@ -46,6 +47,10 @@ export default async function ConsultoriaPage({ params }: PageProps) {
       <ConsultoriaHero />
       <ConsultorProfile />
       <ConsultoriaServicos />
+      <RelatedArticles
+        slugs={['vale-a-pena-consultoria-caprinocultura', 'como-escolher-software-caprinos-ovinos']}
+        locale={locale}
+      />
       <VendasCTA />
     </>
   );

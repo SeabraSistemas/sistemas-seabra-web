@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { LandingCTA } from '@/components/landing/LandingCTA';
 import { LogosSection } from '@/components/home/LogosSection';
+import { RelatedArticles } from '@/components/blog/RelatedArticles';
 
 interface PageProps {
   params: Promise<{ locale: string }>;
@@ -95,6 +96,15 @@ export default async function PequenosRuminantesHub({ params }: PageProps) {
       </section>
 
       <LogosSection />
+      <RelatedArticles
+        slugs={[
+          'como-escolher-software-caprinos-ovinos',
+          'planilha-ou-software-gestao-de-rebanho',
+          'quanto-leite-produz-uma-cabra-por-dia',
+          'indicadores-criador-cabra-leiteira',
+        ]}
+        locale={locale}
+      />
       <LandingCTA segmentSlug="caprinos-corte" />
     </>
   );

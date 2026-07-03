@@ -7,6 +7,7 @@ import { Modules } from '@/components/landing/Modules';
 import { LandingProofs } from '@/components/landing/LandingProofs';
 import { FAQ } from '@/components/landing/FAQ';
 import { LandingCTA } from '@/components/landing/LandingCTA';
+import { RelatedArticles } from '@/components/blog/RelatedArticles';
 
 const SEGMENT_KEY = 'goatDairy';
 const SEGMENT_SLUG = 'caprinos-leite';
@@ -37,6 +38,14 @@ export default async function CaprinosLeitePage({ params }: PageProps) {
       <Modules />
       <LandingProofs segmentSlug={SEGMENT_SLUG} />
       <FAQ />
+      <RelatedArticles
+        slugs={[
+          'quanto-leite-produz-uma-cabra-por-dia',
+          'indicadores-criador-cabra-leiteira',
+          'calendario-manejo-reprodutivo-caprinos',
+        ]}
+        locale={locale}
+      />
       <LandingCTA segmentSlug={SEGMENT_SLUG} />
     </>
   );
