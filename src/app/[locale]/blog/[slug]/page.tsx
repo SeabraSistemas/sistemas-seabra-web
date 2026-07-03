@@ -85,7 +85,12 @@ export default async function BlogPostPage({ params }: PageProps) {
             dateModified: post.date,
             inLanguage,
             mainEntityOfPage: postUrl,
-            author: { '@type': 'Person', name: 'Felipe Seabra' },
+            image: localizedUrl(contentLocale, `/blog/${post.slug}/opengraph-image`),
+            author: {
+              '@type': 'Person',
+              name: 'Felipe Seabra',
+              url: localizedUrl(contentLocale, '/vendas/consultoria'),
+            },
             publisher: {
               '@type': 'Organization',
               name: 'Seabra Solutions',
