@@ -22,6 +22,17 @@ export type Genealogia = Partial<Record<
   Ancestral
 >>;
 
+/**
+ * Snapshot jsonb da AML (avaliação morfológica linear): vitrine_animal.aml.
+ * '{}' quando não há avaliação; senão { total, data, pts: [[label, valor 1-9], ...] }
+ * (só os pontos não-nulos — úbere de macho não vem).
+ */
+export interface Aml {
+  total?: number | null;
+  data?: string | null;
+  pts?: [string, number][];
+}
+
 export type SexoNorm = 'macho' | 'femea';
 
 /** Linha de vitrine.criadores (card do indice + header da pagina do criador). */
@@ -74,6 +85,7 @@ export interface Animal {
   indexavel: boolean;
   ordem: number;
   atualizado_em: string | null;
+  aml: Aml;
 }
 
 /** Payload da pagina do criador. */
