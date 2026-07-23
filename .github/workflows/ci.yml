@@ -20,7 +20,11 @@ jobs:
           node-version: 22
           cache: npm
       - name: Install deps
-        run: npm ci
+        # npm install (nao `npm ci`): o package-lock deste repo tem drift
+        # pre-existente (ex.: @swc/helpers) que o `npm ci` estrito rejeita; o
+        # deploy real (Vercel) usa install proprio. Este job e so gate de
+        # lint+build, entao install tolerante basta.
+        run: npm install --no-audit --no-fund
       - name: Lint
         run: npm run lint
       - name: Build
