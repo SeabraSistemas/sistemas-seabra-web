@@ -5,6 +5,8 @@ import { Info } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { AmlBarras } from './AmlBarras';
 import { MedidasChips } from './MedidasChips';
+import { LactacaoAberta } from './LactacaoAberta';
+import { CarrosselEncerradas } from './CarrosselEncerradas';
 
 /** Métrica serializável vinda de metricasDe(animal). */
 type Metrica = { label: string; valor: string; sufixo?: string };
@@ -14,6 +16,12 @@ type AmlData = { totalFmt: string | null; pts: [string, number][] };
 
 /** Medida do snapshot: [label, valor, unidade]. */
 type Medida = [string, number, string];
+
+/** Lactação serializável (snapshot); campos ausentes quando não há dado. */
+type Lactacao = {
+  aberta?: { dias: number; med: number; pts: [number, number][] };
+  enc?: { ordem: number; ano: number; total: number; dias: number; media: number }[];
+};
 
 /**
  * Abas da ficha (protótipo v12). Duas abas SEMPRE existem:
@@ -25,10 +33,12 @@ export function FichaTabs({
   metricas,
   aml,
   medidas,
+  lactacao,
 }: {
   metricas: Metrica[];
   aml: AmlData | null;
   medidas: Medida[];
+  lactacao: Lactacao;
 }) {
   const t = useTranslations('criadores');
   const [tab, setTab] = useState<'pl' | 'ta'>('pl');
@@ -57,7 +67,9 @@ export function FichaTabs({
       </div>
 
       <div className="panel" role="tabpanel" hidden={tab !== 'pl'}>
-        {metricas.length > 0 ? (
+        {lactacao.aberta && <LactacaoAberta aberta={lactacao.aberta} />}
+        {lactacao.enc && lactacao.enc.length > 0 && <CarrosselEncerradas enc={lactacao.enc} />}
+        {metricas.length > 0 && (
           <div className="stats">
             {metricas.map((m) => (
               <div className="stat" key={m.label}>
@@ -69,7 +81,8 @@ export function FichaTabs({
               </div>
             ))}
           </div>
-        ) : (
+        )}
+        {!lactacao.aberta && !(lactacao.enc && lactacao.enc.length > 0) && metricas.length === 0 && (
           <div className="block">
             <div className="empty-note">
               <Info size={13} strokeWidth={1.8} />
