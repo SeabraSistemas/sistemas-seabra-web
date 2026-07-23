@@ -2,9 +2,10 @@ import Image from 'next/image';
 import { cn } from '@/lib/utils';
 
 /**
- * Foto do animal com marca d'agua anti-crop (diagonal + selo no canto) e
- * fallback de logo quando nao ha foto. A moldura (aspect/rounded) vem do pai
- * via className; aqui so cuidamos de imagem + overlay.
+ * Foto do animal (protótipo v12): renderiza a caixa .photo (aspect 4/5) com
+ * marca d'água anti-crop (9 faixas diagonais + selo sistemaseabra.com.br no
+ * canto) e placeholder com a logo quando não há foto. A API é a mesma de antes
+ * (src/alt/blurDataURL/priority/sizes/className) — o pai pode empilhar classes.
  */
 export function AnimalFoto({
   src,
@@ -22,7 +23,7 @@ export function AnimalFoto({
   className?: string;
 }) {
   return (
-    <div className={cn('relative overflow-hidden bg-gray-100', className)}>
+    <div className={cn('photo', !src && 'noimg', className)}>
       {src ? (
         <Image
           src={src}
@@ -35,14 +36,8 @@ export function AnimalFoto({
           className="object-cover"
         />
       ) : (
-        <div className="absolute inset-0 grid place-items-center bg-gray-50">
-          <Image
-            src="/images/logo-icon.png"
-            alt="Sistema Seabra"
-            width={72}
-            height={72}
-            className="opacity-40"
-          />
+        <div className="ph">
+          <Image src="/images/logo-icon.png" alt="Sistema Seabra" width={82} height={82} />
         </div>
       )}
       <Watermark />
@@ -50,20 +45,17 @@ export function AnimalFoto({
   );
 }
 
+/** Marca d'água diagonal + selo de canto com a logo branca (anti-crop). */
 function Watermark() {
   return (
-    <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
-      <div className="absolute -inset-1/4 flex rotate-[-22deg] flex-col gap-6 opacity-[0.12]">
-        {Array.from({ length: 8 }).map((_, i) => (
-          <span
-            key={i}
-            className="whitespace-nowrap font-mono text-[9px] tracking-[0.22em] text-white [text-shadow:0_1px_2px_rgba(0,0,0,.35)]"
-          >
-            SISTEMA SEABRA · SISTEMASEABRA.COM.BR · PEQUENOS RUMINANTES ·&nbsp;
-          </span>
+    <div aria-hidden className="wm">
+      <div className="diag">
+        {Array.from({ length: 9 }).map((_, i) => (
+          <span key={i}>SISTEMA SEABRA · SISTEMASEABRA.COM.BR · PEQUENOS RUMINANTES ·&nbsp;</span>
         ))}
       </div>
-      <div className="absolute bottom-1.5 right-1.5 flex items-center gap-1 rounded-md bg-[rgba(10,25,55,0.52)] px-1.5 py-0.5 font-mono text-[8px] text-white backdrop-blur-[2px]">
+      <div className="corner">
+        <Image src="/images/logo-icon.png" alt="" width={9} height={9} />
         sistemaseabra.com.br
       </div>
     </div>

@@ -5,10 +5,9 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { Link } from '@/i18n/routing';
 import { getPaginaCriador, getTodosSlugsCriadores } from '@/lib/criadores/queries';
 import { CriadorHeader } from '@/components/criadores/CriadorHeader';
-import { AnimalCard } from '@/components/criadores/AnimalCard';
+import { PlantelFiltravel } from '@/components/criadores/PlantelFiltravel';
 import { MarcaSeabra } from '@/components/criadores/MarcaSeabra';
 import { Disclaimer } from '@/components/criadores/Disclaimer';
-import type { Animal } from '@/lib/criadores/types';
 
 export const revalidate = 300;
 export const dynamicParams = true;
@@ -53,47 +52,25 @@ export default async function CriadorPage({
   const femeas = animais.filter((a) => a.sexo_norm === 'femea');
 
   return (
-    <div className="container-wide pb-20 pt-24 md:pt-28">
-      <Link
-        href="/criadores"
-        className="mb-4 inline-flex h-11 items-center gap-1 text-sm text-gray-500 transition-colors hover:text-gray-900"
-      >
-        <ChevronLeft className="h-4 w-4" />
+    <>
+      <Link href="/criadores" className="crd-back">
+        <ChevronLeft size={15} strokeWidth={2} />
         {t('voltarCriadores')}
       </Link>
 
       <CriadorHeader criador={criador} />
 
-      <div className="mt-8 space-y-8">
-        {machos.length > 0 && (
-          <Secao titulo={t('secaoMachos')} animais={machos} criadorNome={criador.criador} />
-        )}
-        {femeas.length > 0 && (
-          <Secao titulo={t('secaoFemeas')} animais={femeas} criadorNome={criador.criador} />
-        )}
-      </div>
+      <PlantelFiltravel
+        machos={machos}
+        femeas={femeas}
+        racas={criador.racas}
+        criadorNome={criador.criador}
+      />
 
-      <div className="mt-12 space-y-4">
+      <div className="crd-foot">
         <MarcaSeabra />
         <Disclaimer />
       </div>
-    </div>
-  );
-}
-
-function Secao({ titulo, animais, criadorNome }: { titulo: string; animais: Animal[]; criadorNome: string }) {
-  return (
-    <section>
-      <div className="mb-3 flex items-center gap-3">
-        <h2 className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">{titulo}</h2>
-        <span className="font-mono text-xs text-gray-400">{animais.length}</span>
-        <div className="h-px flex-1 bg-gray-200" />
-      </div>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5">
-        {animais.map((a) => (
-          <AnimalCard key={a.animal_slug} animal={a} criadorNome={criadorNome} />
-        ))}
-      </div>
-    </section>
+    </>
   );
 }
