@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Info } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { AmlBarras } from './AmlBarras';
+import { MedidasChips } from './MedidasChips';
 
 /** Métrica serializável vinda de metricasDe(animal). */
 type Metrica = { label: string; valor: string; sufixo?: string };
@@ -11,14 +12,24 @@ type Metrica = { label: string; valor: string; sufixo?: string };
 /** AML serializável vinda de amlDe(animal); null → a aba mostra o placeholder. */
 type AmlData = { totalFmt: string | null; pts: [string, number][] };
 
+/** Medida do snapshot: [label, valor, unidade]. */
+type Medida = [string, number, string];
+
 /**
  * Abas da ficha (protótipo v12). Duas abas SEMPRE existem:
  *  - "Produção · Progênie": mostra os stats de produção presentes (metricasDe);
  *    sem dado → nota discreta. Curva de lactação / progênie / filhas são Fase B/C.
- *  - "AML · Medidas": bloco AML quando há avaliação (snapshot); senão placeholder.
- *    Medidas seguem Fase B/C.
+ *  - "AML · Medidas": bloco AML (se há avaliação) e/ou Medidas (se há); senão placeholder.
  */
-export function FichaTabs({ metricas, aml }: { metricas: Metrica[]; aml: AmlData | null }) {
+export function FichaTabs({
+  metricas,
+  aml,
+  medidas,
+}: {
+  metricas: Metrica[];
+  aml: AmlData | null;
+  medidas: Medida[];
+}) {
   const t = useTranslations('criadores');
   const [tab, setTab] = useState<'pl' | 'ta'>('pl');
 
@@ -69,9 +80,9 @@ export function FichaTabs({ metricas, aml }: { metricas: Metrica[]; aml: AmlData
       </div>
 
       <div className="panel" role="tabpanel" hidden={tab !== 'ta'}>
-        {aml ? (
-          <AmlBarras aml={aml} />
-        ) : (
+        {aml && <AmlBarras aml={aml} />}
+        {medidas.length > 0 && <MedidasChips medidas={medidas} />}
+        {!aml && medidas.length === 0 && (
           <div className="block">
             <div className="empty-note">
               <Info size={13} strokeWidth={1.8} />

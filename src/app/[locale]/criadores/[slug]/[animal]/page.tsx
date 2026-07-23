@@ -128,7 +128,7 @@ export default async function FichaPage({
         <GenealogiaArvore genealogia={a.genealogia} />
       </section>
 
-      <FichaTabs metricas={metricas} aml={aml} />
+      <FichaTabs metricas={metricas} aml={aml} medidas={a.medidas} />
 
       <div className="ficha-nav">
         {anteriorSlug ? (

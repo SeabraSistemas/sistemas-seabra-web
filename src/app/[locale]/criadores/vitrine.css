@@ -364,6 +364,13 @@
   .vitrine-scope .bar { grid-template-columns: 110px 1fr; }
 }
 
+/* ---- Medidas: chips de valor + unidade ---- */
+.vitrine-scope .mchips { display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); gap: 9px; }
+.vitrine-scope .mchip { border: 1px solid var(--line); border-radius: 9px; padding: 9px 11px; background: var(--surface-2); }
+.vitrine-scope .mchip .l { font-size: 10px; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-mute); }
+.vitrine-scope .mchip .v { font-family: var(--mono); font-size: 17px; font-weight: 600; margin-top: 3px; }
+.vitrine-scope .mchip .v small { font-size: 11px; color: var(--ink-mute); font-weight: 400; }
+
 /* ---- genealogia: árvore horizontal compacta com conectores ---- */
 .vitrine-scope .gtree-wrap { overflow-x: auto; padding: 2px 2px 6px; }
 .vitrine-scope .gtree { display: flex; flex-direction: column; gap: 6px; min-width: min-content; }
