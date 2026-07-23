@@ -47,6 +47,19 @@ export interface Filhas {
   publicadas: { slug: string; nome: string | null; numero: string; sexo: SexoNorm; foto: string | null }[];
 }
 
+/**
+ * Snapshot de Performance da Progênie (vitrine_animal.progenie). '{}' quando não
+ * há dado (ou oculto por exibe_producao). Espelha o card do app: macho = média do
+ * HC das filhas; fêmea = HC individual dela. `conf` é a confiabilidade (%, badge
+ * some se 0); `cats` são as 5 categorias com o valor médio e os subitens visíveis
+ * (composição do leite fica de fora dos subitens por decisão de produto).
+ */
+export interface Progenie {
+  conf?: number;
+  total_filhas?: number | null;
+  cats?: { n: string; v: number; sub: [string, number][] }[];
+}
+
 /** Linha de vitrine.criadores (card do indice + header da pagina do criador). */
 export interface Criador {
   slug: string;
@@ -102,6 +115,7 @@ export interface Animal {
   medidas: [string, number, string][];
   lactacao: Lactacao;
   filhas: Filhas;
+  progenie: Progenie;
 }
 
 /** Payload da pagina do criador. */

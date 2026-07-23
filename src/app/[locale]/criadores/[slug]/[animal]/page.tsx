@@ -130,6 +130,7 @@ export default async function FichaPage({
         medidas={a.medidas}
         lactacao={a.lactacao}
         filhas={a.filhas}
+        progenie={a.progenie}
         criadorSlug={slug}
       />
 
