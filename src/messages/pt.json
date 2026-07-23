@@ -80,6 +80,8 @@
     "lactacaoDias": "Dias em lactação",
     "lactacoesEncerradas": "Lactações encerradas",
     "lactacaoOrdinal": "{n}ª lactação",
+    "filhasTitulo": "Filhas",
+    "filhasContagem": "{n} de {total}",
     "genMacho": "macho",
     "genFemea": "fêmea",
     "fatoNascimento": "Nascimento",

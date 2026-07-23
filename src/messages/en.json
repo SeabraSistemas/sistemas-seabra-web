@@ -80,6 +80,8 @@
     "lactacaoDias": "Days in milk",
     "lactacoesEncerradas": "Closed lactations",
     "lactacaoOrdinal": "Lactation {n}",
+    "filhasTitulo": "Offspring",
+    "filhasContagem": "{n} of {total}",
     "genMacho": "male",
     "genFemea": "female",
     "fatoNascimento": "Birth",

@@ -400,6 +400,19 @@
 .vitrine-scope .lcard .big small { font-size: 11px; color: var(--ink-mute); font-weight: 400; }
 .vitrine-scope .lcard .sub { display: flex; gap: 12px; margin-top: 6px; font-size: 11px; color: var(--ink-mute); font-family: var(--mono); }
 
+/* ---- Filhas divulgadas: grid de cards ---- */
+.vitrine-scope .prog { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 11px; }
+.vitrine-scope .pcard { border: 1px solid var(--line); border-radius: 11px; overflow: hidden; background: var(--surface); color: inherit; display: block; text-decoration: none; }
+.vitrine-scope .pcard-photo { position: relative; aspect-ratio: 1/1; overflow: hidden; background: var(--surface-2); }
+.vitrine-scope .pcard-photo img { object-fit: cover; }
+.vitrine-scope .pcard-ph { position: absolute; inset: 0; display: grid; place-items: center; opacity: .35; }
+.vitrine-scope .pcard .pb { padding: 8px 9px; }
+.vitrine-scope .pcard .pb .nm { font-family: var(--serif); font-size: 12.5px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vitrine-scope .pcard .pb .pd { font-family: var(--mono); font-size: 10px; color: var(--ink-mute); margin-top: 2px; }
+@container vit (max-width: 640px) {
+  .vitrine-scope .prog { grid-template-columns: 1fr 1fr; }
+}
+
 /* ---- genealogia: árvore horizontal compacta com conectores ---- */
 .vitrine-scope .gtree-wrap { overflow-x: auto; padding: 2px 2px 6px; }
 .vitrine-scope .gtree { display: flex; flex-direction: column; gap: 6px; min-width: min-content; }

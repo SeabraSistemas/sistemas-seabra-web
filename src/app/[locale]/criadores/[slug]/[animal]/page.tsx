@@ -4,9 +4,8 @@ import { ChevronLeft, ChevronRight, MessageCircle } from 'lucide-react';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { Link } from '@/i18n/routing';
 import { getPaginaAnimal, getTodosSlugsAnimais } from '@/lib/criadores/queries';
-import { altAnimal, amlDe, idadeExibivel, metricasDe, nomeExibivel } from '@/lib/criadores/normalize';
+import { altAnimal, amlDe, metricasDe, nomeExibivel } from '@/lib/criadores/normalize';
 import { AnimalFoto } from '@/components/criadores/AnimalFoto';
-import { SexoBadge } from '@/components/criadores/SexoBadge';
 import { GenealogiaArvore } from '@/components/criadores/GenealogiaArvore';
 import { FichaTabs } from '@/components/criadores/FichaTabs';
 import { RodapeFicha } from '@/components/criadores/RodapeFicha';
@@ -60,7 +59,6 @@ export default async function FichaPage({
   if (!pag) notFound();
   const { criador, animal: a, indice, total, anteriorSlug, proximoSlug } = pag;
 
-  const idade = idadeExibivel(a);
   const nascimento = fmtData(a.data_nascimento);
   const metricas = metricasDe(a);
   const aml = amlDe(a);
@@ -88,11 +86,9 @@ export default async function FichaPage({
           <h1 className="serif">{nomeExibivel(a)}</h1>
           <div className="idnum">Nº {a.numero}</div>
           <div className="idrow">
-            <SexoBadge sexo={a.sexo_norm} />
             {a.raca && <span className="badge b-raca">{a.raca}</span>}
             {a.grau_sangue && <span className="badge b-po">{a.grau_sangue}</span>}
             {a.categoria_rg && <span className="badge">{a.categoria_rg}</span>}
-            {idade && <span className="badge">{idade}</span>}
           </div>
           {(nascimento || a.peso_kg != null) && (
             <div className="facts">
@@ -128,7 +124,14 @@ export default async function FichaPage({
         <GenealogiaArvore genealogia={a.genealogia} />
       </section>
 
-      <FichaTabs metricas={metricas} aml={aml} medidas={a.medidas} lactacao={a.lactacao} />
+      <FichaTabs
+        metricas={metricas}
+        aml={aml}
+        medidas={a.medidas}
+        lactacao={a.lactacao}
+        filhas={a.filhas}
+        criadorSlug={slug}
+      />
 
       <div className="ficha-nav">
         {anteriorSlug ? (
