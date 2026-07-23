@@ -1,0 +1,424 @@
+/* ============================================================================
+ * Vitrine de Criadores — estilos ESCOPADOS em .vitrine-scope
+ * Portados do protótipo v12 (docs/prototipos/vitrine-criadores/vitrine_template.html).
+ * Tema CLARO fixo — o site tem <html class="dark"> mas sem bloco .dark de cores,
+ * então NUNCA usamos classes dark:. Tudo travado em claro.
+ *
+ * Os tokens são redefinidos localmente (não tocam :root global). Responsividade
+ * via container queries: .vitrine-scope é o container (@container vit).
+ * O andaime do protótipo (.chrome/.device/.seg/SITEHEAD) NÃO é portado — o
+ * site já tem Header/Footer globais e as páginas renderizam dentro deles.
+ * ========================================================================== */
+
+.vitrine-scope {
+  /* tokens EXATOS do protótipo (paleta do sistemaseabra.com.br, tema claro) */
+  --ground: #f6f7f9;
+  --surface: #ffffff;
+  --surface-2: #f3f4f6;
+  --surface-3: #e5e7eb;
+  --ink: #111827;
+  --ink-soft: #6b7280;
+  --ink-mute: #9ca3af;
+  --line: #e5e7eb;
+  --primary: #1d4ed8;
+  --primary-2: #3b6ef0;
+  --primary-deep: #1e40af;
+  --primary-soft: #eaf0fd;
+  --green: #059669;
+  --green-soft: #d1fae5;
+  --terra: #d97706;
+  --terra-soft: #fef3c7;
+  /* aliases de sexo do protótipo (macho = terra, fêmea = green) */
+  --male: #d97706;
+  --male-soft: #fef3c7;
+  --female: #059669;
+  --female-soft: #d1fae5;
+  --good: #059669;
+  /* genealogia: traço macho azul, fêmea rosa; botão de contato verde */
+  --gen-male: #2563eb;
+  --gen-female: #db2777;
+  --wa-green: #1f9d54;
+  --shadow: 0 1px 2px rgba(17, 24, 39, .05), 0 10px 24px -14px rgba(17, 24, 39, .15);
+  --serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', Palatino, serif;
+  --sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+  --mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
+  container-type: inline-size;
+  container-name: vit;
+  max-width: 1152px;
+  margin: 0 auto;
+  padding: 5.5rem 0 4rem;
+  color: var(--ink);
+  font-family: var(--sans);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+@media (min-width: 768px) {
+  .vitrine-scope { padding-top: 6.5rem; }
+}
+
+.vitrine-scope h1,
+.vitrine-scope h2,
+.vitrine-scope h3 { margin: 0; text-wrap: balance; }
+.vitrine-scope .serif { font-family: var(--serif); }
+.vitrine-scope button { font-family: inherit; cursor: pointer; }
+
+/* ---- back-link (topo das páginas internas) ---- */
+.vitrine-scope .crd-back {
+  display: inline-flex; align-items: center; gap: 5px;
+  margin: 0 22px 4px; padding: 7px 0;
+  font-size: 13px; color: var(--ink-soft); text-decoration: none;
+  transition: color .15s;
+}
+.vitrine-scope .crd-back:hover { color: var(--ink); }
+
+/* ============ ÍNDICE ============ */
+.vitrine-scope .idx-hero { padding: 28px 22px 18px; }
+.vitrine-scope .idx-hero h1 {
+  font-family: var(--serif); font-size: 30px; font-weight: 600;
+  letter-spacing: -.01em; margin: 8px 0 6px;
+}
+.vitrine-scope .idx-hero .eyebrow {
+  font-size: 10.5px; text-transform: uppercase; letter-spacing: .14em;
+  color: var(--primary); font-weight: 700;
+}
+.vitrine-scope .idx-hero p { margin: 0; color: var(--ink-soft); max-width: 56ch; font-size: 14.5px; }
+
+.vitrine-scope .idx-filter { padding: 2px 22px 18px; display: flex; align-items: center; gap: 9px; }
+.vitrine-scope .idx-filter .fl {
+  font-size: 11px; text-transform: uppercase; letter-spacing: .1em;
+  color: var(--ink-mute); font-weight: 700;
+}
+.vitrine-scope .idx-filter .ufsel {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--surface-2); border: 1px solid var(--line);
+  border-radius: 10px; padding: 8px 12px;
+}
+.vitrine-scope .idx-filter select {
+  border: 0; background: transparent; color: var(--ink);
+  font-size: 13.5px; font-weight: 600; outline: none; font-family: inherit; cursor: pointer;
+}
+
+.vitrine-scope .criador-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px; padding: 6px 22px 28px;
+}
+.vitrine-scope .ccard {
+  border: 1px solid var(--line); border-radius: 14px; background: var(--surface);
+  overflow: hidden; transition: transform .15s, box-shadow .15s;
+  text-align: left; padding: 0; color: inherit; width: 100%; display: block;
+  text-decoration: none;
+}
+.vitrine-scope a.ccard:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
+.vitrine-scope .ccard-top {
+  height: 80px; background: linear-gradient(120deg, var(--primary), var(--primary-2));
+  position: relative; background-size: cover; background-position: center;
+}
+.vitrine-scope .ccard-top.ghost { background: var(--surface-3); }
+.vitrine-scope .ccard-logo {
+  position: absolute; left: 18px; bottom: -24px; width: 62px; height: 62px;
+  border-radius: 14px; background: #fff; border: 1px solid var(--line);
+  overflow: hidden; padding: 2px;
+}
+.vitrine-scope .ccard-logo img { width: 100%; height: 100%; object-fit: contain; }
+.vitrine-scope .ccard-logo.mono {
+  display: grid; place-items: center; color: var(--primary);
+  font-weight: 700; font-size: 20px; padding: 0;
+}
+.vitrine-scope .ccard-body { padding: 32px 18px 16px; }
+.vitrine-scope .ccard-body h3 { font-family: var(--serif); font-size: 19px; font-weight: 600; }
+.vitrine-scope .ccard-body h3.mute { color: var(--ink-mute); }
+.vitrine-scope .ccard-body .sub { color: var(--ink-mute); font-size: 13px; margin-top: 3px; }
+.vitrine-scope .cloc {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 12px; color: var(--ink-mute); margin-top: 7px;
+}
+.vitrine-scope .ccard-meta { display: flex; gap: 16px; margin-top: 13px; flex-wrap: wrap; }
+.vitrine-scope .ccard-meta div { font-size: 12px; color: var(--ink-soft); }
+.vitrine-scope .ccard-meta b {
+  display: block; font-family: var(--mono); font-size: 16px; color: var(--ink); font-weight: 600;
+}
+.vitrine-scope .ccard-cta {
+  margin-top: 14px; display: flex; gap: 8px; align-items: center;
+  color: var(--primary); font-weight: 600; font-size: 13px;
+}
+.vitrine-scope .ccard-cta.mute { color: var(--ink-mute); }
+
+/* ============ PÁGINA DO CRIADOR ============ */
+.vitrine-scope .crd-head {
+  background: linear-gradient(120deg, var(--primary), var(--primary-2));
+  color: #eef4fd; border-radius: 16px; overflow: hidden; margin: 0 22px;
+}
+.vitrine-scope .crd-head-in { padding: 22px; display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+.vitrine-scope .crd-logo {
+  width: 66px; height: 66px; border-radius: 15px; background: #fff;
+  overflow: hidden; flex: none; padding: 2px;
+}
+.vitrine-scope .crd-logo img { width: 100%; height: 100%; object-fit: contain; }
+.vitrine-scope .crd-logo.mono {
+  display: grid; place-items: center; color: var(--primary); font-weight: 700; font-size: 22px; padding: 0;
+}
+.vitrine-scope .crd-id { min-width: 0; }
+.vitrine-scope .crd-id h1 { font-family: var(--serif); font-size: 26px; font-weight: 600; }
+.vitrine-scope .crd-id .by { opacity: .85; font-size: 13.5px; margin-top: 4px; }
+.vitrine-scope .crd-contacts { display: flex; gap: 8px; margin-left: auto; flex-wrap: wrap; }
+.vitrine-scope .crd-strip {
+  display: flex; background: rgba(0, 0, 0, .14); border-top: 1px solid rgba(255, 255, 255, .12); flex-wrap: wrap;
+}
+.vitrine-scope .crd-strip div { padding: 10px 22px; font-size: 12px; color: #dbe6f9; }
+.vitrine-scope .crd-strip b { font-family: var(--mono); font-size: 15px; color: #fff; margin-right: 6px; }
+
+/* botões (usados no header do criador e na ficha) */
+.vitrine-scope .btn {
+  display: inline-flex; align-items: center; gap: 7px; border-radius: 9px;
+  padding: 9px 13px; font-size: 13px; font-weight: 600;
+  border: 1px solid transparent; text-decoration: none; cursor: pointer;
+}
+.vitrine-scope .btn-wa { background: var(--wa-green); color: #fff; border-color: rgba(255, 255, 255, .16); }
+.vitrine-scope .btn-ghost { background: rgba(255, 255, 255, .14); color: #eef4fd; border-color: rgba(255, 255, 255, .24); }
+
+/* ---- filtros (chips) ---- */
+.vitrine-scope .controls { display: flex; gap: 10px; align-items: center; padding: 18px 22px 4px; flex-wrap: wrap; }
+.vitrine-scope .flabel {
+  font-size: 11px; text-transform: uppercase; letter-spacing: .1em; color: var(--ink-mute); font-weight: 700;
+}
+.vitrine-scope .chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.vitrine-scope .chip {
+  border: 1px solid var(--line); background: var(--surface); color: var(--ink-soft);
+  font-size: 12.5px; font-weight: 600; padding: 7px 13px; border-radius: 99px;
+}
+.vitrine-scope .chip[aria-pressed="true"] { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+/* ---- seções da grade ---- */
+.vitrine-scope .sec-label { padding: 18px 22px 8px; display: flex; align-items: center; gap: 10px; }
+.vitrine-scope .sec-label h2 {
+  font-size: 12px; text-transform: uppercase; letter-spacing: .13em; color: var(--ink-soft);
+}
+.vitrine-scope .sec-label .count { font-family: var(--mono); font-size: 12px; color: var(--ink-mute); }
+.vitrine-scope .sec-label .rule { flex: 1; height: 1px; background: var(--line); }
+
+.vitrine-scope .agrid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(158px, 1fr));
+  gap: 14px; padding: 6px 22px 10px;
+}
+.vitrine-scope .acard {
+  border: 1px solid var(--line); border-radius: 13px; overflow: hidden; background: var(--surface);
+  padding: 0; text-align: left; color: inherit; transition: transform .15s, box-shadow .15s;
+  display: block; width: 100%; text-decoration: none;
+}
+.vitrine-scope .acard:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
+
+/* ---- foto + marca d'água ---- */
+.vitrine-scope .photo { position: relative; aspect-ratio: 4/5; background: var(--surface-3); overflow: hidden; }
+.vitrine-scope .photo img { width: 100%; height: 100%; object-fit: cover; }
+.vitrine-scope .photo.noimg { display: grid; place-items: center; background: var(--surface-2); }
+.vitrine-scope .photo.noimg .ph {
+  display: flex; flex-direction: column; align-items: center; gap: 8px; opacity: .85; padding: 10px; text-align: center;
+}
+.vitrine-scope .photo.noimg .ph img { width: 52%; max-width: 82px; height: auto; opacity: .5; }
+.vitrine-scope .photo.noimg .ph span {
+  font-size: 9px; text-transform: uppercase; letter-spacing: .12em; color: var(--ink-mute);
+}
+.vitrine-scope .wm { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.vitrine-scope .wm .diag {
+  position: absolute; inset: -40%; display: flex; flex-direction: column; gap: 26px;
+  transform: rotate(-22deg); opacity: .14;
+}
+.vitrine-scope .wm .diag span {
+  font-family: var(--mono); font-size: 9px; letter-spacing: .22em; color: #fff;
+  white-space: nowrap; text-shadow: 0 1px 2px rgba(0, 0, 0, .35);
+}
+.vitrine-scope .wm .corner {
+  position: absolute; right: 6px; bottom: 6px; display: flex; align-items: center; gap: 4px;
+  background: rgba(10, 25, 55, .52); color: #fff; padding: 3px 7px; border-radius: 6px;
+  font-family: var(--mono); font-size: 8px; backdrop-filter: blur(2px);
+}
+.vitrine-scope .wm .corner img { height: 9px; width: auto; filter: brightness(0) invert(1); }
+
+.vitrine-scope .acard-b { padding: 9px 11px 11px; }
+.vitrine-scope .acard-b .nm {
+  font-family: var(--serif); font-size: 12.5px; font-weight: 600; line-height: 1.22;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 2.4em;
+}
+.vitrine-scope .acard-b .mt { margin-top: 5px; font-size: 10.5px; color: var(--ink-mute); font-family: var(--mono); }
+
+/* ============ FICHA DO ANIMAL ============ */
+.vitrine-scope .ficha-head {
+  display: grid; grid-template-columns: 188px minmax(210px, 285px) minmax(0, 1fr);
+  grid-template-areas: "photo data gen"; gap: 18px; padding: 20px 22px;
+  border-bottom: 1px solid var(--line); align-items: start;
+}
+.vitrine-scope .ficha-photo {
+  grid-area: photo; border-radius: 12px; overflow: hidden; border: 1px solid var(--line); position: relative;
+}
+.vitrine-scope .ficha-id { grid-area: data; min-width: 0; }
+.vitrine-scope .ficha-id .eyebrow {
+  font-size: 10.5px; text-transform: uppercase; letter-spacing: .14em;
+  color: var(--primary); font-weight: 700; margin-bottom: 5px; display: block;
+}
+.vitrine-scope .ficha-id h1 {
+  font-family: var(--serif); font-size: 23px; font-weight: 600; letter-spacing: -.01em; line-height: 1.12;
+}
+.vitrine-scope .ficha-id .idnum { margin-top: 6px; font-family: var(--mono); font-size: 13px; color: var(--ink-soft); }
+.vitrine-scope .ficha-id .idrow { display: flex; gap: 7px; flex-wrap: wrap; margin-top: 8px; }
+.vitrine-scope .badge {
+  display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; font-weight: 600;
+  padding: 4px 9px; border-radius: 8px; background: var(--surface-2); color: var(--ink-soft);
+}
+.vitrine-scope .badge.b-sex-f { background: var(--female-soft); color: var(--female); }
+.vitrine-scope .badge.b-sex-m { background: var(--male-soft); color: var(--male); }
+.vitrine-scope .badge.b-raca { background: var(--primary-soft); color: var(--primary); }
+.vitrine-scope .badge.b-po { background: var(--terra-soft); color: var(--terra); }
+.vitrine-scope .ficha-id .facts { display: flex; gap: 18px; margin-top: 12px; flex-wrap: wrap; }
+.vitrine-scope .fact { font-size: 9.5px; color: var(--ink-mute); text-transform: uppercase; letter-spacing: .07em; }
+.vitrine-scope .fact b {
+  display: block; font-family: var(--mono); font-size: 14px; color: var(--ink);
+  font-weight: 600; letter-spacing: 0; text-transform: none; margin-top: 3px;
+}
+.vitrine-scope .ficha-actions { display: flex; gap: 8px; margin-top: 13px; flex-wrap: wrap; }
+.vitrine-scope .ficha-actions .btn { flex: 1 1 0; justify-content: center; }
+.vitrine-scope .ficha-actions .btn-wa { background: var(--green); }
+
+/* genealogia compacta (3ª coluna da ficha) */
+.vitrine-scope .ficha-gen {
+  grid-area: gen; min-width: 0; border: 1px solid var(--line); border-radius: 12px;
+  padding: 12px; background: var(--surface-2);
+}
+.vitrine-scope .ficha-gen .fg-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+.vitrine-scope .ficha-gen .fg-head h3 {
+  font-size: 11px; text-transform: uppercase; letter-spacing: .12em; color: var(--ink);
+}
+.vitrine-scope .ficha-gen .glegend {
+  display: inline-flex; align-items: center; gap: 4px; font-size: 9.5px; color: var(--ink-mute); margin-left: auto;
+}
+.vitrine-scope .ficha-gen .glegend i { width: 11px; height: 3px; border-radius: 2px; display: inline-block; }
+.vitrine-scope .ficha-gen .glegend i.m { background: var(--gen-male); }
+.vitrine-scope .ficha-gen .glegend i.f { background: var(--gen-female); margin-left: 7px; }
+.vitrine-scope .ficha-gen .gtree { gap: 4px; width: max-content; max-width: none; }
+.vitrine-scope .ficha-gen .gtree .ch { gap: 4px; }
+.vitrine-scope .ficha-gen .gtree .lbl { height: 22px; font-size: 10.5px; padding: 0 8px; }
+.vitrine-scope .ficha-gen .gtree .lbl.empty { font-size: 9.5px; }
+.vitrine-scope .ficha-gen .gtree .b > .ch::before { top: 11px; bottom: 11px; }
+
+/* média: genealogia reflui pra largura total abaixo dos dados */
+@container vit (max-width: 1060px) {
+  .vitrine-scope .ficha-head {
+    grid-template-columns: 188px minmax(0, 1fr);
+    grid-template-areas: "photo data" "gen gen";
+  }
+}
+
+/* ---- abas ---- */
+.vitrine-scope .tabs {
+  display: flex; gap: 4px; padding: 14px 22px 0; border-bottom: 1px solid var(--line);
+  position: sticky; top: 0; background: var(--surface); z-index: 4;
+}
+.vitrine-scope .tab {
+  border: 0; background: transparent; color: var(--ink-mute); font-size: 13.5px; font-weight: 600;
+  padding: 11px 14px; border-bottom: 2px solid transparent; margin-bottom: -1px;
+}
+.vitrine-scope .tab[aria-selected="true"] { color: var(--primary); border-bottom-color: var(--primary); }
+.vitrine-scope .panel { padding: 20px 22px; }
+.vitrine-scope .panel[hidden] { display: none; }
+
+.vitrine-scope .block {
+  border: 1px solid var(--line); border-radius: 13px; padding: 16px 17px; margin-bottom: 14px; background: var(--surface);
+}
+.vitrine-scope .block-h {
+  display: flex; align-items: baseline; gap: 10px; margin-bottom: 14px; padding-bottom: 11px; border-bottom: 1px solid var(--line);
+}
+.vitrine-scope .block-h h3 { font-size: 12px; text-transform: uppercase; letter-spacing: .12em; color: var(--ink); }
+.vitrine-scope .block-h .k { font-family: var(--mono); font-size: 11px; color: var(--ink-mute); margin-left: auto; }
+
+.vitrine-scope .stats {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(88px, 1fr)); gap: 1px;
+  background: var(--line); border-radius: 10px; overflow: hidden; border: 1px solid var(--line);
+}
+.vitrine-scope .stat { background: var(--surface); padding: 12px 13px; }
+.vitrine-scope .stat .v {
+  font-family: var(--mono); font-size: 21px; font-weight: 600; letter-spacing: -.02em; font-variant-numeric: tabular-nums;
+}
+.vitrine-scope .stat .v small { font-size: 11px; color: var(--ink-mute); font-weight: 400; }
+.vitrine-scope .stat .l { font-size: 10px; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-mute); margin-top: 3px; }
+
+/* nota discreta (placeholders Fase A) */
+.vitrine-scope .empty-note {
+  font-size: 12.5px; color: var(--ink-mute); padding: 6px 2px;
+  display: flex; align-items: flex-start; gap: 8px; line-height: 1.45;
+}
+.vitrine-scope .empty-note svg { flex: none; margin-top: 1px; }
+
+/* ---- genealogia: árvore horizontal compacta com conectores ---- */
+.vitrine-scope .gtree-wrap { overflow-x: auto; padding: 2px 2px 6px; }
+.vitrine-scope .gtree { display: flex; flex-direction: column; gap: 6px; min-width: min-content; }
+.vitrine-scope .gtree .ch { display: flex; flex-direction: column; gap: 6px; margin-left: 20px; position: relative; }
+.vitrine-scope .gtree .b { display: flex; align-items: center; position: relative; }
+.vitrine-scope .gtree .lbl {
+  border: 1px solid var(--line); border-left: 3px solid var(--gen-male); border-radius: 7px; padding: 0 10px;
+  background: var(--surface); white-space: nowrap; height: 28px; display: flex; align-items: center; flex: none;
+  font-family: var(--serif); font-weight: 600; font-size: 11.5px; color: var(--ink);
+}
+.vitrine-scope .gtree .lbl.f { border-left-color: var(--gen-female); }
+.vitrine-scope .gtree .lbl.empty {
+  border-style: dashed; color: var(--ink-mute); font-family: var(--mono); font-weight: 400; font-size: 10.5px; opacity: .7;
+}
+.vitrine-scope .gtree .b > .ch::before {
+  content: ""; position: absolute; left: -10px; top: 14px; bottom: 14px; width: 1.5px; background: var(--line);
+}
+.vitrine-scope .gtree .b > .ch > .b::before {
+  content: ""; position: absolute; left: -10px; top: 50%; width: 10px; height: 1.5px; background: var(--line);
+}
+.vitrine-scope .gtree .b:has(> .ch) > .lbl::after {
+  content: ""; position: absolute; right: -10px; top: 50%; width: 10px; height: 1.5px; background: var(--line);
+}
+
+/* ---- rodapé da ficha ---- */
+.vitrine-scope .ficha-foot {
+  margin: 6px 22px 0; border: 1px solid var(--line); border-radius: 13px;
+  background: linear-gradient(120deg, var(--primary), var(--primary-2)); color: #eef4fd;
+  padding: 16px 18px; display: flex; align-items: center; gap: 16px;
+}
+.vitrine-scope .ficha-foot .foot-logo { width: 56px; height: 56px; flex: none; display: grid; place-items: center; }
+.vitrine-scope .ficha-foot .foot-logo img { width: 100%; height: 100%; object-fit: contain; }
+.vitrine-scope .ficha-foot .ft b { font-family: var(--serif); font-size: 17px; font-weight: 600; display: block; }
+.vitrine-scope .ficha-foot .ft span { font-size: 11px; opacity: .82; }
+.vitrine-scope .ficha-foot .grow { flex: 1; }
+.vitrine-scope .ficha-foot .cta {
+  background: rgba(255, 255, 255, .16); border: 1px solid rgba(255, 255, 255, .26); color: #fff;
+  border-radius: 9px; padding: 9px 14px; font-size: 12.5px; font-weight: 600; text-decoration: none; white-space: nowrap;
+}
+
+/* ---- navegação anterior/próximo da ficha ---- */
+.vitrine-scope .ficha-nav {
+  display: flex; align-items: center; justify-content: space-between;
+  margin: 20px 22px 0; padding-top: 14px; border-top: 1px solid var(--line);
+}
+.vitrine-scope .ficha-nav a {
+  display: inline-flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 600;
+  color: var(--ink-soft); text-decoration: none;
+}
+.vitrine-scope .ficha-nav a:hover { color: var(--ink); }
+.vitrine-scope .ficha-nav .idx { font-family: var(--mono); font-size: 13px; color: var(--ink-mute); }
+
+/* ---- rodapé de marca / disclaimer nas páginas ---- */
+.vitrine-scope .crd-foot { margin: 30px 22px 0; display: flex; flex-direction: column; gap: 16px; }
+
+/* ============ RESPONSIVO (breakpoints do protótipo) ============ */
+@container vit (max-width: 640px) {
+  .vitrine-scope .criador-grid { grid-template-columns: 1fr; }
+  .vitrine-scope .crd-contacts { margin-left: 0; width: 100%; }
+  .vitrine-scope .crd-contacts .btn { flex: 1; justify-content: center; }
+  .vitrine-scope .agrid { grid-template-columns: 1fr 1fr; gap: 11px; }
+  .vitrine-scope .ficha-head { grid-template-columns: 1fr; grid-template-areas: "photo" "data" "gen"; gap: 14px; }
+  .vitrine-scope .ficha-photo { max-width: 220px; }
+  .vitrine-scope .tab { flex: 1; font-size: 12px; padding: 11px 4px; }
+  .vitrine-scope .idx-hero h1 { font-size: 25px; }
+  .vitrine-scope .ficha-id h1 { font-size: 23px; }
+}
+@container vit (max-width: 400px) {
+  .vitrine-scope .agrid { grid-template-columns: 1fr; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vitrine-scope * { transition: none !important; }
+}
