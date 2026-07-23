@@ -35,6 +35,11 @@ const nextConfig: NextConfig = {
     return [
       { source: '/privacidade', destination: '/pt/privacidade', permanent: true },
       { source: '/termos',      destination: '/pt/termos',      permanent: true },
+      // /criadores sem prefixo de locale dava 404 (o middleware next-intl só
+      // casa '/' e '/(pt|es|en)/...'). 307 pro pt — o link no termo e as URLs
+      // compartilhadas usam a forma sem prefixo.
+      { source: '/criadores',        destination: '/pt/criadores',        permanent: false },
+      { source: '/criadores/:path*', destination: '/pt/criadores/:path*', permanent: false },
     ];
   },
 };
