@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useLocale } from 'next-intl';
+import { usePathname } from '@/i18n/routing';
 import { buildWhatsAppUrl, getUTMFromUrl, type UTMParams } from '@/lib/whatsapp';
 import { type Locale } from '@/i18n/config';
 import { cn } from '@/lib/utils';
@@ -27,6 +28,7 @@ interface WhatsAppButtonProps {
 
 export function WhatsAppButton({ segment, className }: WhatsAppButtonProps) {
   const locale = useLocale() as Locale;
+  const pathname = usePathname();
   const [utm, setUtm] = useState<UTMParams>({});
   const [isVisible, setIsVisible] = useState(false);
 
@@ -37,6 +39,10 @@ export function WhatsAppButton({ segment, className }: WhatsAppButtonProps) {
     const timer = setTimeout(() => setIsVisible(true), 1000);
     return () => clearTimeout(timer);
   }, []);
+
+  // A vitrine /criadores tem CTA proprio (contato do criador); o botao flutuante
+  // da Seabra por cima quebraria o objetivo comercial da tela.
+  if (pathname.startsWith('/criadores')) return null;
 
   const whatsappUrl = buildWhatsAppUrl({ locale, segment, utm });
 

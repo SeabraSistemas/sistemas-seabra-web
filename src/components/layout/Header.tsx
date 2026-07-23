@@ -44,6 +44,8 @@ export function Header() {
 
   const navItems = [
     { href: '/#about', label: t('header.about') },
+    // "Criadores" entra logo apos o dropdown de Solucoes (slice(1) renderiza depois dele)
+    { href: '/criadores', label: t('header.criadores') },
     { href: '/blog', label: t('header.blog') },
   ];
 

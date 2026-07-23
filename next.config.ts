@@ -5,12 +5,21 @@ const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 
 const nextConfig: NextConfig = {
   images: {
+    // Mantido '**' de proposito: restringir ao host do Supabase fecharia o
+    // proxy de otimizacao aberto, mas arrisca quebrar imagens de blog/outras
+    // fontes. Essa restricao (host especifico) fica como hardening a parte.
     remotePatterns: [
       {
         protocol: 'https',
         hostname: '**',
       },
     ],
+    // Ganho seguro para as fotos da vitrine (461 KB -> ~40 KB a 640px em avif):
+    formats: ['image/avif', 'image/webp'],
+    minimumCacheTTL: 2592000, // 30 dias (nomes de foto no Storage sao epoch, imutaveis)
+    qualities: [75, 90], // Next 16 rejeita quality fora desta lista
+    deviceSizes: [360, 414, 640, 750, 828, 1080, 1200, 1920],
+    imageSizes: [32, 48, 56, 64, 96, 128, 220, 256, 384],
   },
   async rewrites() {
     return [
