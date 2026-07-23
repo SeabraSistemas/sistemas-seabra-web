@@ -86,6 +86,8 @@ export interface Animal {
   ordem: number;
   atualizado_em: string | null;
   aml: Aml;
+  /** Snapshot de medidas corporais: [[label, valor, unidade], ...] (vazio se não há). */
+  medidas: [string, number, string][];
 }
 
 /** Payload da pagina do criador. */
