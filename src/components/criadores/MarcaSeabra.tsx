@@ -20,7 +20,12 @@ export async function MarcaSeabra() {
         />
       </div>
       <div className="min-w-0 text-center sm:text-left">
-        <b className="block font-serif text-base font-semibold leading-tight">{t('marcaTitulo')}</b>
+        {/* estilos inline (sem classes utilitárias no <b>): no wrapper .crd-foot
+            o <b> vinha aparecendo como caixa branca vazia; o RodapeFicha (que
+            funciona) também usa um <b> sem classes. */}
+        <b style={{ display: 'block', fontFamily: 'var(--serif, Georgia, serif)', fontSize: '1rem', fontWeight: 600, lineHeight: 1.2, background: 'transparent', color: 'inherit' }}>
+          {t('marcaTitulo')}
+        </b>
         <span className="text-xs opacity-80">{t('marcaSub')}</span>
         <div className="mt-0.5 font-mono text-xs opacity-90">{t('marcaDominio')}</div>
       </div>
