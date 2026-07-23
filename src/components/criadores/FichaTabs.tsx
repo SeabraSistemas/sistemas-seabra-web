@@ -7,6 +7,7 @@ import { AmlBarras } from './AmlBarras';
 import { MedidasChips } from './MedidasChips';
 import { LactacaoAberta } from './LactacaoAberta';
 import { CarrosselEncerradas } from './CarrosselEncerradas';
+import { ProgeniePerf } from './ProgeniePerf';
 import { Filhas } from './Filhas';
 
 /** Métrica serializável vinda de metricasDe(animal). */
@@ -30,6 +31,13 @@ type FilhasData = {
   publicadas: { slug: string; nome: string | null; numero: string; sexo: 'macho' | 'femea'; foto: string | null }[];
 };
 
+/** Progênie serializável (snapshot); sem `cats` → o bloco não aparece. */
+type ProgenieData = {
+  conf?: number;
+  total_filhas?: number | null;
+  cats?: { n: string; v: number; sub: [string, number][] }[];
+};
+
 /**
  * Abas da ficha (protótipo v12). Duas abas SEMPRE existem:
  *  - "Produção · Progênie": mostra os stats de produção presentes (metricasDe);
@@ -42,6 +50,7 @@ export function FichaTabs({
   medidas,
   lactacao,
   filhas,
+  progenie,
   criadorSlug,
 }: {
   metricas: Metrica[];
@@ -49,6 +58,7 @@ export function FichaTabs({
   medidas: Medida[];
   lactacao: Lactacao;
   filhas: FilhasData;
+  progenie: ProgenieData;
   criadorSlug: string;
 }) {
   const t = useTranslations('criadores');
@@ -93,10 +103,12 @@ export function FichaTabs({
             ))}
           </div>
         )}
+        <ProgeniePerf progenie={progenie} />
         <Filhas filhas={filhas} criadorSlug={criadorSlug} />
         {!lactacao.aberta &&
           !(lactacao.enc && lactacao.enc.length > 0) &&
           metricas.length === 0 &&
+          !(progenie.cats && progenie.cats.length > 0) &&
           filhas.publicadas.length === 0 && (
             <div className="block">
               <div className="empty-note">
