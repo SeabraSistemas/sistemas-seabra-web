@@ -41,6 +41,12 @@ export interface Lactacao {
 
 export type SexoNorm = 'macho' | 'femea';
 
+/** Snapshot de filhas (progênie) publicadas (vitrine_animal.filhas). */
+export interface Filhas {
+  total: number;
+  publicadas: { slug: string; nome: string | null; numero: string; sexo: SexoNorm; foto: string | null }[];
+}
+
 /** Linha de vitrine.criadores (card do indice + header da pagina do criador). */
 export interface Criador {
   slug: string;
@@ -95,6 +101,7 @@ export interface Animal {
   /** Snapshot de medidas corporais: [[label, valor, unidade], ...] (vazio se não há). */
   medidas: [string, number, string][];
   lactacao: Lactacao;
+  filhas: Filhas;
 }
 
 /** Payload da pagina do criador. */

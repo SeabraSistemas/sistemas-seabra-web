@@ -7,6 +7,7 @@ import { AmlBarras } from './AmlBarras';
 import { MedidasChips } from './MedidasChips';
 import { LactacaoAberta } from './LactacaoAberta';
 import { CarrosselEncerradas } from './CarrosselEncerradas';
+import { Filhas } from './Filhas';
 
 /** Métrica serializável vinda de metricasDe(animal). */
 type Metrica = { label: string; valor: string; sufixo?: string };
@@ -23,6 +24,12 @@ type Lactacao = {
   enc?: { ordem: number; ano: number; total: number; dias: number; media: number }[];
 };
 
+/** Filhas serializável (snapshot). */
+type FilhasData = {
+  total: number;
+  publicadas: { slug: string; nome: string | null; numero: string; sexo: 'macho' | 'femea'; foto: string | null }[];
+};
+
 /**
  * Abas da ficha (protótipo v12). Duas abas SEMPRE existem:
  *  - "Produção · Progênie": mostra os stats de produção presentes (metricasDe);
@@ -34,11 +41,15 @@ export function FichaTabs({
   aml,
   medidas,
   lactacao,
+  filhas,
+  criadorSlug,
 }: {
   metricas: Metrica[];
   aml: AmlData | null;
   medidas: Medida[];
   lactacao: Lactacao;
+  filhas: FilhasData;
+  criadorSlug: string;
 }) {
   const t = useTranslations('criadores');
   const [tab, setTab] = useState<'pl' | 'ta'>('pl');
@@ -82,14 +93,18 @@ export function FichaTabs({
             ))}
           </div>
         )}
-        {!lactacao.aberta && !(lactacao.enc && lactacao.enc.length > 0) && metricas.length === 0 && (
-          <div className="block">
-            <div className="empty-note">
-              <Info size={13} strokeWidth={1.8} />
-              {t('emBreveProducao')}
+        <Filhas filhas={filhas} criadorSlug={criadorSlug} />
+        {!lactacao.aberta &&
+          !(lactacao.enc && lactacao.enc.length > 0) &&
+          metricas.length === 0 &&
+          filhas.publicadas.length === 0 && (
+            <div className="block">
+              <div className="empty-note">
+                <Info size={13} strokeWidth={1.8} />
+                {t('emBreveProducao')}
+              </div>
             </div>
-          </div>
-        )}
+          )}
       </div>
 
       <div className="panel" role="tabpanel" hidden={tab !== 'ta'}>
