@@ -371,6 +371,35 @@
 .vitrine-scope .mchip .v { font-family: var(--mono); font-size: 17px; font-weight: 600; margin-top: 3px; }
 .vitrine-scope .mchip .v small { font-size: 11px; color: var(--ink-mute); font-weight: 400; }
 
+/* ---- Lactação: card aberto + curva SVG + carrossel de encerradas ---- */
+.vitrine-scope .lac-open { border: 1px solid var(--primary); background: linear-gradient(180deg, var(--primary-soft), var(--surface)); border-radius: 12px; padding: 14px; margin-bottom: 14px; }
+.vitrine-scope .lac-open .lh { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.vitrine-scope .lac-open .lh .dot { width: 8px; height: 8px; border-radius: 99px; background: var(--good); box-shadow: 0 0 0 3px var(--green-soft); }
+.vitrine-scope .lac-open .lh b { font-size: 11px; text-transform: uppercase; letter-spacing: .1em; color: var(--good); }
+.vitrine-scope .lac-open .lh .k { margin-left: auto; font-family: var(--mono); font-size: 11px; color: var(--ink-mute); }
+.vitrine-scope .lac-stat-row { display: flex; gap: 22px; margin: 6px 0 4px; flex-wrap: wrap; }
+.vitrine-scope .lac-stat-row .s .v { font-family: var(--mono); font-size: 20px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.vitrine-scope .lac-stat-row .s .v small { font-size: 11px; color: var(--ink-mute); font-weight: 400; }
+.vitrine-scope .lac-stat-row .s .l { font-size: 10px; text-transform: uppercase; letter-spacing: .07em; color: var(--ink-mute); margin-top: 2px; }
+.vitrine-scope .lac-chart { position: relative; width: 100%; height: 172px; margin: 12px 0 4px; }
+.vitrine-scope .lac-svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.vitrine-scope .lac-pts { position: absolute; inset: 0; pointer-events: none; }
+.vitrine-scope .lac-pt { position: absolute; transform: translate(-50%, -50%); }
+.vitrine-scope .lac-pt i { display: block; width: 9px; height: 9px; border-radius: 99px; background: var(--surface); border: 2.5px solid var(--primary); margin: 0 auto; }
+.vitrine-scope .lac-pt.last i { background: var(--good); border-color: var(--good); box-shadow: 0 0 0 5px var(--green-soft); }
+.vitrine-scope .lac-pt .lpv { position: absolute; left: 50%; bottom: calc(100% + 6px); transform: translateX(-50%); font-family: var(--mono); font-size: 11px; font-weight: 600; color: var(--ink); white-space: nowrap; }
+.vitrine-scope .lac-pt .lpd { position: absolute; left: 50%; top: calc(100% + 5px); transform: translateX(-50%); font-family: var(--mono); font-size: 9px; color: var(--ink-mute); white-space: nowrap; }
+.vitrine-scope .carousel { display: flex; gap: 11px; overflow-x: auto; padding: 4px 1px 10px; scroll-snap-type: x mandatory; }
+.vitrine-scope .carousel::-webkit-scrollbar { height: 6px; }
+.vitrine-scope .carousel::-webkit-scrollbar-thumb { background: var(--surface-3); border-radius: 99px; }
+.vitrine-scope .lcard { scroll-snap-align: start; flex: 0 0 168px; border: 1px solid var(--line); border-radius: 11px; padding: 11px 12px; background: var(--surface); }
+.vitrine-scope .lcard .lo { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+.vitrine-scope .lcard .lo b { font-size: 12px; color: var(--ink-soft); }
+.vitrine-scope .lcard .lo span { font-family: var(--mono); font-size: 10.5px; color: var(--ink-mute); }
+.vitrine-scope .lcard .big { font-family: var(--mono); font-size: 20px; font-weight: 600; letter-spacing: -.02em; }
+.vitrine-scope .lcard .big small { font-size: 11px; color: var(--ink-mute); font-weight: 400; }
+.vitrine-scope .lcard .sub { display: flex; gap: 12px; margin-top: 6px; font-size: 11px; color: var(--ink-mute); font-family: var(--mono); }
+
 /* ---- genealogia: árvore horizontal compacta com conectores ---- */
 .vitrine-scope .gtree-wrap { overflow-x: auto; padding: 2px 2px 6px; }
 .vitrine-scope .gtree { display: flex; flex-direction: column; gap: 6px; min-width: min-content; }

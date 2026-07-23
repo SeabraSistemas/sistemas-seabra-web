@@ -33,6 +33,12 @@ export interface Aml {
   pts?: [string, number][];
 }
 
+/** Snapshot de lactação (vitrine_animal.lactacao). '{}' quando não há / oculto. */
+export interface Lactacao {
+  aberta?: { dias: number; med: number; pts: [number, number][] };
+  enc?: { ordem: number; ano: number; total: number; dias: number; media: number }[];
+}
+
 export type SexoNorm = 'macho' | 'femea';
 
 /** Linha de vitrine.criadores (card do indice + header da pagina do criador). */
@@ -88,6 +94,7 @@ export interface Animal {
   aml: Aml;
   /** Snapshot de medidas corporais: [[label, valor, unidade], ...] (vazio se não há). */
   medidas: [string, number, string][];
+  lactacao: Lactacao;
 }
 
 /** Payload da pagina do criador. */
