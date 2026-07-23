@@ -4,7 +4,7 @@ import { ChevronLeft, ChevronRight, MessageCircle } from 'lucide-react';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { Link } from '@/i18n/routing';
 import { getPaginaAnimal, getTodosSlugsAnimais } from '@/lib/criadores/queries';
-import { altAnimal, idadeExibivel, metricasDe, nomeExibivel } from '@/lib/criadores/normalize';
+import { altAnimal, amlDe, idadeExibivel, metricasDe, nomeExibivel } from '@/lib/criadores/normalize';
 import { AnimalFoto } from '@/components/criadores/AnimalFoto';
 import { SexoBadge } from '@/components/criadores/SexoBadge';
 import { GenealogiaArvore } from '@/components/criadores/GenealogiaArvore';
@@ -63,6 +63,7 @@ export default async function FichaPage({
   const idade = idadeExibivel(a);
   const nascimento = fmtData(a.data_nascimento);
   const metricas = metricasDe(a);
+  const aml = amlDe(a);
 
   return (
     <>
@@ -127,7 +128,7 @@ export default async function FichaPage({
         <GenealogiaArvore genealogia={a.genealogia} />
       </section>
 
-      <FichaTabs metricas={metricas} />
+      <FichaTabs metricas={metricas} aml={aml} />
 
       <div className="ficha-nav">
         {anteriorSlug ? (

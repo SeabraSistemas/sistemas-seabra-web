@@ -62,6 +62,19 @@ export function metricasDe(a: Animal): { label: string; valor: string; sufixo?: 
   return out;
 }
 
+/**
+ * Snapshot da AML pronto para render, ou null quando não há avaliação com pontos
+ * (aí a aba mostra o placeholder). Formata o total como pt-BR ("76,13") no servidor
+ * para evitar mismatch de hidratação no client component.
+ */
+export function amlDe(a: Animal): { totalFmt: string | null; pts: [string, number][] } | null {
+  const pts = a.aml?.pts;
+  if (!Array.isArray(pts) || pts.length === 0) return null;
+  const total = a.aml?.total;
+  const totalFmt = typeof total === 'number' ? total.toFixed(2).replace('.', ',') : null;
+  return { totalFmt, pts };
+}
+
 function fmtKg(n: number): string {
   return n.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 }
