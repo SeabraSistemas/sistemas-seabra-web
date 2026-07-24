@@ -88,7 +88,8 @@
     "genMacho": "male",
     "genFemea": "female",
     "fatoNascimento": "Birth",
-    "fatoPeso": "Weight"
+    "fatoPeso": "Weight",
+    "titulosLabel": "Titles"
   },
   "segments": {
     "cattleDairy": "Dairy Cattle",

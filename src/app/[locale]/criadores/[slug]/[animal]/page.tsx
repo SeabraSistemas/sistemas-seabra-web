@@ -106,6 +106,18 @@ export default async function FichaPage({
               )}
             </div>
           )}
+          {(a.titulos ?? []).length > 0 && (
+            <div className="ficha-titulos">
+              <div className="fact">{t('titulosLabel')}</div>
+              <div className="titulos-chips">
+                {(a.titulos ?? []).map((titulo) => (
+                  <span className="badge b-titulo" key={titulo}>
+                    {titulo}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
           {criador.whatsapp && (
             <div className="ficha-actions">
               <a
