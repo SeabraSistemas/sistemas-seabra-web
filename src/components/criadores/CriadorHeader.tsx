@@ -27,6 +27,15 @@ export async function CriadorHeader({ criador }: { criador: Criador }) {
         <div className="crd-id">
           <h1 className="serif">{criador.criador}</h1>
           {by && <div className="by">{by}</div>}
+          {(criador.titulos ?? []).length > 0 && (
+            <div className="crd-titulos">
+              {(criador.titulos ?? []).map((titulo) => (
+                <span className="crd-titulo" key={titulo}>
+                  {titulo}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
         <div className="crd-contacts">
           {criador.whatsapp && (
