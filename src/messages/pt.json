@@ -88,7 +88,8 @@
     "genMacho": "macho",
     "genFemea": "fêmea",
     "fatoNascimento": "Nascimento",
-    "fatoPeso": "Peso"
+    "fatoPeso": "Peso",
+    "titulosLabel": "Títulos"
   },
   "segments": {
     "cattleDairy": "Bovinos Leiteiros",

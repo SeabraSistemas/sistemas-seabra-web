@@ -161,6 +161,15 @@
 .vitrine-scope .crd-id { min-width: 0; }
 .vitrine-scope .crd-id h1 { font-family: var(--serif); font-size: 26px; font-weight: 600; }
 .vitrine-scope .crd-id .by { opacity: .85; font-size: 13.5px; margin-top: 4px; }
+/* títulos do criador (usuarios.titulos) — chips claros sobre a faixa azul */
+.vitrine-scope .crd-titulos { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
+.vitrine-scope .crd-titulo {
+  display: inline-flex; align-items: center;
+  background: #ffffff24; border: 1px solid #ffffff3d; color: #fff;
+  border-radius: 999px; padding: 3px 10px;
+  font-size: 11.5px; font-weight: 600;
+}
+
 .vitrine-scope .crd-contacts { display: flex; gap: 8px; margin-left: auto; flex-wrap: wrap; }
 .vitrine-scope .crd-strip {
   display: flex; background: rgba(0, 0, 0, .14); border-top: 1px solid rgba(255, 255, 255, .12); flex-wrap: wrap;
@@ -269,6 +278,10 @@
 .vitrine-scope .badge.b-sex-m { background: var(--male-soft); color: var(--male); }
 .vitrine-scope .badge.b-raca { background: var(--primary-soft); color: var(--primary); }
 .vitrine-scope .badge.b-po { background: var(--terra-soft); color: var(--terra); }
+/* títulos do ANIMAL (rebanho.titulos) — abaixo do nascimento na ficha */
+.vitrine-scope .badge.b-titulo { background: var(--green-soft); color: var(--green); }
+.vitrine-scope .ficha-titulos { margin-top: 12px; }
+.vitrine-scope .ficha-titulos .titulos-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 5px; }
 .vitrine-scope .ficha-id .facts { display: flex; gap: 18px; margin-top: 12px; flex-wrap: wrap; }
 .vitrine-scope .fact { font-size: 9.5px; color: var(--ink-mute); text-transform: uppercase; letter-spacing: .07em; }
 .vitrine-scope .fact b {

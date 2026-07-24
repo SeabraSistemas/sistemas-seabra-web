@@ -73,6 +73,8 @@ export interface Criador {
   bio_curta: string | null;
   exibe_producao: boolean;
   ordem: number;
+  /** Títulos do criador (usuarios.titulos) — chips no header da página do criador. */
+  titulos: string[];
   total_animais: number;
   machos: number;
   femeas: number;
