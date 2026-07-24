@@ -133,6 +133,9 @@
   display: inline-flex; align-items: center; gap: 5px;
   font-size: 12px; color: var(--ink-mute); margin-top: 7px;
 }
+/* títulos do criador no card do índice — mesmos chips verdes dos títulos do animal
+   (o card é branco, então não dá pra reusar .crd-titulo, que é feito pra faixa azul) */
+.vitrine-scope .ccard-titulos { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
 .vitrine-scope .ccard-meta { display: flex; gap: 16px; margin-top: 13px; flex-wrap: wrap; }
 .vitrine-scope .ccard-meta div { font-size: 12px; color: var(--ink-soft); }
 .vitrine-scope .ccard-meta b {
