@@ -22,7 +22,14 @@ type Medida = [string, number, string];
 /** Lactação serializável (snapshot); campos ausentes quando não há dado. */
 type Lactacao = {
   aberta?: { dias: number; med: number; pts: [number, number][] };
-  enc?: { ordem: number; ano: number; total: number; dias: number; media: number }[];
+  enc?: {
+    ordem: number;
+    ano: number;
+    total: number;
+    dias: number;
+    media: number;
+    pts?: [number, number][];
+  }[];
 };
 
 /** Filhas serializável (snapshot). */

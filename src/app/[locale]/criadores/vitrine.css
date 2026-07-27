@@ -408,13 +408,15 @@
 .vitrine-scope .carousel { display: flex; gap: 11px; overflow-x: auto; padding: 4px 1px 10px; scroll-snap-type: x mandatory; }
 .vitrine-scope .carousel::-webkit-scrollbar { height: 6px; }
 .vitrine-scope .carousel::-webkit-scrollbar-thumb { background: var(--surface-3); border-radius: 99px; }
-.vitrine-scope .lcard { scroll-snap-align: start; flex: 0 0 168px; border: 1px solid var(--line); border-radius: 11px; padding: 11px 12px; background: var(--surface); }
+.vitrine-scope .lcard { scroll-snap-align: start; flex: 0 0 212px; border: 1px solid var(--line); border-radius: 11px; padding: 11px 12px; background: var(--surface); }
 .vitrine-scope .lcard .lo { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
 .vitrine-scope .lcard .lo b { font-size: 12px; color: var(--ink-soft); }
 .vitrine-scope .lcard .lo span { font-family: var(--mono); font-size: 10.5px; color: var(--ink-mute); }
 .vitrine-scope .lcard .big { font-family: var(--mono); font-size: 20px; font-weight: 600; letter-spacing: -.02em; }
 .vitrine-scope .lcard .big small { font-size: 11px; color: var(--ink-mute); font-weight: 400; }
 .vitrine-scope .lcard .sub { display: flex; gap: 12px; margin-top: 6px; font-size: 11px; color: var(--ink-mute); font-family: var(--mono); }
+.vitrine-scope .lcard-chart { position: relative; width: 100%; height: 58px; margin-top: 10px; }
+.vitrine-scope .lac-pt.mini i { width: 6px; height: 6px; border-width: 2px; }
 
 /* ---- Filhas divulgadas: grid de cards ---- */
 .vitrine-scope .prog { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 11px; }
