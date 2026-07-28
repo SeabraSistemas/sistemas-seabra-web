@@ -36,7 +36,15 @@ export interface Aml {
 /** Snapshot de lactação (vitrine_animal.lactacao). '{}' quando não há / oculto. */
 export interface Lactacao {
   aberta?: { dias: number; med: number; pts: [number, number][] };
-  enc?: { ordem: number; ano: number; total: number; dias: number; media: number }[];
+  enc?: {
+    ordem: number;
+    ano: number;
+    total: number;
+    dias: number;
+    media: number;
+    /** Ausente quando a lactação encerrada não tem controle leiteiro no período. */
+    pts?: [number, number][];
+  }[];
 }
 
 export type SexoNorm = 'macho' | 'femea';
