@@ -1,8 +1,9 @@
 'use client';
 
-import { useId } from 'react';
+import { useRef, useState } from 'react';
+import { ChevronDown } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { projetarCurva } from '@/lib/criadores/curva';
+import { CurvaSvg } from './CurvaSvg';
 
 type Enc = {
   ordem: number;
@@ -13,65 +14,29 @@ type Enc = {
   pts?: [number, number][];
 };
 
-/** Caixa da miniatura: quase toda a altura, já que não há rótulos por ponto. */
-const CAIXA = { x: 3, xr: 97, yt: 8, yb: 92 };
+/** Miniatura (recolhida): quase toda a altura, sem rótulo por ponto. */
+const CAIXA_MINI = { x: 3, xr: 97, yt: 8, yb: 92 };
+/** Expandida: mesma caixa da lactação aberta, pra ficar visualmente igual. */
+const CAIXA_GRANDE = { x: 4, xr: 95, yt: 26, yb: 80 };
 
-/** Miniatura da curva dia×kg da lactação encerrada (mesma projeção da aberta). */
-function CurvaMini({ pts }: { pts: [number, number][] }) {
-  const gid = `enc${useId().replace(/[:]/g, '')}`;
-  const { P, line, area, grid } = projetarCurva(pts, CAIXA);
-
-  return (
-    <div className="lcard-chart">
-      <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="lac-svg" aria-hidden="true">
-        <defs>
-          <linearGradient id={gid} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stopColor="var(--primary)" stopOpacity="0.22" />
-            <stop offset="1" stopColor="var(--primary)" stopOpacity="0" />
-          </linearGradient>
-        </defs>
-        {grid.map((y, i) => (
-          <line
-            key={i}
-            x1={CAIXA.x}
-            y1={y}
-            x2={CAIXA.xr}
-            y2={y}
-            stroke="var(--line)"
-            strokeWidth="1"
-            vectorEffect="non-scaling-stroke"
-            strokeDasharray="2 4"
-          />
-        ))}
-        <path d={area} fill={`url(#${gid})`} />
-        <path
-          d={line}
-          fill="none"
-          stroke="var(--primary)"
-          strokeWidth="2"
-          vectorEffect="non-scaling-stroke"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
-      <div className="lac-pts">
-        {P.map((pt, i) => (
-          <div
-            key={i}
-            className="lac-pt mini"
-            style={{ left: `${pt[0].toFixed(2)}%`, top: `${pt[1].toFixed(2)}%` }}
-          >
-            <i />
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-/** Carrossel de lactações encerradas (protótipo v12): card por lactação. */
+/** Carrossel de lactações encerradas (protótipo v12): card por lactação.
+ * Cards com curva (2+ pontos) são clicáveis — expandem no lugar mostrando a
+ * mesma curva detalhada da lactação aberta, com rótulo de kg/dia por ponto. */
 export function CarrosselEncerradas({ enc }: { enc: Enc[] }) {
   const t = useTranslations('criadores');
+  const [aberto, setAberto] = useState<number | null>(null);
+  const refs = useRef<Record<number, HTMLButtonElement | null>>({});
+
+  function toggle(ordem: number) {
+    const abrindo = aberto !== ordem;
+    setAberto(abrindo ? ordem : null);
+    if (abrindo) {
+      requestAnimationFrame(() => {
+        refs.current[ordem]?.scrollIntoView({ behavior: 'smooth', inline: 'nearest', block: 'nearest' });
+      });
+    }
+  }
+
   return (
     <div className="block">
       <div className="block-h">
@@ -79,23 +44,63 @@ export function CarrosselEncerradas({ enc }: { enc: Enc[] }) {
         <span className="k">{enc.length}</span>
       </div>
       <div className="carousel">
-        {enc.map((l) => (
-          <div className="lcard" key={l.ordem}>
-            <div className="lo">
-              <b>{t('lactacaoOrdinal', { n: l.ordem })}</b>
-              <span>{l.ano}</span>
-            </div>
-            <div className="big">
-              {l.total}
-              <small> kg</small>
-            </div>
-            <div className="sub">
-              <span>{l.media} kg/d</span>
-              <span>{l.dias} d</span>
-            </div>
-            {l.pts && l.pts.length > 1 && <CurvaMini pts={l.pts} />}
-          </div>
-        ))}
+        {enc.map((l) => {
+          const clicavel = !!l.pts && l.pts.length > 1;
+          const expandida = clicavel && aberto === l.ordem;
+          const corpo = (
+            <>
+              <div className="lo">
+                <b>{t('lactacaoOrdinal', { n: l.ordem })}</b>
+                <span className="lo-right">
+                  <span>{l.ano}</span>
+                  {clicavel && <ChevronDown className="ppchev" strokeWidth={2.2} />}
+                </span>
+              </div>
+              <div className="big">
+                {l.total}
+                <small> kg</small>
+              </div>
+              <div className="sub">
+                <span>{l.media} kg/d</span>
+                <span>{l.dias} d</span>
+              </div>
+              {clicavel &&
+                (expandida ? (
+                  <div className="lac-chart">
+                    <CurvaSvg pts={l.pts!} caixa={CAIXA_GRANDE} />
+                  </div>
+                ) : (
+                  <div className="lcard-chart">
+                    <CurvaSvg pts={l.pts!} caixa={CAIXA_MINI} mostrarRotulos={false} />
+                  </div>
+                ))}
+            </>
+          );
+
+          if (!clicavel) {
+            return (
+              <div className="lcard" key={l.ordem}>
+                {corpo}
+              </div>
+            );
+          }
+
+          return (
+            <button
+              type="button"
+              key={l.ordem}
+              ref={(el) => {
+                refs.current[l.ordem] = el;
+              }}
+              className={`lcard clicavel${expandida ? ' aberto' : ''}`}
+              aria-expanded={expandida}
+              aria-label={t('lactacaoVerCurva')}
+              onClick={() => toggle(l.ordem)}
+            >
+              {corpo}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
