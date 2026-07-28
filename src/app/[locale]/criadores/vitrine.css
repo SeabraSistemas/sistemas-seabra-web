@@ -408,10 +408,16 @@
 .vitrine-scope .carousel { display: flex; gap: 11px; overflow-x: auto; padding: 4px 1px 10px; scroll-snap-type: x mandatory; }
 .vitrine-scope .carousel::-webkit-scrollbar { height: 6px; }
 .vitrine-scope .carousel::-webkit-scrollbar-thumb { background: var(--surface-3); border-radius: 99px; }
-.vitrine-scope .lcard { scroll-snap-align: start; flex: 0 0 212px; border: 1px solid var(--line); border-radius: 11px; padding: 11px 12px; background: var(--surface); }
+.vitrine-scope .lcard { scroll-snap-align: start; flex: 0 0 212px; border: 1px solid var(--line); border-radius: 11px; padding: 11px 12px; background: var(--surface); transition: flex-basis .25s ease; appearance: none; margin: 0; text-align: left; font: inherit; color: inherit; }
+.vitrine-scope .lcard.clicavel { cursor: pointer; }
+.vitrine-scope .lcard.clicavel:hover { border-color: var(--primary); }
+.vitrine-scope .lcard.aberto { flex: 0 0 min(420px, 90cqi); }
+.vitrine-scope .lcard[aria-expanded="true"] .ppchev { transform: rotate(180deg); }
 .vitrine-scope .lcard .lo { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
 .vitrine-scope .lcard .lo b { font-size: 12px; color: var(--ink-soft); }
 .vitrine-scope .lcard .lo span { font-family: var(--mono); font-size: 10.5px; color: var(--ink-mute); }
+.vitrine-scope .lcard .lo-right { display: flex; align-items: center; gap: 4px; }
+.vitrine-scope .lcard .ppchev { width: 13px; height: 13px; }
 .vitrine-scope .lcard .big { font-family: var(--mono); font-size: 20px; font-weight: 600; letter-spacing: -.02em; }
 .vitrine-scope .lcard .big small { font-size: 11px; color: var(--ink-mute); font-weight: 400; }
 .vitrine-scope .lcard .sub { display: flex; gap: 12px; margin-top: 6px; font-size: 11px; color: var(--ink-mute); font-family: var(--mono); }

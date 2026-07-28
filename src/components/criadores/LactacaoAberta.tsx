@@ -1,10 +1,11 @@
 'use client';
 
-import { useId } from 'react';
 import { useTranslations } from 'next-intl';
-import { projetarCurva } from '@/lib/criadores/curva';
+import { CurvaSvg } from './CurvaSvg';
 
 type Aberta = { dias: number; med: number; pts: [number, number][] };
+
+const CAIXA = { x: 4, xr: 95, yt: 26, yb: 80 };
 
 /**
  * Lactação aberta (em curso): card com média/dias + curva SVG de pontos
@@ -13,9 +14,6 @@ type Aberta = { dias: number; med: number; pts: [number, number][] };
  */
 export function LactacaoAberta({ aberta }: { aberta: Aberta }) {
   const t = useTranslations('criadores');
-  const gid = `lac${useId().replace(/[:]/g, '')}`;
-  const caixa = { x: 4, xr: 95, yt: 26, yb: 80 };
-  const { P, days, vals, line, area, grid } = projetarCurva(aberta.pts, caixa);
 
   return (
     <div className="lac-open">
@@ -43,28 +41,7 @@ export function LactacaoAberta({ aberta }: { aberta: Aberta }) {
         </div>
       </div>
       <div className="lac-chart">
-        <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="lac-svg">
-          <defs>
-            <linearGradient id={gid} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0" stopColor="var(--primary)" stopOpacity="0.22" />
-              <stop offset="1" stopColor="var(--primary)" stopOpacity="0" />
-            </linearGradient>
-          </defs>
-          {grid.map((y, i) => (
-            <line key={i} x1={caixa.x} y1={y} x2={caixa.xr} y2={y} stroke="var(--line)" strokeWidth="1" vectorEffect="non-scaling-stroke" strokeDasharray="2 4" />
-          ))}
-          <path d={area} fill={`url(#${gid})`} />
-          <path d={line} fill="none" stroke="var(--primary)" strokeWidth="2.5" vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-        <div className="lac-pts">
-          {P.map((pt, i) => (
-            <div key={i} className={`lac-pt${i === P.length - 1 ? ' last' : ''}`} style={{ left: `${pt[0].toFixed(2)}%`, top: `${pt[1].toFixed(2)}%` }}>
-              <span className="lpv">{vals[i]}</span>
-              <i />
-              <span className="lpd">{days[i]}d</span>
-            </div>
-          ))}
-        </div>
+        <CurvaSvg pts={aberta.pts} caixa={CAIXA} />
       </div>
     </div>
   );
