@@ -43,7 +43,8 @@ export function HeroSection() {
                 rel="noopener noreferrer"
                 className="inline-block w-full sm:w-auto"
               >
-                {/* Verde escuro da identidade do WhatsApp (--wa): branco sobre o verde claro dá 1,98:1 e reprova AA. */}
+                {/* Verde de WhatsApp (--wa), texto branco: reconhecimento de marca
+                    priorizado sobre contraste — ver nota em globals.css. */}
                 <Button className="rounded-full px-8 h-13 text-base gap-2 w-full sm:w-auto bg-wa text-wa-ink hover:bg-wa-hover transition-colors">
                   <WhatsAppIcon className="h-5 w-5" />
                   {t('cta')}

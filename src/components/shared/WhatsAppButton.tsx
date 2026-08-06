@@ -42,9 +42,8 @@ export function WhatsAppButton({ segment, className }: WhatsAppButtonProps) {
         'fixed bottom-6 right-6 z-50',
         'flex items-center justify-center',
         'h-16 w-16 rounded-2xl',
-        // Cor de plataforma preservada, verde escuro (--wa: #075e54, o das
-        // barras do app). O verde claro do botão do app reprova com texto
-        // branco (1,98:1); este dá 7,67:1.
+        // Verde de WhatsApp (--wa), texto branco: reconhecimento de marca
+        // priorizado sobre contraste — ver nota em globals.css.
         'bg-wa',
         'text-wa-ink',
         'transition-opacity duration-300',

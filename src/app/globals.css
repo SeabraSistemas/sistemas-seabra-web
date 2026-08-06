@@ -95,11 +95,12 @@
 
   /* WhatsApp. É a única cor de terceiro no site, e fica porque é
      reconhecimento de plataforma: o visitante sabe o que o botão faz antes
-     de ler. Usa o verde ESCURO da identidade do WhatsApp (o das barras do
-     app) em vez do verde claro: sobre o claro, texto branco dá 1,98:1 e some
-     no celular sob sol. Sobre este, dá 7,67:1. */
-  --wa: #075e54;
-  --wa-hover: #0a6f63;
+     de ler. Verde claro por decisão explícita — é o mais reconhecível como
+     "botão de WhatsApp". Contraste: texto branco sobre este verde dá
+     1,98:1 e reprova o mínimo AA (4,5:1); decisão consciente, priorizando
+     reconhecimento de marca sobre a norma de contraste. */
+  --wa: #25d366;
+  --wa-hover: #20bd5a;
   --wa-ink: #ffffff;
 }
 
