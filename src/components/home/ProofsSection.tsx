@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import Image from 'next/image';
-import { ArrowRight, ChevronDown, Maximize2 } from 'lucide-react';
+import { ArrowRight, Maximize2 } from 'lucide-react';
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
 
 const DEMO_APP_URL = process.env.NEXT_PUBLIC_DEMO_APP_URL || 'https://pr.sistemaseabra.com.br';
@@ -80,37 +80,11 @@ export function ProofsSection() {
     };
   }, []);
 
-  const centerIframe = () => {
-    const iframe = iframeRef.current;
-    if (!iframe) return;
-    document.body.style.overflow = '';
-    const rect = iframe.getBoundingClientRect();
-    const headerHeight =
-      document.querySelector('header')?.getBoundingClientRect().height ?? 0;
-    const available = window.innerHeight - headerHeight;
-    const desiredTopFromViewport =
-      rect.height > available
-        ? headerHeight + 20
-        : headerHeight + (available - rect.height) / 2;
-    const targetY = window.scrollY + rect.top - desiredTopFromViewport;
-    window.scrollTo({ top: targetY, behavior: 'smooth' });
-  };
-
   return (
     <section className="section-padding band" id="demo" ref={ref}>
       <div className="container-wide">
         <div className={`text-center space-y-4 mb-12 scroll-fade-up ${isVisible ? 'visible' : ''}`}>
-          <div className="flex items-center justify-center gap-4">
-            <h2 className="heading-2">{t('title')}</h2>
-            <button
-              type="button"
-              onClick={centerIframe}
-              aria-label={t('liveCtaTitle')}
-              className="hidden lg:flex h-11 w-11 items-center justify-center rounded-full bg-primary text-primary-foreground hover:bg-[var(--ocre-hover)] transition-colors"
-            >
-              <ChevronDown className="h-5 w-5" />
-            </button>
-          </div>
+          <h2 className="heading-2">{t('title')}</h2>
           <p className="body-large max-w-2xl mx-auto text-muted-foreground">{t('subtitle')}</p>
         </div>
 

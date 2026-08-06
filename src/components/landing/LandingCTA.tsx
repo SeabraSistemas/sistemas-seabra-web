@@ -2,7 +2,6 @@
 
 import { useTranslations, useLocale } from 'next-intl';
 import { Button } from '@/components/ui/button';
-import { ArrowUpRight } from 'lucide-react';
 import { buildWhatsAppUrl } from '@/lib/whatsapp';
 import { type Locale } from '@/i18n/config';
 import { WhatsAppIcon } from '@/components/shared/WhatsAppIcon';
@@ -18,39 +17,27 @@ export function LandingCTA({ segmentSlug }: LandingCTAProps) {
   const whatsappUrl = buildWhatsAppUrl({ locale, segment: segmentSlug });
 
   return (
-    <section className="py-24 md:py-32 bg-primary">
+    // Era uma faixa inteira em bg-primary — com o ocre no lugar do azul,
+    // uma seção cheia dessa cor domina a página (o acento deve aparecer
+    // umas duas vezes por tela). Mesmo tratamento do CTA da home.
+    <section className="py-24 md:py-32 band">
       <div className="container-tight">
-        <div className="max-w-3xl mx-auto text-center space-y-10">
-          {/* Icon */}
-          <div className="inline-flex items-center justify-center h-16 w-16 rounded-2xl bg-card/10 border border-white/20">
-            <ArrowUpRight className="h-8 w-8 text-primary-foreground" />
+        <div className="max-w-3xl mx-auto text-center space-y-8">
+          <div className="space-y-5">
+            <h2 className="heading-1">{t('title')}</h2>
+            <p className="body-large max-w-xl mx-auto">{t('subtitle')}</p>
           </div>
 
-          {/* Content */}
-          <div className="space-y-6">
-            <h2 className="heading-1 text-primary-foreground">
-              {t('title')}
-            </h2>
-            <p className="text-base md:text-lg text-primary-foreground/80 leading-relaxed max-w-xl mx-auto">
-              {t('subtitle')}
-            </p>
+          <div className="flex justify-center">
+            <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
+              <Button size="lg" className="rounded-full px-10 h-14 text-base gap-3 bg-wa text-wa-ink hover:bg-wa-hover transition-colors">
+                <WhatsAppIcon className="h-5 w-5" />
+                {t('button')}
+              </Button>
+            </a>
           </div>
 
-          {/* CTA */}
-          <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
-            <Button
-              size="lg"
-              className="rounded-full px-10 h-14 text-base gap-3 bg-wa text-wa-ink hover:bg-wa-hover shadow-lg hover:shadow-xl transition-all duration-300"
-            >
-              <WhatsAppIcon className="h-5 w-5" />
-              {t('button')}
-            </Button>
-          </a>
-
-          {/* Trust text */}
-          <p className="text-sm text-primary-foreground/70">
-            Sem compromisso. Resposta em até 24h.
-          </p>
+          <p className="text-sm text-muted-foreground">{t('trust')}</p>
         </div>
       </div>
     </section>

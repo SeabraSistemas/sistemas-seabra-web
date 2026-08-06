@@ -2,7 +2,6 @@
 
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/routing';
-import Image from 'next/image';
 import { Instagram, Facebook, Mail, Phone, MapPin } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
@@ -35,18 +34,8 @@ export function Footer() {
         <div className="grid gap-12 lg:grid-cols-12">
           {/* Brand Column */}
           <div className="lg:col-span-4 space-y-6">
-            <Link href="/" className="inline-flex items-center gap-3 group">
-              <div className="relative w-10 h-10 transition-transform duration-300 group-hover:scale-105">
-                <Image
-                  src="/images/logo-icon.png"
-                  alt="Seabra"
-                  fill
-                  className="object-contain"
-                />
-              </div>
-              <span className="text-lg font-semibold text-foreground tracking-tight">
-                Seabra
-              </span>
+            <Link href="/" className="inline-block text-lg font-semibold text-foreground tracking-tight">
+              Seabra
             </Link>
 
             <p className="text-sm text-muted-foreground max-w-xs leading-relaxed">

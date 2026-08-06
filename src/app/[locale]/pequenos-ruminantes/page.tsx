@@ -23,10 +23,10 @@ export async function generateMetadata({ params }: PageProps) {
 }
 
 const products = [
-  { slug: 'caprinos-leite', href: '/solucoes/caprinos/leite', key: 'goatDairy', iconSrc: '/images/icons/caprinos-leite.png' },
-  { slug: 'caprinos-corte', href: '/solucoes/caprinos/corte', key: 'goatBeef', iconSrc: '/images/icons/caprinos-corte.png' },
-  { slug: 'ovinos-leite', href: '/solucoes/ovinos/leite', key: 'sheepDairy', iconSrc: '/images/icons/ovinos-leite.png' },
-  { slug: 'ovinos-corte', href: '/solucoes/ovinos/corte', key: 'sheepBeef', iconSrc: '/images/icons/ovinos-corte.png' },
+  { slug: 'caprinos-leite', href: '/solucoes/caprinos/leite', key: 'goatDairy', iconSrc: '/images/icons/mono/caprinos-leite.png' },
+  { slug: 'caprinos-corte', href: '/solucoes/caprinos/corte', key: 'goatBeef', iconSrc: '/images/icons/mono/caprinos-corte.png' },
+  { slug: 'ovinos-leite', href: '/solucoes/ovinos/leite', key: 'sheepDairy', iconSrc: '/images/icons/mono/ovinos-leite.png' },
+  { slug: 'ovinos-corte', href: '/solucoes/ovinos/corte', key: 'sheepBeef', iconSrc: '/images/icons/mono/ovinos-corte.png' },
 ] as const;
 
 export default async function PequenosRuminantesHub({ params }: PageProps) {
