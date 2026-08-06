@@ -150,8 +150,8 @@ export function ServiceTiers() {
                       size="lg"
                       className={cn(
                         'w-full rounded-full h-12 text-sm gap-2',
-                        'bg-[#25D366] text-white hover:bg-[#20BD5A]',
-                        'shadow-lg shadow-[#25D366]/20 hover:shadow-xl hover:shadow-[#25D366]/30',
+                        'bg-[#25D366] text-background hover:bg-[#20BD5A]',
+                        'shadow-lg hover:shadow-xl',
                         'transition-all duration-300 '
                       )}
                     >

@@ -23,18 +23,11 @@ export async function generateMetadata({ params }: PageProps) {
 }
 
 const products = [
-  { slug: 'caprinos-leite', href: '/solucoes/caprinos/leite', key: 'goatDairy', iconSrc: '/images/icons/caprinos-leite.png', accent: 'emerald' },
-  { slug: 'caprinos-corte', href: '/solucoes/caprinos/corte', key: 'goatBeef', iconSrc: '/images/icons/caprinos-corte.png', accent: 'orange' },
-  { slug: 'ovinos-leite', href: '/solucoes/ovinos/leite', key: 'sheepDairy', iconSrc: '/images/icons/ovinos-leite.png', accent: 'purple' },
-  { slug: 'ovinos-corte', href: '/solucoes/ovinos/corte', key: 'sheepBeef', iconSrc: '/images/icons/ovinos-corte.png', accent: 'amber' },
+  { slug: 'caprinos-leite', href: '/solucoes/caprinos/leite', key: 'goatDairy', iconSrc: '/images/icons/caprinos-leite.png' },
+  { slug: 'caprinos-corte', href: '/solucoes/caprinos/corte', key: 'goatBeef', iconSrc: '/images/icons/caprinos-corte.png' },
+  { slug: 'ovinos-leite', href: '/solucoes/ovinos/leite', key: 'sheepDairy', iconSrc: '/images/icons/ovinos-leite.png' },
+  { slug: 'ovinos-corte', href: '/solucoes/ovinos/corte', key: 'sheepBeef', iconSrc: '/images/icons/ovinos-corte.png' },
 ] as const;
-
-const accentMap: Record<string, { border: string }> = {
-  emerald: { border: 'group-hover:border-emerald-500/40' },
-  orange: { border: 'group-hover:border-orange-500/40' },
-  purple: { border: 'group-hover:border-purple-500/40' },
-  amber: { border: 'group-hover:border-amber-500/40' },
-};
 
 export default async function PequenosRuminantesHub({ params }: PageProps) {
   const { locale } = await params;
@@ -48,7 +41,7 @@ export default async function PequenosRuminantesHub({ params }: PageProps) {
         <div className="container-tight relative z-10 text-center space-y-6">
           <Badge
             variant="outline"
-            className="px-4 py-1.5 rounded-full border-border bg-secondary text-emerald-700 font-medium"
+            className="px-4 py-1.5 rounded-full border-border bg-secondary text-foreground font-medium"
           >
             {t('hubs.smallRuminants.badge')}
           </Badge>
@@ -71,10 +64,9 @@ export default async function PequenosRuminantesHub({ params }: PageProps) {
           </div>
           <div className="grid gap-6 sm:grid-cols-2 max-w-4xl mx-auto">
             {products.map((product) => {
-              const accent = accentMap[product.accent];
-              return (
+                            return (
                 <Link key={product.slug} href={product.href} className="group">
-                  <Card className={`h-full border-border bg-card transition-all duration-300 hover:shadow-xl ${accent.border}`}>
+                  <Card className="h-full border-border bg-card transition-colors group-hover:border-input">
                     <CardContent className="p-6 flex flex-col h-full min-h-[180px]">
                       <div className="mb-4">
                         <Image src={product.iconSrc} alt={t(`segments.${product.key}`)} width={64} height={64} className="object-contain transition-transform duration-300 group-hover:scale-110" />

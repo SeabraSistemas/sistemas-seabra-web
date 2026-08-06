@@ -52,8 +52,8 @@ export function ContactForm() {
   if (submitted) {
     return (
       <div className="text-center py-12 space-y-4">
-        <div className="inline-flex items-center justify-center h-16 w-16 rounded-full bg-emerald-100 mb-2">
-          <CheckCircle className="h-8 w-8 text-emerald-600" />
+        <div className="inline-flex items-center justify-center h-16 w-16 rounded-full bg-secondary mb-2">
+          <CheckCircle className="h-8 w-8 text-[#34d399]" />
         </div>
         <h3 className="text-xl font-semibold text-foreground">{t('successTitle')}</h3>
         <p className="text-muted-foreground">{t('successMessage')}</p>

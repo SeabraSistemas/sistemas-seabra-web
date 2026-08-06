@@ -59,7 +59,7 @@ export default async function ContatoPage({ params }: PageProps) {
                 </p>
               </div>
               <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
-                <Button className="rounded-full gap-2 w-full bg-[#25D366] hover:bg-[#20BA5C] text-white">
+                <Button className="rounded-full gap-2 w-full bg-[#25D366] hover:bg-[#20BA5C] text-background">
                   {t('whatsappButton')}
                   <ArrowRight className="h-4 w-4" />
                 </Button>

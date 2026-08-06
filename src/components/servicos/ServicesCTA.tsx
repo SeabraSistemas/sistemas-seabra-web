@@ -37,7 +37,7 @@ export function ServicesCTA() {
             <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
               <Button
                 size="lg"
-                className="rounded-full px-10 h-14 text-base gap-3 bg-[#25D366] text-white hover:bg-[#20BD5A] shadow-xl shadow-[#25D366]/30 hover:shadow-2xl hover:shadow-[#25D366]/40 transition-all duration-300"
+                className="rounded-full px-10 h-14 text-base gap-3 bg-[#25D366] text-background hover:bg-[#20BD5A] shadow-xl hover:shadow-2xl transition-all duration-300"
               >
                 <WhatsAppIcon className="h-5 w-5" />
                 {t('button')}

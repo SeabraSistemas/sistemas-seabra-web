@@ -32,7 +32,7 @@ export default async function PrivacidadePage({ params }: PageProps) {
           </h1>
           <p className="text-sm text-muted-foreground mt-3">{t('lastUpdated')}</p>
           {localeNotice ? (
-            <div className="mt-6 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+            <div className="mt-6 rounded-lg border border-primary/40 bg-secondary p-4 text-sm text-foreground">
               {localeNotice}
             </div>
           ) : null}
