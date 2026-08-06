@@ -15,25 +15,27 @@ export function CTASection() {
   const { ref, isVisible } = useScrollAnimation();
 
   return (
-    <section className="py-14 md:py-16 bg-primary" ref={ref}>
+    // Era uma faixa inteira em bg-primary com texto branco. Com o ocre no
+    // lugar do azul, uma faixa cheia dessa cor dominaria a página — e o
+    // acento só deve aparecer umas duas vezes por tela. A ênfase agora vem
+    // da superfície e do espaço; a única cor forte é o botão.
+    <section className="py-20 md:py-24 band" ref={ref}>
       <div className="container-tight">
-        <div className={`max-w-3xl mx-auto text-center space-y-8 scroll-fade-up ${isVisible ? 'visible' : ''}`}>
-          {/* Content */}
-          <div className="space-y-6">
-            <h2 className="heading-1 text-white">
-              {t('title')}
-            </h2>
-            <p className="text-base md:text-lg text-blue-100 leading-relaxed max-w-xl mx-auto">
-              {t('subtitle')}
-            </p>
+        <div
+          className={`max-w-2xl mx-auto text-center space-y-8 scroll-fade-up ${
+            isVisible ? 'visible' : ''
+          }`}
+        >
+          <div className="space-y-5">
+            <h2 className="heading-1">{t('title')}</h2>
+            <p className="body-large max-w-xl mx-auto">{t('subtitle')}</p>
           </div>
 
-          {/* CTAs */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+          <div className="flex justify-center">
             <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
               <Button
                 size="lg"
-                className="rounded-full px-10 h-14 text-base gap-3 bg-[#25D366] text-white hover:bg-[#20BD5A] shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5"
+                className="rounded-full px-10 h-14 text-base gap-3 bg-[#25D366] text-background hover:bg-[#20BD5A] transition-colors"
               >
                 <WhatsAppIcon className="h-5 w-5" />
                 {t('cta')}
@@ -41,10 +43,7 @@ export function CTASection() {
             </a>
           </div>
 
-          {/* Trust text */}
-          <p className="text-sm text-blue-200">
-            Sem compromisso. Resposta em até 30 minutos.
-          </p>
+          <p className="text-sm text-muted-foreground">{t('trust')}</p>
         </div>
       </div>
     </section>

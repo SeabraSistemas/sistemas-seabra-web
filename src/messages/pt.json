@@ -209,7 +209,8 @@
   "ctaSection": {
     "title": "Pronto para transformar sua gestão?",
     "subtitle": "Entre em contato e descubra como podemos ajudar sua operação a alcançar novos resultados.",
-    "cta": "Falar no WhatsApp"
+    "cta": "Falar no WhatsApp",
+    "trust": "Sem compromisso. Resposta em até 30 minutos."
   },
   "footer": {
     "description": "Tecnologia para pecuária de precisão. Sistemas sob medida para gestão de rebanhos.",
@@ -549,6 +550,28 @@
           "desc": "Leitor tipo bastão, com Bluetooth."
         }
       }
+    }
+  },
+  "pillars": {
+    "title": "O que a Seabra entrega",
+    "subtitle": "Três frentes que se conversam: o sistema que organiza o rebanho, o serviço de quem entende de campo e o equipamento que identifica o animal.",
+    "systems": {
+      "eyebrow": "Sistemas",
+      "title": "Gestão de rebanho que funciona no curral",
+      "desc": "Manejo, reprodução, controle leiteiro e indicadores. Feito para ser usado com a mão suja, offline, no meio do trabalho.",
+      "cta": "Conhecer os sistemas"
+    },
+    "services": {
+      "eyebrow": "Serviços",
+      "title": "Consultoria de quem é do setor",
+      "desc": "Mais de 15 anos de campo em caprinovinocultura, e desenvolvimento de sistemas sob medida para quem precisa de algo próprio.",
+      "cta": "Ver serviços"
+    },
+    "products": {
+      "eyebrow": "Produtos",
+      "title": "Identificação eletrônica",
+      "desc": "Microchips certificados ICAR e leitores FDX-B para rastrear cada animal sem depender de anotação.",
+      "cta": "Ver produtos"
     }
   }
 }

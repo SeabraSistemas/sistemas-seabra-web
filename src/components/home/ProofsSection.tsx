@@ -97,16 +97,16 @@ export function ProofsSection() {
   };
 
   return (
-    <section className="section-padding bg-gray-50 border-y border-gray-200" id="demo" ref={ref}>
+    <section className="section-padding band" id="demo" ref={ref}>
       <div className="container-wide">
         <div className={`text-center space-y-4 mb-12 scroll-fade-up ${isVisible ? 'visible' : ''}`}>
           <div className="flex items-center justify-center gap-4">
-            <h2 className="heading-2 text-gray-900">{t('title')}</h2>
+            <h2 className="heading-2">{t('title')}</h2>
             <button
               type="button"
               onClick={centerIframe}
               aria-label={t('liveCtaTitle')}
-              className="hidden lg:flex h-11 w-11 items-center justify-center rounded-full bg-primary text-white shadow-md shadow-primary/30 hover:shadow-lg hover:shadow-primary/40 hover:scale-110 active:scale-95 transition-all duration-300"
+              className="hidden lg:flex h-11 w-11 items-center justify-center rounded-full bg-primary text-primary-foreground hover:bg-[var(--ocre-hover)] transition-colors"
             >
               <ChevronDown className="h-5 w-5" />
             </button>
@@ -120,7 +120,11 @@ export function ProofsSection() {
           }`}
         >
           <div className="hidden lg:flex justify-center">
-            <div className="relative">
+            {/* Moldura escura. O conteúdo do iframe é o app real, com interface
+                clara e não-tematizável — o retângulo branco é inevitável. A
+                moldura o transforma em "tela de aparelho" em vez de buraco
+                branco no meio da página. */}
+            <div className="relative rounded-[2rem] border border-border bg-secondary p-2.5">
               <iframe
                 ref={iframeRef}
                 src={demoSrc}
@@ -131,13 +135,13 @@ export function ProofsSection() {
                 referrerPolicy="no-referrer"
                 width={461}
                 height={831}
-                className="rounded-3xl border border-gray-200 shadow-md bg-white"
+                className="block rounded-3xl bg-white"
               />
               <button
                 type="button"
                 onClick={() => iframeRef.current?.requestFullscreen()}
                 aria-label="Maximizar"
-                className="absolute top-2 right-2 h-9 w-9 flex items-center justify-center rounded-xl bg-white/40 backdrop-blur-md border border-white/50 text-gray-700 shadow-sm hover:bg-white/70 hover:text-gray-900 hover:shadow-md hover:scale-105 active:scale-95 transition-all duration-200"
+                className="absolute top-5 right-5 h-9 w-9 flex items-center justify-center rounded-xl bg-popover/90 backdrop-blur-md border border-border text-popover-foreground hover:bg-popover transition-colors"
               >
                 <Maximize2 className="h-4 w-4" />
               </button>
@@ -148,24 +152,24 @@ export function ProofsSection() {
             href={mobileDemoHref}
             target="_blank"
             rel="noopener noreferrer"
-            className="lg:hidden group relative aspect-4/3 rounded-3xl border border-gray-200 bg-white hover:border-primary/40 hover:shadow-xl hover:-translate-y-1 transition-all duration-500 flex flex-col items-center justify-center gap-7 p-10"
+            className="lg:hidden group relative aspect-4/3 rounded-3xl border border-border bg-card hover:border-input transition-colors flex flex-col items-center justify-center gap-7 p-10"
           >
             <Image
               src="/images/logo.png"
-              alt="Seabra Solutions"
-              width={80}
-              height={80}
-              className="object-contain group-hover:scale-105 transition-transform duration-500"
+              alt="Seabra"
+              width={72}
+              height={72}
+              className="object-contain"
             />
 
             <div className="text-center space-y-1.5">
-              <h3 className="text-2xl font-semibold text-gray-900">{t('liveCtaTitle')}</h3>
-              <p className="text-sm text-gray-500">{t('liveCtaSubtitle')}</p>
+              <h3 className="text-2xl">{t('liveCtaTitle')}</h3>
+              <p className="text-sm text-muted-foreground">{t('liveCtaSubtitle')}</p>
             </div>
 
-            <span className="inline-flex items-center gap-2 px-7 py-3 rounded-full bg-linear-to-r from-primary to-blue-600 text-white text-sm font-semibold shadow-lg shadow-primary/30 group-hover:shadow-xl group-hover:shadow-primary/40 transition-all duration-300">
+            <span className="inline-flex items-center gap-2 px-7 py-3 rounded-full bg-primary text-primary-foreground text-sm font-medium transition-colors group-hover:bg-[var(--ocre-hover)]">
               {t('liveCtaButton')}
-              <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform duration-300" />
+              <ArrowRight className="h-4 w-4" />
             </span>
           </a>
 

@@ -209,7 +209,8 @@
   "ctaSection": {
     "title": "Ready to transform your management?",
     "subtitle": "Get in touch and discover how we can help your operation achieve new results.",
-    "cta": "Talk on WhatsApp"
+    "cta": "Talk on WhatsApp",
+    "trust": "No strings attached. Reply within 30 minutes."
   },
   "footer": {
     "description": "Precision livestock technology. Custom systems for herd management.",
@@ -549,6 +550,28 @@
           "desc": "Stick-type reader, with Bluetooth."
         }
       }
+    }
+  },
+  "pillars": {
+    "title": "What Seabra delivers",
+    "subtitle": "Three fronts that work together: the system that organises the herd, the service from people who know the field, and the hardware that identifies the animal.",
+    "systems": {
+      "eyebrow": "Systems",
+      "title": "Herd management that works in the pen",
+      "desc": "Handling, breeding, milk recording and indicators. Built to be used with dirty hands, offline, mid-work.",
+      "cta": "Explore the systems"
+    },
+    "services": {
+      "eyebrow": "Services",
+      "title": "Consulting from people in the sector",
+      "desc": "Over 15 years of field work in goat and sheep farming, plus custom software for those who need something of their own.",
+      "cta": "See services"
+    },
+    "products": {
+      "eyebrow": "Products",
+      "title": "Electronic identification",
+      "desc": "ICAR-certified microchips and FDX-B readers to track every animal without relying on paper.",
+      "cta": "See products"
     }
   }
 }
