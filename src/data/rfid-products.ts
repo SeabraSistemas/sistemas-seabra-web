@@ -58,7 +58,7 @@ export const rfidProducts: RFIDProduct[] = [
       { minQty: 60, unitBRL: 10.4 },
       { minQty: 100, unitBRL: 9.8 },
       { minQty: 200, unitBRL: 9.2 },
-      { minQty: 1000, unitBRL: 8.5 },
+      { minQty: 1000, unitBRL: 8.6 },
     ],
     minQty: 10,
     unit: 'unidade',

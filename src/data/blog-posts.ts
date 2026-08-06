@@ -345,7 +345,7 @@ O microchip da Seabra é **2,12 × 12 mm**, frequência **134,2 kHz**, padrão *
 | 60 a 99 | R$ 10,40 |
 | 100 a 199 | R$ 9,80 |
 | 200 a 999 | R$ 9,20 |
-| 1.000 ou mais | R$ 8,50 |
+| 1.000 ou mais | R$ 8,60 |
 
 ## Leitores RFID — qual escolher
 
@@ -369,7 +369,7 @@ O chip identifica; o **software** dá sentido ao número. Com o leitor Bluetooth
 
 ## Quanto vale a pena?
 
-Faça a conta pelo custo por animal, não pela nota: o microchip sai por **R$ 8,50 a R$ 11,60** conforme a quantidade — uma vez na vida do animal. Some um leitor a partir de **R$ 180** e você tem rastreabilidade eletrônica completa. Para começar, o pedido mínimo é de **10 microchips**.
+Faça a conta pelo custo por animal, não pela nota: o microchip sai por **R$ 8,60 a R$ 11,60** conforme a quantidade — uma vez na vida do animal. Some um leitor a partir de **R$ 180** e você tem rastreabilidade eletrônica completa. Para começar, o pedido mínimo é de **10 microchips**.
 
 Quer montar o kit certo para o seu rebanho? [Veja os produtos](/pt/vendas/produtos) ou [fale com a gente](/pt/contato).
 `,
