@@ -42,19 +42,14 @@ export function WhatsAppButton({ segment, className }: WhatsAppButtonProps) {
         'fixed bottom-6 right-6 z-50',
         'flex items-center justify-center',
         'h-16 w-16 rounded-2xl',
+        // Verde da marca preservado: é reconhecimento de plataforma, o
+        // visitante sabe o que o botão faz antes de ler. Mas o texto é
+        // escuro — branco sobre #25D366 dá 1,98:1 e reprova AA; escuro
+        // dá 8,94:1.
         'bg-[#25D366]',
-        'text-white',
-        'shadow-2xl shadow-[#25D366]/30',
-        'transition-all duration-500 ease-out',
-        'hover:scale-110 hover:shadow-[#25D366]/50',
-        'hover:rotate-[5deg]',
-        // Entrance animation
-        isVisible
-          ? 'translate-y-0 opacity-100'
-          : 'translate-y-8 opacity-0',
-        // Pulse ring effect
-        'before:absolute before:inset-0 before:rounded-2xl',
-        'before:bg-[#25D366] before:animate-ping before:opacity-20',
+        'text-background',
+        'transition-opacity duration-300',
+        isVisible ? 'opacity-100' : 'opacity-0',
         className
       )}
       aria-label="WhatsApp"
@@ -65,8 +60,8 @@ export function WhatsAppButton({ segment, className }: WhatsAppButtonProps) {
       <span
         className={cn(
           'absolute right-full mr-4 px-4 py-2',
-          'bg-white text-black text-sm font-medium',
-          'rounded-xl shadow-xl',
+          'bg-popover text-popover-foreground border border-border text-sm font-medium',
+          'rounded-xl',
           'whitespace-nowrap',
           'opacity-0 pointer-events-none',
           'group-hover:opacity-100',

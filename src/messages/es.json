@@ -5,15 +5,15 @@
   },
   "header": {
     "about": "Nosotros",
-    "solutions": "Soluciones",
-    "cases": "Cases",
     "blog": "Blog",
     "contact": "Contacto",
     "services": "Servicios",
-    "access": "Acceder al sistema — Pequeños Rumiantes",
-    "accessShort": "Acceder al sistema",
-    "accessCaption": "Pequeños Rumiantes",
-    "criadores": "Criadores"
+    "criadores": "Criadores",
+    "systems": "Sistemas",
+    "products": "Productos",
+    "signIn": "Entrar",
+    "downloadApp": "Descargar la app",
+    "downloadHint": "APK para Android. El teléfono puede pedir permiso para instalar fuera de Play Store."
   },
   "criadores": {
     "metaTitle": "Criadores Pro del Sistema Seabra",

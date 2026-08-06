@@ -5,15 +5,15 @@
   },
   "header": {
     "about": "About",
-    "solutions": "Solutions",
-    "cases": "Cases",
     "blog": "Blog",
     "contact": "Contact",
     "services": "Services",
-    "access": "Access system — Small Ruminants",
-    "accessShort": "Access system",
-    "accessCaption": "Small Ruminants",
-    "criadores": "Breeders"
+    "criadores": "Breeders",
+    "systems": "Systems",
+    "products": "Products",
+    "signIn": "Sign in",
+    "downloadApp": "Download the app",
+    "downloadHint": "Android APK. Your phone may ask permission to install from outside the Play Store."
   },
   "criadores": {
     "metaTitle": "Sistema Seabra Pro Breeders",
