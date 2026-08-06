@@ -10,12 +10,15 @@ import Image from 'next/image';
  * partir dos arquivos originais em public/images/logos/, que permanecem
  * intocados (usados no rodapé e em outros lugares que preservam a cor).
  *
- * Uma logo (Santa Rita) tinha um retângulo azul-marinho pintado dentro do
- * próprio arquivo — não é fundo transparente, é cor real do PNG. Para essa,
- * o fundo foi recortado por chroma key antes do mesmo tratamento; as outras
- * 8 foram direto.
+ * Duas logos precisaram de um passo a mais antes do alfa: Santa Rita tinha
+ * um retângulo azul-marinho pintado dentro do próprio arquivo, e Fazenda
+ * Campinas (puxada do Supabase Storage, é a mesma logo usada na vitrine de
+ * criadores) tinha fundo branco opaco — nenhum dos dois é transparência
+ * real. Para as duas, o fundo foi recortado por chroma key antes do mesmo
+ * tratamento; as outras 7 foram direto.
  */
 const logos = [
+  { name: 'Fazenda Campinas', src: '/images/logos/mono/fazenda-campinas.png', w: 1024, h: 724 },
   { name: 'Minas Cabra', src: '/images/logos/mono/minas-cabra.png', w: 358, h: 347 },
   { name: 'Fazenda Santa Rita - Capril Sanri', src: '/images/logos/mono/santa-rita.png', w: 320, h: 174 },
   { name: 'Capril Conquista', src: '/images/logos/mono/capril-conquista.png', w: 360, h: 360 },
@@ -32,9 +35,9 @@ export function LogosSection() {
   const duplicated = [...logos, ...logos];
 
   return (
-    <section className="py-20 overflow-hidden band">
+    <section className="py-10 sm:py-12 overflow-hidden band">
       <div className="container-wide">
-        <p className="text-center text-xs text-muted-foreground uppercase tracking-widest mb-12 font-medium">
+        <p className="text-center text-xs text-muted-foreground uppercase tracking-widest mb-8 font-medium">
           {t('title')}
         </p>
       </div>
