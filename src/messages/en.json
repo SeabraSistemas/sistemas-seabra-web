@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "title": "Seabra Solutions - Precision Livestock Technology",
+    "title": "Seabra - Precision Livestock Technology",
     "description": "Custom systems for herd management. Cattle and small ruminants for dairy and beef."
   },
   "header": {
@@ -53,7 +53,7 @@
     "marcaSub": "Small Ruminants",
     "marcaDominio": "www.sistemaseabra.com.br",
     "conhecaSistema": "Discover the system",
-    "disclaimer": "The information on this page is the sole responsibility of the breeder, who declared it in Sistema Seabra. Seabra Solutions does not sell, broker, guarantee or verify the data shown here, and takes no part in any negotiation. Pedigree and registration must be checked against the association's official certificate.",
+    "disclaimer": "The information on this page is the sole responsibility of the breeder, who declared it in Sistema Seabra. Seabra does not sell, broker, guarantee or verify the data shown here, and takes no part in any negotiation. Pedigree and registration must be checked against the association's official certificate.",
     "naoEncontradoTitulo": "Breeder not found",
     "naoEncontradoTexto": "This page is unavailable or has been removed from the showcase.",
     "naoEncontradoCta": "See all breeders",
@@ -108,7 +108,7 @@
   },
   "journey": {
     "badge": "Choose your path",
-    "title": "Who Seabra Solutions is for",
+    "title": "Who Seabra is for",
     "subtitle": "Each operation needs a different system. Pick the environment that fits yours.",
     "smallRuminants": {
       "title": "Small Ruminants",
@@ -182,13 +182,13 @@
     "badge": "About Us",
     "title": "Technology born in the field",
     "p1": "We were born from direct field experience. With a background in veterinary medicine and livestock farming since 2011, we understand that precise decisions depend on reliable data — and that most producers still operate without the right tools to obtain them.",
-    "p2": "Seabra Solutions develops custom livestock management systems designed for the reality of each operation. Our software turns data entry into something practical and fast, delivering performance indicators with the precision the industry demands.",
+    "p2": "Seabra develops custom livestock management systems designed for the reality of each operation. Our software turns data entry into something practical and fast, delivering performance indicators with the precision the industry demands.",
     "p3": "Each system is built from a diagnosis of your operation. We don't offer generic solutions — we deliver technology that adapts to your process, works offline in the field, and evolves alongside your business.",
     "highlightExperience": "In the field since",
     "highlightOffline": "Works offline",
     "highlightSupport": "Fast support",
     "visionLabel": "Our Vision",
-    "vision": "Our vision is to establish Seabra Solutions as a reference in precision livestock technology across Latin America."
+    "vision": "Our vision is to establish Seabra as a reference in precision livestock technology across Latin America."
   },
   "testimonials": {
     "badge": "Testimonials",
@@ -237,7 +237,7 @@
     "draftNotice": ""
   },
   "whatsapp": {
-    "defaultMessage": "Hello! I want to know more about Seabra Solutions.",
+    "defaultMessage": "Hello! I want to know more about Seabra.",
     "segmentMessage": "Hello! I want a demo of the {segment} solution."
   },
   "landing": {

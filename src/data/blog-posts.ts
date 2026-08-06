@@ -45,7 +45,7 @@ Muitos sistemas foram feitos para bovinos e "servem" para caprino no improviso. 
 
 ## Um sistema sob medida
 
-Na [Seabra Solutions](/pt/pequenos-ruminantes) o sistema é montado para o seu tipo de produção — [caprinos e ovinos de leite](/pt/solucoes/caprinos/leite) ou [de corte](/pt/solucoes/ovinos/corte) — e integra com [microchip e leitor RFID](/pt/vendas/produtos) para identificar cada animal sem digitar. Antes de decidir, [fale com a gente](/pt/contato) e veja funcionando na sua realidade.
+Na [Seabra](/pt/pequenos-ruminantes) o sistema é montado para o seu tipo de produção — [caprinos e ovinos de leite](/pt/solucoes/caprinos/leite) ou [de corte](/pt/solucoes/ovinos/corte) — e integra com [microchip e leitor RFID](/pt/vendas/produtos) para identificar cada animal sem digitar. Antes de decidir, [fale com a gente](/pt/contato) e veja funcionando na sua realidade.
 `,
   },
   {
@@ -295,7 +295,7 @@ O leitor traz o número na hora, sem digitar. Um **leitor com Bluetooth** envia 
 
 ## Passo 4 — Um software que amarra tudo
 
-O número sozinho não decide nada. É o **software de gestão de rebanho** que transforma leituras em histórico e indicadores: cada animal ganha uma ficha viva com sanidade, reprodução e produção. Na [Seabra Solutions](/pt/pequenos-ruminantes) o sistema é sob medida para [caprinos e ovinos](/pt/solucoes/caprinos/leite) ou [bovinos de corte](/pt/bovinos-corte), e funciona **offline** — você registra no campo e sincroniza depois.
+O número sozinho não decide nada. É o **software de gestão de rebanho** que transforma leituras em histórico e indicadores: cada animal ganha uma ficha viva com sanidade, reprodução e produção. Na [Seabra](/pt/pequenos-ruminantes) o sistema é sob medida para [caprinos e ovinos](/pt/solucoes/caprinos/leite) ou [bovinos de corte](/pt/bovinos-corte), e funciona **offline** — você registra no campo e sincroniza depois.
 
 ## Por onde começar (kit mínimo)
 
@@ -434,7 +434,7 @@ Se é o seu caso, ótimo — economize e siga. Mas se você já "perde o fio" do
 
 ## Já tenho tudo na planilha — e agora?
 
-Dá para migrar sem recomeçar do zero: um bom sistema importa seus dados atuais. Na [Seabra Solutions](/pt/pequenos-ruminantes), o sistema é **sob medida** para o seu tipo de produção — [caprinos e ovinos de leite ou corte](/pt/solucoes/caprinos/leite) e [bovinos de corte](/pt/bovinos-corte) — com suporte de quem entende do setor, não só de software.
+Dá para migrar sem recomeçar do zero: um bom sistema importa seus dados atuais. Na [Seabra](/pt/pequenos-ruminantes), o sistema é **sob medida** para o seu tipo de produção — [caprinos e ovinos de leite ou corte](/pt/solucoes/caprinos/leite) e [bovinos de corte](/pt/bovinos-corte) — com suporte de quem entende do setor, não só de software.
 
 ## Conclusão
 
@@ -494,7 +494,7 @@ Aplicar a IATFx com sucesso exige **organização e acompanhamento rigoroso** de
 - **Controle de sêmen**: gestão do estoque de doses por touro/bode, lote e tipo de sêmen
 - **Funcionamento offline**: registre os dados no campo mesmo sem internet — o sistema sincroniza quando houver conexão
 
-Com a Seabra Solutions, você tem um sistema sob medida para registrar, acompanhar e otimizar seus protocolos reprodutivos, transformando dados em decisões precisas para o seu rebanho.
+Com a Seabra, você tem um sistema sob medida para registrar, acompanhar e otimizar seus protocolos reprodutivos, transformando dados em decisões precisas para o seu rebanho.
     `.trim(),
   },
   {
@@ -554,7 +554,7 @@ Gerenciar a introdução de uma nova raça no rebanho exige **controle preciso d
 - **Indicadores zootécnicos**: monitorar ganho de peso dos cabritos, intervalo entre partos e taxa de concepção
 - **Relatórios comparativos**: avaliar o impacto genético da Murciano-Granadina no seu rebanho ao longo do tempo
 
-Com a Seabra Solutions, cada animal tem um histórico completo — da genética à produção — para que você tome decisões de melhoramento com base em dados, não em achismo.
+Com a Seabra, cada animal tem um histórico completo — da genética à produção — para que você tome decisões de melhoramento com base em dados, não em achismo.
     `.trim(),
   },
   {
@@ -618,7 +618,7 @@ Um sistema de gestão pecuária permite **rastrear e correlacionar** as informa�
 - **Relatórios automáticos**: visualize tendências e identifique padrões que seriam invisíveis no dia a dia
 - **Acesso offline**: registre dados no campo e sincronize quando houver conexão
 
-Com a Seabra Solutions, você transforma dados dispersos em inteligência para proteger seu rebanho e sua produção.
+Com a Seabra, você transforma dados dispersos em inteligência para proteger seu rebanho e sua produção.
     `.trim(),
   },
   {
@@ -689,7 +689,7 @@ Um sistema de gestão pecuária permite **monitorar os indicadores** que revelam
 - **Histórico sanitário**: correlacione problemas no período de transição com mudanças na dieta
 - **Dados para o nutricionista**: forneça informações precisas para ajuste fino da formulação
 
-Com a Seabra Solutions, você tem os dados necessários para sair do achismo e entrar na era da nutrição de precisão no seu rebanho leiteiro.
+Com a Seabra, você tem os dados necessários para sair do achismo e entrar na era da nutrição de precisão no seu rebanho leiteiro.
     `.trim(),
   },
   {
@@ -756,7 +756,7 @@ Identificar problemas de teteiras exige **cruzar dados de diferentes fontes**. U
 - **Produção individual**: detecte quedas de produção que podem indicar desconforto na ordenha
 - **Histórico completo**: correlacione dados de manutenção de equipamentos com indicadores sanitários e produtivos
 
-Com a Seabra Solutions, você conecta os dados de equipamento, saúde e produção em um único sistema — e transforma a manutenção preventiva em decisões baseadas em evidências.
+Com a Seabra, você conecta os dados de equipamento, saúde e produção em um único sistema — e transforma a manutenção preventiva em decisões baseadas em evidências.
     `.trim(),
   },
   {
@@ -830,7 +830,7 @@ Gerenciar nutrição com precisão exige **dados individuais e de lote atualizad
 - **Indicadores reprodutivos**: correlacione falhas reprodutivas com períodos de balanço energético negativo
 - **Controle de insumos**: rastreie lotes de ração, silagem e suplementos para auditar a formulação
 
-Com a Seabra Solutions, você transforma o controle nutricional do seu rebanho em uma gestão baseada em dados — do volumoso ao concentrado, da formulação ao resultado no balde.
+Com a Seabra, você transforma o controle nutricional do seu rebanho em uma gestão baseada em dados — do volumoso ao concentrado, da formulação ao resultado no balde.
     `.trim(),
   },
   {
@@ -912,7 +912,7 @@ Monitorar conforto na ordenha exige **registrar e cruzar dados de rotina, equipa
 - **Manutenção de equipamento**: registre trocas de teteiras, calibrações e revisões do sistema de vácuo
 - **Relatórios por lote**: compare indicadores entre grupos para identificar problemas de rotina
 
-Com a Seabra Solutions, você transforma a rotina de ordenha em dados acionáveis — porque conforto na ordenha não é custo, é investimento em produção e longevidade.
+Com a Seabra, você transforma a rotina de ordenha em dados acionáveis — porque conforto na ordenha não é custo, é investimento em produção e longevidade.
     `.trim(),
   },
   {
@@ -983,7 +983,7 @@ Gerenciar a nutrição de confinamento com precisão exige **rastrear insumos, m
 - **Eficiência alimentar**: calcule a conversão alimentar real e compare entre lotes com diferentes fontes de volumoso
 - **Indicadores sanitários**: correlacione problemas digestivos e metabólicos com mudanças na dieta
 
-Com a Seabra Solutions, você transforma o confinamento em uma operação orientada por dados — onde cada decisão nutricional é medida pelo resultado no gancho, não pelo preço na nota fiscal.
+Com a Seabra, você transforma o confinamento em uma operação orientada por dados — onde cada decisão nutricional é medida pelo resultado no gancho, não pelo preço na nota fiscal.
     `.trim(),
   },
   {
@@ -1051,7 +1051,7 @@ Decidir entre silagem de Capiaçu e milho — ou encontrar a proporção ideal d
 - **Calendário de cortes**: programe datas de corte, adubação de cobertura e previsão de produção
 - **Estoque de volumoso**: controle a quantidade disponível no silo e projete a autonomia alimentar do rebanho
 
-Com a Seabra Solutions, você toma a decisão sobre volumoso com base em números — comparando custo, produtividade e resultado animal em um único sistema.
+Com a Seabra, você toma a decisão sobre volumoso com base em números — comparando custo, produtividade e resultado animal em um único sistema.
     `.trim(),
   },
   {
@@ -1114,7 +1114,7 @@ Em um cenário de margens estreitas e volumes crescentes, **cada detalhe impacta
 - **Projeção de abate**: estime a data ideal de saída com base no peso atual, GMD e preço-alvo da arroba
 - **Resultado por lote**: apure a margem real de cada lote ao final do ciclo — receita menos todos os custos
 
-Com a Seabra Solutions, você gerencia o confinamento com a precisão que o recorde de 9,25 milhões de cabeças exige — transformando dados em margem.
+Com a Seabra, você gerencia o confinamento com a precisão que o recorde de 9,25 milhões de cabeças exige — transformando dados em margem.
     `.trim(),
   },
   {
@@ -1184,7 +1184,7 @@ Controlar moscas é parte de uma **estratégia sanitária integrada** que exige 
 - **Controle de custos sanitários**: registre gastos com produtos e mão de obra para controle de moscas
 - **Histórico por período**: compare indicadores entre estações para antecipar problemas recorrentes
 
-Com a Seabra Solutions, você integra sanidade ambiental, desempenho animal e custos em um único sistema — e transforma o controle de moscas de reativo em preventivo.
+Com a Seabra, você integra sanidade ambiental, desempenho animal e custos em um único sistema — e transforma o controle de moscas de reativo em preventivo.
     `.trim(),
   },
   {
@@ -1261,7 +1261,7 @@ Registrar e acompanhar o ECC de cada animal ao longo do tempo exige **organizaç
 - **Correlação com reprodução**: cruze dados de ECC ao parto com taxa de prenhez na estação seguinte
 - **Gestão de lotes**: agrupe vacas por faixa de ECC para direcionar manejo nutricional
 
-Com a Seabra Solutions, o escore de condição corporal deixa de ser uma avaliação pontual e vira uma ferramenta contínua de gestão — conectando nutrição, reprodução e resultado econômico.
+Com a Seabra, o escore de condição corporal deixa de ser uma avaliação pontual e vira uma ferramenta contínua de gestão — conectando nutrição, reprodução e resultado econômico.
     `.trim(),
   },
   {
@@ -1338,7 +1338,7 @@ Gerenciar raças, cruzamentos e terminação de cordeiros exige **dados individu
 - **Indicadores reprodutivos**: taxa de parição, prolificidade, intervalo entre partos e desempenho por reprodutor
 - **Projeção de abate**: estime a data ideal de saída com base no peso atual e ganho médio diário
 
-Com a Seabra Solutions, você gerencia cada cordeiro do nascimento ao abate — comparando genéticas, otimizando cruzamentos e tomando decisões com base em dados, não em intuição.
+Com a Seabra, você gerencia cada cordeiro do nascimento ao abate — comparando genéticas, otimizando cruzamentos e tomando decisões com base em dados, não em intuição.
     `.trim(),
   },
   {
@@ -1404,7 +1404,7 @@ Aplicar conceitos de eficiência alimentar no dia a dia exige **registros detalh
 - **Histórico genealógico**: correlacione desempenho de eficiência com ascendência para orientar decisões de seleção
 - **Monitoramento de resposta a dietas**: compare produção antes e depois de mudanças nutricionais em cada lote
 
-Com a Seabra Solutions, você transforma dados de produção e alimentação em indicadores de eficiência — identificando as ovelhas que mais contribuem para o resultado e direcionando recursos para onde geram mais retorno.
+Com a Seabra, você transforma dados de produção e alimentação em indicadores de eficiência — identificando as ovelhas que mais contribuem para o resultado e direcionando recursos para onde geram mais retorno.
     `.trim(),
   },
   {
@@ -1479,7 +1479,7 @@ Produzir leite de ovelha com a qualidade que mercados premium exigem depende de 
 - **Indicadores reprodutivos**: intervalo entre partos, prolificidade e taxa de desmame — fatores que impactam diretamente a produção de leite por ovelha/ano
 - **Rastreabilidade completa**: da genealogia do animal ao lote de leite entregue — requisito para mercados regulados
 
-Com a Seabra Solutions, você gerencia sua ovinocultura leiteira com a precisão que mercados de alto valor exigem — do controle individual à rastreabilidade que abre portas para novas oportunidades.
+Com a Seabra, você gerencia sua ovinocultura leiteira com a precisão que mercados de alto valor exigem — do controle individual à rastreabilidade que abre portas para novas oportunidades.
     `.trim(),
   },
 ];

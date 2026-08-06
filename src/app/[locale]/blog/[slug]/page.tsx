@@ -30,7 +30,7 @@ export async function generateMetadata({ params }: PageProps) {
   const canonicalLocale = locale === 'es' && hasEs ? 'es' : 'pt';
 
   return {
-    title: `${post.title} | Seabra Solutions`,
+    title: `${post.title} | Seabra`,
     description: post.excerpt,
     alternates: {
       canonical: localizedUrl(canonicalLocale, `/blog/${slug}`),
@@ -93,7 +93,7 @@ export default async function BlogPostPage({ params }: PageProps) {
             },
             publisher: {
               '@type': 'Organization',
-              name: 'Seabra Solutions',
+              name: 'Seabra',
               logo: { '@type': 'ImageObject', url: `${SITE_URL}/images/logo.png` },
             },
           },

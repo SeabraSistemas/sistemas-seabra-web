@@ -31,12 +31,12 @@ const newsreader = Newsreader({
 export const metadata: Metadata = {
   metadataBase: new URL('https://www.sistemaseabra.com.br'),
   title: {
-    default: 'Seabra Solutions — Tecnologia para Pecuária de Precisão',
-    template: '%s | Seabra Solutions',
+    default: 'Seabra — Tecnologia para Pecuária de Precisão',
+    template: '%s | Seabra',
   },
   description:
     'Sistemas sob medida para gestão de rebanhos. Pequenos ruminantes e bovinos de corte, com suporte direto de quem é do setor.',
-  applicationName: 'Seabra Solutions',
+  applicationName: 'Seabra',
   icons: {
     icon: '/images/logo-icon.png',
     shortcut: '/images/logo-icon.png',
@@ -44,8 +44,8 @@ export const metadata: Metadata = {
   },
   openGraph: {
     type: 'website',
-    siteName: 'Seabra Solutions',
-    title: 'Seabra Solutions — Tecnologia para Pecuária de Precisão',
+    siteName: 'Seabra',
+    title: 'Seabra — Tecnologia para Pecuária de Precisão',
     description:
       'Sistemas sob medida para gestão de rebanhos. Pequenos ruminantes e bovinos de corte.',
     images: [
@@ -53,13 +53,13 @@ export const metadata: Metadata = {
         url: '/images/logo.png',
         width: 1200,
         height: 630,
-        alt: 'Seabra Solutions',
+        alt: 'Seabra',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Seabra Solutions',
+    title: 'Seabra',
     description: 'Tecnologia para pecuária de precisão.',
     images: ['/images/logo.png'],
   },

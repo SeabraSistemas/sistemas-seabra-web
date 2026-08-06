@@ -15,7 +15,7 @@ export async function generateMetadata({ params }: PageProps) {
   const t = await getTranslations({ locale, namespace: 'contactPage' });
 
   return {
-    title: `${t('title')} | Seabra Solutions`,
+    title: `${t('title')} | Seabra`,
     description: t('subtitle'),
   };
 }

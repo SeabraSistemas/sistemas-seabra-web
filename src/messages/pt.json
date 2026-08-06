@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "title": "Seabra Solutions - Tecnologia para Pecuária de Precisão",
+    "title": "Seabra - Tecnologia para Pecuária de Precisão",
     "description": "Sistemas sob medida para gestão de rebanhos. Bovinos e pequenos ruminantes de leite e corte."
   },
   "header": {
@@ -53,7 +53,7 @@
     "marcaSub": "Pequenos Ruminantes",
     "marcaDominio": "www.sistemaseabra.com.br",
     "conhecaSistema": "Conheça o sistema",
-    "disclaimer": "As informações desta página são de responsabilidade exclusiva do criador, que as declarou no Sistema Seabra. A Seabra Solutions não vende, não intermedeia, não garante e não verifica os dados aqui exibidos, e não participa de qualquer negociação. Genealogia e registro devem ser conferidos no certificado oficial da associação.",
+    "disclaimer": "As informações desta página são de responsabilidade exclusiva do criador, que as declarou no Sistema Seabra. A Seabra não vende, não intermedeia, não garante e não verifica os dados aqui exibidos, e não participa de qualquer negociação. Genealogia e registro devem ser conferidos no certificado oficial da associação.",
     "naoEncontradoTitulo": "Criador não encontrado",
     "naoEncontradoTexto": "Esta página não está disponível ou foi removida da vitrine.",
     "naoEncontradoCta": "Ver todos os criadores",
@@ -108,7 +108,7 @@
   },
   "journey": {
     "badge": "Escolha sua jornada",
-    "title": "Para quem é a Seabra Solutions",
+    "title": "Para quem é a Seabra",
     "subtitle": "Cada produção exige um sistema diferente. Escolha o ambiente que combina com a sua operação.",
     "smallRuminants": {
       "title": "Pequenos Ruminantes",
@@ -182,13 +182,13 @@
     "badge": "Sobre Nós",
     "title": "Tecnologia nascida no campo",
     "p1": "Nascemos da vivência direta no campo. Com experiência em medicina veterinária e pecuária desde 2011, entendemos que decisões precisas dependem de dados confiáveis — e que a maioria dos produtores ainda opera sem as ferramentas certas para obtê-los.",
-    "p2": "A Seabra Solutions desenvolve sistemas de gestão pecuária sob medida, projetados para a realidade de cada operação. Nossos softwares transformam o lançamento de dados em algo prático e rápido, e devolvem indicadores de desempenho com a precisão que o setor exige.",
+    "p2": "A Seabra desenvolve sistemas de gestão pecuária sob medida, projetados para a realidade de cada operação. Nossos softwares transformam o lançamento de dados em algo prático e rápido, e devolvem indicadores de desempenho com a precisão que o setor exige.",
     "p3": "Cada sistema é construído a partir do diagnóstico da sua operação. Não oferecemos soluções genéricas — entregamos tecnologia que se adapta ao seu processo, funciona offline no campo e evolui junto com o seu negócio.",
     "highlightExperience": "No campo desde",
     "highlightOffline": "Funciona offline",
     "highlightSupport": "Suporte rápido",
     "visionLabel": "Nossa Visão",
-    "vision": "Nossa visão é consolidar a Seabra Solutions como referência em tecnologia para pecuária de precisão na América Latina."
+    "vision": "Nossa visão é consolidar a Seabra como referência em tecnologia para pecuária de precisão na América Latina."
   },
   "testimonials": {
     "badge": "Depoimentos",
@@ -237,7 +237,7 @@
     "draftNotice": ""
   },
   "whatsapp": {
-    "defaultMessage": "Olá! Quero saber mais sobre as soluções da Seabra Solutions.",
+    "defaultMessage": "Olá! Quero saber mais sobre as soluções da Seabra.",
     "segmentMessage": "Olá! Quero uma demonstração da solução para {segment}."
   },
   "landing": {

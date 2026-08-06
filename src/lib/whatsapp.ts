@@ -19,21 +19,21 @@ export const WHATSAPP_NUMBER = '5521999366784';
 
 const messages: Record<Locale, { default: string; segment: string; service: string }> = {
   pt: {
-    default: 'Olá! Quero saber mais sobre as soluções da Seabra Solutions.',
+    default: 'Olá! Quero saber mais sobre as soluções da Seabra.',
     segment:
       'Olá! Quero uma demonstração da solução para {segment}. {origin}',
     service:
       'Olá! Tenho interesse no plano {service} de desenvolvimento web. {origin}',
   },
   es: {
-    default: '¡Hola! Quiero saber más sobre las soluciones de Seabra Solutions.',
+    default: '¡Hola! Quiero saber más sobre las soluciones de Seabra.',
     segment:
       '¡Hola! Quiero una demostración de la solución para {segment}. {origin}',
     service:
       '¡Hola! Tengo interés en el plan {service} de desarrollo web. {origin}',
   },
   en: {
-    default: 'Hello! I want to know more about Seabra Solutions.',
+    default: 'Hello! I want to know more about Seabra.',
     segment: 'Hello! I want a demo of the {segment} solution. {origin}',
     service:
       'Hello! I\'m interested in the {service} web development plan. {origin}',
@@ -109,9 +109,9 @@ const serviceNames: Record<Locale, Record<string, string>> = {
 
 // Mensagem de cabeçalho do pedido (carrinho de produtos RFID → WhatsApp).
 const orderIntro: Record<Locale, { intro: string; subtotal: string }> = {
-  pt: { intro: 'Olá! Quero finalizar este pedido na Seabra Solutions:', subtotal: 'Subtotal' },
-  es: { intro: '¡Hola! Quiero finalizar este pedido en Seabra Solutions:', subtotal: 'Subtotal' },
-  en: { intro: 'Hello! I want to place this order with Seabra Solutions:', subtotal: 'Subtotal' },
+  pt: { intro: 'Olá! Quero finalizar este pedido na Seabra:', subtotal: 'Subtotal' },
+  es: { intro: '¡Hola! Quiero finalizar este pedido en Seabra:', subtotal: 'Subtotal' },
+  en: { intro: 'Hello! I want to place this order with Seabra:', subtotal: 'Subtotal' },
 };
 
 export interface OrderItem {

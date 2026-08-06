@@ -39,7 +39,7 @@ export function Footer() {
               <div className="relative w-10 h-10 transition-transform duration-300 group-hover:scale-105">
                 <Image
                   src="/images/logo-icon.png"
-                  alt="Seabra Solutions"
+                  alt="Seabra"
                   fill
                   className="object-contain"
                 />
@@ -173,7 +173,7 @@ export function Footer() {
 
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-sm text-muted-foreground">
-            &copy; {new Date().getFullYear()} Seabra Solutions. {t('footer.rights')}
+            &copy; {new Date().getFullYear()} Seabra. {t('footer.rights')}
           </p>
           <div className="flex items-center gap-6 text-sm text-muted-foreground">
             <Link

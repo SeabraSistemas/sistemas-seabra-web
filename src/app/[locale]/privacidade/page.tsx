@@ -10,7 +10,7 @@ export async function generateMetadata({ params }: PageProps) {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: 'privacyPage' });
   return {
-    title: `${t('title')} | Seabra Solutions`,
+    title: `${t('title')} | Seabra`,
     description: t('title'),
     robots: { index: true, follow: true },
   };
@@ -41,7 +41,7 @@ export default async function PrivacidadePage({ params }: PageProps) {
         <div className="space-y-6 text-foreground leading-relaxed">
           <p>
             Esta Política de Privacidade descreve como a{' '}
-            <strong>Seabra Solutions</strong> (&quot;nós&quot;, &quot;nosso&quot;)
+            <strong>Seabra</strong> (&quot;nós&quot;, &quot;nosso&quot;)
             coleta, usa e protege as informações pessoais dos usuários do{' '}
             <strong>SeabraApp</strong> (o &quot;Serviço&quot;), em conformidade
             com a Lei Geral de Proteção de Dados (Lei nº 13.709/2018 — LGPD).
@@ -60,7 +60,7 @@ export default async function PrivacidadePage({ params }: PageProps) {
               iOS e Android, e versões web acessadas em sistemaseabra.com.br.
             </li>
             <li>
-              <strong>Empresa</strong>: Seabra Solutions, com sede em Brasil.
+              <strong>Empresa</strong>: Seabra, com sede em Brasil.
             </li>
             <li>
               <strong>Dados Pessoais</strong>: informações que identificam ou
@@ -358,7 +358,7 @@ export default async function PrivacidadePage({ params }: PageProps) {
                 sistemaseabra.com.br
               </Link>
             </li>
-            <li>Responsável: Felipe Leal — Seabra Solutions</li>
+            <li>Responsável: Felipe Leal — Seabra</li>
           </ul>
         </div>
       </div>

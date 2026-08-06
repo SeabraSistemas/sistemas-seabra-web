@@ -10,7 +10,7 @@ export async function generateMetadata({ params }: PageProps) {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: 'termsPage' });
   return {
-    title: `${t('title')} | Seabra Solutions`,
+    title: `${t('title')} | Seabra`,
     description: t('title'),
     robots: { index: true, follow: true },
   };
@@ -43,7 +43,7 @@ export default async function TermosPage({ params }: PageProps) {
             Estes Termos de Uso (&quot;Termos&quot;) regem o uso do aplicativo{' '}
             <strong>SeabraApp</strong> e dos serviços associados
             (&quot;Serviço&quot;), oferecidos pela{' '}
-            <strong>Seabra Solutions</strong> (&quot;nós&quot;, &quot;nosso&quot;).
+            <strong>Seabra</strong> (&quot;nós&quot;, &quot;nosso&quot;).
           </p>
           <p>
             Ao usar o Serviço, você (&quot;Usuário&quot;) declara ter lido,
@@ -154,7 +154,7 @@ export default async function TermosPage({ params }: PageProps) {
               informações inseridas
             </li>
             <li>
-              Concede à Seabra Solutions licença limitada, não exclusiva, para
+              Concede à Seabra licença limitada, não exclusiva, para
               hospedar, processar e exibir esse conteúdo conforme necessário
               para fornecer o Serviço
             </li>
@@ -170,7 +170,7 @@ export default async function TermosPage({ params }: PageProps) {
           <ul className="list-disc pl-6 space-y-2">
             <li>
               Marca, design, código-fonte, textos e demais elementos do
-              SeabraApp são propriedade da Seabra Solutions ou licenciados a ela
+              SeabraApp são propriedade da Seabra ou licenciados a ela
             </li>
             <li>
               Nada nestes Termos transfere direitos de propriedade intelectual
@@ -213,7 +213,7 @@ export default async function TermosPage({ params }: PageProps) {
           <p>Na máxima extensão permitida por lei:</p>
           <ul className="list-disc pl-6 space-y-2">
             <li>
-              A Seabra Solutions <strong>não se responsabiliza</strong> por:
+              A Seabra <strong>não se responsabiliza</strong> por:
               <ul className="list-disc pl-6 space-y-2 mt-2">
                 <li>
                   Decisões zootécnicas, sanitárias ou comerciais tomadas com
@@ -269,7 +269,7 @@ export default async function TermosPage({ params }: PageProps) {
             <li>Estes Termos constituem o acordo integral entre as partes</li>
             <li>A invalidade de qualquer cláusula não afeta as demais</li>
             <li>
-              A não aplicação de algum direito pela Seabra Solutions não
+              A não aplicação de algum direito pela Seabra não
               significa renúncia
             </li>
             <li>Cessão dos Termos pelo Usuário só com autorização escrita</li>

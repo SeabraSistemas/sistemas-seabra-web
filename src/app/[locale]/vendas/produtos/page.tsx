@@ -15,7 +15,7 @@ export async function generateMetadata({ params }: PageProps) {
   const t = await getTranslations({ locale, namespace: 'vendas.produtos' });
 
   return {
-    title: `${t('metaTitle')} | Seabra Solutions`,
+    title: `${t('metaTitle')} | Seabra`,
     description: t('metaDescription'),
   };
 }
@@ -57,7 +57,7 @@ export default async function ProdutosPage({ params }: PageProps) {
           name: t(`items.${p.slug}.name`),
           description: t(`items.${p.slug}.desc`),
           category: p.category === 'microchip' ? 'Microchip RFID' : 'Leitor RFID',
-          brand: { '@type': 'Brand', name: 'Seabra Solutions' },
+          brand: { '@type': 'Brand', name: 'Seabra' },
           image: `${SITE_URL}${p.image}`,
           offers,
         },
