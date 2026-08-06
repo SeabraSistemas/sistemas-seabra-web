@@ -4,7 +4,7 @@ import { useTranslations, useLocale } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Layers, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { buildWhatsAppUrl } from '@/lib/whatsapp';
 import { type Locale } from '@/i18n/config';
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
@@ -49,7 +49,6 @@ export function ServiceTiers() {
             variant="outline"
             className="px-4 py-1.5 rounded-full border-border bg-card backdrop-blur-sm text-foreground font-medium"
           >
-            <Layers className="h-3.5 w-3.5 mr-2 text-primary" />
             {t('badge')}
           </Badge>
           <h2 className="heading-2 text-foreground">{t('title')}</h2>

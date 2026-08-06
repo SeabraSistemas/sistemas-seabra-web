@@ -3,7 +3,7 @@
 import { useTranslations, useLocale } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowRight, Zap } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { buildWhatsAppUrl } from '@/lib/whatsapp';
 import { type Locale } from '@/i18n/config';
 
@@ -28,8 +28,7 @@ export function LandingHero({ segmentKey, segmentSlug }: LandingHeroProps) {
           variant="outline"
           className="px-4 py-1.5 rounded-full border-border bg-muted backdrop-blur-sm text-foreground font-medium"
         >
-          <Zap className="h-3.5 w-3.5 mr-2 text-primary" />
-          Sistema especializado
+          {t('landing.hero.badge')}
         </Badge>
 
         {/* Headline */}
