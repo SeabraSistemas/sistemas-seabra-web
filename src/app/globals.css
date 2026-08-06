@@ -3,15 +3,19 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Só os tokens do tier 2 (semânticos) viram utilitário Tailwind. Os primitivos do
+   tier 1 ficam de fora de propósito: componente consome significado (bg-card),
+   nunca cor crua (bg-surface-1). */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
-  --font-mono: var(--font-mono);
+  --font-display: var(--font-display);
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
   --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
   --color-muted-foreground: var(--muted-foreground);
@@ -30,34 +34,63 @@
   --radius-xl: calc(var(--radius) + 4px);
   --radius-2xl: calc(var(--radius) + 8px);
   --color-surface-light: var(--surface-light);
-  --color-warm: var(--warm);
-  --color-warm-strong: var(--warm-strong);
-  --font-display: var(--font-display);
 }
 
 :root {
+  /* Faz o navegador escurecer scrollbar, autofill e popup nativo de <select>.
+     Sem isto, um <select> escuro abre uma lista branca. */
+  color-scheme: dark;
   --radius: 0.75rem;
-  --background: #ffffff;
-  --foreground: #111827;
-  --card: #ffffff;
-  --card-foreground: #111827;
-  --popover: #ffffff;
-  --popover-foreground: #111827;
-  --primary: #1d4ed8;
-  --primary-foreground: #ffffff;
-  --secondary: #f3f4f6;
-  --secondary-foreground: #111827;
-  --muted: #f9fafb;
-  --muted-foreground: #6b7280;
-  --accent: rgba(29, 78, 216, 0.08);
-  --accent-foreground: #1d4ed8;
-  --destructive: #ef4444;
-  --border: #e5e7eb;
-  --input: #e5e7eb;
-  --ring: #1d4ed8;
+
+  /* ── Tier 1 — primitivos ────────────────────────────────────────────────
+     Cinza quente (hue ~50°, croma baixo): neutro sem virar frio nem marrom.
+     Elevação = luminosidade, ~4 pontos de L* entre níveis vizinhos. */
+  --surface-0: #1a1815; /* canvas da página */
+  --surface-1: #221f1b; /* card, painel, faixa alternada */
+  --surface-2: #2b2723; /* dentro de um nível 1: input, chip, hover */
+  --surface-3: #35302b; /* overlay: dropdown, popover, tooltip, sheet */
+
+  /* Duas bordas, não uma: colapsá-las reprova WCAG 1.4.11 em todo input
+     e botão outline. subtle = decorativa; strong = componente interativo
+     (3,25:1 sobre surface-1). */
+  --line-subtle: #3a342e;
+  --line-strong: #786d62;
+
+  /* Off-white quente em vez de branco puro, que causa halation no escuro.
+     ink-1 passa AA (4,5) até sobre surface-3, o pior caso do sistema. */
+  --ink-0: #f2eee8; /* texto primário   — 15,3:1 sobre surface-0 */
+  --ink-1: #a79e93; /* texto secundário —  4,94:1 no pior caso */
+  --ink-2: #7a7168; /* decorativo, nunca texto informativo */
+
+  /* O acento único. Branco sobre ocre dá 3,15:1 e reprova, então o texto
+     sobre ocre é a cor do canvas. */
+  --ocre: #c8813c;
+  --ocre-hover: #d18f45;
+  --ocre-ink: #1a1815;
+
+  /* ── Tier 2 — semânticos (contrato shadcn) ──────────────────────────── */
+  --background: var(--surface-0);
+  --foreground: var(--ink-0);
+  --card: var(--surface-1);
+  --card-foreground: var(--ink-0);
+  --popover: var(--surface-3);
+  --popover-foreground: var(--ink-0);
+  --primary: var(--ocre);
+  --primary-foreground: var(--ocre-ink);
+  --secondary: var(--surface-2);
+  --secondary-foreground: var(--ink-0);
+  --muted: var(--surface-1);
+  --muted-foreground: var(--ink-1);
+  --accent: var(--surface-2);
+  --accent-foreground: var(--ink-0);
+  --destructive: #f87171; /* o #ef4444 anterior dá 4,36:1 e reprova AA */
+  --destructive-foreground: var(--ocre-ink);
+  --border: var(--line-subtle);
+  --input: var(--line-strong);
+  --ring: var(--ocre);
+
+  /* Ilha clara remanescente: a vitrine de criadores só migra na fase 6. */
   --surface-light: #f6f7f9;
-  --warm: #d97706;
-  --warm-strong: #b45309;
 }
 
 @layer base {
@@ -73,6 +106,18 @@
   body {
     @apply text-foreground antialiased bg-background;
     min-height: 100vh;
+  }
+
+  /* Serifa por ELEMENTO, não pelas utilities .heading-*: só 25 dos 93 títulos
+     do site usam essas classes, os outros 68 são <h1 className="text-3xl">
+     cru. A regra de elemento cobre os 93 sem tocar em nenhum TSX, e por estar
+     no layer base qualquer componente ainda consegue sobrescrever. */
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display), Georgia, "Times New Roman", serif;
+    font-weight: 400;
+    letter-spacing: -0.015em;
   }
 }
 
@@ -97,8 +142,21 @@
     @apply bg-clip-text text-transparent bg-linear-to-b from-foreground to-muted-foreground;
   }
 
-  .glass-card {
-    @apply bg-card border border-border rounded-2xl shadow-sm;
+  /* Superfície de card padrão. Substitui o par `border-gray-200 bg-white
+     shadow-sm` repetido em ~14 componentes. (Era .glass-card — não havia
+     vidro nenhum no estilo.) */
+  .surface-card {
+    @apply bg-card border border-border rounded-2xl;
+  }
+
+  /* Faixa de seção alternada. Sobe --card um nível dentro dela, para que um
+     card descendente não fique da mesma cor do próprio fundo — o problema
+     clássico de "o card sumiu" no tema escuro. */
+  .band {
+    background-color: var(--surface-1);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    --card: var(--surface-2);
   }
 
   .font-display {
@@ -107,13 +165,11 @@
 
   .btn-modern {
     @apply relative font-medium transition-all duration-200;
-    @apply bg-primary text-white rounded-full;
-    @apply shadow-sm;
+    @apply bg-primary text-primary-foreground rounded-full;
   }
 
   .btn-modern:hover {
-    @apply bg-blue-800 shadow-md;
-    transform: translateY(-1px);
+    background-color: var(--ocre-hover);
   }
 
   .btn-ghost {
@@ -155,10 +211,12 @@
     transform: translateY(-1px);
   }
 
+  /* Linhas claras: as antigas eram pretas a 2,5% e ficavam invisíveis
+     sobre fundo escuro. */
   .bg-grid-pattern {
     background-image:
-      linear-gradient(rgba(0, 0, 0, 0.025) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(0, 0, 0, 0.025) 1px, transparent 1px);
+      linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
     background-size: 50px 50px;
   }
 
@@ -235,12 +293,13 @@
   background: transparent;
 }
 
+/* Antes era preto a 15%: invisível sobre fundo escuro. */
 ::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.15);
+  background: var(--line-strong);
   border-radius: 3px;
 }
 
 ::selection {
-  background: rgba(59, 130, 246, 0.3);
-  color: white;
+  background: var(--ocre);
+  color: var(--ocre-ink);
 }

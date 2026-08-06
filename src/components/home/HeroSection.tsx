@@ -57,7 +57,7 @@ export function HeroSection() {
           <div className={`relative hidden lg:flex justify-center lg:justify-end scroll-fade-up scroll-fade-up-delay-2 ${isVisible ? 'visible' : ''}`}>
             <div className="relative w-full max-w-md">
               {/* Main card */}
-              <div className="glass-card p-8 space-y-6">
+              <div className="surface-card p-8 space-y-6">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-3xl font-semibold text-gray-900">+30%</p>

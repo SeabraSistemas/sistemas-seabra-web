@@ -1,8 +1,8 @@
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
-import { Inter } from 'next/font/google';
-import type { Metadata } from 'next';
+import { Archivo, Newsreader } from 'next/font/google';
+import type { Metadata, Viewport } from 'next';
 import { locales, type Locale } from '@/i18n/config';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
@@ -11,9 +11,21 @@ import { OrganizationJsonLd, WebSiteJsonLd } from '@/components/seo/JsonLd';
 import { GoogleAnalytics } from '@/components/analytics/GoogleAnalytics';
 import '../globals.css';
 
-const inter = Inter({
+// Corpo: grotesk robusta, com mais presença que a Inter — que é o marcador
+// tipográfico nº 1 de "template gerado".
+const archivo = Archivo({
   subsets: ['latin'],
   variable: '--font-sans',
+  display: 'swap',
+});
+
+// Títulos: serifa editorial. É o que faz o site ler como instituição de 15
+// anos em vez de produto lançado ano passado. Consumida por h1/h2/h3 via
+// @layer base em globals.css.
+const newsreader = Newsreader({
+  subsets: ['latin'],
+  variable: '--font-display',
+  display: 'swap',
 });
 
 export const metadata: Metadata = {
@@ -65,6 +77,12 @@ export const metadata: Metadata = {
   },
 };
 
+// Pinta a barra do navegador no mobile com o canvas do site (--surface-0).
+// Sem isto, a barra fica branca e cria uma faixa clara acima da página escura.
+export const viewport: Viewport = {
+  themeColor: '#1a1815',
+};
+
 export function generateStaticParams() {
   return locales.map((locale) => ({ locale }));
 }
@@ -90,7 +108,9 @@ export default async function LocaleLayout({
 
   return (
     <html lang={locale} className="dark">
-      <body className={`${inter.variable} font-sans antialiased`}>
+      <body
+        className={`${archivo.variable} ${newsreader.variable} font-sans antialiased`}
+      >
         <GoogleAnalytics />
         <OrganizationJsonLd />
         <WebSiteJsonLd />
