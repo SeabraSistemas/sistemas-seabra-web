@@ -4,12 +4,13 @@ import { useTranslations, useLocale } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Check, Layers, Plus } from 'lucide-react';
+import { Layers, Plus } from 'lucide-react';
 import { buildWhatsAppUrl } from '@/lib/whatsapp';
 import { type Locale } from '@/i18n/config';
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
 import { cn } from '@/lib/utils';
 import { WhatsAppIcon } from '@/components/shared/WhatsAppIcon';
+import { BulletDot } from '@/components/shared/BulletDot';
 
 const tiers = [
   {
@@ -124,7 +125,7 @@ export function ServiceTiers() {
                     const descKey = `${tier.key}.f${i + 1}desc`;
                     return (
                       <li key={i} className="flex items-start gap-3">
-                        <Check className="h-3.5 w-3.5 shrink-0 mt-1 text-primary" />
+                        <BulletDot className="mt-2" />
                         <div>
                           <span className="text-sm font-medium text-foreground">
                             {t(featureKey)}

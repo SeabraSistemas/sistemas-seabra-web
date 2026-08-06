@@ -1,9 +1,10 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { Check, ShieldCheck } from 'lucide-react';
+import { ShieldCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Card, CardContent } from '@/components/ui/card';
+import { BulletDot } from '@/components/shared/BulletDot';
 
 export function Benefits() {
   const t = useTranslations('landing.benefits');
@@ -35,43 +36,12 @@ export function Benefits() {
           {benefits.map((benefit, index) => (
             <Card
               key={index}
-              className={cn(
-                'group h-full border-border bg-card',
-                'transition-all duration-300 ease-out',
-                'hover:shadow-md hover:border-border ',
-                'fade-in-up opacity-0'
-              )}
+              className={cn('h-full border-border bg-card', 'fade-in-up opacity-0')}
               style={{ animationDelay: `${index * 0.1}s` }}
             >
-              <CardContent className="p-6 flex items-start gap-4">
-                {/* Icon container with enhanced effects */}
-                <div className="flex-shrink-0">
-                  <div
-                    className={cn(
-                      'relative h-12 w-12 rounded-2xl flex items-center justify-center',
-                      'transition-all duration-300',
-                      'bg-secondary',
-                      'group-hover:bg-primary/20',
-                      'group- group-hover:rotate-3'
-                    )}
-                  >
-
-                    <Check
-                      className={cn(
-                        'h-6 w-6 relative z-10 transition-transform duration-300',
-                        'text-primary',
-                        'group-'
-                      )}
-                    />
-                  </div>
-                </div>
-
-                {/* Content */}
-                <div className="flex-1">
-                  <p className="text-foreground leading-relaxed group-hover:text-foreground transition-colors duration-300">
-                    {benefit}
-                  </p>
-                </div>
+              <CardContent className="p-6 flex items-start gap-3">
+                <BulletDot className="mt-2" />
+                <p className="text-foreground leading-relaxed">{benefit}</p>
               </CardContent>
             </Card>
           ))}

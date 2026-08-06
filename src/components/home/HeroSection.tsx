@@ -2,12 +2,12 @@
 
 import { useTranslations, useLocale } from 'next-intl';
 import { Button } from '@/components/ui/button';
-import { Check } from 'lucide-react';
 import { buildWhatsAppUrl } from '@/lib/whatsapp';
 import { type Locale } from '@/i18n/config';
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
 import { WhatsAppIcon } from '@/components/shared/WhatsAppIcon';
 import { FieldPhoto } from '@/components/shared/FieldPhoto';
+import { BulletDot } from '@/components/shared/BulletDot';
 
 export function HeroSection() {
   const t = useTranslations('hero');
@@ -30,7 +30,7 @@ export function HeroSection() {
             <ul className="space-y-3">
               {bullets.map((bullet) => (
                 <li key={bullet} className="flex items-start gap-3">
-                  <Check className="h-4 w-4 shrink-0 mt-1 text-primary" />
+                  <BulletDot className="mt-2" />
                   <span className="text-sm text-muted-foreground">{bullet}</span>
                 </li>
               ))}
