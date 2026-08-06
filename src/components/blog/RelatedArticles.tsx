@@ -20,9 +20,9 @@ export function RelatedArticles({ slugs, locale }: { slugs: string[]; locale: st
   if (posts.length === 0) return null;
 
   return (
-    <section className="section-padding bg-gray-50/50">
+    <section className="section-padding band">
       <div className="container-wide max-w-4xl mx-auto">
-        <h2 className="heading-2 text-gray-900 mb-8 text-center">
+        <h2 className="heading-2 text-foreground mb-8 text-center">
           {LABEL[locale] ?? LABEL.pt}
         </h2>
         <div className="grid gap-4 sm:grid-cols-2">
@@ -30,12 +30,12 @@ export function RelatedArticles({ slugs, locale }: { slugs: string[]; locale: st
             <Link
               key={post.slug}
               href={`/blog/${post.slug}`}
-              className="group block rounded-xl border border-gray-200 bg-white p-5 transition-all hover:border-primary/30 hover:shadow-md"
+              className="group block rounded-xl border border-border bg-card p-5 transition-all hover:border-input"
             >
               <span className="text-xs font-semibold uppercase tracking-wide text-primary">
                 {post.category}
               </span>
-              <h3 className="mt-2 font-semibold leading-snug text-gray-900 transition-colors group-hover:text-primary">
+              <h3 className="mt-2 font-semibold leading-snug text-foreground transition-colors group-hover:text-primary">
                 {post.title}
               </h3>
               <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">{post.excerpt}</p>

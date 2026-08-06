@@ -27,7 +27,7 @@ export default async function TermosPage({ params }: PageProps) {
     <article className="section-padding">
       <div className="container-tight max-w-3xl">
         <header className="mb-12">
-          <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl text-gray-900">
+          <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl text-foreground">
             {t('title')}
           </h1>
           <p className="text-sm text-muted-foreground mt-3">{t('lastUpdated')}</p>
@@ -38,7 +38,7 @@ export default async function TermosPage({ params }: PageProps) {
           ) : null}
         </header>
 
-        <div className="space-y-6 text-gray-700 leading-relaxed">
+        <div className="space-y-6 text-foreground leading-relaxed">
           <p>
             Estes Termos de Uso (&quot;Termos&quot;) regem o uso do aplicativo{' '}
             <strong>SeabraApp</strong> e dos serviços associados
@@ -50,7 +50,7 @@ export default async function TermosPage({ params }: PageProps) {
             compreendido e aceito estes Termos.
           </p>
 
-          <h2 className="text-2xl font-semibold text-gray-900 mt-10 mb-4">
+          <h2 className="text-2xl font-semibold text-foreground mt-10 mb-4">
             1. Aceitação
           </h2>
           <p>
@@ -58,7 +58,7 @@ export default async function TermosPage({ params }: PageProps) {
             não concorda, não use o Serviço.
           </p>
 
-          <h2 className="text-2xl font-semibold text-gray-900 mt-10 mb-4">
+          <h2 className="text-2xl font-semibold text-foreground mt-10 mb-4">
             2. Quem pode usar
           </h2>
           <ul className="list-disc pl-6 space-y-2">
@@ -73,7 +73,7 @@ export default async function TermosPage({ params }: PageProps) {
             </li>
           </ul>
 
-          <h2 className="text-2xl font-semibold text-gray-900 mt-10 mb-4">
+          <h2 className="text-2xl font-semibold text-foreground mt-10 mb-4">
             3. Conta e responsabilidade
           </h2>
           <ul className="list-disc pl-6 space-y-2">
@@ -91,7 +91,7 @@ export default async function TermosPage({ params }: PageProps) {
             </li>
           </ul>
 
-          <h2 className="text-2xl font-semibold text-gray-900 mt-10 mb-4">
+          <h2 className="text-2xl font-semibold text-foreground mt-10 mb-4">
             4. Planos e cobrança
           </h2>
           <ul className="list-disc pl-6 space-y-2">
@@ -118,7 +118,7 @@ export default async function TermosPage({ params }: PageProps) {
             </li>
           </ul>
 
-          <h2 className="text-2xl font-semibold text-gray-900 mt-10 mb-4">
+          <h2 className="text-2xl font-semibold text-foreground mt-10 mb-4">
             5. Uso aceitável
           </h2>
           <p>
@@ -145,7 +145,7 @@ export default async function TermosPage({ params }: PageProps) {
             </li>
           </ul>
 
-          <h2 className="text-2xl font-semibold text-gray-900 mt-10 mb-4">
+          <h2 className="text-2xl font-semibold text-foreground mt-10 mb-4">
             6. Conteúdo do usuário
           </h2>
           <ul className="list-disc pl-6 space-y-2">
@@ -164,7 +164,7 @@ export default async function TermosPage({ params }: PageProps) {
             </li>
           </ul>
 
-          <h2 className="text-2xl font-semibold text-gray-900 mt-10 mb-4">
+          <h2 className="text-2xl font-semibold text-foreground mt-10 mb-4">
             7. Propriedade intelectual
           </h2>
           <ul className="list-disc pl-6 space-y-2">
@@ -178,7 +178,7 @@ export default async function TermosPage({ params }: PageProps) {
             </li>
           </ul>
 
-          <h2 className="text-2xl font-semibold text-gray-900 mt-10 mb-4">
+          <h2 className="text-2xl font-semibold text-foreground mt-10 mb-4">
             8. Privacidade
           </h2>
           <p>
@@ -189,7 +189,7 @@ export default async function TermosPage({ params }: PageProps) {
             , parte integrante destes Termos.
           </p>
 
-          <h2 className="text-2xl font-semibold text-gray-900 mt-10 mb-4">
+          <h2 className="text-2xl font-semibold text-foreground mt-10 mb-4">
             9. Disponibilidade e suporte
           </h2>
           <ul className="list-disc pl-6 space-y-2">
@@ -207,7 +207,7 @@ export default async function TermosPage({ params }: PageProps) {
             </li>
           </ul>
 
-          <h2 className="text-2xl font-semibold text-gray-900 mt-10 mb-4">
+          <h2 className="text-2xl font-semibold text-foreground mt-10 mb-4">
             10. Limitação de responsabilidade
           </h2>
           <p>Na máxima extensão permitida por lei:</p>
@@ -235,7 +235,7 @@ export default async function TermosPage({ params }: PageProps) {
             </li>
           </ul>
 
-          <h2 className="text-2xl font-semibold text-gray-900 mt-10 mb-4">
+          <h2 className="text-2xl font-semibold text-foreground mt-10 mb-4">
             11. Encerramento
           </h2>
           <p>Podemos suspender ou encerrar seu acesso a qualquer momento por:</p>
@@ -253,7 +253,7 @@ export default async function TermosPage({ params }: PageProps) {
             </li>
           </ul>
 
-          <h2 className="text-2xl font-semibold text-gray-900 mt-10 mb-4">
+          <h2 className="text-2xl font-semibold text-foreground mt-10 mb-4">
             12. Alterações dos Termos
           </h2>
           <p>
@@ -262,7 +262,7 @@ export default async function TermosPage({ params }: PageProps) {
             de antecedência. O uso continuado após o prazo implica aceitação.
           </p>
 
-          <h2 className="text-2xl font-semibold text-gray-900 mt-10 mb-4">
+          <h2 className="text-2xl font-semibold text-foreground mt-10 mb-4">
             13. Disposições gerais
           </h2>
           <ul className="list-disc pl-6 space-y-2">
@@ -275,7 +275,7 @@ export default async function TermosPage({ params }: PageProps) {
             <li>Cessão dos Termos pelo Usuário só com autorização escrita</li>
           </ul>
 
-          <h2 className="text-2xl font-semibold text-gray-900 mt-10 mb-4">
+          <h2 className="text-2xl font-semibold text-foreground mt-10 mb-4">
             14. Lei aplicável e foro
           </h2>
           <p>
@@ -285,7 +285,7 @@ export default async function TermosPage({ params }: PageProps) {
             quaisquer controvérsias.
           </p>
 
-          <h2 className="text-2xl font-semibold text-gray-900 mt-10 mb-4">
+          <h2 className="text-2xl font-semibold text-foreground mt-10 mb-4">
             15. Contato
           </h2>
           <ul className="list-disc pl-6 space-y-2">

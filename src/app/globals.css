@@ -219,6 +219,105 @@
     transform: translateY(-1px);
   }
 
+  /* Corpo de artigo do blog. Substitui as classes prose-* que estavam no
+     markup mas nunca produziram regra alguma — @tailwindcss/typography não
+     está instalado. Escrito à mão sobre os tokens para não trazer o plugin,
+     que embute defaults de modo claro.
+
+     Leitura longa em fundo escuro: corpo em ink-1 (não branco puro, que
+     causa halation), entrelinha generosa e medida limitada a ~68 caracteres,
+     que é onde o olho volta para a linha seguinte sem se perder. */
+  .article {
+    max-width: 68ch;
+    color: var(--muted-foreground);
+    line-height: 1.75;
+  }
+
+  .article > * + * {
+    margin-top: 1.25em;
+  }
+
+  .article h2 {
+    color: var(--foreground);
+    font-size: 1.5rem;
+    margin-top: 2.5rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .article h3 {
+    color: var(--foreground);
+    font-size: 1.25rem;
+    margin-top: 2rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .article strong {
+    color: var(--foreground);
+    font-weight: 600;
+  }
+
+  .article a {
+    color: var(--primary);
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
+
+  .article ul,
+  .article ol {
+    padding-left: 1.5rem;
+  }
+
+  .article ul {
+    list-style: disc;
+  }
+
+  .article ol {
+    list-style: decimal;
+  }
+
+  .article li + li {
+    margin-top: 0.4em;
+  }
+
+  .article blockquote {
+    border-left: 2px solid var(--primary);
+    padding-left: 1.25rem;
+    color: var(--foreground);
+  }
+
+  .article code {
+    background: var(--secondary);
+    border-radius: 0.25rem;
+    padding: 0.1em 0.35em;
+    font-size: 0.9em;
+  }
+
+  /* O conteúdo tem tabelas GFM, que sem estilo saem sem borda nenhuma. */
+  .article table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+    display: block;
+    overflow-x: auto;
+  }
+
+  .article th,
+  .article td {
+    border: 1px solid var(--border);
+    padding: 0.6rem 0.8rem;
+    text-align: left;
+  }
+
+  .article th {
+    color: var(--foreground);
+    background: var(--secondary);
+    font-weight: 600;
+  }
+
+  .article img {
+    border-radius: var(--radius);
+  }
+
   /* Linhas claras: as antigas eram pretas a 2,5% e ficavam invisíveis
      sobre fundo escuro. */
   .bg-grid-pattern {

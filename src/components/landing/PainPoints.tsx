@@ -21,12 +21,12 @@ export function PainPoints() {
 
       <div className="container-tight relative">
         <div className="text-center space-y-4 mb-16">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-500/10 border border-red-500/20 mb-4">
-            <AlertCircle className="h-4 w-4 text-red-500" />
-            <span className="text-sm font-medium text-red-500">Desafios</span>
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-destructive/10 border border-destructive/20 mb-4">
+            <AlertCircle className="h-4 w-4 text-destructive" />
+            <span className="text-sm font-medium text-destructive">Desafios</span>
           </div>
 
-          <h2 className="heading-2 text-gray-900">
+          <h2 className="heading-2 text-foreground">
             {t('title')}
           </h2>
         </div>
@@ -36,12 +36,12 @@ export function PainPoints() {
             <Card
               key={index}
               className={cn(
-                'group h-full border-gray-200 bg-white shadow-sm',
+                'group h-full border-border bg-card',
                 'transition-all duration-300 ease-out',
-                'hover:scale-[1.02] hover:-translate-y-1',
+                '',
                 'hover:shadow-xl',
-                'hover:border-red-500/30',
-                'group-hover:shadow-red-500/10',
+                'hover:border-destructive/30',
+                'group-hover:',
                 'fade-in-up opacity-0'
               )}
               style={{ animationDelay: `${index * 0.1}s` }}
@@ -53,22 +53,17 @@ export function PainPoints() {
                     className={cn(
                       'relative h-12 w-12 rounded-2xl flex items-center justify-center',
                       'transition-all duration-300',
-                      'bg-red-500/10',
-                      'group-hover:bg-red-500/20',
-                      'group-hover:scale-110 group-hover:rotate-3'
+                      'bg-destructive/10',
+                      'group-hover:bg-destructive/20',
+                      'group- group-hover:rotate-3'
                     )}
                   >
-                    {/* Glow effect behind icon */}
-                    <div className={cn(
-                      'absolute inset-0 rounded-2xl blur-xl opacity-0 group-hover:opacity-50 transition-opacity duration-300',
-                      'bg-red-500/20'
-                    )} />
 
                     <X
                       className={cn(
                         'h-6 w-6 relative z-10 transition-transform duration-300',
-                        'text-red-500',
-                        'group-hover:scale-110'
+                        'text-destructive',
+                        'group-'
                       )}
                     />
                   </div>
@@ -76,16 +71,10 @@ export function PainPoints() {
 
                 {/* Content */}
                 <div className="flex-1">
-                  <p className="text-gray-700 leading-relaxed group-hover:text-gray-900 transition-colors duration-300">
+                  <p className="text-foreground leading-relaxed group-hover:text-foreground transition-colors duration-300">
                     {pain}
                   </p>
                 </div>
-
-                {/* Decorative corner accent */}
-                <div className={cn(
-                  'absolute top-0 right-0 w-20 h-20 rounded-bl-full opacity-0 group-hover:opacity-5 transition-opacity duration-300',
-                  'bg-red-500/20'
-                )} />
               </CardContent>
             </Card>
           ))}

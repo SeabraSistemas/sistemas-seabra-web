@@ -22,13 +22,13 @@ export function ServicesCTA() {
           className={`max-w-3xl mx-auto text-center space-y-10 scroll-fade-up ${isVisible ? 'visible' : ''}`}
         >
           {/* Icon */}
-          <div className="inline-flex items-center justify-center h-16 w-16 rounded-2xl bg-primary/20 border border-primary/30 animate-pulse-glow">
+          <div className="inline-flex items-center justify-center h-16 w-16 rounded-2xl bg-primary/20 border border-primary/30 ">
             <ArrowUpRight className="h-8 w-8 text-primary" />
           </div>
 
           {/* Content */}
           <div className="space-y-6">
-            <h2 className="heading-1 text-gray-900">{t('title')}</h2>
+            <h2 className="heading-1 text-foreground">{t('title')}</h2>
             <p className="body-large max-w-xl mx-auto">{t('subtitle')}</p>
           </div>
 
@@ -37,7 +37,7 @@ export function ServicesCTA() {
             <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
               <Button
                 size="lg"
-                className="rounded-full px-10 h-14 text-base gap-3 bg-[#25D366] text-white hover:bg-[#20BD5A] shadow-xl shadow-[#25D366]/30 hover:shadow-2xl hover:shadow-[#25D366]/40 transition-all duration-300 hover:-translate-y-0.5"
+                className="rounded-full px-10 h-14 text-base gap-3 bg-[#25D366] text-white hover:bg-[#20BD5A] shadow-xl shadow-[#25D366]/30 hover:shadow-2xl hover:shadow-[#25D366]/40 transition-all duration-300"
               >
                 <WhatsAppIcon className="h-5 w-5" />
                 {t('button')}
@@ -46,7 +46,7 @@ export function ServicesCTA() {
           </div>
 
           {/* Trust text */}
-          <p className="text-sm text-gray-400">
+          <p className="text-sm text-muted-foreground">
             Sem compromisso. Resposta em até 24h.
           </p>
         </div>

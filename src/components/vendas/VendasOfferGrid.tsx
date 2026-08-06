@@ -7,8 +7,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 
 const offers = [
-  { key: 'consultoria', href: '/vendas/consultoria', icon: Stethoscope, iconBg: 'bg-emerald-50', iconText: 'text-emerald-600', border: 'hover:border-emerald-500/40' },
-  { key: 'produtos', href: '/vendas/produtos', icon: Cpu, iconBg: 'bg-blue-50', iconText: 'text-blue-600', border: 'hover:border-blue-500/40' },
+  { key: 'consultoria', href: '/vendas/consultoria', icon: Stethoscope, iconBg: 'bg-secondary', iconText: 'text-foreground', border: 'hover:border-input' },
+  { key: 'produtos', href: '/vendas/produtos', icon: Cpu, iconBg: 'bg-secondary', iconText: 'text-foreground', border: 'hover:border-input' },
 ] as const;
 
 export function VendasOfferGrid() {
@@ -24,7 +24,7 @@ export function VendasOfferGrid() {
               <Link key={o.key} href={o.href} className="group">
                 <Card
                   className={cn(
-                    'h-full border-gray-200 bg-white shadow-sm transition-all duration-300 hover:shadow-xl hover:-translate-y-1',
+                    'h-full border-border bg-card transition-all duration-300 hover:shadow-xl ',
                     o.border
                   )}
                 >
@@ -32,7 +32,7 @@ export function VendasOfferGrid() {
                     <div className={cn('mb-6 inline-flex w-fit rounded-2xl p-3', o.iconBg)}>
                       <Icon className={cn('h-8 w-8', o.iconText)} />
                     </div>
-                    <h3 className="text-2xl font-semibold text-gray-900 mb-3 group-hover:text-primary transition-colors">
+                    <h3 className="text-2xl font-semibold text-foreground mb-3 group-hover:text-primary transition-colors">
                       {t(`${o.key}.title`)}
                     </h3>
                     <p className="text-sm text-muted-foreground mb-6">{t(`${o.key}.desc`)}</p>

@@ -83,14 +83,14 @@ export default async function ProdutosPage({ params }: PageProps) {
 
       <section className="section-padding">
         <div className="max-w-3xl mx-auto px-4">
-          <h2 className="text-2xl font-semibold text-gray-900 mb-6">{faq.title}</h2>
+          <h2 className="text-2xl font-semibold text-foreground mb-6">{faq.title}</h2>
           <div className="space-y-3">
             {faq.items.map((item, i) => (
               <details
                 key={i}
-                className="group rounded-xl border border-gray-200 p-4 open:bg-gray-50 transition-colors"
+                className="group rounded-xl border border-border p-4 open:bg-muted transition-colors"
               >
-                <summary className="flex cursor-pointer list-none items-center justify-between font-medium text-gray-900">
+                <summary className="flex cursor-pointer list-none items-center justify-between font-medium text-foreground">
                   {item.q}
                   <span className="ml-4 text-primary transition-transform group-open:rotate-45">
                     +

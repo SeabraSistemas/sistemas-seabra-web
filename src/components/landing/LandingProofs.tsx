@@ -22,23 +22,23 @@ export function LandingProofs({ segmentSlug }: LandingProofsProps) {
   });
 
   return (
-    <section className="section-padding bg-gray-50 border-y border-gray-200">
+    <section className="section-padding band">
       <div className="container-tight">
         <div className="max-w-2xl mx-auto text-center space-y-8">
           <div className="space-y-4">
-            <h2 className="heading-2 text-gray-900">{t('title')}</h2>
+            <h2 className="heading-2 text-foreground">{t('title')}</h2>
             <p className="body-large text-muted-foreground">{t('ctaMessage')}</p>
           </div>
 
           <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="inline-block">
-            <Button className="rounded-full px-8 h-14 text-base gap-2.5 bg-[#25D366] text-white hover:bg-[#20BD5A] shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5">
+            <Button className="rounded-full px-8 h-14 text-base gap-2.5 bg-[#25D366] text-white hover:bg-[#20BD5A] shadow-lg hover:shadow-xl transition-all duration-300 ">
               <WhatsAppIcon className="h-5 w-5" />
               {t('ctaButton')}
               <ArrowRight className="h-4 w-4" />
             </Button>
           </a>
 
-          <p className="text-xs text-gray-500">{t('ctaNote')}</p>
+          <p className="text-xs text-muted-foreground">{t('ctaNote')}</p>
         </div>
       </div>
     </section>

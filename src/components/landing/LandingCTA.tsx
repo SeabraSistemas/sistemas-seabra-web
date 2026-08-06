@@ -22,16 +22,16 @@ export function LandingCTA({ segmentSlug }: LandingCTAProps) {
       <div className="container-tight">
         <div className="max-w-3xl mx-auto text-center space-y-10">
           {/* Icon */}
-          <div className="inline-flex items-center justify-center h-16 w-16 rounded-2xl bg-white/10 border border-white/20">
-            <ArrowUpRight className="h-8 w-8 text-white" />
+          <div className="inline-flex items-center justify-center h-16 w-16 rounded-2xl bg-card/10 border border-white/20">
+            <ArrowUpRight className="h-8 w-8 text-primary-foreground" />
           </div>
 
           {/* Content */}
           <div className="space-y-6">
-            <h2 className="heading-1 text-white">
+            <h2 className="heading-1 text-primary-foreground">
               {t('title')}
             </h2>
-            <p className="text-base md:text-lg text-blue-100 leading-relaxed max-w-xl mx-auto">
+            <p className="text-base md:text-lg text-primary-foreground/80 leading-relaxed max-w-xl mx-auto">
               {t('subtitle')}
             </p>
           </div>
@@ -40,7 +40,7 @@ export function LandingCTA({ segmentSlug }: LandingCTAProps) {
           <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
             <Button
               size="lg"
-              className="rounded-full px-10 h-14 text-base gap-3 bg-[#25D366] text-white hover:bg-[#20BD5A] shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5"
+              className="rounded-full px-10 h-14 text-base gap-3 bg-[#25D366] text-white hover:bg-[#20BD5A] shadow-lg hover:shadow-xl transition-all duration-300"
             >
               <WhatsAppIcon className="h-5 w-5" />
               {t('button')}
@@ -48,7 +48,7 @@ export function LandingCTA({ segmentSlug }: LandingCTAProps) {
           </a>
 
           {/* Trust text */}
-          <p className="text-sm text-blue-200">
+          <p className="text-sm text-primary-foreground/70">
             Sem compromisso. Resposta em até 24h.
           </p>
         </div>

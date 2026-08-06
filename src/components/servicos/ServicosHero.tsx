@@ -28,7 +28,7 @@ export function ServicosHero() {
         {/* Badge */}
         <Badge
           variant="outline"
-          className="px-4 py-1.5 rounded-full border-gray-300 bg-gray-50 backdrop-blur-sm text-gray-700 font-medium"
+          className="px-4 py-1.5 rounded-full border-border bg-muted backdrop-blur-sm text-foreground font-medium"
         >
           <Globe className="h-3.5 w-3.5 mr-2 text-primary" />
           {t('badge')}
@@ -36,7 +36,7 @@ export function ServicosHero() {
 
         {/* Headline */}
         <div className="space-y-6">
-          <h1 className="heading-display text-gradient-subtle max-w-4xl mx-auto">
+          <h1 className="heading-display max-w-4xl mx-auto">
             {t('title')}
           </h1>
           <p className="body-large max-w-2xl mx-auto">
