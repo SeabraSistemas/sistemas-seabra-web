@@ -20,12 +20,7 @@ export function LandingHero({ segmentKey, segmentSlug }: LandingHeroProps) {
 
   return (
     <section className="relative min-h-[70vh] flex items-center pt-28 pb-20 overflow-hidden">
-      {/* Background Effects */}
-      <div className="absolute inset-0 bg-gradient-radial-top pointer-events-none" />
       <div className="absolute inset-0 bg-grid-pattern opacity-20 pointer-events-none" />
-
-      {/* Blur blobs */}
-      <div className="blur-blob blur-blob-primary w-[500px] h-[500px] -top-32 left-1/2 -translate-x-1/2 opacity-30" />
 
       <div className="container-tight relative z-10 text-center space-y-10">
         {/* Badge */}

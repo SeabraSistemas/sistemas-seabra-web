@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { ShoppingCart, Minus, Plus, Trash2 } from 'lucide-react';
 import { type Locale } from '@/i18n/config';
 import { buildWhatsAppOrderUrl } from '@/lib/whatsapp';
-import { WhatsAppIcon } from '../WhatsAppIcon';
+import { WhatsAppIcon } from '@/components/shared/WhatsAppIcon';
 import { useCart, unitPrice, lineTotal } from './CartContext';
 
 function formatBRL(value: number): string {

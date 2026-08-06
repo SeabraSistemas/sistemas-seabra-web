@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Stethoscope } from 'lucide-react';
 import { buildWhatsAppUrl } from '@/lib/whatsapp';
 import { type Locale } from '@/i18n/config';
-import { WhatsAppIcon } from './WhatsAppIcon';
+import { WhatsAppIcon } from '@/components/shared/WhatsAppIcon';
 
 const stats = ['years', 'reach', 'count'] as const;
 

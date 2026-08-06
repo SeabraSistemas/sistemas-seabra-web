@@ -4,7 +4,7 @@ import { useTranslations, useLocale } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { buildWhatsAppUrl } from '@/lib/whatsapp';
 import { type Locale } from '@/i18n/config';
-import { WhatsAppIcon } from './WhatsAppIcon';
+import { WhatsAppIcon } from '@/components/shared/WhatsAppIcon';
 
 export function VendasCTA() {
   const t = useTranslations('vendas.cta');
