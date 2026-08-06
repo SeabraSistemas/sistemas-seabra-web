@@ -168,7 +168,7 @@ export function ContactForm() {
 
       <Button
         type="submit"
-        className="w-full rounded-xl h-12 text-sm gap-2 bg-[#25D366] text-background hover:bg-[#20BD5A] transition-colors"
+        className="w-full rounded-xl h-12 text-sm gap-2 bg-wa text-wa-ink hover:bg-wa-hover transition-colors"
       >
         <Send className="h-4 w-4" />
         {t('submit')}

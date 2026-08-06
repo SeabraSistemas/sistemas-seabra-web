@@ -42,12 +42,11 @@ export function WhatsAppButton({ segment, className }: WhatsAppButtonProps) {
         'fixed bottom-6 right-6 z-50',
         'flex items-center justify-center',
         'h-16 w-16 rounded-2xl',
-        // Verde da marca preservado: é reconhecimento de plataforma, o
-        // visitante sabe o que o botão faz antes de ler. Mas o texto é
-        // escuro — branco sobre #25D366 dá 1,98:1 e reprova AA; escuro
-        // dá 8,94:1.
-        'bg-[#25D366]',
-        'text-background',
+        // Cor de plataforma preservada, verde escuro (--wa: #075e54, o das
+        // barras do app). O verde claro do botão do app reprova com texto
+        // branco (1,98:1); este dá 7,67:1.
+        'bg-wa',
+        'text-wa-ink',
         'transition-opacity duration-300',
         isVisible ? 'opacity-100' : 'opacity-0',
         className

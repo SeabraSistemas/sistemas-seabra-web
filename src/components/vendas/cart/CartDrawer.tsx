@@ -112,7 +112,7 @@ export function CartDrawer() {
               </div>
               <Button
                 onClick={checkout}
-                className="w-full rounded-full h-12 gap-2 bg-[#25D366] text-background hover:bg-[#20BD5A] transition-colors"
+                className="w-full rounded-full h-12 gap-2 bg-wa text-wa-ink hover:bg-wa-hover transition-colors"
               >
                 <WhatsAppIcon className="h-5 w-5" />
                 {t('checkout')}

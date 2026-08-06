@@ -28,6 +28,9 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  --color-wa: var(--wa);
+  --color-wa-hover: var(--wa-hover);
+  --color-wa-ink: var(--wa-ink);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -89,6 +92,15 @@
   --border: var(--line-subtle);
   --input: var(--line-strong);
   --ring: var(--ocre);
+
+  /* WhatsApp. É a única cor de terceiro no site, e fica porque é
+     reconhecimento de plataforma: o visitante sabe o que o botão faz antes
+     de ler. Usa o verde ESCURO da identidade do WhatsApp (o das barras do
+     app) em vez do verde claro: sobre o claro, texto branco dá 1,98:1 e some
+     no celular sob sol. Sobre este, dá 7,67:1. */
+  --wa: #075e54;
+  --wa-hover: #0a6f63;
+  --wa-ink: #ffffff;
 }
 
 @layer base {

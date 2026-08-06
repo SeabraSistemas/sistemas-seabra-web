@@ -45,10 +45,10 @@ export default async function ContatoPage({ params }: PageProps) {
         {/* Contact Options */}
         <div className="grid gap-6 md:grid-cols-2 max-w-2xl mx-auto mb-16">
           {/* WhatsApp */}
-          <Card className="border-border hover:border-[#25D366]/50 transition-colors hover:shadow-md">
+          <Card className="border-border hover:border-wa/50 transition-colors">
             <CardContent className="p-8 text-center space-y-6">
-              <div className="h-16 w-16 mx-auto rounded-2xl bg-[#25D366]/10 flex items-center justify-center">
-                <MessageCircle className="h-8 w-8 text-[#25D366]" />
+              <div className="h-16 w-16 mx-auto rounded-2xl bg-wa/10 flex items-center justify-center">
+                <MessageCircle className="h-8 w-8 text-wa" />
               </div>
               <div className="space-y-2">
                 <h2 className="text-xl font-semibold text-foreground">
@@ -59,7 +59,7 @@ export default async function ContatoPage({ params }: PageProps) {
                 </p>
               </div>
               <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
-                <Button className="rounded-full gap-2 w-full bg-[#25D366] hover:bg-[#20BA5C] text-background">
+                <Button className="rounded-full gap-2 w-full bg-wa hover:bg-wa-hover text-wa-ink">
                   {t('whatsappButton')}
                   <ArrowRight className="h-4 w-4" />
                 </Button>

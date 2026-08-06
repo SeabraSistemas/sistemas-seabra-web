@@ -20,7 +20,7 @@ export function VendasCTA() {
           <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="inline-block">
             <Button
               size="lg"
-              className="rounded-full px-10 h-14 text-base gap-3 bg-[#25D366] text-background hover:bg-[#20BD5A] shadow-lg hover:shadow-xl transition-all duration-300"
+              className="rounded-full px-10 h-14 text-base gap-3 bg-wa text-wa-ink hover:bg-wa-hover shadow-lg hover:shadow-xl transition-all duration-300"
             >
               <WhatsAppIcon className="h-5 w-5" />
               {t('button')}
