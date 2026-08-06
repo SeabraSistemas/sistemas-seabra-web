@@ -504,16 +504,11 @@
         "subtitle": "Microchips certificados ICAR y lectores FDX-B para identificar tus animales con precisión y estándar internacional."
       },
       "pjNote": "Valores para empresas (CNPJ).",
-      "categories": {
-        "microchip": "Microchips",
-        "leitor": "Lectores"
-      },
       "specLabels": {
         "frequency": "Frecuencia",
         "protocol": "Protocolo",
         "size": "Dimensiones",
         "application": "Aplicación",
-        "range": "Alcance",
         "connectivity": "Conectividad"
       },
       "priceTableTitle": "Precio por cantidad",

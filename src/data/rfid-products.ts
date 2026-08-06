@@ -70,10 +70,7 @@ export const rfidProducts: RFIDProduct[] = [
     nameKey: 'leitor-rfid',
     descKey: 'leitor-rfid',
     image: '/images/produtos/leitor_portatil_sem_bt.png',
-    specs: [
-      { labelKey: 'protocol', value: 'FDX-B · 132,2 kHz' },
-      { labelKey: 'connectivity', value: 'USB' },
-    ],
+    specs: [{ labelKey: 'protocol', value: 'FDX-B · 132,2 kHz' }],
     priceBRL: 180,
     unit: 'unidade',
   },
@@ -85,7 +82,7 @@ export const rfidProducts: RFIDProduct[] = [
     image: '/images/produtos/leitor_portatil_bt.png',
     specs: [
       { labelKey: 'protocol', value: 'FDX-B · 132,2 kHz' },
-      { labelKey: 'connectivity', value: 'Bluetooth + USB' },
+      { labelKey: 'connectivity', value: 'Bluetooth' },
     ],
     priceBRL: 280,
     unit: 'unidade',
@@ -99,12 +96,9 @@ export const rfidProducts: RFIDProduct[] = [
     image: '/images/produtos/leitor_bastao.png',
     specs: [
       { labelKey: 'protocol', value: 'FDX-B · 132,2 kHz' },
-      { labelKey: 'range', value: 'longo alcance (bastão)' },
       { labelKey: 'connectivity', value: 'Bluetooth' },
     ],
     priceBRL: 4950,
     unit: 'unidade',
   },
 ];
-
-export const rfidCategories: RFIDCategory[] = ['microchip', 'leitor'];

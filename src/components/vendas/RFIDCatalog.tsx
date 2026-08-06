@@ -6,12 +6,7 @@ import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Minus, Plus, ShoppingCart } from 'lucide-react';
-import {
-  rfidProducts,
-  rfidCategories,
-  unitPriceForQty,
-  type RFIDProduct,
-} from '@/data/rfid-products';
+import { rfidProducts, unitPriceForQty, type RFIDProduct } from '@/data/rfid-products';
 import { useCart } from './cart/CartContext';
 
 function formatBRL(value: number): string {
@@ -150,25 +145,18 @@ function ProductCard({ product }: { product: RFIDProduct }) {
 }
 
 export function RFIDCatalog() {
-  const t = useTranslations('vendas.produtos');
-
   return (
+    // Sem agrupar por categoria: são sempre só 4 produtos ao todo, e
+    // dividir "Microchips" (1 item) de "Leitores" (3 itens) em grids
+    // separados deixava a seção do microchip sozinho, ocupando 1 de 3
+    // colunas — o resto da linha ficava vazio. Um grid único resolve.
     <section className="section-padding bg-muted border-t border-border">
-      <div className="container-wide space-y-14">
-        {rfidCategories.map((category) => {
-          const products = rfidProducts.filter((p) => p.category === category);
-          if (products.length === 0) return null;
-          return (
-            <div key={category}>
-              <h2 className="heading-3 text-foreground mb-6">{t(`categories.${category}`)}</h2>
-              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                {products.map((p) => (
-                  <ProductCard key={p.slug} product={p} />
-                ))}
-              </div>
-            </div>
-          );
-        })}
+      <div className="container-wide">
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {rfidProducts.map((p) => (
+            <ProductCard key={p.slug} product={p} />
+          ))}
+        </div>
       </div>
     </section>
   );

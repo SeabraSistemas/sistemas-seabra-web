@@ -26,7 +26,7 @@ export const produtosFaq: Record<'pt' | 'es' | 'en', Faq> = {
       },
       {
         q: 'Preciso de um leitor para usar o microchip?',
-        a: 'Sim. O leitor faz a leitura do chip sem digitar. Temos leitor USB, leitor com Bluetooth (envia para o celular/app) e leitor bastão de longo alcance.',
+        a: 'Sim. O leitor faz a leitura do chip sem digitar. Temos leitor com tela própria, leitor com Bluetooth (envia para o celular/app) e leitor bastão de longo alcance.',
       },
       {
         q: 'Qual é a quantidade mínima de compra?',
@@ -51,7 +51,7 @@ export const produtosFaq: Record<'pt' | 'es' | 'en', Faq> = {
       },
       {
         q: '¿Necesito un lector para usar el microchip?',
-        a: 'Sí. El lector lee el chip sin teclear. Tenemos lector USB, lector con Bluetooth (envía al teléfono/app) y lector tipo bastón de largo alcance.',
+        a: 'Sí. El lector lee el chip sin teclear. Tenemos lector con pantalla propia, lector con Bluetooth (envía al teléfono/app) y lector tipo bastón de largo alcance.',
       },
       {
         q: '¿Cuál es la cantidad mínima de compra?',
@@ -76,7 +76,7 @@ export const produtosFaq: Record<'pt' | 'es' | 'en', Faq> = {
       },
       {
         q: 'Do I need a reader to use the microchip?',
-        a: 'Yes. The reader reads the chip with no typing. We offer a USB reader, a Bluetooth reader (sends to phone/app) and a long-range stick reader.',
+        a: 'Yes. The reader reads the chip with no typing. We offer a reader with its own screen, a Bluetooth reader (sends to phone/app) and a long-range stick reader.',
       },
       {
         q: 'What is the minimum order quantity?',
