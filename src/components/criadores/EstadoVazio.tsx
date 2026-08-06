@@ -16,9 +16,9 @@ export function EstadoVazio({
   ctaHref?: string;
 }) {
   return (
-    <div className="mx-auto max-w-md rounded-2xl border border-gray-200 bg-surface-light px-6 py-12 text-center">
-      <h2 className="text-lg font-semibold text-gray-900">{titulo}</h2>
-      <p className="mt-2 text-sm text-gray-500">{texto}</p>
+    <div className="mx-auto max-w-md rounded-2xl border border-border bg-card px-6 py-12 text-center">
+      <h2 className="text-lg font-semibold text-foreground">{titulo}</h2>
+      <p className="mt-2 text-sm text-muted-foreground">{texto}</p>
       {ctaHref && ctaLabel && (
         <Link
           href={ctaHref}

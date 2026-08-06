@@ -33,7 +33,6 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
   --radius-2xl: calc(var(--radius) + 8px);
-  --color-surface-light: var(--surface-light);
 }
 
 :root {
@@ -90,9 +89,6 @@
   --border: var(--line-subtle);
   --input: var(--line-strong);
   --ring: var(--ocre);
-
-  /* Ilha clara remanescente: a vitrine de criadores só migra na fase 6. */
-  --surface-light: #f6f7f9;
 }
 
 @layer base {
