@@ -80,7 +80,7 @@ export const metadata: Metadata = {
 // Pinta a barra do navegador no mobile com o canvas do site (--surface-0).
 // Sem isto, a barra fica branca e cria uma faixa clara acima da página escura.
 export const viewport: Viewport = {
-  themeColor: '#1a1815',
+  themeColor: '#000000',
 };
 
 export function generateStaticParams() {

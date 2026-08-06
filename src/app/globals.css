@@ -43,30 +43,32 @@
   --radius: 0.75rem;
 
   /* ── Tier 1 — primitivos ────────────────────────────────────────────────
-     Cinza quente (hue ~50°, croma baixo): neutro sem virar frio nem marrom.
-     Elevação = luminosidade, ~4 pontos de L* entre níveis vizinhos. */
-  --surface-0: #1a1815; /* canvas da página */
-  --surface-1: #221f1b; /* card, painel, faixa alternada */
-  --surface-2: #2b2723; /* dentro de um nível 1: input, chip, hover */
-  --surface-3: #35302b; /* overlay: dropdown, popover, tooltip, sheet */
+     Cinza NEUTRO, sem matiz. A primeira versão usava cinza quente (hue ~50°)
+     para "remeter ao campo", mas numa superfície do tamanho de uma página o
+     matiz lê como sépia — o fundo parecia marrom, não preto.
+     O calor do site vem do acento ocre e das fotografias de campo. O canvas
+     fica fora disso. Elevação = luminosidade pura. */
+  --surface-0: #000000; /* canvas da página */
+  --surface-1: #121212; /* card, painel, faixa alternada */
+  --surface-2: #1e1e1e; /* dentro de um nível 1: input, chip, hover */
+  --surface-3: #2a2a2a; /* overlay: dropdown, popover, tooltip, sheet */
 
   /* Duas bordas, não uma: colapsá-las reprova WCAG 1.4.11 em todo input
      e botão outline. subtle = decorativa; strong = componente interativo
-     (3,25:1 sobre surface-1). */
-  --line-subtle: #3a342e;
-  --line-strong: #786d62;
+     (3,26:1 sobre surface-1). */
+  --line-subtle: #262626;
+  --line-strong: #666666;
 
-  /* Off-white quente em vez de branco puro, que causa halation no escuro.
-     ink-1 passa AA (4,5) até sobre surface-3, o pior caso do sistema. */
-  --ink-0: #f2eee8; /* texto primário   — 15,3:1 sobre surface-0 */
-  --ink-1: #a79e93; /* texto secundário —  4,94:1 no pior caso */
-  --ink-2: #7a7168; /* decorativo, nunca texto informativo */
+  /* ink-1 passa AA (4,5) até sobre surface-3, o pior caso do sistema. */
+  --ink-0: #f5f5f5; /* texto primário   — 19,3:1 sobre o canvas */
+  --ink-1: #999999; /* texto secundário —  5,04:1 no pior caso */
+  --ink-2: #6b6b6b; /* decorativo, nunca texto informativo */
 
-  /* O acento único. Branco sobre ocre dá 3,15:1 e reprova, então o texto
-     sobre ocre é a cor do canvas. */
+  /* O acento único, e a única fonte de calor da interface. Branco sobre ele
+     dá 3,15:1 e reprova, então o texto sobre ocre é preto (6,66:1). */
   --ocre: #c8813c;
   --ocre-hover: #d18f45;
-  --ocre-ink: #1a1815;
+  --ocre-ink: #000000;
 
   /* ── Tier 2 — semânticos (contrato shadcn) ──────────────────────────── */
   --background: var(--surface-0);
@@ -106,6 +108,12 @@
   body {
     @apply text-foreground antialiased bg-background;
     min-height: 100vh;
+  }
+
+  /* O foco padrão do navegador é azul e vaza para fora da paleta. */
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
   }
 
   /* Serifa por ELEMENTO, não pelas utilities .heading-*: só 25 dos 93 títulos
