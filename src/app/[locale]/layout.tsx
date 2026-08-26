@@ -50,7 +50,7 @@ export const metadata: Metadata = {
       'Sistemas sob medida para gestão de rebanhos. Pequenos ruminantes e bovinos de corte.',
     images: [
       {
-        url: '/images/logo.png',
+        url: '/images/og-cover.png',
         width: 1200,
         height: 630,
         alt: 'Seabra',
@@ -61,7 +61,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Seabra',
     description: 'Tecnologia para pecuária de precisão.',
-    images: ['/images/logo.png'],
+    images: ['/images/og-cover.png'],
   },
   // Token de verificação do Google Search Console (propriedade sob sistemaseabra@gmail.com).
   // Fica hardcoded como fallback porque a Vercel (conta do sócio) não está acessível para

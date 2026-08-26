@@ -12,7 +12,7 @@ export async function MarcaSeabra() {
     <div className="flex flex-col items-center gap-4 rounded-2xl bg-card border border-border px-5 py-5 text-foreground sm:flex-row sm:text-left">
       <div className="grid h-12 w-12 shrink-0 place-items-center">
         <Image
-          src="/images/logo.png"
+          src="/images/logo-icon.svg"
           alt="Sistema Seabra"
           width={48}
           height={48}
