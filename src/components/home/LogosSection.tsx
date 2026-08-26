@@ -16,6 +16,20 @@ import Image from 'next/image';
  * criadores) tinha fundo branco opaco — nenhum dos dois é transparência
  * real. Para as duas, o fundo foi recortado por chroma key antes do mesmo
  * tratamento; as outras 7 foram direto.
+ *
+ * As 5 últimas (Dinâmica → Gran Sierra) vieram sem transparência, com a arte
+ * chapada sobre fundo. A máscara sai da distância de cor pelo canal mais
+ * extremo, não pela luminância: luminância vira azul médio e laranja em cinza
+ * translúcido (o "N" da Dinâmica e o sol da Gregianin saíram assim antes de
+ * corrigir). Umari e Gran Sierra são o caso inverso — arte clara dentro de um
+ * disco escuro, onde pintar a forma toda daria um círculo branco sólido e
+ * engoliria o desenho; nas duas o disco foi descartado e só a arte clara ficou,
+ * mesma decisão do retângulo da Santa Rita.
+ *
+ * ABCGRAN tem uma foto real (cabeça de cabra) no meio do brasão, não arte
+ * vetorial como os outros — testado antes de incluir, porque foto vira
+ * silhueta mais "suja" que ícone; no tamanho renderizado (56px) ainda leu bem,
+ * mas é o mais arriscado do lote se o logo for redesenhado no futuro.
  */
 const logos = [
   { name: 'Fazenda Campinas', src: '/images/logos/mono/fazenda-campinas.png', w: 1024, h: 724 },
@@ -27,6 +41,13 @@ const logos = [
   { name: '3 Irmãos', src: '/images/logos/mono/3-irmaos.png', w: 360, h: 360 },
   { name: 'Lá do Alto', src: '/images/logos/mono/la-do-alto.png', w: 360, h: 360 },
   { name: 'Bonito', src: '/images/logos/mono/bonito.png', w: 422, h: 380 },
+  { name: 'Dinâmica Soluções para o Agro', src: '/images/logos/mono/dinamica.png', w: 303, h: 210 },
+  { name: 'Gregianin Conexão Agro', src: '/images/logos/mono/gregianin.png', w: 245, h: 238 },
+  { name: 'Casa Bianchi', src: '/images/logos/mono/casa-bianchi.png', w: 289, h: 174 },
+  { name: 'Cabanha Umari', src: '/images/logos/mono/cabanha-umari.png', w: 251, h: 193 },
+  { name: 'Gran Sierra', src: '/images/logos/mono/gran-sierra.png', w: 271, h: 136 },
+  { name: 'ABCOL', src: '/images/logos/mono/abcol.png', w: 355, h: 344 },
+  { name: 'ABCGRAN — Associação Brasileira dos Criadores da Raça Murciano-Granadina', src: '/images/logos/mono/abcgran.png', w: 580, h: 534 },
 ];
 
 export function LogosSection() {
