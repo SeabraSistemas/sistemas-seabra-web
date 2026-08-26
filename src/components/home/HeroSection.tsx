@@ -6,8 +6,9 @@ import { buildWhatsAppUrl } from '@/lib/whatsapp';
 import { type Locale } from '@/i18n/config';
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
 import { WhatsAppIcon } from '@/components/shared/WhatsAppIcon';
-import { FieldPhoto } from '@/components/shared/FieldPhoto';
+import { FieldPhotoCarousel } from '@/components/shared/FieldPhotoCarousel';
 import { BulletDot } from '@/components/shared/BulletDot';
+import { heroCarousel } from '@/data/fotos';
 
 export function HeroSection() {
   const t = useTranslations('hero');
@@ -61,8 +62,8 @@ export function HeroSection() {
           <div
             className={`scroll-fade-up scroll-fade-up-delay-2 ${isVisible ? 'visible' : ''}`}
           >
-            <FieldPhoto
-              slot="hero"
+            <FieldPhotoCarousel
+              slides={heroCarousel}
               sizes="(max-width: 1024px) 100vw, 45vw"
               priority
               className="aspect-[4/5] w-full rounded-2xl min-h-[320px]"

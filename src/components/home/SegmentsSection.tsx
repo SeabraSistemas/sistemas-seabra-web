@@ -6,7 +6,8 @@ import { ArrowUpRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
 import { FieldPhoto } from '@/components/shared/FieldPhoto';
-import type { SlotFotoKey } from '@/data/fotos';
+import { FieldPhotoCarousel } from '@/components/shared/FieldPhotoCarousel';
+import { produtosCarousel, type SlotFotoKey } from '@/data/fotos';
 
 /**
  * Os três pilares da empresa como cartões editoriais: imagem dominante,
@@ -19,11 +20,11 @@ import type { SlotFotoKey } from '@/data/fotos';
 const pillars = [
   { key: 'systems', href: '/pequenos-ruminantes', slot: 'sistemas', featured: true },
   { key: 'services', href: '/vendas/consultoria', slot: 'servicos', featured: false },
-  { key: 'products', href: '/vendas/produtos', slot: 'produtos', featured: false },
+  { key: 'products', href: '/vendas/produtos', slot: null, featured: false },
 ] as const satisfies ReadonlyArray<{
   key: string;
   href: string;
-  slot: SlotFotoKey;
+  slot: SlotFotoKey | null;
   featured: boolean;
 }>;
 
@@ -56,18 +57,28 @@ export function SegmentsSection() {
                 pillar.featured && 'md:col-span-2'
               )}
             >
-              <FieldPhoto
-                slot={pillar.slot}
-                sizes={
-                  pillar.featured
-                    ? '(max-width: 768px) 100vw, 1152px'
-                    : '(max-width: 768px) 100vw, 576px'
-                }
-                className={cn(
-                  'w-full',
-                  pillar.featured ? 'aspect-[16/9] min-h-[280px]' : 'aspect-[4/3] min-h-[260px]'
-                )}
-              />
+              {pillar.slot ? (
+                <FieldPhoto
+                  slot={pillar.slot}
+                  veil="band"
+                  sizes={
+                    pillar.featured
+                      ? '(max-width: 768px) 100vw, 1152px'
+                      : '(max-width: 768px) 100vw, 576px'
+                  }
+                  className={cn(
+                    'w-full',
+                    pillar.featured ? 'aspect-[16/9] min-h-[280px]' : 'aspect-[4/3] min-h-[260px]'
+                  )}
+                />
+              ) : (
+                <FieldPhotoCarousel
+                  slides={produtosCarousel}
+                  fit="contain"
+                  sizes="(max-width: 768px) 100vw, 576px"
+                  className="aspect-[4/3] min-h-[260px] w-full"
+                />
+              )}
 
               <div className="absolute inset-x-0 bottom-0 p-6 sm:p-8">
                 <p className="text-[0.7rem] uppercase tracking-[0.16em] text-muted-foreground mb-2">

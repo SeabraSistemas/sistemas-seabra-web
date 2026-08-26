@@ -8,6 +8,12 @@ interface FieldPhotoProps {
   sizes: string;
   className?: string;
   priority?: boolean;
+  /**
+   * `soft` (padrão): véu leve, para foto sem nada por cima.
+   * `band`: faixa na cor do card subindo da base — use quando houver texto
+   * sobreposto, senão foto clara (equipamento, céu) engole o texto.
+   */
+  veil?: 'soft' | 'band';
 }
 
 /**
@@ -21,7 +27,13 @@ interface FieldPhotoProps {
  * espaço reservado com o briefing — a página mostra o que está faltando em vez
  * de fingir que está pronta.
  */
-export function FieldPhoto({ slot, sizes, className, priority }: FieldPhotoProps) {
+export function FieldPhoto({
+  slot,
+  sizes,
+  className,
+  priority,
+  veil = 'soft',
+}: FieldPhotoProps) {
   const foto = fotos[slot];
 
   if (!foto.src) {
@@ -58,7 +70,12 @@ export function FieldPhoto({ slot, sizes, className, priority }: FieldPhotoProps
       {/* Véu na base: dá contraste ao texto sobreposto sem escurecer a foto toda. */}
       <div
         aria-hidden
-        className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent"
+        className={cn(
+          'absolute inset-0 bg-gradient-to-t',
+          veil === 'band'
+            ? 'from-card from-12% via-card/75 via-40% to-transparent to-74%'
+            : 'from-black/75 via-black/25 to-transparent'
+        )}
       />
     </div>
   );
