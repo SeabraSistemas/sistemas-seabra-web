@@ -3,12 +3,14 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { Link, usePathname, useRouter } from '@/i18n/routing';
-import { Menu, ChevronDown, Download } from 'lucide-react';
+import { Menu, ChevronDown } from 'lucide-react';
+import { AndroidIcon } from '@/components/shared/AndroidIcon';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
@@ -117,7 +119,7 @@ export function Header() {
             de rodapé e material, mas fora da navegação. */}
         <Link
           href="/"
-          className="text-lg font-semibold tracking-tight text-foreground shrink-0"
+          className="text-xl font-bold tracking-tight text-foreground shrink-0"
         >
           Seabra
         </Link>
@@ -179,20 +181,50 @@ export function Header() {
         <div className="hidden lg:flex items-center gap-2 shrink-0">
           <LanguageSwitcher />
 
-          <a href={APP_URL} target="_blank" rel="noopener noreferrer">
-            <Button variant="outline" className="rounded-full px-5">
-              {t('header.signIn')}
-            </Button>
-          </a>
-
-          {APK_URL && (
-            <a href={APK_URL} target="_blank" rel="noopener noreferrer">
-              <Button className="rounded-full px-5 gap-2">
-                <Download className="h-4 w-4" />
-                {t('header.downloadApp')}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="rounded-full px-5 gap-1.5">
+                {t('header.signIn')}
+                <ChevronDown className="h-3.5 w-3.5 opacity-60" />
               </Button>
-            </a>
-          )}
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-60 p-1.5">
+              <DropdownMenuItem asChild>
+                <a
+                  href={APP_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full cursor-pointer rounded-lg px-3 py-2.5 text-sm"
+                >
+                  {t('header.accessWeb')}
+                </a>
+              </DropdownMenuItem>
+              {APK_URL && (
+                <DropdownMenuItem asChild>
+                  <a
+                    href={APK_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full cursor-pointer rounded-lg px-3 py-2.5 text-sm gap-2"
+                  >
+                    <AndroidIcon className="h-4 w-4" />
+                    {t('header.downloadApp')}
+                  </a>
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <a href="/planos" className="w-full cursor-pointer rounded-lg px-3 py-2.5 text-sm">
+                  {t('header.viewPlans')}
+                </a>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <a href="/apresentacao" className="w-full cursor-pointer rounded-lg px-3 py-2.5 text-sm">
+                  {t('header.presentation')}
+                </a>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         {/* Menu mobile */}
@@ -210,7 +242,7 @@ export function Header() {
                 <div className="p-6 border-b border-border">
                   <Link
                     href="/"
-                    className="text-lg font-semibold tracking-tight text-foreground"
+                    className="text-xl font-bold tracking-tight text-foreground"
                     onClick={() => setIsOpen(false)}
                   >
                     Seabra
@@ -282,8 +314,8 @@ export function Header() {
                       onClick={() => setIsOpen(false)}
                       className="block"
                     >
-                      <Button className="w-full h-12 rounded-full gap-2">
-                        <Download className="h-4 w-4" />
+                      <Button variant="outline" className="w-full h-12 rounded-full gap-2">
+                        <AndroidIcon className="h-4 w-4" />
                         {t('header.downloadApp')}
                       </Button>
                     </a>
@@ -306,6 +338,24 @@ export function Header() {
                       {t('header.downloadHint')}
                     </p>
                   )}
+
+                  <div className="flex items-center justify-center gap-4 pt-1">
+                    <a
+                      href="/planos"
+                      onClick={() => setIsOpen(false)}
+                      className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      {t('header.viewPlans')}
+                    </a>
+                    <span className="text-border">·</span>
+                    <a
+                      href="/apresentacao"
+                      onClick={() => setIsOpen(false)}
+                      className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      {t('header.presentation')}
+                    </a>
+                  </div>
                 </div>
               </div>
             </SheetContent>

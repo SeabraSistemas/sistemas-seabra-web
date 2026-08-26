@@ -12,8 +12,11 @@
     "systems": "Sistemas",
     "products": "Produtos",
     "signIn": "Entrar",
+    "accessWeb": "Acessar pelo navegador",
     "downloadApp": "Baixar o app",
-    "downloadHint": "APK para Android. O celular pode pedir permissão para instalar de fora da Play Store."
+    "downloadHint": "APK para Android. O celular pode pedir permissão para instalar de fora da Play Store.",
+    "viewPlans": "Ver planos",
+    "presentation": "Apresentação"
   },
   "criadores": {
     "metaTitle": "Criadores Pro do Sistema Seabra",

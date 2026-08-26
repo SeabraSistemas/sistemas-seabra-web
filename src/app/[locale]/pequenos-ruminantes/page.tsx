@@ -4,6 +4,8 @@ import { Link } from '@/i18n/routing';
 import { ArrowRight } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { AndroidIcon } from '@/components/shared/AndroidIcon';
 import { LandingCTA } from '@/components/landing/LandingCTA';
 import { LogosSection } from '@/components/home/LogosSection';
 import { RelatedArticles } from '@/components/blog/RelatedArticles';
@@ -11,6 +13,9 @@ import { RelatedArticles } from '@/components/blog/RelatedArticles';
 interface PageProps {
   params: Promise<{ locale: string }>;
 }
+
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://pr.sistemaseabra.com.br/';
+const APK_URL = process.env.NEXT_PUBLIC_APK_URL || '';
 
 export async function generateMetadata({ params }: PageProps) {
   const { locale } = await params;
@@ -51,6 +56,21 @@ export default async function PequenosRuminantesHub({ params }: PageProps) {
           <p className="body-large max-w-2xl mx-auto text-muted-foreground">
             {t('hubs.smallRuminants.subtitle')}
           </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+            <a href={APP_URL} target="_blank" rel="noopener noreferrer">
+              <Button variant="outline" className="rounded-full px-6 h-12 w-full sm:w-auto">
+                {t('header.accessWeb')}
+              </Button>
+            </a>
+            {APK_URL && (
+              <a href={APK_URL} target="_blank" rel="noopener noreferrer">
+                <Button variant="outline" className="rounded-full px-6 h-12 gap-2 w-full sm:w-auto">
+                  <AndroidIcon className="h-4 w-4" />
+                  {t('header.downloadApp')}
+                </Button>
+              </a>
+            )}
+          </div>
         </div>
       </section>
 

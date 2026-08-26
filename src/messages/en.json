@@ -12,8 +12,11 @@
     "systems": "Systems",
     "products": "Products",
     "signIn": "Sign in",
+    "accessWeb": "Access from browser",
     "downloadApp": "Download the app",
-    "downloadHint": "Android APK. Your phone may ask permission to install from outside the Play Store."
+    "downloadHint": "Android APK. Your phone may ask permission to install from outside the Play Store.",
+    "viewPlans": "View plans",
+    "presentation": "Presentation"
   },
   "criadores": {
     "metaTitle": "Sistema Seabra Pro Breeders",
