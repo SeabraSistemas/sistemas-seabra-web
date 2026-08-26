@@ -78,10 +78,10 @@ export default async function ContatoPage({ params }: PageProps) {
                   {t('email')}
                 </h2>
                 <p className="text-sm text-muted-foreground">
-                  felipeseabracl@gmail.com
+                  sistemaseabra@gmail.com
                 </p>
               </div>
-              <a href="mailto:felipeseabracl@gmail.com">
+              <a href="mailto:sistemaseabra@gmail.com">
                 <Button variant="outline" className="rounded-full gap-2 w-full">
                   {t('emailButton')}
                   <ArrowRight className="h-4 w-4" />

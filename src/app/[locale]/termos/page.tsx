@@ -293,9 +293,9 @@ export default async function TermosPage({ params }: PageProps) {
               E-mail:{' '}
               <a
                 className="text-primary hover:underline"
-                href="mailto:felipeseabracl@gmail.com"
+                href="mailto:sistemaseabra@gmail.com"
               >
-                felipeseabracl@gmail.com
+                sistemaseabra@gmail.com
               </a>
             </li>
             <li>

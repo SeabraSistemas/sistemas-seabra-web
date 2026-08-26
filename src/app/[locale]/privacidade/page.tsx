@@ -285,9 +285,9 @@ export default async function PrivacidadePage({ params }: PageProps) {
               Por e-mail:{' '}
               <a
                 className="text-primary hover:underline"
-                href="mailto:felipeseabracl@gmail.com?subject=LGPD%20%E2%80%94%20solicitação"
+                href="mailto:sistemaseabra@gmail.com?subject=LGPD%20%E2%80%94%20solicitação"
               >
-                felipeseabracl@gmail.com
+                sistemaseabra@gmail.com
               </a>{' '}
               (assunto &quot;LGPD — solicitação&quot;)
             </li>
@@ -347,9 +347,9 @@ export default async function PrivacidadePage({ params }: PageProps) {
               E-mail:{' '}
               <a
                 className="text-primary hover:underline"
-                href="mailto:felipeseabracl@gmail.com"
+                href="mailto:sistemaseabra@gmail.com"
               >
-                felipeseabracl@gmail.com
+                sistemaseabra@gmail.com
               </a>
             </li>
             <li>
