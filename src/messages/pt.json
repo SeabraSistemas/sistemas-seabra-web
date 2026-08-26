@@ -1,19 +1,22 @@
 {
   "metadata": {
-    "title": "Seabra Solutions - Tecnologia para Pecuária de Precisão",
+    "title": "Seabra - Tecnologia para Pecuária de Precisão",
     "description": "Sistemas sob medida para gestão de rebanhos. Bovinos e pequenos ruminantes de leite e corte."
   },
   "header": {
     "about": "Sobre",
-    "solutions": "Soluções",
-    "cases": "Cases",
     "blog": "Blog",
     "contact": "Contato",
     "services": "Serviços",
-    "access": "Acessar sistema — Pequenos Ruminantes",
-    "accessShort": "Acessar sistema",
-    "accessCaption": "Pequenos Ruminantes",
-    "criadores": "Criadores"
+    "criadores": "Criadores",
+    "systems": "Sistemas",
+    "products": "Produtos",
+    "signIn": "Entrar",
+    "accessWeb": "Acessar pelo navegador",
+    "downloadApp": "Baixar o app",
+    "downloadHint": "APK para Android. O celular pode pedir permissão para instalar de fora da Play Store.",
+    "viewPlans": "Ver planos",
+    "presentation": "Apresentação"
   },
   "criadores": {
     "metaTitle": "Criadores Pro do Sistema Seabra",
@@ -53,7 +56,7 @@
     "marcaSub": "Pequenos Ruminantes",
     "marcaDominio": "www.sistemaseabra.com.br",
     "conhecaSistema": "Conheça o sistema",
-    "disclaimer": "As informações desta página são de responsabilidade exclusiva do criador, que as declarou no Sistema Seabra. A Seabra Solutions não vende, não intermedeia, não garante e não verifica os dados aqui exibidos, e não participa de qualquer negociação. Genealogia e registro devem ser conferidos no certificado oficial da associação.",
+    "disclaimer": "As informações desta página são de responsabilidade exclusiva do criador, que as declarou no Sistema Seabra. A Seabra não vende, não intermedeia, não garante e não verifica os dados aqui exibidos, e não participa de qualquer negociação. Genealogia e registro devem ser conferidos no certificado oficial da associação.",
     "naoEncontradoTitulo": "Criador não encontrado",
     "naoEncontradoTexto": "Esta página não está disponível ou foi removida da vitrine.",
     "naoEncontradoCta": "Ver todos os criadores",
@@ -108,7 +111,7 @@
   },
   "journey": {
     "badge": "Escolha sua jornada",
-    "title": "Para quem é a Seabra Solutions",
+    "title": "Para quem é a Seabra",
     "subtitle": "Cada produção exige um sistema diferente. Escolha o ambiente que combina com a sua operação.",
     "smallRuminants": {
       "title": "Pequenos Ruminantes",
@@ -152,7 +155,7 @@
     "responseTime": "Atendimento direto com nossa equipe"
   },
   "logos": {
-    "title": "Empresas que confiam na Seabra Solutions"
+    "title": "Empresas que confiam na Seabra"
   },
   "segmentsSection": {
     "title": "Escolha seu segmento",
@@ -182,13 +185,13 @@
     "badge": "Sobre Nós",
     "title": "Tecnologia nascida no campo",
     "p1": "Nascemos da vivência direta no campo. Com experiência em medicina veterinária e pecuária desde 2011, entendemos que decisões precisas dependem de dados confiáveis — e que a maioria dos produtores ainda opera sem as ferramentas certas para obtê-los.",
-    "p2": "A Seabra Solutions desenvolve sistemas de gestão pecuária sob medida, projetados para a realidade de cada operação. Nossos softwares transformam o lançamento de dados em algo prático e rápido, e devolvem indicadores de desempenho com a precisão que o setor exige.",
+    "p2": "A Seabra desenvolve sistemas de gestão pecuária sob medida, projetados para a realidade de cada operação. Nossos softwares transformam o lançamento de dados em algo prático e rápido, e devolvem indicadores de desempenho com a precisão que o setor exige.",
     "p3": "Cada sistema é construído a partir do diagnóstico da sua operação. Não oferecemos soluções genéricas — entregamos tecnologia que se adapta ao seu processo, funciona offline no campo e evolui junto com o seu negócio.",
     "highlightExperience": "No campo desde",
     "highlightOffline": "Funciona offline",
     "highlightSupport": "Suporte rápido",
     "visionLabel": "Nossa Visão",
-    "vision": "Nossa visão é consolidar a Seabra Solutions como referência em tecnologia para pecuária de precisão na América Latina."
+    "vision": "Nossa visão é consolidar a Seabra como referência em tecnologia para pecuária de precisão na América Latina."
   },
   "testimonials": {
     "badge": "Depoimentos",
@@ -209,7 +212,8 @@
   "ctaSection": {
     "title": "Pronto para transformar sua gestão?",
     "subtitle": "Entre em contato e descubra como podemos ajudar sua operação a alcançar novos resultados.",
-    "cta": "Falar no WhatsApp"
+    "cta": "Falar no WhatsApp",
+    "trust": "Sem compromisso. Resposta em até 30 minutos."
   },
   "footer": {
     "description": "Tecnologia para pecuária de precisão. Sistemas sob medida para gestão de rebanhos.",
@@ -236,7 +240,7 @@
     "draftNotice": ""
   },
   "whatsapp": {
-    "defaultMessage": "Olá! Quero saber mais sobre as soluções da Seabra Solutions.",
+    "defaultMessage": "Olá! Quero saber mais sobre as soluções da Seabra.",
     "segmentMessage": "Olá! Quero uma demonstração da solução para {segment}."
   },
   "landing": {
@@ -276,7 +280,11 @@
     "cta": {
       "title": "Comece agora",
       "subtitle": "Agende uma demonstração gratuita e veja como podemos transformar sua gestão.",
-      "button": "Agendar demonstração"
+      "button": "Agendar demonstração",
+      "trust": "Sem compromisso. Resposta em até 24h."
+    },
+    "hero": {
+      "badge": "Sistema especializado"
     }
   },
   "cases": {
@@ -502,16 +510,11 @@
         "subtitle": "Microchips certificados ICAR e leitores FDX-B para identificar seus animais com precisão e padrão internacional."
       },
       "pjNote": "Valores para PJ (CNPJ).",
-      "categories": {
-        "microchip": "Microchips",
-        "leitor": "Leitores"
-      },
       "specLabels": {
         "frequency": "Frequência",
         "protocol": "Protocolo",
         "size": "Dimensões",
         "application": "Aplicação",
-        "range": "Alcance",
         "connectivity": "Conectividade"
       },
       "priceTableTitle": "Preço por quantidade",
@@ -549,6 +552,28 @@
           "desc": "Leitor tipo bastão, com Bluetooth."
         }
       }
+    }
+  },
+  "pillars": {
+    "title": "O que a Seabra entrega",
+    "subtitle": "Três frentes que se conversam: o sistema que organiza o rebanho, o serviço de quem entende de campo e o equipamento que identifica o animal.",
+    "systems": {
+      "eyebrow": "Sistemas",
+      "title": "Gestão de rebanho que funciona no curral",
+      "desc": "Manejo, reprodução, controle leiteiro e indicadores. Feito para ser usado com a mão suja, offline, no meio do trabalho.",
+      "cta": "Conhecer os sistemas"
+    },
+    "services": {
+      "eyebrow": "Serviços",
+      "title": "Consultoria de quem é do setor",
+      "desc": "Mais de 15 anos de campo em caprinovinocultura, e desenvolvimento de sistemas sob medida para quem precisa de algo próprio.",
+      "cta": "Ver serviços"
+    },
+    "products": {
+      "eyebrow": "Produtos",
+      "title": "Identificação eletrônica",
+      "desc": "Microchips certificados ICAR e leitores FDX-B para rastrear cada animal sem depender de anotação.",
+      "cta": "Ver produtos"
     }
   }
 }

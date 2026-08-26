@@ -14,8 +14,8 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
 
   return (
     <div className="container-wide pb-20 pt-32">
-      <div className="mx-auto max-w-md rounded-2xl border border-gray-200 bg-white p-8 text-center">
-        <h1 className="text-lg font-semibold text-gray-900">{t('erroTitulo')}</h1>
+      <div className="mx-auto max-w-md rounded-2xl border border-border bg-card p-8 text-center">
+        <h1 className="text-lg font-semibold text-foreground">{t('erroTitulo')}</h1>
         <div className="mt-6 flex justify-center gap-3">
           <button
             onClick={reset}
@@ -25,7 +25,7 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
           </button>
           <Link
             href="/"
-            className="inline-flex h-11 items-center justify-center rounded-full border border-gray-300 px-5 text-sm font-medium text-gray-700 hover:bg-gray-100"
+            className="inline-flex h-11 items-center justify-center rounded-full border border-input px-5 text-sm font-medium text-foreground hover:bg-secondary"
           >
             {t('erroVoltar')}
           </Link>

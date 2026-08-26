@@ -2,7 +2,6 @@
 
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/routing';
-import Image from 'next/image';
 import { Instagram, Facebook, Mail, Phone, MapPin } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
@@ -27,7 +26,7 @@ export function Footer() {
   const t = useTranslations();
 
   return (
-    <footer className="relative bg-slate-900 text-gray-400">
+    <footer className="relative bg-card text-muted-foreground">
       {/* Top gradient line */}
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
 
@@ -35,21 +34,11 @@ export function Footer() {
         <div className="grid gap-12 lg:grid-cols-12">
           {/* Brand Column */}
           <div className="lg:col-span-4 space-y-6">
-            <Link href="/" className="inline-flex items-center gap-3 group">
-              <div className="relative w-10 h-10 transition-transform duration-300 group-hover:scale-105">
-                <Image
-                  src="/images/logo-icon.png"
-                  alt="Seabra Solutions"
-                  fill
-                  className="object-contain"
-                />
-              </div>
-              <span className="text-lg font-semibold text-white tracking-tight">
-                Seabra Solutions
-              </span>
+            <Link href="/" className="inline-block text-lg font-semibold text-foreground tracking-tight">
+              Seabra
             </Link>
 
-            <p className="text-sm text-gray-400 max-w-xs leading-relaxed">
+            <p className="text-sm text-muted-foreground max-w-xs leading-relaxed">
               {t('footer.description')}
             </p>
 
@@ -64,9 +53,9 @@ export function Footer() {
                   className={cn(
                     'flex items-center justify-center',
                     'h-10 w-10 rounded-xl',
-                    'bg-white/5 border border-white/10',
-                    'text-gray-400 hover:text-white',
-                    'hover:bg-white/10 hover:border-white/20',
+                    'bg-secondary border border-border',
+                    'text-muted-foreground hover:text-foreground',
+                    'hover:border-input',
                     'transition-all duration-300'
                   )}
                   aria-label={social.label}
@@ -81,7 +70,7 @@ export function Footer() {
           <div className="lg:col-span-8 grid gap-8 sm:grid-cols-3">
             {/* Solutions */}
             <div className="space-y-4">
-              <h3 className="text-sm font-semibold text-white uppercase tracking-wider">
+              <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">
                 {t('footer.solutions')}
               </h3>
               <ul className="space-y-3">
@@ -89,7 +78,7 @@ export function Footer() {
                   <li key={solution.href}>
                     <Link
                       href={solution.href}
-                      className="text-sm text-gray-400 hover:text-white transition-colors duration-200"
+                      className="text-sm text-muted-foreground hover:text-foreground transition-colors duration-200"
                     >
                       {t(`segments.${solution.key}`)}
                     </Link>
@@ -100,14 +89,14 @@ export function Footer() {
 
             {/* Company */}
             <div className="space-y-4">
-              <h3 className="text-sm font-semibold text-white uppercase tracking-wider">
+              <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">
                 {t('footer.company')}
               </h3>
               <ul className="space-y-3">
                 <li>
                   <Link
                     href="/#about"
-                    className="text-sm text-gray-400 hover:text-white transition-colors duration-200"
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors duration-200"
                   >
                     {t('footer.about')}
                   </Link>
@@ -115,7 +104,7 @@ export function Footer() {
                 <li>
                   <Link
                     href="/blog"
-                    className="text-sm text-gray-400 hover:text-white transition-colors duration-200"
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors duration-200"
                   >
                     {t('footer.blog')}
                   </Link>
@@ -123,7 +112,7 @@ export function Footer() {
                 <li>
                   <Link
                     href="/contato"
-                    className="text-sm text-gray-400 hover:text-white transition-colors duration-200"
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors duration-200"
                   >
                     {t('footer.contact')}
                   </Link>
@@ -133,17 +122,17 @@ export function Footer() {
 
             {/* Contact */}
             <div className="space-y-4">
-              <h3 className="text-sm font-semibold text-white uppercase tracking-wider">
+              <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">
                 {t('footer.contact')}
               </h3>
               <ul className="space-y-4">
                 <li>
                   <a
-                    href="mailto:felipeseabracl@gmail.com"
-                    className="flex items-start gap-3 text-sm text-gray-400 hover:text-white transition-colors duration-200 group"
+                    href="mailto:sistemaseabra@gmail.com"
+                    className="flex items-start gap-3 text-sm text-muted-foreground hover:text-foreground transition-colors duration-200 group"
                   >
                     <Mail className="h-4 w-4 mt-0.5 shrink-0" />
-                    <span>felipeseabracl@gmail.com</span>
+                    <span>sistemaseabra@gmail.com</span>
                   </a>
                 </li>
                 <li>
@@ -151,14 +140,14 @@ export function Footer() {
                     href="https://wa.me/5521999366784"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-start gap-3 text-sm text-gray-400 hover:text-white transition-colors duration-200 group"
+                    className="flex items-start gap-3 text-sm text-muted-foreground hover:text-foreground transition-colors duration-200 group"
                   >
                     <Phone className="h-4 w-4 mt-0.5 shrink-0" />
                     <span>+55 21 99936-6784</span>
                   </a>
                 </li>
                 <li>
-                  <div className="flex items-start gap-3 text-sm text-gray-400">
+                  <div className="flex items-start gap-3 text-sm text-muted-foreground">
                     <MapPin className="h-4 w-4 mt-0.5 shrink-0" />
                     <span>Brasil</span>
                   </div>
@@ -169,22 +158,22 @@ export function Footer() {
         </div>
 
         {/* Bottom */}
-        <Separator className="my-12 bg-white/10" />
+        <Separator className="my-12" />
 
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-sm text-gray-500">
-            &copy; {new Date().getFullYear()} Seabra Solutions. {t('footer.rights')}
+          <p className="text-sm text-muted-foreground">
+            &copy; {new Date().getFullYear()} Seabra. {t('footer.rights')}
           </p>
-          <div className="flex items-center gap-6 text-sm text-gray-500">
+          <div className="flex items-center gap-6 text-sm text-muted-foreground">
             <Link
               href="/privacidade"
-              className="hover:text-white transition-colors"
+              className="hover:text-foreground transition-colors"
             >
               {t('footer.privacy')}
             </Link>
             <Link
               href="/termos"
-              className="hover:text-white transition-colors"
+              className="hover:text-foreground transition-colors"
             >
               {t('footer.terms')}
             </Link>

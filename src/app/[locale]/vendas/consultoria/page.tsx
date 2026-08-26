@@ -16,7 +16,7 @@ export async function generateMetadata({ params }: PageProps) {
   const t = await getTranslations({ locale, namespace: 'vendas.consultoria' });
 
   return {
-    title: `${t('metaTitle')} | Seabra Solutions`,
+    title: `${t('metaTitle')} | Seabra`,
     description: t('metaDescription'),
   };
 }
@@ -39,7 +39,7 @@ export default async function ConsultoriaPage({ params }: PageProps) {
           areaServed: 'BR',
           provider: {
             '@type': 'Organization',
-            name: 'Seabra Solutions',
+            name: 'Seabra',
             url: SITE_URL,
           },
         }}

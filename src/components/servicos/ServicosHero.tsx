@@ -3,7 +3,7 @@
 import { useTranslations, useLocale } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowRight, Globe } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { buildWhatsAppUrl } from '@/lib/whatsapp';
 import { type Locale } from '@/i18n/config';
 
@@ -22,26 +22,20 @@ export function ServicosHero() {
 
   return (
     <section className="relative min-h-[70vh] flex items-center pt-28 pb-20 overflow-hidden">
-      {/* Background Effects */}
-      <div className="absolute inset-0 bg-gradient-radial-top pointer-events-none" />
       <div className="absolute inset-0 bg-grid-pattern opacity-20 pointer-events-none" />
-
-      {/* Blur blobs */}
-      <div className="blur-blob blur-blob-primary w-[500px] h-[500px] -top-32 left-1/2 -translate-x-1/2 opacity-30" />
 
       <div className="container-tight relative z-10 text-center space-y-10">
         {/* Badge */}
         <Badge
           variant="outline"
-          className="px-4 py-1.5 rounded-full border-gray-300 bg-gray-50 backdrop-blur-sm text-gray-700 font-medium"
+          className="px-4 py-1.5 rounded-full border-border bg-muted backdrop-blur-sm text-foreground font-medium"
         >
-          <Globe className="h-3.5 w-3.5 mr-2 text-primary" />
           {t('badge')}
         </Badge>
 
         {/* Headline */}
         <div className="space-y-6">
-          <h1 className="heading-display text-gradient-subtle max-w-4xl mx-auto">
+          <h1 className="heading-display max-w-4xl mx-auto">
             {t('title')}
           </h1>
           <p className="body-large max-w-2xl mx-auto">

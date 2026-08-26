@@ -1,19 +1,22 @@
 {
   "metadata": {
-    "title": "Seabra Solutions - Precision Livestock Technology",
+    "title": "Seabra - Precision Livestock Technology",
     "description": "Custom systems for herd management. Cattle and small ruminants for dairy and beef."
   },
   "header": {
     "about": "About",
-    "solutions": "Solutions",
-    "cases": "Cases",
     "blog": "Blog",
     "contact": "Contact",
     "services": "Services",
-    "access": "Access system — Small Ruminants",
-    "accessShort": "Access system",
-    "accessCaption": "Small Ruminants",
-    "criadores": "Breeders"
+    "criadores": "Breeders",
+    "systems": "Systems",
+    "products": "Products",
+    "signIn": "Sign in",
+    "accessWeb": "Access from browser",
+    "downloadApp": "Download the app",
+    "downloadHint": "Android APK. Your phone may ask permission to install from outside the Play Store.",
+    "viewPlans": "View plans",
+    "presentation": "Presentation"
   },
   "criadores": {
     "metaTitle": "Sistema Seabra Pro Breeders",
@@ -53,7 +56,7 @@
     "marcaSub": "Small Ruminants",
     "marcaDominio": "www.sistemaseabra.com.br",
     "conhecaSistema": "Discover the system",
-    "disclaimer": "The information on this page is the sole responsibility of the breeder, who declared it in Sistema Seabra. Seabra Solutions does not sell, broker, guarantee or verify the data shown here, and takes no part in any negotiation. Pedigree and registration must be checked against the association's official certificate.",
+    "disclaimer": "The information on this page is the sole responsibility of the breeder, who declared it in Sistema Seabra. Seabra does not sell, broker, guarantee or verify the data shown here, and takes no part in any negotiation. Pedigree and registration must be checked against the association's official certificate.",
     "naoEncontradoTitulo": "Breeder not found",
     "naoEncontradoTexto": "This page is unavailable or has been removed from the showcase.",
     "naoEncontradoCta": "See all breeders",
@@ -108,7 +111,7 @@
   },
   "journey": {
     "badge": "Choose your path",
-    "title": "Who Seabra Solutions is for",
+    "title": "Who Seabra is for",
     "subtitle": "Each operation needs a different system. Pick the environment that fits yours.",
     "smallRuminants": {
       "title": "Small Ruminants",
@@ -152,7 +155,7 @@
     "responseTime": "Direct support from our team"
   },
   "logos": {
-    "title": "Companies that trust Seabra Solutions"
+    "title": "Companies that trust Seabra"
   },
   "segmentsSection": {
     "title": "Choose your segment",
@@ -182,13 +185,13 @@
     "badge": "About Us",
     "title": "Technology born in the field",
     "p1": "We were born from direct field experience. With a background in veterinary medicine and livestock farming since 2011, we understand that precise decisions depend on reliable data — and that most producers still operate without the right tools to obtain them.",
-    "p2": "Seabra Solutions develops custom livestock management systems designed for the reality of each operation. Our software turns data entry into something practical and fast, delivering performance indicators with the precision the industry demands.",
+    "p2": "Seabra develops custom livestock management systems designed for the reality of each operation. Our software turns data entry into something practical and fast, delivering performance indicators with the precision the industry demands.",
     "p3": "Each system is built from a diagnosis of your operation. We don't offer generic solutions — we deliver technology that adapts to your process, works offline in the field, and evolves alongside your business.",
     "highlightExperience": "In the field since",
     "highlightOffline": "Works offline",
     "highlightSupport": "Fast support",
     "visionLabel": "Our Vision",
-    "vision": "Our vision is to establish Seabra Solutions as a reference in precision livestock technology across Latin America."
+    "vision": "Our vision is to establish Seabra as a reference in precision livestock technology across Latin America."
   },
   "testimonials": {
     "badge": "Testimonials",
@@ -209,7 +212,8 @@
   "ctaSection": {
     "title": "Ready to transform your management?",
     "subtitle": "Get in touch and discover how we can help your operation achieve new results.",
-    "cta": "Talk on WhatsApp"
+    "cta": "Talk on WhatsApp",
+    "trust": "No strings attached. Reply within 30 minutes."
   },
   "footer": {
     "description": "Precision livestock technology. Custom systems for herd management.",
@@ -236,7 +240,7 @@
     "draftNotice": ""
   },
   "whatsapp": {
-    "defaultMessage": "Hello! I want to know more about Seabra Solutions.",
+    "defaultMessage": "Hello! I want to know more about Seabra.",
     "segmentMessage": "Hello! I want a demo of the {segment} solution."
   },
   "landing": {
@@ -276,7 +280,11 @@
     "cta": {
       "title": "Start now",
       "subtitle": "Schedule a free demo and see how we can transform your management.",
-      "button": "Schedule demo"
+      "button": "Schedule demo",
+      "trust": "No strings attached. Reply within 24h."
+    },
+    "hero": {
+      "badge": "Specialized system"
     }
   },
   "cases": {
@@ -502,16 +510,11 @@
         "subtitle": "ICAR-certified microchips and FDX-B readers to identify your animals accurately, to international standards."
       },
       "pjNote": "Prices for businesses (CNPJ).",
-      "categories": {
-        "microchip": "Microchips",
-        "leitor": "Readers"
-      },
       "specLabels": {
         "frequency": "Frequency",
         "protocol": "Protocol",
         "size": "Dimensions",
         "application": "Application",
-        "range": "Range",
         "connectivity": "Connectivity"
       },
       "priceTableTitle": "Price by quantity",
@@ -549,6 +552,28 @@
           "desc": "Stick-type reader, with Bluetooth."
         }
       }
+    }
+  },
+  "pillars": {
+    "title": "What Seabra delivers",
+    "subtitle": "Three fronts that work together: the system that organises the herd, the service from people who know the field, and the hardware that identifies the animal.",
+    "systems": {
+      "eyebrow": "Systems",
+      "title": "Herd management that works in the pen",
+      "desc": "Handling, breeding, milk recording and indicators. Built to be used with dirty hands, offline, mid-work.",
+      "cta": "Explore the systems"
+    },
+    "services": {
+      "eyebrow": "Services",
+      "title": "Consulting from people in the sector",
+      "desc": "Over 15 years of field work in goat and sheep farming, plus custom software for those who need something of their own.",
+      "cta": "See services"
+    },
+    "products": {
+      "eyebrow": "Products",
+      "title": "Electronic identification",
+      "desc": "ICAR-certified microchips and FDX-B readers to track every animal without relying on paper.",
+      "cta": "See products"
     }
   }
 }

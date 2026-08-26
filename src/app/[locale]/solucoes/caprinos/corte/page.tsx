@@ -20,7 +20,7 @@ export async function generateMetadata({ params }: PageProps) {
   const t = await getTranslations({ locale, namespace: 'segments' });
 
   return {
-    title: `${t(SEGMENT_KEY)} | Seabra Solutions`,
+    title: `${t(SEGMENT_KEY)} | Seabra`,
     description: `Sistema completo para gestão de ${t(SEGMENT_KEY).toLowerCase()}. Controle de produção, manejo reprodutivo e muito mais.`,
   };
 }

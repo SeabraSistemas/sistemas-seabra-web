@@ -38,6 +38,7 @@ export async function POST() {
   });
 
   if (error || !data.session) {
+    console.error('[demo-session] signInWithPassword falhou:', error);
     return NextResponse.json(
       { error: 'demo_unavailable' },
       { status: 500 },

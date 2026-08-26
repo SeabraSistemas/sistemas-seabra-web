@@ -7,5 +7,5 @@ import { getTranslations } from 'next-intl/server';
  */
 export async function Disclaimer() {
   const t = await getTranslations('criadores');
-  return <p className="text-[11px] leading-relaxed text-gray-500">{t('disclaimer')}</p>;
+  return <p className="text-[11px] leading-relaxed text-muted-foreground">{t('disclaimer')}</p>;
 }

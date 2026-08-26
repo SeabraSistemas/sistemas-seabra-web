@@ -1,7 +1,7 @@
 import { ImageResponse } from 'next/og';
 import { getPostBySlug, blogPosts } from '@/data/blog-posts';
 
-export const alt = 'Seabra Solutions';
+export const alt = 'Seabra';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
@@ -58,7 +58,7 @@ export default async function Image({
           {title}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', fontSize: 32, fontWeight: 700 }}>
-          Seabra Solutions
+          Seabra
         </div>
       </div>
     ),

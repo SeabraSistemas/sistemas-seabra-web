@@ -9,10 +9,10 @@ import { getTranslations } from 'next-intl/server';
 export async function MarcaSeabra() {
   const t = await getTranslations('criadores');
   return (
-    <div className="flex flex-col items-center gap-4 rounded-2xl bg-gradient-to-br from-primary to-blue-500 px-5 py-5 text-white sm:flex-row sm:text-left">
+    <div className="flex flex-col items-center gap-4 rounded-2xl bg-card border border-border px-5 py-5 text-foreground sm:flex-row sm:text-left">
       <div className="grid h-12 w-12 shrink-0 place-items-center">
         <Image
-          src="/images/logo.png"
+          src="/images/logo-icon.svg"
           alt="Sistema Seabra"
           width={48}
           height={48}
@@ -23,7 +23,7 @@ export async function MarcaSeabra() {
         {/* estilos inline (sem classes utilitárias no <b>): no wrapper .crd-foot
             o <b> vinha aparecendo como caixa branca vazia; o RodapeFicha (que
             funciona) também usa um <b> sem classes. */}
-        <b style={{ display: 'block', fontFamily: 'var(--serif, Georgia, serif)', fontSize: '1rem', fontWeight: 600, lineHeight: 1.2, background: 'transparent', color: 'inherit' }}>
+        <b style={{ display: 'block', fontFamily: 'var(--vit-serif, Georgia, serif)', fontSize: '1rem', fontWeight: 600, lineHeight: 1.2, background: 'transparent', color: 'inherit' }}>
           {t('marcaTitulo')}
         </b>
         <span className="text-xs opacity-80">{t('marcaSub')}</span>
@@ -34,7 +34,7 @@ export async function MarcaSeabra() {
         href="https://www.sistemaseabra.com.br/apresentacao"
         target="_blank"
         rel="noopener noreferrer"
-        className="whitespace-nowrap rounded-lg bg-white px-4 py-2 text-xs font-semibold text-blue-700 transition-colors hover:bg-blue-50"
+        className="whitespace-nowrap rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground transition-colors hover:bg-[var(--ocre-hover)]"
       >
         {t('conhecaSistema')} →
       </a>

@@ -17,7 +17,7 @@ export function OrganizationJsonLd() {
       data={{
         '@context': 'https://schema.org',
         '@type': 'Organization',
-        name: 'Seabra Solutions',
+        name: 'Seabra',
         url: SITE_URL,
         logo: `${SITE_URL}/images/logo.png`,
         description:
@@ -37,7 +37,7 @@ export function WebSiteJsonLd() {
       data={{
         '@context': 'https://schema.org',
         '@type': 'WebSite',
-        name: 'Seabra Solutions',
+        name: 'Seabra',
         url: SITE_URL,
         inLanguage: ['pt-BR', 'es', 'en'],
       }}

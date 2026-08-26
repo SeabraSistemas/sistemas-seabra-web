@@ -10,7 +10,7 @@ export async function generateMetadata({ params }: PageProps) {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: 'privacyPage' });
   return {
-    title: `${t('title')} | Seabra Solutions`,
+    title: `${t('title')} | Seabra`,
     description: t('title'),
     robots: { index: true, follow: true },
   };
@@ -27,21 +27,21 @@ export default async function PrivacidadePage({ params }: PageProps) {
     <article className="section-padding">
       <div className="container-tight max-w-3xl">
         <header className="mb-12">
-          <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl text-gray-900">
+          <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl text-foreground">
             {t('title')}
           </h1>
           <p className="text-sm text-muted-foreground mt-3">{t('lastUpdated')}</p>
           {localeNotice ? (
-            <div className="mt-6 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+            <div className="mt-6 rounded-lg border border-primary/40 bg-secondary p-4 text-sm text-foreground">
               {localeNotice}
             </div>
           ) : null}
         </header>
 
-        <div className="space-y-6 text-gray-700 leading-relaxed">
+        <div className="space-y-6 text-foreground leading-relaxed">
           <p>
             Esta Política de Privacidade descreve como a{' '}
-            <strong>Seabra Solutions</strong> (&quot;nós&quot;, &quot;nosso&quot;)
+            <strong>Seabra</strong> (&quot;nós&quot;, &quot;nosso&quot;)
             coleta, usa e protege as informações pessoais dos usuários do{' '}
             <strong>SeabraApp</strong> (o &quot;Serviço&quot;), em conformidade
             com a Lei Geral de Proteção de Dados (Lei nº 13.709/2018 — LGPD).
@@ -51,7 +51,7 @@ export default async function PrivacidadePage({ params }: PageProps) {
             Política.
           </p>
 
-          <h2 className="text-2xl font-semibold text-gray-900 mt-10 mb-4">
+          <h2 className="text-2xl font-semibold text-foreground mt-10 mb-4">
             1. Definições
           </h2>
           <ul className="list-disc pl-6 space-y-2">
@@ -60,7 +60,7 @@ export default async function PrivacidadePage({ params }: PageProps) {
               iOS e Android, e versões web acessadas em sistemaseabra.com.br.
             </li>
             <li>
-              <strong>Empresa</strong>: Seabra Solutions, com sede em Brasil.
+              <strong>Empresa</strong>: Seabra, com sede em Brasil.
             </li>
             <li>
               <strong>Dados Pessoais</strong>: informações que identificam ou
@@ -78,11 +78,11 @@ export default async function PrivacidadePage({ params }: PageProps) {
             </li>
           </ul>
 
-          <h2 className="text-2xl font-semibold text-gray-900 mt-10 mb-4">
+          <h2 className="text-2xl font-semibold text-foreground mt-10 mb-4">
             2. Dados que coletamos
           </h2>
 
-          <h3 className="text-xl font-semibold text-gray-900 mt-6 mb-3">
+          <h3 className="text-xl font-semibold text-foreground mt-6 mb-3">
             2.1. Dados fornecidos por você
           </h3>
           <ul className="list-disc pl-6 space-y-2">
@@ -99,7 +99,7 @@ export default async function PrivacidadePage({ params }: PageProps) {
             <li>Fotos e arquivos enviados ao aplicativo</li>
           </ul>
 
-          <h3 className="text-xl font-semibold text-gray-900 mt-6 mb-3">
+          <h3 className="text-xl font-semibold text-foreground mt-6 mb-3">
             2.2. Dados coletados automaticamente
           </h3>
           <ul className="list-disc pl-6 space-y-2">
@@ -117,7 +117,7 @@ export default async function PrivacidadePage({ params }: PageProps) {
             </li>
           </ul>
 
-          <h3 className="text-xl font-semibold text-gray-900 mt-6 mb-3">
+          <h3 className="text-xl font-semibold text-foreground mt-6 mb-3">
             2.3. Dados de câmera e galeria
           </h3>
           <p>
@@ -132,22 +132,22 @@ export default async function PrivacidadePage({ params }: PageProps) {
             sincronização entre dispositivos.
           </p>
 
-          <h2 className="text-2xl font-semibold text-gray-900 mt-10 mb-4">
+          <h2 className="text-2xl font-semibold text-foreground mt-10 mb-4">
             3. Por que coletamos seus dados (bases legais — LGPD Art. 7º)
           </h2>
           <div className="overflow-x-auto">
             <table className="w-full text-sm border-collapse">
               <thead>
-                <tr className="border-b border-gray-300">
-                  <th className="text-left py-2 pr-4 font-semibold text-gray-900">
+                <tr className="border-b border-border">
+                  <th className="text-left py-2 pr-4 font-semibold text-foreground">
                     Finalidade
                   </th>
-                  <th className="text-left py-2 font-semibold text-gray-900">
+                  <th className="text-left py-2 font-semibold text-foreground">
                     Base legal
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-border">
                 <tr>
                   <td className="py-2 pr-4">Fornecer e manter o Serviço</td>
                   <td className="py-2">Execução de contrato</td>
@@ -192,7 +192,7 @@ export default async function PrivacidadePage({ params }: PageProps) {
             </table>
           </div>
 
-          <h2 className="text-2xl font-semibold text-gray-900 mt-10 mb-4">
+          <h2 className="text-2xl font-semibold text-foreground mt-10 mb-4">
             4. Compartilhamento de dados
           </h2>
           <p>
@@ -227,7 +227,7 @@ export default async function PrivacidadePage({ params }: PageProps) {
             nossos, com obrigações contratuais de proteção.
           </p>
 
-          <h2 className="text-2xl font-semibold text-gray-900 mt-10 mb-4">
+          <h2 className="text-2xl font-semibold text-foreground mt-10 mb-4">
             5. Transferência internacional
           </h2>
           <p>
@@ -237,7 +237,7 @@ export default async function PrivacidadePage({ params }: PageProps) {
             nível de proteção equivalente ao da LGPD.
           </p>
 
-          <h2 className="text-2xl font-semibold text-gray-900 mt-10 mb-4">
+          <h2 className="text-2xl font-semibold text-foreground mt-10 mb-4">
             6. Retenção
           </h2>
           <p>
@@ -251,7 +251,7 @@ export default async function PrivacidadePage({ params }: PageProps) {
             lei.
           </p>
 
-          <h2 className="text-2xl font-semibold text-gray-900 mt-10 mb-4">
+          <h2 className="text-2xl font-semibold text-foreground mt-10 mb-4">
             7. Seus direitos (LGPD Art. 18º)
           </h2>
           <p>Você pode, a qualquer momento:</p>
@@ -285,16 +285,16 @@ export default async function PrivacidadePage({ params }: PageProps) {
               Por e-mail:{' '}
               <a
                 className="text-primary hover:underline"
-                href="mailto:felipeseabracl@gmail.com?subject=LGPD%20%E2%80%94%20solicitação"
+                href="mailto:sistemaseabra@gmail.com?subject=LGPD%20%E2%80%94%20solicitação"
               >
-                felipeseabracl@gmail.com
+                sistemaseabra@gmail.com
               </a>{' '}
               (assunto &quot;LGPD — solicitação&quot;)
             </li>
           </ul>
           <p>Atenderemos solicitações em até 15 dias úteis.</p>
 
-          <h2 className="text-2xl font-semibold text-gray-900 mt-10 mb-4">
+          <h2 className="text-2xl font-semibold text-foreground mt-10 mb-4">
             8. Segurança
           </h2>
           <ul className="list-disc pl-6 space-y-2">
@@ -311,7 +311,7 @@ export default async function PrivacidadePage({ params }: PageProps) {
             comunicaremos você e a ANPD conforme exige a LGPD.
           </p>
 
-          <h2 className="text-2xl font-semibold text-gray-900 mt-10 mb-4">
+          <h2 className="text-2xl font-semibold text-foreground mt-10 mb-4">
             9. Crianças
           </h2>
           <p>
@@ -320,7 +320,7 @@ export default async function PrivacidadePage({ params }: PageProps) {
             inadvertida, eliminaremos imediatamente.
           </p>
 
-          <h2 className="text-2xl font-semibold text-gray-900 mt-10 mb-4">
+          <h2 className="text-2xl font-semibold text-foreground mt-10 mb-4">
             10. Links externos
           </h2>
           <p>
@@ -329,7 +329,7 @@ export default async function PrivacidadePage({ params }: PageProps) {
             privacidade desses sites — recomendamos revisar as políticas deles.
           </p>
 
-          <h2 className="text-2xl font-semibold text-gray-900 mt-10 mb-4">
+          <h2 className="text-2xl font-semibold text-foreground mt-10 mb-4">
             11. Alterações nesta Política
           </h2>
           <p>
@@ -339,7 +339,7 @@ export default async function PrivacidadePage({ params }: PageProps) {
             antes da entrada em vigor.
           </p>
 
-          <h2 className="text-2xl font-semibold text-gray-900 mt-10 mb-4">
+          <h2 className="text-2xl font-semibold text-foreground mt-10 mb-4">
             12. Contato e Encarregado de Dados (DPO)
           </h2>
           <ul className="list-disc pl-6 space-y-2">
@@ -347,9 +347,9 @@ export default async function PrivacidadePage({ params }: PageProps) {
               E-mail:{' '}
               <a
                 className="text-primary hover:underline"
-                href="mailto:felipeseabracl@gmail.com"
+                href="mailto:sistemaseabra@gmail.com"
               >
-                felipeseabracl@gmail.com
+                sistemaseabra@gmail.com
               </a>
             </li>
             <li>
@@ -358,7 +358,7 @@ export default async function PrivacidadePage({ params }: PageProps) {
                 sistemaseabra.com.br
               </Link>
             </li>
-            <li>Responsável: Felipe Leal — Seabra Solutions</li>
+            <li>Responsável: Felipe Leal — Seabra</li>
           </ul>
         </div>
       </div>

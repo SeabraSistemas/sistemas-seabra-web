@@ -25,12 +25,12 @@ export function FAQ() {
 
       <div className="container-tight relative">
         <div className="text-center space-y-4 mb-16">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 mb-4">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-secondary border border-border mb-4">
             <HelpCircle className="h-4 w-4 text-primary" />
             <span className="text-sm font-medium text-primary">Dúvidas Frequentes</span>
           </div>
 
-          <h2 className="heading-2 text-gray-900">
+          <h2 className="heading-2 text-foreground">
             {t('title')}
           </h2>
         </div>
@@ -41,7 +41,7 @@ export function FAQ() {
               <AccordionItem
                 key={index}
                 value={`item-${index}`}
-                className="group border border-gray-200 rounded-2xl px-6 bg-white shadow-sm data-[state=open]:bg-card/80 data-[state=open]:border-primary/30 transition-all duration-300 hover:scale-[1.01] hover:shadow-lg"
+                className="group border border-border rounded-2xl px-6 bg-card shadow-sm data-[state=open]:bg-card/80 data-[state=open]:border-primary/30 transition-all duration-300 hover:scale-[1.01] hover:shadow-lg"
               >
                 <AccordionTrigger className="text-left text-foreground hover:text-primary py-5 hover:no-underline transition-colors duration-300">
                   <span className="pr-4 font-semibold">{faq.q}</span>

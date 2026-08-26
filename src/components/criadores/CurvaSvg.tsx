@@ -31,8 +31,8 @@ export function CurvaSvg({
       <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="lac-svg" aria-hidden="true">
         <defs>
           <linearGradient id={gid} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stopColor="var(--primary)" stopOpacity="0.22" />
-            <stop offset="1" stopColor="var(--primary)" stopOpacity="0" />
+            <stop offset="0" stopColor="var(--vit-primary)" stopOpacity="0.22" />
+            <stop offset="1" stopColor="var(--vit-primary)" stopOpacity="0" />
           </linearGradient>
         </defs>
         {grid.map((y, i) => (
@@ -42,7 +42,7 @@ export function CurvaSvg({
             y1={y}
             x2={caixa.xr}
             y2={y}
-            stroke="var(--line)"
+            stroke="var(--vit-line)"
             strokeWidth="1"
             vectorEffect="non-scaling-stroke"
             strokeDasharray="2 4"
@@ -52,7 +52,7 @@ export function CurvaSvg({
         <path
           d={line}
           fill="none"
-          stroke="var(--primary)"
+          stroke="var(--vit-primary)"
           strokeWidth={mostrarRotulos ? '2.5' : '2'}
           vectorEffect="non-scaling-stroke"
           strokeLinecap="round"

@@ -3,28 +3,19 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Só os tokens do tier 2 (semânticos) viram utilitário Tailwind. Os primitivos do
+   tier 1 ficam de fora de propósito: componente consome significado (bg-card),
+   nunca cor crua (bg-surface-1). */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
-  --font-mono: var(--font-mono);
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
+  --font-display: var(--font-display);
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
   --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
   --color-muted-foreground: var(--muted-foreground);
@@ -37,60 +28,80 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  --color-wa: var(--wa);
+  --color-wa-hover: var(--wa-hover);
+  --color-wa-ink: var(--wa-ink);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
   --radius-2xl: calc(var(--radius) + 8px);
-  --color-surface-light: var(--surface-light);
-  --color-surface-light-foreground: var(--surface-light-foreground);
-  --color-surface-light-muted: var(--surface-light-muted);
-  --color-surface-light-border: var(--surface-light-border);
-  --color-warm: var(--warm);
-  --color-warm-strong: var(--warm-strong);
-  --font-display: var(--font-display);
 }
 
 :root {
+  /* Faz o navegador escurecer scrollbar, autofill e popup nativo de <select>.
+     Sem isto, um <select> escuro abre uma lista branca. */
+  color-scheme: dark;
   --radius: 0.75rem;
-  --background: #ffffff;
-  --foreground: #111827;
-  --card: #ffffff;
-  --card-foreground: #111827;
-  --popover: #ffffff;
-  --popover-foreground: #111827;
-  --primary: #1d4ed8;
-  --primary-foreground: #ffffff;
-  --secondary: #f3f4f6;
-  --secondary-foreground: #111827;
-  --muted: #f9fafb;
-  --muted-foreground: #6b7280;
-  --accent: rgba(29, 78, 216, 0.08);
-  --accent-foreground: #1d4ed8;
-  --destructive: #ef4444;
-  --border: #e5e7eb;
-  --input: #e5e7eb;
-  --ring: #1d4ed8;
-  --chart-1: #3b82f6;
-  --chart-2: #10b981;
-  --chart-3: #f59e0b;
-  --chart-4: #8b5cf6;
-  --chart-5: #ec4899;
-  --sidebar: #f9fafb;
-  --sidebar-foreground: #111827;
-  --sidebar-primary: #3b82f6;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #f3f4f6;
-  --sidebar-accent-foreground: #111827;
-  --sidebar-border: #e5e7eb;
-  --sidebar-ring: #3b82f6;
-  /* Selective-dark surfaces (light-on-light fallback) + warm accent */
-  --surface-light: #f6f7f9;
-  --surface-light-foreground: #14181f;
-  --surface-light-muted: #5b6473;
-  --surface-light-border: #e3e6eb;
-  --warm: #d97706;
-  --warm-strong: #b45309;
+
+  /* ── Tier 1 — primitivos ────────────────────────────────────────────────
+     Cinza NEUTRO, sem matiz. A primeira versão usava cinza quente (hue ~50°)
+     para "remeter ao campo", mas numa superfície do tamanho de uma página o
+     matiz lê como sépia — o fundo parecia marrom, não preto.
+     O calor do site vem do acento ocre e das fotografias de campo. O canvas
+     fica fora disso. Elevação = luminosidade pura. */
+  --surface-0: #000000; /* canvas da página */
+  --surface-1: #121212; /* card, painel, faixa alternada */
+  --surface-2: #1e1e1e; /* dentro de um nível 1: input, chip, hover */
+  --surface-3: #2a2a2a; /* overlay: dropdown, popover, tooltip, sheet */
+
+  /* Duas bordas, não uma: colapsá-las reprova WCAG 1.4.11 em todo input
+     e botão outline. subtle = decorativa; strong = componente interativo
+     (3,26:1 sobre surface-1). */
+  --line-subtle: #262626;
+  --line-strong: #666666;
+
+  /* ink-1 passa AA (4,5) até sobre surface-3, o pior caso do sistema. */
+  --ink-0: #f5f5f5; /* texto primário   — 19,3:1 sobre o canvas */
+  --ink-1: #999999; /* texto secundário —  5,04:1 no pior caso */
+  --ink-2: #6b6b6b; /* decorativo, nunca texto informativo */
+
+  /* O acento único, e a única fonte de calor da interface. Branco sobre ele
+     dá 3,15:1 e reprova, então o texto sobre ocre é preto (6,66:1). */
+  --ocre: #c8813c;
+  --ocre-hover: #d18f45;
+  --ocre-ink: #000000;
+
+  /* ── Tier 2 — semânticos (contrato shadcn) ──────────────────────────── */
+  --background: var(--surface-0);
+  --foreground: var(--ink-0);
+  --card: var(--surface-1);
+  --card-foreground: var(--ink-0);
+  --popover: var(--surface-3);
+  --popover-foreground: var(--ink-0);
+  --primary: var(--ocre);
+  --primary-foreground: var(--ocre-ink);
+  --secondary: var(--surface-2);
+  --secondary-foreground: var(--ink-0);
+  --muted: var(--surface-1);
+  --muted-foreground: var(--ink-1);
+  --accent: var(--surface-2);
+  --accent-foreground: var(--ink-0);
+  --destructive: #f87171; /* o #ef4444 anterior dá 4,36:1 e reprova AA */
+  --destructive-foreground: var(--ocre-ink);
+  --border: var(--line-subtle);
+  --input: var(--line-strong);
+  --ring: var(--ocre);
+
+  /* WhatsApp. É a única cor de terceiro no site, e fica porque é
+     reconhecimento de plataforma: o visitante sabe o que o botão faz antes
+     de ler. Verde claro por decisão explícita — é o mais reconhecível como
+     "botão de WhatsApp". Contraste: texto branco sobre este verde dá
+     1,98:1 e reprova o mínimo AA (4,5:1); decisão consciente, priorizando
+     reconhecimento de marca sobre a norma de contraste. */
+  --wa: #25d366;
+  --wa-hover: #20bd5a;
+  --wa-ink: #ffffff;
 }
 
 @layer base {
@@ -106,6 +117,24 @@
   body {
     @apply text-foreground antialiased bg-background;
     min-height: 100vh;
+  }
+
+  /* O foco padrão do navegador é azul e vaza para fora da paleta. */
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
+  /* Serifa por ELEMENTO, não pelas utilities .heading-*: só 25 dos 93 títulos
+     do site usam essas classes, os outros 68 são <h1 className="text-3xl">
+     cru. A regra de elemento cobre os 93 sem tocar em nenhum TSX, e por estar
+     no layer base qualquer componente ainda consegue sobrescrever. */
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display), Georgia, "Times New Roman", serif;
+    font-weight: 400;
+    letter-spacing: -0.015em;
   }
 }
 
@@ -130,8 +159,21 @@
     @apply bg-clip-text text-transparent bg-linear-to-b from-foreground to-muted-foreground;
   }
 
-  .glass-card {
-    @apply bg-card border border-border rounded-2xl shadow-sm;
+  /* Superfície de card padrão. Substitui o par `border-gray-200 bg-white
+     shadow-sm` repetido em ~14 componentes. (Era .glass-card — não havia
+     vidro nenhum no estilo.) */
+  .surface-card {
+    @apply bg-card border border-border rounded-2xl;
+  }
+
+  /* Faixa de seção alternada. Sobe --card um nível dentro dela, para que um
+     card descendente não fique da mesma cor do próprio fundo — o problema
+     clássico de "o card sumiu" no tema escuro. */
+  .band {
+    background-color: var(--surface-1);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    --card: var(--surface-2);
   }
 
   .font-display {
@@ -140,13 +182,11 @@
 
   .btn-modern {
     @apply relative font-medium transition-all duration-200;
-    @apply bg-primary text-white rounded-full;
-    @apply shadow-sm;
+    @apply bg-primary text-primary-foreground rounded-full;
   }
 
   .btn-modern:hover {
-    @apply bg-blue-800 shadow-md;
-    transform: translateY(-1px);
+    background-color: var(--ocre-hover);
   }
 
   .btn-ghost {
@@ -188,43 +228,114 @@
     transform: translateY(-1px);
   }
 
-  .bg-gradient-radial-top {
-    background: transparent;
+  /* Corpo de artigo do blog. Substitui as classes prose-* que estavam no
+     markup mas nunca produziram regra alguma — @tailwindcss/typography não
+     está instalado. Escrito à mão sobre os tokens para não trazer o plugin,
+     que embute defaults de modo claro.
+
+     Leitura longa em fundo escuro: corpo em ink-1 (não branco puro, que
+     causa halation), entrelinha generosa e medida limitada a ~68 caracteres,
+     que é onde o olho volta para a linha seguinte sem se perder. */
+  .article {
+    max-width: 68ch;
+    color: var(--muted-foreground);
+    line-height: 1.75;
   }
 
+  .article > * + * {
+    margin-top: 1.25em;
+  }
+
+  .article h2 {
+    color: var(--foreground);
+    font-size: 1.5rem;
+    margin-top: 2.5rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .article h3 {
+    color: var(--foreground);
+    font-size: 1.25rem;
+    margin-top: 2rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .article strong {
+    color: var(--foreground);
+    font-weight: 600;
+  }
+
+  .article a {
+    color: var(--primary);
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
+
+  .article ul,
+  .article ol {
+    padding-left: 1.5rem;
+  }
+
+  .article ul {
+    list-style: disc;
+  }
+
+  .article ol {
+    list-style: decimal;
+  }
+
+  .article li + li {
+    margin-top: 0.4em;
+  }
+
+  .article blockquote {
+    border-left: 2px solid var(--primary);
+    padding-left: 1.25rem;
+    color: var(--foreground);
+  }
+
+  .article code {
+    background: var(--secondary);
+    border-radius: 0.25rem;
+    padding: 0.1em 0.35em;
+    font-size: 0.9em;
+  }
+
+  /* O conteúdo tem tabelas GFM, que sem estilo saem sem borda nenhuma. */
+  .article table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+    display: block;
+    overflow-x: auto;
+  }
+
+  .article th,
+  .article td {
+    border: 1px solid var(--border);
+    padding: 0.6rem 0.8rem;
+    text-align: left;
+  }
+
+  .article th {
+    color: var(--foreground);
+    background: var(--secondary);
+    font-weight: 600;
+  }
+
+  .article img {
+    border-radius: var(--radius);
+  }
+
+  /* Linhas claras: as antigas eram pretas a 2,5% e ficavam invisíveis
+     sobre fundo escuro. */
   .bg-grid-pattern {
     background-image:
-      linear-gradient(rgba(0, 0, 0, 0.025) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(0, 0, 0, 0.025) 1px, transparent 1px);
+      linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
     background-size: 50px 50px;
   }
 
-  .blur-blob {
-    display: none;
-  }
-
-  .blur-blob-primary {
-    display: none;
-  }
-
-  .shine {
-    @apply absolute inset-0 opacity-0 transition-opacity duration-500;
-    background: linear-gradient(
-      120deg,
-      transparent 30%,
-      rgba(255, 255, 255, 0.5) 50%,
-      transparent 70%
-    );
-  }
-
-  .shine:hover {
-    @apply opacity-100;
-  }
-}
-
-@keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-6px); }
 }
 
 @keyframes fadeInUp {
@@ -247,10 +358,6 @@
     opacity: 0.8;
     box-shadow: 0 0 30px rgba(59, 130, 246, 0.5);
   }
-}
-
-.animate-float {
-  animation: float 4s ease-in-out infinite;
 }
 
 .fade-in-up {
@@ -302,12 +409,13 @@
   background: transparent;
 }
 
+/* Antes era preto a 15%: invisível sobre fundo escuro. */
 ::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.15);
+  background: var(--line-strong);
   border-radius: 3px;
 }
 
 ::selection {
-  background: rgba(59, 130, 246, 0.3);
-  color: white;
+  background: var(--ocre);
+  color: var(--ocre-ink);
 }

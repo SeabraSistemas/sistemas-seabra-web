@@ -30,7 +30,7 @@ export async function generateMetadata({ params }: PageProps) {
   const canonicalLocale = locale === 'es' && hasEs ? 'es' : 'pt';
 
   return {
-    title: `${post.title} | Seabra Solutions`,
+    title: `${post.title} | Seabra`,
     description: post.excerpt,
     alternates: {
       canonical: localizedUrl(canonicalLocale, `/blog/${slug}`),
@@ -93,7 +93,7 @@ export default async function BlogPostPage({ params }: PageProps) {
             },
             publisher: {
               '@type': 'Organization',
-              name: 'Seabra Solutions',
+              name: 'Seabra',
               logo: { '@type': 'ImageObject', url: `${SITE_URL}/images/logo.png` },
             },
           },
@@ -135,7 +135,7 @@ export default async function BlogPostPage({ params }: PageProps) {
             </span>
           </div>
 
-          <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight text-gray-900 leading-tight">
+          <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight text-foreground leading-tight">
             {post.title}
           </h1>
 
@@ -145,13 +145,19 @@ export default async function BlogPostPage({ params }: PageProps) {
         </header>
 
         {/* Content */}
-        <article className="prose prose-gray max-w-none prose-headings:text-gray-900 prose-h2:text-2xl prose-h2:mt-10 prose-h2:mb-4 prose-h3:text-xl prose-h3:mt-8 prose-h3:mb-3 prose-p:text-gray-600 prose-p:leading-relaxed prose-li:text-gray-600 prose-strong:text-gray-900 prose-ul:space-y-1 prose-a:text-primary prose-a:font-medium prose-a:no-underline hover:prose-a:underline prose-table:text-sm prose-th:text-gray-900">
+        {/* As classes prose-* que estavam aqui nunca produziram uma única
+            regra: @tailwindcss/typography não está instalado e não há @plugin
+            em globals.css. O corpo dos artigos vinha sem estilo nenhum. A
+            classe .article em globals.css substitui isso usando os tokens do
+            tema — sem trazer o plugin, que embute defaults de modo claro e
+            exigiria prose-invert por cima. */}
+        <article className="article">
           <ReactMarkdown remarkPlugins={[remarkGfm]}>{post.content}</ReactMarkdown>
         </article>
 
         {/* Source */}
         {post.source && (
-          <div className="mt-10 p-4 rounded-xl bg-gray-50 border border-gray-100">
+          <div className="mt-10 p-4 rounded-xl bg-muted border border-border">
             <p className="text-sm text-muted-foreground">
               {t('source')}:{' '}
               <a
@@ -169,7 +175,7 @@ export default async function BlogPostPage({ params }: PageProps) {
 
         {/* CTA */}
         <div className="mt-12 p-8 rounded-2xl bg-primary/5 border border-primary/10 text-center space-y-4">
-          <h3 className="text-xl font-semibold text-gray-900">
+          <h3 className="text-xl font-semibold text-foreground">
             {t('ctaTitle')}
           </h3>
           <p className="text-muted-foreground max-w-lg mx-auto">
