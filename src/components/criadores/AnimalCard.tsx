@@ -15,6 +15,7 @@ export function AnimalCard({ animal, criadorNome }: { animal: Animal; criadorNom
         alt={altAnimal(animal, criadorNome)}
         blurDataURL={animal.blur_data_url}
         sizes="(max-width:640px) 50vw, (max-width:1024px) 33vw, 200px"
+        dotsCount={animal.fotos.length}
       />
       <div className="acard-b">
         <div className="nm">{nomeExibivel(animal)}</div>

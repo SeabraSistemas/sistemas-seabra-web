@@ -5,7 +5,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { Link } from '@/i18n/routing';
 import { getPaginaAnimal, getTodosSlugsAnimais } from '@/lib/criadores/queries';
 import { altAnimal, amlDe, fmtDataBr, metricasDe, nomeExibivel } from '@/lib/criadores/normalize';
-import { AnimalFoto } from '@/components/criadores/AnimalFoto';
+import { AnimalFotoCarrossel } from '@/components/criadores/AnimalFotoCarrossel';
 import { GenealogiaArvore } from '@/components/criadores/GenealogiaArvore';
 import { FichaTabs } from '@/components/criadores/FichaTabs';
 import { RodapeFicha } from '@/components/criadores/RodapeFicha';
@@ -64,11 +64,10 @@ export default async function FichaPage({
 
       <section className="ficha-head">
         <div className="ficha-photo">
-          <AnimalFoto
-            src={a.fotos[0] ?? null}
+          <AnimalFotoCarrossel
+            fotos={a.fotos}
             alt={altAnimal(a, criador.criador)}
             blurDataURL={a.blur_data_url}
-            priority
             sizes="(max-width:640px) 220px, 188px"
           />
         </div>
@@ -114,12 +113,12 @@ export default async function FichaPage({
             <div className="ficha-actions">
               <a
                 className="btn btn-wa"
-                href={`https://wa.me/${criador.whatsapp}`}
+                href={`https://wa.me/${criador.whatsapp}?text=${encodeURIComponent(t('mensagemWhatsappAnimal', { animal: nomeExibivel(a) }))}`}
                 target="_blank"
                 rel="noopener noreferrer"
               >
                 <MessageCircle size={15} />
-                {t('contato')}
+                {t('contatar')}
               </a>
             </div>
           )}

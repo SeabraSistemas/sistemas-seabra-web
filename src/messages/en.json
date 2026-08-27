@@ -40,6 +40,8 @@
     "animaisNaVitrine": "{n, plural, one {# animal in the showcase} other {# animals in the showcase}}",
     "contatoCriador": "Ask about this breeder",
     "contatoAnimal": "Ask about this animal",
+    "contatar": "Contact",
+    "mensagemWhatsappAnimal": "Hello! I'd like more information about the animal {animal} I saw in your Sistema Seabra showcase.",
     "compartilhar": "Share profile",
     "voltarCriadores": "Breeders",
     "secaoMachos": "Males",

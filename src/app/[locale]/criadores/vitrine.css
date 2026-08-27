@@ -195,7 +195,7 @@
   padding: 9px 13px; font-size: 13px; font-weight: 600;
   border: 1px solid transparent; text-decoration: none; cursor: pointer;
 }
-.vitrine-scope .btn-wa { background: var(--vit-wa-green); color: #000; border-color: transparent; }
+.vitrine-scope .btn-wa { background: var(--vit-wa-green); color: #fff; border-color: transparent; }
 .vitrine-scope .btn-ghost { background: var(--vit-surface-3); color: var(--vit-ink); border-color: var(--vit-line); }
 
 /* ---- filtros (chips) ---- */
@@ -240,6 +240,14 @@
 .vitrine-scope .photo.noimg .ph span {
   font-size: 9px; text-transform: uppercase; letter-spacing: .12em; color: var(--vit-ink-mute);
 }
+.vitrine-scope .photo .dots {
+  position: absolute; left: 0; right: 0; top: 8px; display: flex; justify-content: center; gap: 4px; z-index: 1;
+}
+.vitrine-scope .photo .dots span {
+  width: 4px; height: 4px; border-radius: 99px; background: rgba(255, 255, 255, .45);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, .25);
+}
+.vitrine-scope .photo .dots span.on { background: #fff; }
 .vitrine-scope .wm { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
 .vitrine-scope .wm .diag {
   position: absolute; inset: -40%; display: flex; flex-direction: column; gap: 26px;
@@ -272,6 +280,22 @@
 .vitrine-scope .ficha-photo {
   grid-area: photo; border-radius: 12px; overflow: hidden; border: 1px solid var(--vit-line); position: relative;
 }
+.vitrine-scope .fcarrossel { position: relative; }
+.vitrine-scope .fcarrossel-nav {
+  position: absolute; top: 50%; transform: translateY(-50%); display: grid; place-items: center;
+  width: 26px; height: 26px; border-radius: 99px; border: none; cursor: pointer;
+  background: rgba(10, 12, 16, .55); color: #fff; backdrop-filter: blur(2px);
+}
+.vitrine-scope .fcarrossel-nav.prev { left: 6px; }
+.vitrine-scope .fcarrossel-nav.next { right: 6px; }
+.vitrine-scope .fcarrossel-dots {
+  position: absolute; left: 0; right: 0; top: 8px; display: flex; justify-content: center; gap: 5px; z-index: 1;
+}
+.vitrine-scope .fcarrossel-dots button {
+  width: 6px; height: 6px; padding: 0; border: none; border-radius: 99px; cursor: pointer;
+  background: rgba(255, 255, 255, .45); box-shadow: 0 0 0 1px rgba(0, 0, 0, .25);
+}
+.vitrine-scope .fcarrossel-dots button.on { background: #fff; }
 .vitrine-scope .ficha-id { grid-area: data; min-width: 0; }
 .vitrine-scope .ficha-id .eyebrow {
   font-size: 10.5px; text-transform: uppercase; letter-spacing: .14em;
@@ -302,7 +326,6 @@
 }
 .vitrine-scope .ficha-actions { display: flex; gap: 8px; margin-top: 13px; flex-wrap: wrap; }
 .vitrine-scope .ficha-actions .btn { flex: 1 1 0; justify-content: center; }
-.vitrine-scope .ficha-actions .btn-wa { background: var(--vit-green); }
 
 /* genealogia compacta (3ª coluna da ficha) */
 .vitrine-scope .ficha-gen {

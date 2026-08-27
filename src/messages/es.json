@@ -40,6 +40,8 @@
     "animaisNaVitrine": "{n, plural, one {# animal en la vitrina} other {# animales en la vitrina}}",
     "contatoCriador": "Preguntar por este criador",
     "contatoAnimal": "Preguntar por este animal",
+    "contatar": "Contactar",
+    "mensagemWhatsappAnimal": "¡Hola! Me gustaría saber más información sobre el animal {animal} que vi en la vitrina de Sistema Seabra.",
     "compartilhar": "Compartir ficha",
     "voltarCriadores": "Criadores",
     "secaoMachos": "Machos",

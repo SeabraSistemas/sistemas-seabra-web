@@ -14,6 +14,7 @@ export function AnimalFoto({
   priority,
   sizes,
   className,
+  dotsCount,
 }: {
   src: string | null;
   alt: string;
@@ -21,6 +22,8 @@ export function AnimalFoto({
   priority?: boolean;
   sizes: string;
   className?: string;
+  /** Quando > 1, mostra bolinhas indicando que há mais fotos no perfil (sem trocar a imagem). */
+  dotsCount?: number;
 }) {
   return (
     <div className={cn('photo', !src && 'noimg', className)}>
@@ -38,6 +41,13 @@ export function AnimalFoto({
       ) : (
         <div className="ph">
           <Image src="/images/logo-icon.png" alt="Sistema Seabra" width={82} height={82} />
+        </div>
+      )}
+      {dotsCount != null && dotsCount > 1 && (
+        <div className="dots" aria-hidden>
+          {Array.from({ length: dotsCount }).map((_, i) => (
+            <span key={i} className={i === 0 ? 'on' : undefined} />
+          ))}
         </div>
       )}
       <Watermark />
