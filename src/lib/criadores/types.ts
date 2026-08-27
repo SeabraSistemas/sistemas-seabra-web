@@ -24,13 +24,18 @@ export type Genealogia = Partial<Record<
 
 /**
  * Snapshot jsonb da AML (avaliação morfológica linear): vitrine_animal.aml.
- * '{}' quando não há avaliação; senão { total, data, pts: [[label, valor 1-9], ...] }
- * (só os pontos não-nulos — úbere de macho não vem).
+ * '{}' quando não há avaliação; senão { total, data, pts: [...] } (só os
+ * pontos não-nulos — úbere de macho não vem).
+ *
+ * Cada ponto vem em uma de duas formas, conforme a versão da migration que
+ * gerou o snapshot (ver src/lib/criadores/aml.ts):
+ *  - [label, valor 1-9]              — vitrine_09 (atual em produção)
+ *  - [ord 1-16, label, valor 1-9]    — vitrine_19_aml_ord (após rodar no app)
  */
 export interface Aml {
   total?: number | null;
   data?: string | null;
-  pts?: [string, number][];
+  pts?: ([string, number] | [number, string, number])[];
 }
 
 /** Snapshot de lactação (vitrine_animal.lactacao). '{}' quando não há / oculto. */

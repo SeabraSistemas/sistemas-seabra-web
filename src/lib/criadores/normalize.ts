@@ -1,4 +1,5 @@
 import type { Animal, Criador, SexoNorm } from './types';
+import { AML_NUMERO } from './aml';
 
 /**
  * Regras de exibicao da vitrine. NUNCA renderizar rotulo orfao: cada helper
@@ -62,17 +63,47 @@ export function metricasDe(a: Animal): { label: string; valor: string; sufixo?: 
   return out;
 }
 
+/** "YYYY-MM-DD" -> "DD/MM/YYYY"; null se ausente/invalido. */
+export function fmtDataBr(d: string | null | undefined): string | null {
+  if (!d) return null;
+  const [y, m, day] = d.split('-');
+  if (!y || !m || !day) return null;
+  return `${day}/${m}/${y}`;
+}
+
+/** Ponto da AML já resolvido para render: numero da caracteristica (quando
+ * conhecido), label e nota 1-9. */
+export type AmlPonto = { n: number | null; label: string; valor: number };
+
+/** Snapshot da AML pronto para render (retorno de amlDe), consumido por AmlBloco/RadarAml. */
+export type AmlData = { totalFmt: string | null; totalInt: number | null; dataFmt: string | null; pts: AmlPonto[] };
+
 /**
  * Snapshot da AML pronto para render, ou null quando não há avaliação com pontos
  * (aí a aba mostra o placeholder). Formata o total como pt-BR ("76,13") no servidor
- * para evitar mismatch de hidratação no client component.
+ * para evitar mismatch de hidratação no client component; totalInt arredonda pro
+ * medalhão do radar (mesmo texto do app: "80 PONTOS", não "79,61").
+ *
+ * Cada ponto pode vir como [label, valor] (snapshot atual) ou [ord, label, valor]
+ * (pós vitrine_19_aml_ord no app) — o numero e resolvido nessa ordem: ord do
+ * proprio snapshot > AML_NUMERO[label] > null (barra/badge sem numero).
  */
-export function amlDe(a: Animal): { totalFmt: string | null; pts: [string, number][] } | null {
-  const pts = a.aml?.pts;
-  if (!Array.isArray(pts) || pts.length === 0) return null;
+export function amlDe(a: Animal): AmlData | null {
+  const ptsRaw = a.aml?.pts;
+  if (!Array.isArray(ptsRaw) || ptsRaw.length === 0) return null;
   const total = a.aml?.total;
   const totalFmt = typeof total === 'number' ? total.toFixed(2).replace('.', ',') : null;
-  return { totalFmt, pts };
+  const totalInt = typeof total === 'number' ? Math.round(total) : null;
+  const dataFmt = fmtDataBr(a.aml?.data);
+  const pts: AmlPonto[] = ptsRaw.map((pt) => {
+    if (pt.length === 3) {
+      const [ord, label, valor] = pt;
+      return { n: ord, label, valor };
+    }
+    const [label, valor] = pt;
+    return { n: AML_NUMERO[label] ?? null, label, valor };
+  });
+  return { totalFmt, totalInt, dataFmt, pts };
 }
 
 function fmtKg(n: number): string {

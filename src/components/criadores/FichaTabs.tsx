@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { Info } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { AmlBarras } from './AmlBarras';
+import type { AmlData } from '@/lib/criadores/normalize';
+import { AmlBloco } from './AmlBloco';
 import { MedidasChips } from './MedidasChips';
 import { LactacaoAberta } from './LactacaoAberta';
 import { CarrosselEncerradas } from './CarrosselEncerradas';
@@ -12,9 +13,6 @@ import { Filhas } from './Filhas';
 
 /** Métrica serializável vinda de metricasDe(animal). */
 type Metrica = { label: string; valor: string; sufixo?: string };
-
-/** AML serializável vinda de amlDe(animal); null → a aba mostra o placeholder. */
-type AmlData = { totalFmt: string | null; pts: [string, number][] };
 
 /** Medida do snapshot: [label, valor, unidade]. */
 type Medida = [string, number, string];
@@ -127,7 +125,7 @@ export function FichaTabs({
       </div>
 
       <div className="panel" role="tabpanel" hidden={tab !== 'ta'}>
-        {aml && <AmlBarras aml={aml} />}
+        {aml && <AmlBloco aml={aml} />}
         {medidas.length > 0 && <MedidasChips medidas={medidas} />}
         {!aml && medidas.length === 0 && (
           <div className="block">

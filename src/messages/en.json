@@ -74,7 +74,8 @@
     "emBreveProducao": "Production data coming soon.",
     "emBreveAml": "Morphological evaluation and measurements coming soon.",
     "amlTitulo": "Linear morphological evaluation",
-    "amlPontuacao": "Score",
+    "amlPontosLabel": "Points",
+    "amlAvaliadaEm": "Evaluated on {data}",
     "medidasTitulo": "Body measurements",
     "lactacaoAberta": "Open lactation",
     "lactacaoDiasSufixo": "days",
@@ -466,6 +467,7 @@
         "badge": "Consulting",
         "title": "Small ruminant consulting",
         "subtitle": "15+ years in the field with dozens of consulting projects in Brazil and abroad — on-site or remote.",
+        "logoAlt": "Seabra Consultoria",
         "cta": "Talk to the consultant"
       },
       "stats": {

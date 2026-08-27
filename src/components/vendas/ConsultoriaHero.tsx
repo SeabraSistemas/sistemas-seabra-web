@@ -1,6 +1,7 @@
 'use client';
 
 import { useTranslations, useLocale } from 'next-intl';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { buildWhatsAppUrl } from '@/lib/whatsapp';
 import { type Locale } from '@/i18n/config';
@@ -22,6 +23,24 @@ export function ConsultoriaHero() {
         </div>
         <h1 className="heading-display text-foreground max-w-3xl mx-auto">{t('hero.title')}</h1>
         <p className="body-large max-w-2xl mx-auto text-muted-foreground">{t('hero.subtitle')}</p>
+
+        {/* Assinatura Seabra Consultoria: a arte tem azul/verde/navy e o
+            navy some sobre o fundo escuro do site — a placa clara isola a
+            marca em vez de repintá-la. Logo grande e padding enxuto: pouco
+            respiro em volta pra marca não se perder num retângulo branco. */}
+        <div className="flex justify-center">
+          <div className="inline-flex items-center rounded-2xl border border-black/5 bg-[#f4f4f2] px-5 py-3">
+            <Image
+              src="/images/consultoria/seabra-consultoria.png"
+              alt={t('hero.logoAlt')}
+              width={1451}
+              height={697}
+              priority
+              className="h-24 sm:h-28 w-auto"
+            />
+          </div>
+        </div>
+
         <div className="pt-2">
           <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="inline-block">
             <Button

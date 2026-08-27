@@ -74,7 +74,8 @@
     "emBreveProducao": "Dados de produção em breve.",
     "emBreveAml": "Avaliação morfológica e medidas em breve.",
     "amlTitulo": "Avaliação morfológica linear",
-    "amlPontuacao": "Pontuação",
+    "amlPontosLabel": "Pontos",
+    "amlAvaliadaEm": "Avaliada em {data}",
     "medidasTitulo": "Medidas corporais",
     "lactacaoAberta": "Lactação aberta",
     "lactacaoDiasSufixo": "dias",
@@ -466,6 +467,7 @@
         "badge": "Consultoria",
         "title": "Consultoria em pequenos ruminantes",
         "subtitle": "Mais de 15 anos de campo em caprinovinocultura, com dezenas de consultorias no Brasil e no exterior — presencial ou à distância.",
+        "logoAlt": "Seabra Consultoria",
         "cta": "Falar com o consultor"
       },
       "stats": {

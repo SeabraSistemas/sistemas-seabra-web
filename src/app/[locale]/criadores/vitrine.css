@@ -373,20 +373,53 @@
 }
 .vitrine-scope .empty-note svg { flex: none; margin-top: 1px; }
 
-/* ---- AML: pontuação + barras por faixa (verde ≥7 / amarelo ≥4 / vermelho <4), sem números ---- */
-.vitrine-scope .aml-score { display: flex; align-items: baseline; gap: 8px; margin-bottom: 16px; }
-.vitrine-scope .aml-score b { font-family: var(--vit-mono); font-size: 34px; font-weight: 600; letter-spacing: -.02em; }
-.vitrine-scope .aml-score span { font-size: 12px; color: var(--vit-ink-mute); }
-.vitrine-scope .bars { display: flex; flex-direction: column; gap: 10px; }
-.vitrine-scope .bar { display: grid; grid-template-columns: 160px 1fr; align-items: center; gap: 12px; }
+/* ---- AML: radar do perfil morfológico (esquerda) + barras numeradas por
+   faixa (verde ≥7 / amarelo ≥4 / vermelho <4) (direita). Espelha o gráfico
+   que o app monta no compartilhar perfil — ver RadarAml.tsx / radar.ts. O
+   total (antes num .aml-score solto) foi para o medalhão do radar e o
+   cabeçalho do bloco (.block-h .k, já existia sem uso). ---- */
+.vitrine-scope .aml-grid { display: grid; grid-template-columns: 440px 1fr; gap: 24px; align-items: center; }
+.vitrine-scope .aml-radar-svg { display: block; width: 100%; height: auto; }
+
+.vitrine-scope .rd-grid { fill: none; stroke: var(--vit-surface-3); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.vitrine-scope .rd-area { fill: var(--vit-primary); fill-opacity: .18; stroke: none; }
+.vitrine-scope .rd-line { fill: none; stroke: var(--vit-primary); stroke-width: 2; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+.vitrine-scope .rd-vtx { fill: var(--vit-primary); transform-box: fill-box; transform-origin: center; transition: transform .15s, fill .15s; }
+.vitrine-scope .rd-vtx.on { fill: var(--vit-primary-2); transform: scale(1.6); }
+.vitrine-scope .rd-badge circle { fill: var(--vit-surface-3); stroke: var(--vit-line); stroke-width: 1; transition: fill .15s; }
+.vitrine-scope .rd-badge text { fill: var(--vit-ink-soft); font-family: var(--vit-mono); font-size: 10px; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+.vitrine-scope .rd-badge.on circle { fill: var(--vit-primary); }
+.vitrine-scope .rd-badge.on text { fill: var(--vit-ink); }
+.vitrine-scope .rd-medalhao circle { fill: var(--vit-surface); stroke: var(--vit-primary); stroke-width: 2.5; }
+.vitrine-scope .rd-total { fill: var(--vit-ink); font-family: var(--vit-mono); font-size: 15px; font-weight: 600; text-anchor: middle; }
+.vitrine-scope .rd-pontos { fill: var(--vit-ink-mute); font-size: 5.5px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; text-anchor: middle; }
+
+/* width:100% é necessário: sem ele, width:auto + margin-left:auto vira
+   shrink-to-fit (a coluna .bt de 1fr no .bar some, tudo encolhe pro
+   conteúdo fixo) em vez de esticar até o max-width e só então empurrar
+   pra direita. */
+.vitrine-scope .bars { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 460px; margin-left: auto; }
+.vitrine-scope .bar {
+  display: grid; grid-template-columns: 22px 150px 1fr 30px; align-items: center; gap: 10px;
+  border-radius: 6px; padding: 3px 6px; margin: 0 -6px; transition: background-color .15s;
+}
+.vitrine-scope .bar.on { background: var(--vit-surface-2); }
+.vitrine-scope .bar .bn { font-family: var(--vit-mono); font-size: 11px; color: var(--vit-ink-mute); text-align: right; }
 .vitrine-scope .bar .bl { font-size: 12px; color: var(--vit-ink-soft); }
 .vitrine-scope .bar .bt { height: 9px; background: var(--vit-surface-3); border-radius: 99px; overflow: hidden; }
 .vitrine-scope .bar .bf { display: block; height: 100%; background: var(--vit-primary); border-radius: 99px; }
 .vitrine-scope .bar .bf.g { background: #34d399; }
 .vitrine-scope .bar .bf.y { background: #e3c65b; }
 .vitrine-scope .bar .bf.r { background: #f87171; }
+.vitrine-scope .bar .bv { font-family: var(--vit-mono); font-size: 12px; font-weight: 600; color: var(--vit-ink); text-align: right; font-variant-numeric: tabular-nums; }
+
+@container vit (max-width: 760px) {
+  .vitrine-scope .aml-grid { grid-template-columns: 1fr; }
+  .vitrine-scope .aml-radar { max-width: 260px; margin: 0 auto 8px; }
+  .vitrine-scope .bars { max-width: none; margin-left: 0; }
+}
 @container vit (max-width: 640px) {
-  .vitrine-scope .bar { grid-template-columns: 110px 1fr; }
+  .vitrine-scope .bar { grid-template-columns: 18px 108px 1fr 28px; gap: 8px; }
 }
 
 /* ---- Medidas: chips de valor + unidade ---- */

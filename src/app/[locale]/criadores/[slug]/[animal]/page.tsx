@@ -4,7 +4,7 @@ import { ChevronLeft, ChevronRight, MessageCircle } from 'lucide-react';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { Link } from '@/i18n/routing';
 import { getPaginaAnimal, getTodosSlugsAnimais } from '@/lib/criadores/queries';
-import { altAnimal, amlDe, metricasDe, nomeExibivel } from '@/lib/criadores/normalize';
+import { altAnimal, amlDe, fmtDataBr, metricasDe, nomeExibivel } from '@/lib/criadores/normalize';
 import { AnimalFoto } from '@/components/criadores/AnimalFoto';
 import { GenealogiaArvore } from '@/components/criadores/GenealogiaArvore';
 import { FichaTabs } from '@/components/criadores/FichaTabs';
@@ -14,14 +14,6 @@ import { Disclaimer } from '@/components/criadores/Disclaimer';
 // dynamicParams=true: fichas rendem sob demanda (cache ISR de 1h).
 export const revalidate = 3600;
 export const dynamicParams = true;
-
-/** "YYYY-MM-DD" -> "DD/MM/YYYY"; null se ausente/invalido. */
-function fmtData(d: string | null): string | null {
-  if (!d) return null;
-  const [y, m, day] = d.split('-');
-  if (!y || !m || !day) return null;
-  return `${day}/${m}/${y}`;
-}
 
 export async function generateStaticParams() {
   try {
@@ -59,7 +51,7 @@ export default async function FichaPage({
   if (!pag) notFound();
   const { criador, animal: a, indice, total, anteriorSlug, proximoSlug } = pag;
 
-  const nascimento = fmtData(a.data_nascimento);
+  const nascimento = fmtDataBr(a.data_nascimento);
   const metricas = metricasDe(a);
   const aml = amlDe(a);
 
