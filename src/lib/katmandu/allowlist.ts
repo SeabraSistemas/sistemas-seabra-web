@@ -6,4 +6,8 @@
  *
  * Adicionar/remover usuário aqui é só editar este array.
  */
-export const USUARIOS_PERMITIDOS = ['felipeseabracl@gmail.com'];
+export const USUARIOS_PERMITIDOS = [
+  'felipeseabracl@gmail.com',
+  'cvdsilva@hotmail.com',
+  'gustavoweber2017@gmail.com',
+];
