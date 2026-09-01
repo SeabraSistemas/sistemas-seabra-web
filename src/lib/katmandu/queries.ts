@@ -78,7 +78,8 @@ export async function getRebanho(): Promise<AnimalRebanho[]> {
       diasEmEngorda: parseNumber(r['Dias em engorda']),
       lote: parseText(r['Lote']),
       pdi: parseNumber(r['pdi']),
-      ultimoManejo: parseText(r['Data última pesagem']),
+      ultimoManejo: parseText(r['data_ultima_pesagem']),
+      local: parseText(r['local']),
     };
   }).filter((a) => a.idAnimal !== '');
 }
@@ -105,6 +106,7 @@ export async function getPesagem(): Promise<PesagemRegistro[]> {
       venda: parseText(r['Venda']),
       manejos: parseText(r['Manejos']),
       mesesVida: diasVida == null ? null : diasVida / 30,
+      local: parseText(r['local']),
     };
   }).filter((p) => p.idAnimal !== '');
 }
@@ -114,8 +116,11 @@ export async function getBaixas(): Promise<Baixa[]> {
   return toObjects(rows).map((r) => ({
     idAnimal: parseText(r['ID animal']) ?? '',
     data: parseText(r['Data da baixa']),
-    causa: parseText(r['Causa da baixa']) ?? parseText(r['Causa do óbito']),
+    causa: parseText(r['Causa da baixa']),
     categoria: parseText(r['Categoria na baixa']),
+    lote: parseText(r['Lote']),
+    local: parseText(r['local']),
+    obs: parseText(r['OBS']),
   })).filter((b) => b.idAnimal !== '');
 }
 

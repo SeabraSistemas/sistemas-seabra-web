@@ -8,6 +8,8 @@ const LINKS = [
   { href: '/katmandu/rebanho', label: 'Rebanho' },
   { href: '/katmandu/pesagem', label: 'Pesagem' },
   { href: '/katmandu/lote', label: 'Lote' },
+  { href: '/katmandu/movimentar', label: 'Movimentar' },
+  { href: '/katmandu/baixa', label: 'Baixa' },
 ];
 
 export function DashboardNav({ usuario }: { usuario: string }) {

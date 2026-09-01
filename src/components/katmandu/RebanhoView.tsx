@@ -38,6 +38,7 @@ export function RebanhoView({ animais: todos }: { animais: AnimalRebanho[] }) {
   const [status, setStatus] = useState('');
   const [destino, setDestino] = useState('');
   const [lote, setLote] = useState('');
+  const [local, setLocal] = useState('');
   const [entrada, setEntrada] = useState('');
   const [ultimoManejo, setUltimoManejo] = useState('');
 
@@ -64,6 +65,7 @@ export function RebanhoView({ animais: todos }: { animais: AnimalRebanho[] }) {
       { key: 'status', test: (a) => !status || a.status === status },
       { key: 'destino', test: (a) => !destino || destinoLabel(a) === destino },
       { key: 'lote', test: (a) => !lote || a.lote === lote },
+      { key: 'local', test: (a) => !local || a.local === local },
       { key: 'entrada', test: (a) => !entrada || a.entradaEngorda === entrada },
       { key: 'ultimoManejo', test: (a) => !ultimoManejo || a.ultimoManejo === ultimoManejo },
       {
@@ -83,6 +85,7 @@ export function RebanhoView({ animais: todos }: { animais: AnimalRebanho[] }) {
     status,
     destino,
     lote,
+    local,
     entrada,
     ultimoManejo,
     idadeRange,
@@ -99,6 +102,7 @@ export function RebanhoView({ animais: todos }: { animais: AnimalRebanho[] }) {
   );
   const statuses = useMemo(() => opcoesExcluindo(animais, condicoes, 'status', (a) => a.status), [animais, condicoes]);
   const lotes = useMemo(() => opcoesExcluindo(animais, condicoes, 'lote', (a) => a.lote), [animais, condicoes]);
+  const locais = useMemo(() => opcoesExcluindo(animais, condicoes, 'local', (a) => a.local), [animais, condicoes]);
   const entradas = useMemo(
     () => opcoesExcluindo(animais, condicoes, 'entrada', (a) => a.entradaEngorda),
     [animais, condicoes],
@@ -134,6 +138,7 @@ export function RebanhoView({ animais: todos }: { animais: AnimalRebanho[] }) {
     { key: 'gmd', header: 'GMD', cell: (a) => formatNumber(a.gmd), sortValue: (a) => a.gmd },
     { key: 'pdi', header: 'PDI', cell: (a) => formatNumber(a.pdi), sortValue: (a) => a.pdi },
     { key: 'lote', header: 'Lote', cell: (a) => a.lote ?? '—', sortValue: (a) => a.lote },
+    { key: 'local', header: 'Local', cell: (a) => a.local ?? '—', sortValue: (a) => a.local },
     { key: 'entrada', header: 'Entrada GMD', cell: (a) => a.entradaEngorda ?? '—', sortValue: (a) => a.entradaEngorda },
     { key: 'dias', header: 'Dias GMD', cell: (a) => formatNumber(a.diasEmEngorda), sortValue: (a) => a.diasEmEngorda },
     { key: 'destino', header: 'Destino', cell: destinoLabel, sortValue: (a) => a.destino },
@@ -151,6 +156,7 @@ export function RebanhoView({ animais: todos }: { animais: AnimalRebanho[] }) {
     { key: 'gmd', header: 'GMD', value: (a) => formatNumber(a.gmd) },
     { key: 'pdi', header: 'PDI', value: (a) => formatNumber(a.pdi) },
     { key: 'lote', header: 'Lote', value: (a) => a.lote ?? '' },
+    { key: 'local', header: 'Local', value: (a) => a.local ?? '' },
     { key: 'entrada', header: 'Entrada GMD', value: (a) => a.entradaEngorda ?? '' },
     { key: 'dias', header: 'Dias GMD', value: (a) => formatNumber(a.diasEmEngorda) },
     { key: 'destino', header: 'Destino', value: destinoLabel },
@@ -173,6 +179,7 @@ export function RebanhoView({ animais: todos }: { animais: AnimalRebanho[] }) {
         <FilterSelect label="Sexo" value={sexo} onChange={setSexo} options={['Macho', 'Fêmea']} />
         <FilterSelect label="Status" value={status} onChange={setStatus} options={statuses} />
         <FilterSelect label="Lote" value={lote} onChange={setLote} options={lotes} />
+        <FilterSelect label="Local" value={local} onChange={setLocal} options={locais} />
         <FilterSelect label="Entrada GMD" value={entrada} onChange={setEntrada} options={entradas} />
         <FilterSelect label="Último manejo" value={ultimoManejo} onChange={setUltimoManejo} options={manejos} />
         <FilterSelect

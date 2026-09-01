@@ -16,6 +16,7 @@ export function FilterSelect({
   options,
   labelDe,
   placeholder = 'Todos',
+  triggerClassName = 'w-full sm:w-40',
 }: {
   label: string;
   value: string;
@@ -23,12 +24,14 @@ export function FilterSelect({
   options: string[];
   labelDe?: (value: string) => string;
   placeholder?: string;
+  /** Sobrescreve a largura padrão do trigger — útil quando `labelDe` gera rótulos mais longos. */
+  triggerClassName?: string;
 }) {
   return (
     <div className="flex min-w-0 flex-col gap-1">
       <span className="text-xs text-muted-foreground">{label}</span>
       <Select value={value || TODOS} onValueChange={(v) => onChange(v === TODOS ? '' : v)}>
-        <SelectTrigger size="sm" className="w-full sm:w-40">
+        <SelectTrigger size="sm" className={triggerClassName}>
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
         <SelectContent>

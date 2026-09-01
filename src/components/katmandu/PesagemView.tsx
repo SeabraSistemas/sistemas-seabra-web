@@ -24,6 +24,7 @@ import type { PesagemRegistro } from '@/lib/katmandu/types';
 
 export function PesagemView({ registros }: { registros: PesagemRegistro[] }) {
   const [lote, setLote] = useState('');
+  const [local, setLocal] = useState('');
   const [destino, setDestino] = useState('');
   const [dataPesagem, setDataPesagem] = useState('');
   const [venda, setVenda] = useState('');
@@ -40,6 +41,7 @@ export function PesagemView({ registros }: { registros: PesagemRegistro[] }) {
     const [lo, hi] = pesoRange ?? pesoBounds ?? [0, 0];
     return [
       { key: 'lote', test: (r) => !lote || r.lote === lote },
+      { key: 'local', test: (r) => !local || r.local === local },
       {
         key: 'destino',
         test: (r) => !destino || (r.destino ? DESTINO_LABEL[r.destino] : null) === destino,
@@ -50,9 +52,10 @@ export function PesagemView({ registros }: { registros: PesagemRegistro[] }) {
       { key: 'soPerdaPeso', test: (r) => !soPerdaPeso || (r.diferencaKg != null && r.diferencaKg < 0) },
       { key: 'peso', test: (r) => !pesoBounds || r.pesoKg == null || (r.pesoKg >= lo && r.pesoKg <= hi) },
     ];
-  }, [lote, destino, dataPesagem, venda, manejos, soPerdaPeso, pesoRange, pesoBounds]);
+  }, [lote, local, destino, dataPesagem, venda, manejos, soPerdaPeso, pesoRange, pesoBounds]);
 
   const lotes = useMemo(() => opcoesExcluindo(registros, condicoes, 'lote', (r) => r.lote), [registros, condicoes]);
+  const locais = useMemo(() => opcoesExcluindo(registros, condicoes, 'local', (r) => r.local), [registros, condicoes]);
   const datas = useMemo(
     () => opcoesExcluindo(registros, condicoes, 'dataPesagem', (r) => r.dataPesagem),
     [registros, condicoes],
@@ -106,6 +109,7 @@ export function PesagemView({ registros }: { registros: PesagemRegistro[] }) {
     { key: 'pdi', header: 'PDI', cell: (r) => formatNumber(r.pdi), sortValue: (r) => r.pdi },
     { key: 'gpdi', header: 'GPDI', cell: (r) => formatNumber(r.gpdi), sortValue: (r) => r.gpdi },
     { key: 'lote', header: 'Lote', cell: (r) => r.lote ?? '—', sortValue: (r) => r.lote },
+    { key: 'local', header: 'Local', cell: (r) => r.local ?? '—', sortValue: (r) => r.local },
     {
       key: 'destino',
       header: 'Destino',
@@ -125,6 +129,7 @@ export function PesagemView({ registros }: { registros: PesagemRegistro[] }) {
     { key: 'pdi', header: 'PDI', value: (r) => formatNumber(r.pdi) },
     { key: 'gpdi', header: 'GPDI', value: (r) => formatNumber(r.gpdi) },
     { key: 'lote', header: 'Lote', value: (r) => r.lote ?? '' },
+    { key: 'local', header: 'Local', value: (r) => r.local ?? '' },
     { key: 'destino', header: 'Destino', value: (r) => (r.destino ? DESTINO_LABEL[r.destino] : '') },
     { key: 'data', header: 'Data da pesagem', value: (r) => r.dataPesagem ?? '' },
     { key: 'manejos', header: 'Manejos', value: (r) => r.manejos ?? '' },
@@ -134,6 +139,7 @@ export function PesagemView({ registros }: { registros: PesagemRegistro[] }) {
     <div className="flex flex-col gap-6">
       <div className="grid grid-cols-2 gap-3 rounded-xl border border-border bg-card p-4 sm:flex sm:flex-wrap sm:items-end sm:gap-4">
         <FilterSelect label="Lote" value={lote} onChange={setLote} options={lotes} />
+        <FilterSelect label="Local" value={local} onChange={setLocal} options={locais} />
         <FilterSelect
           label="Destino"
           value={destino}

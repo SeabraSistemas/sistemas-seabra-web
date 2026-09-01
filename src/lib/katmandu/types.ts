@@ -36,6 +36,8 @@ export interface AnimalRebanho {
   pdi: number | null;
   /** Data da pesagem mais recente — coluna nativa CY ("Data última pesagem") do RebanhoProd. */
   ultimoManejo: string | null;
+  /** Localização física atual (pasto/baia/rotacionado) — independente de Lote. */
+  local: string | null;
 }
 
 export interface PesagemRegistro {
@@ -57,6 +59,8 @@ export interface PesagemRegistro {
   /** Indicadores próprios da planilha (colunas "pdi"/"gpdi") — sempre presentes quando há pesagem. */
   pdi: number | null;
   gpdi: number | null;
+  /** Localização física do animal nesta pesagem — independente de Lote. */
+  local: string | null;
 }
 
 export interface Baixa {
@@ -64,6 +68,9 @@ export interface Baixa {
   data: string | null;
   causa: string | null;
   categoria: string | null;
+  lote: string | null;
+  local: string | null;
+  obs: string | null;
 }
 
 export interface OcorrenciaClinica {

@@ -53,6 +53,11 @@ export function parseDateBR(raw: string | undefined | null): number | null {
   return Number.isFinite(ts) ? ts : null;
 }
 
+/** Timestamp => "dd/mm/aaaa", pra mostrar de volta no formato da planilha (inverso de parseDateBR). */
+export function formatDateBR(ts: number): string {
+  return new Date(ts).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+}
+
 const numberFormatter = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 2 });
 
 export function formatNumber(n: number | null | undefined): string {
