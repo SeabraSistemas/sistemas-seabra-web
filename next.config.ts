@@ -29,7 +29,6 @@ const nextConfig: NextConfig = {
       { source: '/planos',          destination: '/docs-seabra/planos.html' },
       { source: '/planos-es',       destination: '/docs-seabra/planos-es.html' },
       { source: '/planos-en',       destination: '/docs-seabra/planos-en.html' },
-      { source: '/caprisul',        destination: '/docs-seabra/caprisul.html' },
     ];
   },
   async redirects() {
