@@ -27,6 +27,7 @@ export function MovimentarView({ animais, locais }: { animais: AnimalRebanho[]; 
     return mapa;
   }, [animais]);
 
+  const opcoesOrigem = useMemo(() => locais.filter((l) => (contagem[l] ?? 0) > 0), [locais, contagem]);
   const opcoesDestino = useMemo(() => locais.filter((l) => l !== origem), [locais, origem]);
   const qtdOrigem = origem ? (contagem[origem] ?? 0) : 0;
 
@@ -78,7 +79,7 @@ export function MovimentarView({ animais, locais }: { animais: AnimalRebanho[]; 
               if (v === destino) setDestino('');
               setEstado('ideia');
             }}
-            options={locais}
+            options={opcoesOrigem}
             labelDe={(l) => `${l} (${contagem[l] ?? 0})`}
             placeholder="Selecione"
             triggerClassName="w-full sm:w-56"
