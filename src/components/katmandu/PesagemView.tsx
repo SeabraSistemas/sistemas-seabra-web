@@ -13,17 +13,14 @@ import { CsvExport, type CsvColumn } from './CsvExport';
 import { SiglasInfo } from './SiglasInfo';
 import { getPesagemMetrics } from '@/lib/katmandu/metrics';
 import { formatKg, formatNumber, numberBounds } from '@/lib/katmandu/format';
+import {
+  DESTINO_LABEL,
+  destinosPresentes,
+  filtrarPor,
+  opcoesExcluindo,
+  type Condicao,
+} from '@/lib/katmandu/filters';
 import type { PesagemRegistro } from '@/lib/katmandu/types';
-
-const DESTINO_LABEL: Record<NonNullable<PesagemRegistro['destino']>, string> = {
-  melhor: 'Melhor',
-  mediano: 'Mediano',
-  pior: 'Pior',
-};
-
-function opcoes(valores: (string | null)[]): string[] {
-  return Array.from(new Set(valores.filter((v): v is string => v != null))).sort();
-}
 
 export function PesagemView({ registros }: { registros: PesagemRegistro[] }) {
   const [lote, setLote] = useState('');
@@ -36,28 +33,41 @@ export function PesagemView({ registros }: { registros: PesagemRegistro[] }) {
   const pesoBounds = useMemo(() => numberBounds(registros.map((r) => r.pesoKg)), [registros]);
   const [pesoRange, setPesoRange] = useState<[number, number] | null>(null);
 
-  const lotes = useMemo(() => opcoes(registros.map((r) => r.lote)), [registros]);
-  const datas = useMemo(() => opcoes(registros.map((r) => r.dataPesagem)), [registros]);
-  const vendas = useMemo(() => opcoes(registros.map((r) => r.venda)), [registros]);
-  const manejosOpcoes = useMemo(() => opcoes(registros.map((r) => r.manejos)), [registros]);
+  // Cada filtro entra aqui uma vez; as opções de um select vêm dos registros
+  // que passam em TODOS os outros filtros ativos (exceto o dele mesmo) — é
+  // isso que faz escolher uma Data estreitar o Lote, e vice-versa.
+  const condicoes = useMemo((): Condicao<PesagemRegistro>[] => {
+    const [lo, hi] = pesoRange ?? pesoBounds ?? [0, 0];
+    return [
+      { key: 'lote', test: (r) => !lote || r.lote === lote },
+      {
+        key: 'destino',
+        test: (r) => !destino || (r.destino ? DESTINO_LABEL[r.destino] : null) === destino,
+      },
+      { key: 'dataPesagem', test: (r) => !dataPesagem || r.dataPesagem === dataPesagem },
+      { key: 'venda', test: (r) => !venda || r.venda === venda },
+      { key: 'manejos', test: (r) => !manejos || r.manejos === manejos },
+      { key: 'soPerdaPeso', test: (r) => !soPerdaPeso || (r.diferencaKg != null && r.diferencaKg < 0) },
+      { key: 'peso', test: (r) => !pesoBounds || r.pesoKg == null || (r.pesoKg >= lo && r.pesoKg <= hi) },
+    ];
+  }, [lote, destino, dataPesagem, venda, manejos, soPerdaPeso, pesoRange, pesoBounds]);
+
+  const lotes = useMemo(() => opcoesExcluindo(registros, condicoes, 'lote', (r) => r.lote), [registros, condicoes]);
+  const datas = useMemo(
+    () => opcoesExcluindo(registros, condicoes, 'dataPesagem', (r) => r.dataPesagem),
+    [registros, condicoes],
+  );
+  const vendas = useMemo(() => opcoesExcluindo(registros, condicoes, 'venda', (r) => r.venda), [registros, condicoes]);
+  const manejosOpcoes = useMemo(
+    () => opcoesExcluindo(registros, condicoes, 'manejos', (r) => r.manejos),
+    [registros, condicoes],
+  );
   const destinos = useMemo(
-    () => Array.from(new Set(registros.map((r) => r.destino).filter((d): d is NonNullable<typeof d> => d != null))),
-    [registros],
+    () => destinosPresentes(registros, condicoes, 'destino', (r) => r.destino),
+    [registros, condicoes],
   );
 
-  const filtrados = useMemo(() => {
-    const [lo, hi] = pesoRange ?? pesoBounds ?? [0, 0];
-    return registros.filter((r) => {
-      if (lote && r.lote !== lote) return false;
-      if (destino && (r.destino ? DESTINO_LABEL[r.destino] : null) !== destino) return false;
-      if (dataPesagem && r.dataPesagem !== dataPesagem) return false;
-      if (venda && r.venda !== venda) return false;
-      if (manejos && r.manejos !== manejos) return false;
-      if (soPerdaPeso && !(r.diferencaKg != null && r.diferencaKg < 0)) return false;
-      if (pesoBounds && r.pesoKg != null && (r.pesoKg < lo || r.pesoKg > hi)) return false;
-      return true;
-    });
-  }, [registros, lote, destino, dataPesagem, venda, manejos, soPerdaPeso, pesoRange, pesoBounds]);
+  const filtrados = useMemo(() => filtrarPor(registros, condicoes), [registros, condicoes]);
 
   const metricas = useMemo(() => getPesagemMetrics(filtrados), [filtrados]);
 

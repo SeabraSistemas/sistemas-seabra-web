@@ -11,13 +11,14 @@ import { FilterRange } from './FilterRange';
 import { CsvExport, type CsvColumn } from './CsvExport';
 import { contagemPorCategoria, getRebanhoMetrics } from '@/lib/katmandu/metrics';
 import { formatNumber, numberBounds } from '@/lib/katmandu/format';
+import {
+  DESTINO_LABEL,
+  destinosPresentes,
+  filtrarPor,
+  opcoesExcluindo,
+  type Condicao,
+} from '@/lib/katmandu/filters';
 import type { AnimalRebanho } from '@/lib/katmandu/types';
-
-const DESTINO_LABEL = { melhor: 'Melhor', mediano: 'Mediano', pior: 'Pior' } as const;
-
-function opcoes(valores: (string | null)[]): string[] {
-  return Array.from(new Set(valores.filter((v): v is string => v != null))).sort();
-}
 
 function sexoLabel(a: AnimalRebanho): string {
   return a.sexo === 'macho' ? 'Macho' : a.sexo === 'femea' ? 'Fêmea' : '—';
@@ -49,38 +50,35 @@ export function RebanhoView({ animais: todos }: { animais: AnimalRebanho[] }) {
   const gmdBounds = useMemo(() => numberBounds(animais.map((a) => a.gmd)), [animais]);
   const [gmdRange, setGmdRange] = useState<[number, number] | null>(null);
 
-  const categorias = useMemo(() => opcoes(animais.map((a) => a.categoria)), [animais]);
-  const statuses = useMemo(() => opcoes(animais.map((a) => a.status)), [animais]);
-  const lotes = useMemo(() => opcoes(animais.map((a) => a.lote)), [animais]);
-  const entradas = useMemo(() => opcoes(animais.map((a) => a.entradaEngorda)), [animais]);
-  const manejos = useMemo(() => opcoes(animais.map((a) => a.ultimoManejo)), [animais]);
-  const destinos = useMemo(
-    () => Array.from(new Set(animais.map((a) => a.destino).filter((d): d is NonNullable<typeof d> => d != null))),
-    [animais],
-  );
-
-  const filtrados = useMemo(() => {
+  // Cada filtro entra aqui uma vez; as opções de um select vêm dos animais
+  // que passam em TODOS os outros filtros ativos (exceto o dele mesmo) — é
+  // isso que faz, por ex., escolher um Lote estreitar as opções de Status.
+  const condicoes = useMemo((): Condicao<AnimalRebanho>[] => {
     const [idadeLo, idadeHi] = idadeRange ?? idadeBounds ?? [0, 0];
     const [diasLo, diasHi] = diasRange ?? diasBounds ?? [0, 0];
     const [gmdLo, gmdHi] = gmdRange ?? gmdBounds ?? [0, 0];
-    return animais.filter((a) => {
-      if (categoria && a.categoria !== categoria) return false;
-      if (busca && !a.idAnimal.toLowerCase().includes(busca.toLowerCase())) return false;
-      if (sexo && sexoLabel(a) !== sexo) return false;
-      if (status && a.status !== status) return false;
-      if (destino && destinoLabel(a) !== destino) return false;
-      if (lote && a.lote !== lote) return false;
-      if (entrada && a.entradaEngorda !== entrada) return false;
-      if (ultimoManejo && a.ultimoManejo !== ultimoManejo) return false;
-      if (idadeBounds && a.idadeDias != null && (a.idadeDias < idadeLo || a.idadeDias > idadeHi)) return false;
-      if (diasBounds && a.diasEmEngorda != null && (a.diasEmEngorda < diasLo || a.diasEmEngorda > diasHi)) return false;
-      if (gmdBounds && a.gmd != null && (a.gmd < gmdLo || a.gmd > gmdHi)) return false;
-      return true;
-    });
+    return [
+      { key: 'busca', test: (a) => !busca || a.idAnimal.toLowerCase().includes(busca.toLowerCase()) },
+      { key: 'categoria', test: (a) => !categoria || a.categoria === categoria },
+      { key: 'sexo', test: (a) => !sexo || sexoLabel(a) === sexo },
+      { key: 'status', test: (a) => !status || a.status === status },
+      { key: 'destino', test: (a) => !destino || destinoLabel(a) === destino },
+      { key: 'lote', test: (a) => !lote || a.lote === lote },
+      { key: 'entrada', test: (a) => !entrada || a.entradaEngorda === entrada },
+      { key: 'ultimoManejo', test: (a) => !ultimoManejo || a.ultimoManejo === ultimoManejo },
+      {
+        key: 'idade',
+        test: (a) => !idadeBounds || a.idadeDias == null || (a.idadeDias >= idadeLo && a.idadeDias <= idadeHi),
+      },
+      {
+        key: 'dias',
+        test: (a) => !diasBounds || a.diasEmEngorda == null || (a.diasEmEngorda >= diasLo && a.diasEmEngorda <= diasHi),
+      },
+      { key: 'gmd', test: (a) => !gmdBounds || a.gmd == null || (a.gmd >= gmdLo && a.gmd <= gmdHi) },
+    ];
   }, [
-    animais,
-    categoria,
     busca,
+    categoria,
     sexo,
     status,
     destino,
@@ -94,6 +92,27 @@ export function RebanhoView({ animais: todos }: { animais: AnimalRebanho[] }) {
     gmdRange,
     gmdBounds,
   ]);
+
+  const categorias = useMemo(
+    () => opcoesExcluindo(animais, condicoes, 'categoria', (a) => a.categoria),
+    [animais, condicoes],
+  );
+  const statuses = useMemo(() => opcoesExcluindo(animais, condicoes, 'status', (a) => a.status), [animais, condicoes]);
+  const lotes = useMemo(() => opcoesExcluindo(animais, condicoes, 'lote', (a) => a.lote), [animais, condicoes]);
+  const entradas = useMemo(
+    () => opcoesExcluindo(animais, condicoes, 'entrada', (a) => a.entradaEngorda),
+    [animais, condicoes],
+  );
+  const manejos = useMemo(
+    () => opcoesExcluindo(animais, condicoes, 'ultimoManejo', (a) => a.ultimoManejo),
+    [animais, condicoes],
+  );
+  const destinos = useMemo(
+    () => destinosPresentes(animais, condicoes, 'destino', (a) => a.destino),
+    [animais, condicoes],
+  );
+
+  const filtrados = useMemo(() => filtrarPor(animais, condicoes), [animais, condicoes]);
 
   const metricas = useMemo(() => getRebanhoMetrics(filtrados), [filtrados]);
   const porCategoria = useMemo(() => contagemPorCategoria(filtrados), [filtrados]);
