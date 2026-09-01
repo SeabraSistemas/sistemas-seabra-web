@@ -5,11 +5,18 @@ import { Input } from '@/components/ui/input';
 import { MetricCard } from './MetricCard';
 import { DataTable, type DataTableColumn } from './DataTable';
 import { FilterSelect } from './FilterSelect';
-import { FilterRange } from './FilterRange';
 import { CsvExport, type CsvColumn } from './CsvExport';
 import { filtrarPor, opcoesExcluindo, type Condicao } from '@/lib/katmandu/filters';
-import { formatDateBR, numberBounds, parseDateBR } from '@/lib/katmandu/format';
+import { parseDateBR } from '@/lib/katmandu/format';
 import type { Baixa } from '@/lib/katmandu/types';
+
+/** Valor de <input type="date"> ("aaaa-mm-dd") => timestamp local, mesma base de parseDateBR. */
+function parseDataInput(v: string): number | null {
+  if (!v) return null;
+  const [y, m, d] = v.split('-').map(Number);
+  if (!y || !m || !d) return null;
+  return new Date(y, m - 1, d).getTime();
+}
 
 export function BaixaView({ baixas }: { baixas: Baixa[] }) {
   const [busca, setBusca] = useState('');
@@ -18,11 +25,12 @@ export function BaixaView({ baixas }: { baixas: Baixa[] }) {
   const [categoria, setCategoria] = useState('');
   const [causa, setCausa] = useState('');
 
-  const dataBounds = useMemo(() => numberBounds(baixas.map((b) => parseDateBR(b.data))), [baixas]);
-  const [dataRange, setDataRange] = useState<[number, number] | null>(null);
+  const [dataInicio, setDataInicio] = useState('');
+  const [dataFim, setDataFim] = useState('');
 
   const condicoes = useMemo((): Condicao<Baixa>[] => {
-    const [lo, hi] = dataRange ?? dataBounds ?? [0, 0];
+    const inicio = parseDataInput(dataInicio);
+    const fim = parseDataInput(dataFim);
     return [
       { key: 'busca', test: (b) => !busca || b.idAnimal.toLowerCase().includes(busca.toLowerCase()) },
       { key: 'lote', test: (b) => !lote || b.lote === lote },
@@ -32,13 +40,16 @@ export function BaixaView({ baixas }: { baixas: Baixa[] }) {
       {
         key: 'data',
         test: (b) => {
-          if (!dataBounds) return true;
+          if (inicio == null && fim == null) return true;
           const ts = parseDateBR(b.data);
-          return ts == null || (ts >= lo && ts <= hi);
+          if (ts == null) return true;
+          if (inicio != null && ts < inicio) return false;
+          if (fim != null && ts > fim) return false;
+          return true;
         },
       },
     ];
-  }, [busca, lote, local, categoria, causa, dataRange, dataBounds]);
+  }, [busca, lote, local, categoria, causa, dataInicio, dataFim]);
 
   const lotes = useMemo(() => opcoesExcluindo(baixas, condicoes, 'lote', (b) => b.lote), [baixas, condicoes]);
   const locais = useMemo(() => opcoesExcluindo(baixas, condicoes, 'local', (b) => b.local), [baixas, condicoes]);
@@ -86,15 +97,24 @@ export function BaixaView({ baixas }: { baixas: Baixa[] }) {
         <FilterSelect label="Local" value={local} onChange={setLocal} options={locais} />
         <FilterSelect label="Categoria" value={categoria} onChange={setCategoria} options={categorias} />
         <FilterSelect label="Causa" value={causa} onChange={setCausa} options={causas} />
-        {dataBounds && (
-          <FilterRange
-            label="Data"
-            bounds={dataBounds}
-            value={dataRange ?? dataBounds}
-            onChange={setDataRange}
-            formatValue={formatDateBR}
+        <div className="flex min-w-0 flex-col gap-1">
+          <span className="text-xs text-muted-foreground">Data inicial</span>
+          <Input
+            type="date"
+            value={dataInicio}
+            onChange={(e) => setDataInicio(e.target.value)}
+            className="h-9 w-full sm:w-40"
           />
-        )}
+        </div>
+        <div className="flex min-w-0 flex-col gap-1">
+          <span className="text-xs text-muted-foreground">Data final</span>
+          <Input
+            type="date"
+            value={dataFim}
+            onChange={(e) => setDataFim(e.target.value)}
+            className="h-9 w-full sm:w-40"
+          />
+        </div>
       </div>
 
       <div className="max-w-40">

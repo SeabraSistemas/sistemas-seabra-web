@@ -10,15 +10,12 @@ export function FilterRange({
   value,
   onChange,
   className,
-  formatValue = formatNumber,
 }: {
   label: string;
   bounds: [number, number];
   value: [number, number];
   onChange: (value: [number, number]) => void;
   className?: string;
-  /** Como mostrar as pontas do slider — default formata número, mas ex. uma faixa de datas passa um formatador próprio. */
-  formatValue?: (n: number) => string;
 }) {
   return (
     <div className={cn('flex min-w-0 flex-col gap-1 sm:min-w-48', className)}>
@@ -31,8 +28,8 @@ export function FilterRange({
         className="py-2"
       />
       <div className="flex justify-between text-xs tabular-nums text-muted-foreground">
-        <span>{formatValue(value[0])}</span>
-        <span>{formatValue(value[1])}</span>
+        <span>{formatNumber(value[0])}</span>
+        <span>{formatNumber(value[1])}</span>
       </div>
     </div>
   );
