@@ -10,6 +10,16 @@
 
 export type Sexo = 'macho' | 'femea' | null;
 
+/**
+ * Sentinela pro Movimentar poder tratar "local" vazio como uma origem
+ * selecionável ("Sem local") — nunca é um valor real de local (não vem da
+ * aba lookup `local`), só existe pra diferenciar de "" (nenhum filtro
+ * selecionado, convenção do FilterSelect). Fica aqui (não em mutations.ts)
+ * pra poder ser importado por client components sem puxar sheets-server.ts.
+ */
+export const SEM_LOCAL = '__sem_local__';
+export const SEM_LOCAL_LABEL = 'Sem local';
+
 /** Subgrupo de desempenho (campo "Destino" da Pesagem): melhor/mediano/pior. */
 export type Destino = 'melhor' | 'mediano' | 'pior' | null;
 

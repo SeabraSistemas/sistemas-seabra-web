@@ -1,5 +1,6 @@
 import { appendRow, batchUpdateCells, getSheetValues } from './sheets-server';
 import { parseText } from './format';
+import { SEM_LOCAL, SEM_LOCAL_LABEL } from './types';
 
 /**
  * Camada de ESCRITA do /katmandu — separada de queries.ts (que é só leitura).
@@ -59,7 +60,7 @@ export async function moverAnimais(
 
   rows.slice(1).forEach((row, i) => {
     const idAnimal = parseText(row[idxId]);
-    const local = parseText(row[idxLocal]);
+    const local = parseText(row[idxLocal]) ?? SEM_LOCAL;
     const baixa = parseText(row[idxBaixa]);
     if (!idAnimal || baixa != null || local !== origem) return;
     const numeroDaLinha = i + 2; // linha 1 é header, dados começam na 2
@@ -71,6 +72,7 @@ export async function moverAnimais(
   const ok = await batchUpdateCells(updates);
   if (!ok) return { movidos: 0 };
 
-  const logOk = await appendRow('movimentacao', [crypto.randomUUID(), origem, destino, dataHojeBR()]);
+  const origemLog = origem === SEM_LOCAL ? SEM_LOCAL_LABEL : origem;
+  const logOk = await appendRow('movimentacao', [crypto.randomUUID(), origemLog, destino, dataHojeBR()]);
   return { movidos: updates.length, logFalhou: !logOk };
 }

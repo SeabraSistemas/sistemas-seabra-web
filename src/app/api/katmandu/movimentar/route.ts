@@ -2,6 +2,7 @@ import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { KATMANDU_COOKIE, verifySession } from '@/lib/katmandu/auth';
 import { getLocais, moverAnimais } from '@/lib/katmandu/mutations';
+import { SEM_LOCAL } from '@/lib/katmandu/types';
 
 export const runtime = 'nodejs';
 
@@ -21,7 +22,8 @@ export async function POST(request: Request) {
   }
 
   const locais = await getLocais();
-  if (!locais.includes(origem) || !locais.includes(destino)) {
+  const origemValida = origem === SEM_LOCAL || locais.includes(origem);
+  if (!origemValida || !locais.includes(destino)) {
     return NextResponse.json({ ok: false, erro: 'local-desconhecido' }, { status: 400 });
   }
 

@@ -6,7 +6,7 @@ import { ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { FilterSelect } from './FilterSelect';
 import { MetricCard } from './MetricCard';
-import type { AnimalRebanho } from '@/lib/katmandu/types';
+import { SEM_LOCAL, SEM_LOCAL_LABEL, type AnimalRebanho } from '@/lib/katmandu/types';
 
 type Estado = 'ideia' | 'confirmando' | 'enviando' | 'feito' | 'erro';
 
@@ -21,15 +21,23 @@ export function MovimentarView({ animais, locais }: { animais: AnimalRebanho[]; 
   const contagem = useMemo(() => {
     const mapa: Record<string, number> = {};
     for (const a of animais) {
-      if (a.baixa != null || !a.local) continue;
-      mapa[a.local] = (mapa[a.local] ?? 0) + 1;
+      if (a.baixa != null) continue;
+      const chave = a.local || SEM_LOCAL;
+      mapa[chave] = (mapa[chave] ?? 0) + 1;
     }
     return mapa;
   }, [animais]);
 
-  const opcoesOrigem = useMemo(() => locais.filter((l) => (contagem[l] ?? 0) > 0), [locais, contagem]);
+  const opcoesOrigem = useMemo(() => {
+    const comAnimais = locais.filter((l) => (contagem[l] ?? 0) > 0);
+    return (contagem[SEM_LOCAL] ?? 0) > 0 ? [...comAnimais, SEM_LOCAL] : comAnimais;
+  }, [locais, contagem]);
   const opcoesDestino = useMemo(() => locais.filter((l) => l !== origem), [locais, origem]);
   const qtdOrigem = origem ? (contagem[origem] ?? 0) : 0;
+
+  function nomeLocal(l: string): string {
+    return l === SEM_LOCAL ? SEM_LOCAL_LABEL : l;
+  }
 
   function reiniciar() {
     setOrigem('');
@@ -80,7 +88,7 @@ export function MovimentarView({ animais, locais }: { animais: AnimalRebanho[]; 
               setEstado('ideia');
             }}
             options={opcoesOrigem}
-            labelDe={(l) => `${l} (${contagem[l] ?? 0})`}
+            labelDe={(l) => `${nomeLocal(l)} (${contagem[l] ?? 0})`}
             placeholder="Selecione"
             triggerClassName="w-full sm:w-56"
           />
@@ -99,7 +107,7 @@ export function MovimentarView({ animais, locais }: { animais: AnimalRebanho[]; 
 
         {origem && (
           <div className="mt-4 max-w-40">
-            <MetricCard id="qtd" label={`Ativos em ${origem}`} value={String(qtdOrigem)} />
+            <MetricCard id="qtd" label={`Ativos em ${nomeLocal(origem)}`} value={String(qtdOrigem)} />
           </div>
         )}
 
@@ -119,7 +127,7 @@ export function MovimentarView({ animais, locais }: { animais: AnimalRebanho[]; 
             <div className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-background p-3 text-sm">
               <span>
                 Mover <strong className="tabular-nums">{qtdOrigem}</strong> animais ativos de{' '}
-                <strong>{origem}</strong> pra <strong>{destino}</strong>?
+                <strong>{nomeLocal(origem)}</strong> pra <strong>{destino}</strong>?
               </span>
               <div className="flex gap-2">
                 <Button type="button" size="sm" disabled={estado === 'enviando'} onClick={confirmar}>
@@ -141,7 +149,7 @@ export function MovimentarView({ animais, locais }: { animais: AnimalRebanho[]; 
           {estado === 'feito' && resultado && (
             <div className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-background p-3 text-sm">
               <span>
-                {resultado.movidos} animais movidos de <strong>{origem}</strong> pra{' '}
+                {resultado.movidos} animais movidos de <strong>{nomeLocal(origem)}</strong> pra{' '}
                 <strong>{destino}</strong>.
                 {resultado.logFalhou && (
                   <span className="ml-1 text-destructive">
