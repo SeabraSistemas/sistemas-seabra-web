@@ -35,8 +35,8 @@ export function CategoriaDonut({ data }: { data: { categoria: string; total: num
               data={fatias}
               dataKey="value"
               nameKey="name"
-              innerRadius="62%"
-              outerRadius="100%"
+              innerRadius="54%"
+              outerRadius="86%"
               paddingAngle={2}
               cornerRadius={3}
               stroke="var(--card)"
