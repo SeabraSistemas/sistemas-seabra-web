@@ -5,7 +5,7 @@ import { deckCss } from './deck.css';
 
 /** Ato de cada ecrã, por índice. 0 = capa (sem ato). */
 const ACT_OF = [0, 1, 1, 1, 2, 2, 2, 3, 3, 3];
-const ACT_NAMES = ['Capa', 'Ato I · O modelo', 'Ato II · A fronteira', 'Ato III · O contrato'];
+const ACT_NAMES = ['Capa', 'Parte I · O modelo', 'Parte II · Correção e evolução', 'Parte III · O contrato'];
 const TOTAL = ACT_OF.length;
 
 
@@ -80,9 +80,9 @@ export default function ElmateDeck() {
         {/* 2 — a pergunta */}
         <section className={slide(1)}>
           <p className="eyebrow">
-            <span className="act">Ato I · O modelo</span>
+            <span className="act">Parte I · O modelo</span>
             <span className="sep">/</span>
-            <span>A pergunta</span>
+            <span>A questão</span>
           </p>
           <div className="body-row">
             <p className="question">«A Elmate vai ser cobrada pelo desenvolvimento?»</p>
@@ -97,14 +97,14 @@ export default function ElmateDeck() {
         {/* 3 — tese */}
         <section className={slide(2)}>
           <p className="eyebrow">
-            <span className="act">Ato I · O modelo</span>
+            <span className="act">Parte I · O modelo</span>
             <span className="sep">/</span>
-            <span>Numa frase</span>
+            <span>O princípio</span>
           </p>
           <div className="body-row">
             <p className="thesis">
-              <span className="b">A Elmate aluga.</span>
-              <span className="b">A Seabra constrói.</span>
+              <span className="b">A Elmate paga a utilização.</span>
+              <span className="b">O desenvolvimento é do Prestador.</span>
             </p>
             <p className="thesis-note">
               O investimento em desenvolvimento é do Prestador, por sua conta e risco. A Elmate paga a
@@ -116,12 +116,12 @@ export default function ElmateDeck() {
         {/* 4 — a vida de um módulo */}
         <section className={slide(3)}>
           <p className="eyebrow">
-            <span className="act">Ato I · O modelo</span>
+            <span className="act">Parte I · O modelo</span>
             <span className="sep">/</span>
-            <span>A vida de um módulo</span>
+            <span>Ciclo de um módulo</span>
           </p>
           <div className="body-row">
-            <h2>Sete passos. A conta começa no sexto.</h2>
+            <h2>Ciclo de vida de um módulo</h2>
             <div className="rail">
               <div className="step">
                 <span className="step-n">01</span>
@@ -183,12 +183,12 @@ export default function ElmateDeck() {
         {/* 5 — a fronteira */}
         <section className={slide(4)}>
           <p className="eyebrow">
-            <span className="act">Ato II · A fronteira</span>
+            <span className="act">Parte II · Correção e evolução</span>
             <span className="sep">/</span>
-            <span>Correção ou evolução</span>
+            <span>Definições</span>
           </p>
           <div className="body-row">
-            <h2>Só existe uma fronteira</h2>
+            <h2>Correção e evolução</h2>
             <div className="split">
               <div className="col col-moss">
                 <span className="col-tag">Correção · incluída para sempre</span>
@@ -227,12 +227,12 @@ export default function ElmateDeck() {
         {/* 6 — já está no sistema */}
         <section className={slide(5)}>
           <p className="eyebrow">
-            <span className="act">Ato II · A fronteira</span>
+            <span className="act">Parte II · Correção e evolução</span>
             <span className="sep">/</span>
-            <span>Já está no vosso sistema</span>
+            <span>Central de Chamados</span>
           </p>
           <div className="body-row">
-            <h2>Isto não é um conceito novo do contrato</h2>
+            <h2>A classificação já existe no sistema</h2>
             <div className="two-up">
               <div>
                 <p className="lede">
@@ -292,12 +292,12 @@ export default function ElmateDeck() {
         {/* 7 — números */}
         <section className={slide(6)}>
           <p className="eyebrow">
-            <span className="act">Ato II · A fronteira</span>
+            <span className="act">Parte II · Correção e evolução</span>
             <span className="sep">/</span>
-            <span>O que já aconteceu</span>
+            <span>Histórico</span>
           </p>
           <div className="body-row">
-            <h2>Vocês pediram. Foi feito.</h2>
+            <h2>Pedidos recebidos e atendidos</h2>
             <div className="metrics">
               <div className="metric">
                 <span className="n">18</span>
@@ -329,12 +329,12 @@ export default function ElmateDeck() {
         {/* 8 — pediram / ficou escrito */}
         <section className={slide(7)}>
           <p className="eyebrow">
-            <span className="act">Ato III · O contrato</span>
+            <span className="act">Parte III · O contrato</span>
             <span className="sep">/</span>
             <span>Versão 2</span>
           </p>
           <div className="body-row">
-            <h2>Vocês pediram. Ficou escrito.</h2>
+            <h2>Alterações introduzidas na versão 2</h2>
             <div className="ledger">
               {[
                 [
@@ -381,12 +381,12 @@ export default function ElmateDeck() {
         {/* 9 — se correr mal */}
         <section className={slide(8)}>
           <p className="eyebrow">
-            <span className="act">Ato III · O contrato</span>
+            <span className="act">Parte III · O contrato</span>
             <span className="sep">/</span>
-            <span>Saída</span>
+            <span>Cessação</span>
           </p>
           <div className="body-row">
-            <h2>Se correr mal</h2>
+            <h2>Cessação do contrato</h2>
             <div className="exit-cols">
               <div className="exit hero">
                 <span className="cl">Cláusula 15.4</span>
@@ -420,12 +420,12 @@ export default function ElmateDeck() {
         {/* 10 — a proposta */}
         <section className={slide(9)}>
           <p className="eyebrow">
-            <span className="act">Ato III · O contrato</span>
+            <span className="act">Parte III · O contrato</span>
             <span className="sep">/</span>
             <span>A proposta</span>
           </p>
           <div className="body-row">
-            <h2>Agora fica escrito.</h2>
+            <h2>Alterações propostas à minuta</h2>
             <p className="lede">
               Tudo o que expliquei até aqui existe hoje em emails e em conversa. Estas seis
               alterações põem isso no contrato — para não depender da palavra de ninguém.
@@ -475,7 +475,7 @@ export default function ElmateDeck() {
               </div>
             </div>
             <div className="close-line">
-              <span className="big">Assinar antes de 30 de setembro.</span>
+              <span className="big">Assinatura até 30 de setembro de 2026.</span>
               <span className="why">
                 A primeira fatura semestral é emitida logo a seguir. Faz sentido que saia já com o
                 contrato em vigor e com esta parte escrita.
