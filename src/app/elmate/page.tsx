@@ -417,60 +417,60 @@ export default function ElmateDeck() {
           </div>
         </section>
 
-        {/* 10 — o que falta */}
+        {/* 10 — a proposta */}
         <section className={slide(9)}>
           <p className="eyebrow">
             <span className="act">Ato III · O contrato</span>
             <span className="sep">/</span>
-            <span>O que falta</span>
+            <span>A proposta</span>
           </p>
           <div className="body-row">
-            <h2>Falta escrever o que acabámos de ver</h2>
+            <h2>Agora fica escrito.</h2>
             <p className="lede">
-              A versão 2 respondeu ao que perguntaram em junho — confidencialidade e saída. O modelo
-              de aluguer nunca chegou a ser escrito. Proponho fechá-lo assim:
+              Tudo o que expliquei até aqui existe hoje em emails e em conversa. Estas seis
+              alterações põem isso no contrato — para não depender da palavra de ninguém.
             </p>
             <div className="clauses">
               <div className="clause">
-                <span className="num">2.3</span>
+                <span className="num">Cláusula 2.3</span>
                 <p className="what">
-                  O desenvolvimento é <b>integralmente suportado pela Seabra</b>. A única
-                  contrapartida da Elmate é a mensalidade dos módulos ativos.
+                  A Elmate <b>nunca paga para construir um módulo</b>. Paga só a mensalidade dos que
+                  estiverem ligados.
                 </p>
               </div>
               <div className="clause">
-                <span className="num">3.f–3.h</span>
+                <span className="num">Cláusula 3</span>
                 <p className="what">
-                  Define-se <b>correção</b>, <b>evolução</b> e <b>orçamento de módulo</b> — que fixa a
-                  mensalidade e nunca inclui valor de desenvolvimento.
+                  Fica definido o que é <b>correção</b> e o que é <b>evolução</b> — e que o orçamento
+                  de um módulo é sempre a mensalidade, nunca o custo de o construir.
                 </p>
               </div>
               <div className="clause">
-                <span className="num">6.4</span>
+                <span className="num">Cláusula 6.4</span>
                 <p className="what">
-                  Nos 30 dias de teste, os ajustes estão <b>incluídos</b>. No fim, fica fixado o que
-                  foi validado.
+                  Nos 30 dias de teste, <b>tudo o que for preciso afinar entra sem custo</b>. No fim,
+                  fica registado o que ficou validado.
                 </p>
               </div>
               <div className="clause">
-                <span className="num">9.1–9.3</span>
+                <span className="num">Cláusula 9.1 a 9.3</span>
                 <p className="what">
-                  Módulo novo segue a subscrição. Evolução leva orçamento.{' '}
-                  <b>Correção nunca é faturável, sem limite de tempo.</b>
+                  Setor novo entra pela mensalidade. Evolução leva orçamento antes.{' '}
+                  <b>Correção nunca se paga, e não tem prazo.</b>
                 </p>
               </div>
               <div className="clause">
-                <span className="num">9.4</span>
+                <span className="num">Cláusula 9.4</span>
                 <p className="what">
-                  A classificação é feita ao abrir o chamado.{' '}
-                  <b>Nada é reclassificado depois de feito, nem faturado sem aprovação escrita.</b>
+                  O pedido é classificado quando é aberto. <b>Nada muda de categoria depois de feito,
+                  e nada é faturado sem a Elmate aprovar por escrito.</b>
                 </p>
               </div>
               <div className="clause">
                 <span className="num">Anexo B</span>
                 <p className="what">
-                  Fica escrito o critério dos níveis, para a mensalidade de{' '}
-                  <b>qualquer setor futuro ser previsível</b>.
+                  Fica escrito o critério dos níveis, para a Elmate <b>saber de antemão</b> quanto
+                  custa por mês qualquer setor futuro.
                 </p>
               </div>
             </div>
