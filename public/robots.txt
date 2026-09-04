@@ -6,5 +6,7 @@ Disallow: /apresentacao-en
 Disallow: /planos
 Disallow: /planos-es
 Disallow: /planos-en
+Disallow: /elmate
+Disallow: /katmandu
 
 Sitemap: https://www.sistemaseabra.com.br/sitemap.xml
