@@ -8,13 +8,6 @@ const ACT_OF = [0, 1, 1, 1, 2, 2, 2, 3, 3, 3];
 const ACT_NAMES = ['Capa', 'Ato I · O modelo', 'Ato II · A fronteira', 'Ato III · O contrato'];
 const TOTAL = ACT_OF.length;
 
-/** Tempo médio entre pedido e entrega, só dos chamados abertos pela Elmate. */
-const MESES = [
-  { mes: 'Jun · 8 pedidos', largura: '100%', valor: '147 h', rapido: false },
-  { mes: 'Jul · 7 pedidos', largura: '56%', valor: '83 h', rapido: false },
-  { mes: 'Ago · 2 pedidos', largura: '2.2%', valor: '3,2 h', rapido: true },
-  { mes: 'Set · 1 pedido', largura: '1.6%', valor: '2,3 h', rapido: true },
-];
 
 export default function ElmateDeck() {
   const [i, setI] = useState(0);
@@ -311,7 +304,7 @@ export default function ElmateDeck() {
                 <span className="l">
                   pedidos abertos pela Elmate
                   <br />
-                  desde 29 de maio
+                  desde junho
                 </span>
               </div>
               <div className="metric good">
@@ -327,23 +320,9 @@ export default function ElmateDeck() {
                 <span className="l">cobrados por qualquer um deles</span>
               </div>
             </div>
-            <div className="curve">
-              <p className="curve-title">Tempo médio entre o pedido e a entrega</p>
-              <div className="bars">
-                {MESES.map(({ mes, largura, valor, rapido }) => (
-                  <div className={`bar-row ${rapido ? 'fast' : ''}`.trim()} key={mes}>
-                    <span className="when">{mes}</span>
-                    <span className="bar-track">
-                      <span className="bar-fill" style={{ width: largura }} />
-                    </span>
-                    <span className="val">{valor}</span>
-                  </div>
-                ))}
-              </div>
-              <p className="lede" style={{ marginTop: '1.1rem', fontSize: '1rem' }}>
-                De seis dias para o próprio dia, à medida que o sistema estabilizou.
-              </p>
-            </div>
+            <p className="lede">
+              O mais recente foi aberto a 3 de setembro, às 9h05, e entregue às 11h24 do mesmo dia.
+            </p>
           </div>
         </section>
 
