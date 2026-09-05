@@ -227,6 +227,55 @@ export default async function PrivacidadePage({ params }: PageProps) {
             nossos, com obrigações contratuais de proteção.
           </p>
 
+          <h3 className="text-xl font-semibold text-foreground mt-8 mb-3">
+            4.1. Acesso administrativo interno
+          </h3>
+          <p>
+            Além do compartilhamento com terceiros descrito acima, a{' '}
+            <strong>equipe da Sistema Seabra</strong> acessa dados da sua conta
+            por meio de um painel administrativo interno. Esse acesso é uma
+            operação de tratamento e, por isso, está declarado aqui.
+          </p>
+          <ul className="list-disc pl-6 space-y-2">
+            <li>
+              <strong>Finalidade</strong>: suporte técnico, cobrança e
+              administração do Serviço — inclusive apurar um problema que você
+              relate, conferir o estado da sua assinatura e produzir relatórios
+              sobre o seu próprio rebanho a seu pedido.
+            </li>
+            <li>
+              <strong>Base legal</strong>: execução do contrato (art. 7º, V da
+              LGPD) e legítimo interesse na administração do Serviço (art. 7º,
+              IX), sempre limitado ao necessário para essas finalidades.
+            </li>
+            <li>
+              <strong>Quem acessa</strong>: apenas pessoas autorizadas da Sistema
+              Seabra, com autenticação individual e segundo fator obrigatório.
+            </li>
+            <li>
+              <strong>Minimização</strong>: o painel exibe e-mail e telefone{' '}
+              <em>mascarados</em> e <strong>não exibe o CPF</strong>. O acesso ao
+              dado de contato completo exige uma ação explícita, que fica
+              registrada.
+            </li>
+            <li>
+              <strong>Registro</strong>: toda abertura da ficha de um usuário e
+              toda emissão de relatório são gravadas em trilha de auditoria, com
+              autor, data e hora, conforme o art. 37 da LGPD e o art. 15 do Marco
+              Civil da Internet.
+            </li>
+            <li>
+              <strong>Não usamos esses dados para outra finalidade</strong> — em
+              particular, não os vendemos, não os cedemos e não os usamos para
+              publicidade.
+            </li>
+          </ul>
+          <p>
+            Quando o titular dos dados de um rebanho é cliente de um técnico ou
+            consultor que usa o SeabraApp, a Sistema Seabra atua como operadora
+            em relação a esses dados, e o técnico permanece como controlador.
+          </p>
+
           <h2 className="text-2xl font-semibold text-foreground mt-10 mb-4">
             5. Transferência internacional
           </h2>

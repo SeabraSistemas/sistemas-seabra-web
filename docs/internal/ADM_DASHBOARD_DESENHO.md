@@ -558,3 +558,28 @@ Correções estruturais, não pontuais:
 Depois de tudo: `tsc` e ESLint limpos, build passa, e as 18 rotas do painel respondem 200 com
 sessão real (login testado ponta a ponta, TOTP conferido contra implementação independente).
 
+---
+
+## Política de Privacidade — seção 4.1 (05/09/2026)
+
+O `/adm` institucionaliza um acesso que a política **não declarava**: a seção 4 listava só
+terceiros (Supabase, Firebase, Meta, ABCC, autoridades) e afirmava que todos processam "como
+operadores nossos". Em lugar nenhum dizia que a própria equipe da Sistema Seabra abre a conta de
+um cliente.
+
+Acrescentada a subseção **4.1 — Acesso administrativo interno**, em
+`src/app/[locale]/privacidade/page.tsx`, declarando finalidade, base legal (art. 7º V e IX da
+LGPD), quem acessa, minimização (contato mascarado, CPF nunca exibido), registro em trilha de
+auditoria (art. 37 da LGPD e art. 15 do Marco Civil) e a negativa de uso para outra finalidade.
+Mais um parágrafo sobre consultoria: quando o rebanho é de um cliente do técnico, a Sistema Seabra
+é **operadora** e o técnico permanece controlador.
+
+Correção do que eu havia dito antes: **o corpo legal é pt-only por desenho** — `en` e `es` mostram
+um aviso automático de que o texto está em português porque a lei aplicável é a brasileira
+(`privacyPage.localeNotice`). Então o parágrafo em português cobre os três locales; só a data de
+"última atualização" existe nos três arquivos de mensagem, e foi atualizada nos três.
+
+**Ainda aberto:** quem é o Encarregado (DPO) nomeado na seção 12. E, se o Felipe for abrir no
+painel as propriedades de consultoria — dados de clientes do técnico que nem usam o app —, falta
+cláusula de operador no contrato do plano `tipo='tecnico'`, que hoje não existe.
+

@@ -275,3 +275,162 @@ export const ABAS_CLIENTE: AbaCliente[] = [
   { slug: 'assinatura', rotulo: 'Assinatura', noDossie: false },
   { slug: 'tabelas', rotulo: 'Tabelas', noDossie: false },
 ];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FASE 3 — a carteira em profundidade e o benchmark
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Mesma regra da Fase 2: nome declarado aqui, SQL implementa, TypeScript
+ * consome, `adm_05` falha se faltar. Ver o cabeçalho deste arquivo.
+ */
+export const VIEWS_FASE_3 = {
+  coorte: 'coorte_retencao',
+  benchmarkReferencia: 'benchmark_referencia',
+  benchmarkPropriedade: 'benchmark_propriedade',
+  cobrancas: 'cobrancas_lista',
+} as const;
+
+export type ViewFase3 = (typeof VIEWS_FASE_3)[keyof typeof VIEWS_FASE_3];
+export const NOMES_VIEWS_FASE_3: ViewFase3[] = Object.values(VIEWS_FASE_3);
+
+/**
+ * As métricas comparáveis entre criadores. Fechada de propósito: benchmark é
+ * uma afirmação sobre o negócio do cliente, e cada métrica aqui precisou de uma
+ * decisão sobre denominador, janela e unidade. Acrescentar uma é trabalho de
+ * produto, não de implementação.
+ */
+export const METRICAS_BENCHMARK = [
+  'producao_por_lactante_dia',
+  'custo_litro',
+  'taxa_prenhez',
+  'gmd_medio',
+  'taxa_mortalidade',
+  'intervalo_partos_dias',
+] as const;
+
+export type MetricaBenchmark = (typeof METRICAS_BENCHMARK)[number];
+
+export interface MetricaInfo {
+  rotulo: string;
+  unidade: string;
+  /** Casas decimais na exibição. */
+  casas: number;
+  /** true quando MAIOR é melhor. Vira a direção da seta e a cor do desvio. */
+  maiorEhMelhor: boolean;
+  /** Uma frase que explica o número para o criador, não para o operador. */
+  explicacao: string;
+}
+
+export const BENCHMARK_INFO: Record<MetricaBenchmark, MetricaInfo> = {
+  producao_por_lactante_dia: {
+    rotulo: 'Produção por lactante/dia',
+    unidade: 'L',
+    casas: 2,
+    maiorEhMelhor: true,
+    explicacao: 'Quanto cada fêmea em lactação entrega por dia, em média, nos últimos 90 dias.',
+  },
+  custo_litro: {
+    rotulo: 'Custo por litro',
+    unidade: 'R$',
+    casas: 2,
+    maiorEhMelhor: false,
+    explicacao: 'O custo de produzir um litro, pela estimativa mais recente cadastrada no app.',
+  },
+  taxa_prenhez: {
+    rotulo: 'Taxa de prenhez',
+    unidade: '%',
+    casas: 0,
+    maiorEhMelhor: true,
+    explicacao: 'Diagnósticos positivos sobre diagnósticos feitos, nos últimos 12 meses.',
+  },
+  gmd_medio: {
+    rotulo: 'Ganho de peso diário',
+    unidade: 'kg/dia',
+    casas: 3,
+    maiorEhMelhor: true,
+    explicacao: 'O ganho médio entre pesagens consecutivas do mesmo animal.',
+  },
+  taxa_mortalidade: {
+    rotulo: 'Mortalidade',
+    unidade: '%',
+    casas: 1,
+    maiorEhMelhor: false,
+    explicacao: 'Óbitos sobre o rebanho médio, nos últimos 12 meses.',
+  },
+  intervalo_partos_dias: {
+    rotulo: 'Intervalo entre partos',
+    unidade: 'dias',
+    casas: 0,
+    maiorEhMelhor: false,
+    explicacao: 'Quantos dias, em média, entre um parto e o seguinte da mesma fêmea.',
+  },
+};
+
+/**
+ * A régua: uma linha por (segmento, métrica).
+ *
+ * SEMPRE por segmento. Comparar caprino leiteiro com ovino de corte não é
+ * benchmark, é ruído — e o número resultante daria uma conversa comercial
+ * errada com os dois criadores.
+ */
+export interface LinhaBenchmarkReferencia {
+  segmento: string;
+  metrica: MetricaBenchmark;
+  /**
+   * Quantas propriedades entraram no cálculo. A tela ESCONDE a comparação
+   * abaixo de MINIMO_BENCHMARK: com 3 fazendas, "a mediana da carteira" é uma
+   * frase que soa estatística e não é.
+   */
+  n: number;
+  p25: number | null;
+  mediana: number | null;
+  p75: number | null;
+}
+
+/** O valor de UMA propriedade na mesma métrica — o outro lado da comparação. */
+export interface LinhaBenchmarkPropriedade {
+  propriedade_id: number;
+  segmento: string;
+  metrica: MetricaBenchmark;
+  valor: number | null;
+}
+
+/**
+ * Abaixo disto a comparação não é publicada. Sete é o menor número em que um
+ * quartil ainda separa alguma coisa; abaixo, "mediana" é só o valor do vizinho.
+ */
+export const MINIMO_BENCHMARK = 7;
+
+/**
+ * Coorte de retenção: uma linha por (mês de entrada, mês de vida). O gráfico é
+ * a matriz triangular clássica.
+ */
+export interface LinhaCoorte {
+  /** 'YYYY-MM' do cadastro. */
+  coorte: string;
+  /** 0 = mês de entrada, 1 = mês seguinte... */
+  mes: number;
+  /** Contas que entraram nessa coorte (repetido em toda linha dela). */
+  tamanho: number;
+  /** Quantas ainda estavam ativas nesse mês de vida. */
+  ativos: number;
+  /** ativos / tamanho, 0..1. */
+  retencao: number;
+}
+
+/** Uma cobrança, para /adm/carteira/receita. */
+export interface LinhaCobranca {
+  pagamento_id: number;
+  usuario_id: number | null;
+  usuario_nome: string | null;
+  plano_nome: string | null;
+  valor: number | null;
+  status: string | null;
+  metodo_pagamento: string | null;
+  data_vencimento: string | null;
+  data_pagamento: string | null;
+  /** Vencida e não paga. */
+  inadimplente: boolean;
+  dias_de_atraso: number | null;
+}
