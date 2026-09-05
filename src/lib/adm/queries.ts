@@ -423,6 +423,21 @@ export interface FiltrosUsuarios {
    * base e engajamento com gente que não é cliente.
    */
   incluirTestes?: boolean;
+  /**
+   * Colaborador fica FORA por default — decisão do Felipe em 05/09/2026.
+   *
+   * Ele não é cliente: é funcionário que o produtor cadastrou, não tem rebanho
+   * próprio, não tem assinatura própria e os números que apareceriam na ficha
+   * dele são os da fazenda do patrão. Listá-lo ao lado dos criadores infla a
+   * base e faz a pessoa errada virar linha clicável.
+   *
+   * A relação de colaboradores de um cliente continua existindo, no lugar certo:
+   * a aba EQUIPE da ficha da propriedade, com as permissões de cada um.
+   *
+   * `true` traz de volta — nada some para sempre, e a busca por nome ou e-mail
+   * (que é como se procura uma pessoa específica) liga isto sozinha.
+   */
+  incluirColaboradores?: boolean;
   ordem?: OrdemUsuarios;
   limite?: number;
 }
@@ -448,7 +463,9 @@ function aplicarOrdem(q: Consulta, ordem: OrdemUsuarios): Consulta {
   }
 }
 
-function aplicarFiltrosUsuario(inicial: Consulta, f: FiltrosUsuarios): Consulta {
+/** Exportada para teste: é a regra de QUEM aparece na lista mestra, e ela
+ *  decide coisas de negócio (colaborador fora, conta de teste fora). */
+export function aplicarFiltrosUsuario(inicial: Consulta, f: FiltrosUsuarios): Consulta {
   let q = inicial;
 
   // `not.is.true` e não `is.false`: no banco is_demo/ativo/onboarding_finalizado
@@ -456,6 +473,14 @@ function aplicarFiltrosUsuario(inicial: Consulta, f: FiltrosUsuarios): Consulta 
   // sumir com metade da base num filtro de exclusão é o tipo de erro que ninguém
   // percebe, porque a lista continua parecendo uma lista.
   if (!f.incluirTestes) q = q.not('is_tester', 'is', true).not('is_demo', 'is', true);
+  // Colaborador fora, salvo pedido explícito ou filtro de papel que o inclua —
+  // pedir 'colaborador' em `papeis` é pedido explícito, e o `in` abaixo manda.
+  // Três coisas trazem colaborador de volta: o pedido explícito, um filtro de
+  // papel que o inclua, e a BUSCA — quem digita um nome está procurando uma
+  // pessoa, e uma busca que não acha quem existe parece um sistema quebrado.
+  const pediuColaborador = f.papeis?.includes('colaborador') ?? false;
+  const buscando = (f.busca ?? '').trim() !== '';
+  if (!f.incluirColaboradores && !pediuColaborador && !buscando) q = q.neq('papel', 'colaborador');
   if (f.papeis?.length) q = q.in('papel', f.papeis);
   if (f.status?.length) q = q.in('status_efetivo', f.status);
   if (f.origens?.length) q = q.in('origem_acesso', f.origens);
