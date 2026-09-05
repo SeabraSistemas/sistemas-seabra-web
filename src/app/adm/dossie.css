@@ -1,0 +1,314 @@
+/* ============================================================================
+ * DOSSIÊ COMERCIAL — folha de estilo da peça impressa (decisão D4)
+ *
+ * Consumida por src/app/adm/(app)/u/[id]/dossie/page.tsx. Fica aqui, no nível
+ * de src/app/adm/, pelo mesmo motivo de src/app/[locale]/criadores/vitrine.css:
+ * é CSS global ESCOPADO numa classe (.dossie), e o lugar dele é junto da área
+ * que o usa, não no globals.css do site inteiro.
+ *
+ * ┌─ A DECISÃO QUE ORGANIZA O ARQUIVO ─────────────────────────────────────┐
+ * │ O dossiê nasce CLARO — na tela e no papel — e é diagramado na LARGURA  │
+ * │ REAL DA PÁGINA A4 (178 mm) desde o primeiro pixel.                     │
+ * └────────────────────────────────────────────────────────────────────────┘
+ *
+ * Três razões, e a terceira é técnica e irredutível:
+ *
+ * 1. O produto é o PDF, não a tela. Revisar uma peça comercial numa versão
+ *    escura que ninguém vai receber é revisar outra coisa: as quebras de
+ *    página, o peso do texto sobre o branco e o contraste dos gráficos só
+ *    aparecem no artefato final. Aqui a tela É o artefato.
+ *
+ * 2. Papel escuro é ilegível e caro. Uma página A4 chapada de preto some numa
+ *    impressora jato de tinta e gasta um cartucho por cópia.
+ *
+ * 3. **O recharts mede a largura em pixels, uma vez.** <ResponsiveContainer>
+ *    lê o tamanho do contêiner no cliente e escreve width/height fixos no
+ *    <svg>. Se a tela tivesse 1100 px de largura e o papel 178 mm (≈ 673 px),
+ *    todo gráfico sairia CORTADO na margem direita do PDF — sem erro, sem
+ *    aviso, só um número faltando na ponta da linha. Diagramar na largura do
+ *    papel desde a tela elimina a classe inteira desse defeito: o que o
+ *    recharts mediu é exatamente o que a impressora recebe.
+ *
+ * O que continua escuro é a MESA (.dossie-mesa) — o painel em volta da folha.
+ * É o enquadramento clássico de editor de documento, e deixa claro na tela o
+ * que é papel e o que é ferramenta. Na impressão a mesa some.
+ * ========================================================================== */
+
+/* ---------------------------------------------------------------------------
+ * 1. TOKENS DA FOLHA
+ *
+ * ⚠️ POR QUE OS DOIS TIERS SÃO REDECLARADOS COM VALOR LITERAL
+ *
+ * O globals.css define o tier 2 por referência (`--card: var(--surface-1)`).
+ * A tentação é redeclarar só o tier 1 aqui e deixar o tier 2 "seguir junto".
+ * NÃO SEGUE: pela spec de custom properties a substituição de var() acontece
+ * em computed-value time, no elemento onde a DECLARAÇÃO está. `--card` já
+ * computou `#121212` no :root e é esse valor resolvido que desce por herança —
+ * redefinir `--surface-1` aqui não o alcança.
+ *
+ * O sintoma seria exatamente o pior tipo de bug deste painel: metade dos
+ * tokens vira claro, a outra metade continua escura, e o dossiê sai com cards
+ * pretos sobre papel branco. Por isso os dois tiers aparecem abaixo, com
+ * valor literal, e o contraste medido de cada um.
+ *
+ * A rampa é NEUTRA-QUENTE (o papel puxa levemente para o creme nas linhas),
+ * com o ocre da marca preservado como único acento — a mesma regra do tema
+ * escuro, invertida para fundo claro.
+ * ------------------------------------------------------------------------- */
+.dossie {
+  /* Faz o navegador desenhar scrollbar e controles nativos em claro dentro da
+     folha, mesmo com o <html class="dark"> do painel. */
+  color-scheme: light;
+
+  /* ── Tier 1 — primitivos ─────────────────────────────────────────────── */
+  --surface-0: #ffffff; /* a folha */
+  --surface-1: #ffffff; /* card sobre a folha: papel sobre papel, separado por FIO, não por cinza */
+  --surface-2: #f2eee7; /* trilho de barra, chip, faixa alternada de tabela */
+  --surface-3: #ffffff; /* popover/tooltip — só existe na tela */
+
+  --line-subtle: #e5e0d7; /* fio decorativo: grade de gráfico, divisória */
+  --line-strong: #b3ab9d; /* fio estrutural: regra de seção, borda de tabela */
+
+  --ink-0: #1a1713; /* texto — 18,0:1 sobre o branco */
+  --ink-1: #6a6257; /* secundário — 6,1:1, passa AA com folga em 12px */
+  --ink-2: #9c9488; /* decorativo (a fatia "Outros") — 3,0:1, o mínimo de 1.4.11 */
+
+  /* O acento é o MESMO hex do tema escuro. Peça de marca não troca a cor da
+     marca ao mudar de fundo: #c8813c dá 3,18:1 sobre o branco, acima do
+     mínimo de 3:1 que a WCAG pede para elemento gráfico. O texto SOBRE o ocre
+     continua escuro (6,4:1) — branco sobre ocre daria 3,18:1 e reprovaria. */
+  --ocre: #c8813c;
+  --ocre-hover: #b6742f;
+  --ocre-ink: #1a1713;
+
+  /* ── Tier 2 — semânticos (o contrato que os componentes consomem) ─────── */
+  --background: #ffffff;
+  --foreground: #1a1713;
+  --card: #ffffff;
+  --card-foreground: #1a1713;
+  --popover: #ffffff;
+  --popover-foreground: #1a1713;
+  --primary: #c8813c;
+  --primary-foreground: #1a1713;
+  --secondary: #f2eee7;
+  --secondary-foreground: #1a1713;
+  --muted: #f7f5f1;
+  --muted-foreground: #6a6257;
+  --accent: #f2eee7;
+  --accent-foreground: #1a1713;
+  /* O #f87171 do tema escuro dá 2,4:1 sobre o branco — invisível no papel. */
+  --destructive: #a3271b;
+  --destructive-foreground: #ffffff;
+  --border: #e5e0d7;
+  --input: #b3ab9d;
+  --ring: #c8813c;
+
+  /* ── Métricas da página ──────────────────────────────────────────────── */
+  /* 178 mm = 210 mm de A4 menos as duas margens de 16 mm do @page abaixo.
+     Largura FIXA, sem max-width: um documento não reflui. Numa janela
+     estreita quem rola é a mesa (overflow-x), e o PDF continua idêntico. */
+  width: 178mm;
+  flex: none;
+  background: var(--background);
+  color: var(--foreground);
+  font-size: 14px;
+  line-height: 1.6;
+  /* Números em colunas: o dossiê é feito de comparação vertical. */
+  font-variant-numeric: tabular-nums;
+  /* A margem de papel na TELA é pintada por sombra, não por padding: padding
+     encolheria a caixa de conteúdo e os gráficos seriam medidos numa largura
+     menor que a da página impressa — de volta ao problema nº 3 do cabeçalho. */
+  box-shadow:
+    0 0 0 16mm var(--background),
+    0 0 0 calc(16mm + 1px) #2a2a2a,
+    0 24px 60px rgb(0 0 0 / 0.45);
+}
+
+/* A serifa editorial. O globals.css já aplica --font-display em h1/h2/h3 por
+   elemento; aqui o peso e o tracking são recalibrados para papel: no escuro a
+   fonte precisa de mais peso para não sumir, no branco ela fica pesada demais
+   com o mesmo valor. */
+.dossie h1,
+.dossie h2,
+.dossie h3 {
+  font-family: var(--font-display), Georgia, "Times New Roman", serif;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  color: var(--ink-0);
+}
+
+/* A MESA — o painel em volta da folha. Só existe na tela. */
+.dossie-mesa {
+  display: flex;
+  justify-content: center;
+  /* 16 mm de sombra + respiro: sem isto a margem pintada encosta na borda. */
+  padding: 22mm 20mm 26mm;
+  /* Documento não reflui: numa janela estreita rola a mesa, não a página. */
+  overflow-x: auto;
+}
+
+/* ---------------------------------------------------------------------------
+ * 2. ESTRUTURA DO DOCUMENTO
+ * ------------------------------------------------------------------------- */
+
+/* A capa é a página 1 inteira, sozinha. */
+.dossie-capa {
+  break-after: page;
+  /* Na tela a capa não tem uma "página" para ocupar; a altura mínima recria a
+     proporção do papel (297 mm menos as margens verticais do @page). */
+  min-height: 261mm;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Cada seção começa numa página nova — exceto a primeira, que já herda a
+   quebra da capa. Usar `+` em vez de aplicar em todas e cancelar na primeira
+   evita a página em branco clássica (duas quebras seguidas). */
+.dossie-secao + .dossie-secao {
+  break-before: page;
+}
+
+/* A unidade indivisível do documento: nenhum bloco de números, gráfico ou
+   tabela pode ser partido pela dobra da página. Um KPI cujo rótulo fica numa
+   página e o número na outra é pior que não existir. */
+.dossie-bloco,
+.dossie-numero,
+.dossie-grafico,
+.dossie-fechamento {
+  break-inside: avoid;
+}
+
+/* Título nunca fica órfão no pé da página. */
+.dossie-secao > header {
+  break-after: avoid;
+  break-inside: avoid;
+}
+
+/* Viúvas e órfãs de parágrafo — o default do Chrome é 2, mas alguns motores
+   ainda deixam uma linha solta. */
+.dossie p {
+  orphans: 3;
+  widows: 3;
+}
+
+/* ---------------------------------------------------------------------------
+ * 3. CORES DAS SÉRIES DOS GRÁFICOS
+ *
+ * NÃO ESTÃO AQUI DE PROPÓSITO. A escala do recharts (SERIES em
+ * src/components/adm/charts/theme.ts) é aplicada como ATRIBUTO de
+ * apresentação no SVG (fill="#c8813c"), e sobrescrevê-la exige casar com o
+ * hex exato. Repetir os cinco hexes neste arquivo criaria duas verdades sobre
+ * a paleta — e a divergência seria SILENCIOSA: a série continuaria desenhada,
+ * só que num tom claro demais para o papel.
+ *
+ * A regra é gerada por `cssDaEscalaDeImpressao()` em
+ * src/components/adm/dossie/Dossie.tsx, a partir de SERIES e SERIES_PAPEL
+ * (theme.ts), e emitida como <style> dentro da folha. Muda a paleta, muda a
+ * versão de impressão junto — o tipo de SERIES_PAPEL impede acrescentar cor
+ * numa e esquecer da outra.
+ * ------------------------------------------------------------------------- */
+
+/* ---------------------------------------------------------------------------
+ * 4. IMPRESSÃO
+ * ------------------------------------------------------------------------- */
+
+@page {
+  size: A4;
+  /* 18 mm em cima e embaixo, 16 mm nas laterais. A margem superior maior é
+     convenção editorial: o olho lê a mancha como centrada quando o topo tem
+     mais ar que os lados. */
+  margin: 18mm 16mm;
+}
+
+@media print {
+  /* Tudo que só faz sentido na tela: barra de ações, avisos de operação, o
+     próprio botão de imprimir. Declarada ANTES da regra de isolamento e sem
+     depender de :has() — é a que garante, em qualquer motor, que o botão
+     "Imprimir" não vá para dentro do PDF. */
+  .sem-impressao {
+    display: none !important;
+  }
+
+  /* A tinta de fundo é opcional no diálogo de impressão do Chrome ("Gráficos
+     de fundo"). Este hint pede que o navegador honre os fundos — sem ele um
+     donut sai como cinco contornos vazios. O aviso na barra de ações repete a
+     instrução, porque o hint não é obrigatório para o navegador. */
+  html,
+  body,
+  .dossie {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  html,
+  body {
+    background: #ffffff !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* ── Isolamento da folha ──────────────────────────────────────────────
+   * O dossiê é uma PÁGINA do painel: ele renderiza dentro do layout de
+   * /adm/(app) (navegação) e do layout da ficha do cliente (cabeçalho sticky
+   * com o nome e o health score). Nenhum dos dois é arquivo desta tarefa, e
+   * nenhum dos dois pode aparecer num documento que vai para o cliente.
+   *
+   * Em vez de pedir uma classe a esses layouts, a regra abaixo resolve pela
+   * ESTRUTURA, em qualquer profundidade:
+   *   · `:has(.dossie)`  → é ancestral da folha  → fica, sem moldura
+   *   · `.dossie`, `.dossie *` → é a folha       → fica
+   *   · todo o resto                             → some
+   *
+   * Se o layout ganhar mais um nível amanhã, a regra continua correta —
+   * é o oposto de listar seletores de componentes que não controlo. */
+  body :not(:has(.dossie)):not(.dossie):not(.dossie *) {
+    display: none !important;
+  }
+
+  /* Os ancestrais viram contêineres transparentes: sem padding do painel, sem
+     max-width de 1600px, sem fundo escuro. A folha precisa começar exatamente
+     na margem do @page. */
+  body:has(.dossie),
+  body :has(.dossie) {
+    display: block !important;
+    width: auto !important;
+    max-width: none !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    /* position/overflow do cabeçalho sticky: no papel, sticky não existe e
+       overflow:auto criaria um contexto de rolagem que engole a paginação. */
+    position: static !important;
+    overflow: visible !important;
+  }
+
+  .dossie-mesa {
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  .dossie {
+    /* A largura é a MESMA da tela — é isso que garante que o <svg> medido em
+       pixels caiba exato na mancha de 178 mm. */
+    width: 178mm;
+    margin: 0 !important;
+    /* A margem de papel agora vem do @page; a sombra que a simulava sairia
+       impressa como uma moldura cinza. */
+    box-shadow: none !important;
+  }
+
+  .dossie-capa {
+    /* Na tela a altura mínima recria a página; no papel a quebra já resolve, e
+       um min-height em mm pode empurrar a capa para duas páginas. */
+    min-height: 0;
+  }
+
+  /* Link no papel é texto: sublinhado e cor de tinta, não de interface. */
+  .dossie a {
+    color: var(--ink-0);
+    text-decoration: none;
+  }
+}

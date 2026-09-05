@@ -9,4 +9,9 @@ Disallow: /planos-en
 Disallow: /elmate
 Disallow: /katmandu
 
+# /adm NÃO é listado aqui de propósito. O Disallow pede para não rastrear, mas
+# publica o caminho para qualquer um que leia este arquivo procurando o que vale
+# atacar. A rota é removida do índice pelo header X-Robots-Tag: noindex
+# (next.config.ts), que remove melhor e não entrega o endereço.
+
 Sitemap: https://www.sistemaseabra.com.br/sitemap.xml
