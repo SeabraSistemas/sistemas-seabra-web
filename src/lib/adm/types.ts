@@ -138,6 +138,11 @@ export interface UsuarioLista {
   ultimo_lancamento_em: string | null;
   ultimo_modulo: string | null;
   lancamentos_30d: number;
+  /** Entradas dos componentes 2, 3 e 5 do health score — o que permite a ficha
+   *  DECOMPOR o número, e não só exibi-lo. Ver calcularHealthScore(). */
+  dias_distintos_30d: number;
+  modulos_90d: number;
+  animais_com_evento_90d: number;
   dias_sem_lancar: number | null;
   health_score: number | null;
 }

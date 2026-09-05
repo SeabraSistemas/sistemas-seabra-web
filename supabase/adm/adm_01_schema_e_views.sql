@@ -521,6 +521,9 @@ select
   ativ.ultimo_lancamento_em,
   ativ.ultimo_modulo,
   coalesce(ativ.lancamentos_30d, 0)                       as lancamentos_30d,
+  coalesce(ativ.dias_distintos_30d, 0)                    as dias_distintos_30d,
+  coalesce(ativ.modulos_90d, 0)                           as modulos_90d,
+  coalesce(ativ.animais_com_evento_90d, 0)                as animais_com_evento_90d,
   case when ativ.ultimo_lancamento_em is not null
        then floor(extract(epoch from (now() - ativ.ultimo_lancamento_em)) / 86400)::int
   end                                                     as dias_sem_lancar,
@@ -617,6 +620,14 @@ left join lateral (
     coalesce(sum(t.lancamentos_30d), 0)::bigint                    as lancamentos_30d,
     (array_agg(t.ultimo_modulo
        order by t.ultimo_lancamento_em desc nulls last))[1]        as ultimo_modulo,
+    -- As TRES entradas dos componentes 2, 3 e 5 do health score. Sem elas a
+    -- ficha do cliente conseguia mostrar o NUMERO (que sai calculado daqui) mas
+    -- nao a EXPLICACAO: tres dos cinco componentes apareciam sem valor, e um
+    -- score sem decomposicao nao gera acao nenhuma.
+    -- Somadas entre as propriedades da conta, como lancamentos_30d.
+    coalesce(sum(t.dias_distintos_30d), 0)::bigint                 as dias_distintos_30d,
+    coalesce(max(t.modulos_90d), 0)::bigint                        as modulos_90d,
+    coalesce(sum(t.animais_com_evento_90d), 0)::bigint             as animais_com_evento_90d,
     percentile_cont(0.5) within group (order by (
         35 * greatest(0, least(1,
               (30 - coalesce(

@@ -137,6 +137,9 @@ const COLUNAS_USUARIO = [
   'ultimo_lancamento_em',
   'ultimo_modulo',
   'lancamentos_30d',
+  'dias_distintos_30d',
+  'modulos_90d',
+  'animais_com_evento_90d',
   'dias_sem_lancar',
   'health_score',
 ].join(',');
@@ -322,6 +325,9 @@ function mapearUsuario(l: Linha): UsuarioLista {
     ultimo_lancamento_em: texto(l.ultimo_lancamento_em),
     ultimo_modulo: texto(l.ultimo_modulo),
     lancamentos_30d: inteiro(l.lancamentos_30d),
+    dias_distintos_30d: inteiro(l.dias_distintos_30d),
+    modulos_90d: inteiro(l.modulos_90d),
+    animais_com_evento_90d: inteiro(l.animais_com_evento_90d),
     dias_sem_lancar: numero(l.dias_sem_lancar),
     health_score: numero(l.health_score),
   };

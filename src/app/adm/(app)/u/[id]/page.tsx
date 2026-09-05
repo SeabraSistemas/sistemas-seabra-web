@@ -14,7 +14,17 @@ import {
   formatarNumero,
   formatarTelefone,
 } from '@/lib/adm/format';
-import { COBRANCA_NORM, consolidarVisoes, faixaDeScore, interpolar, METAS_HEALTH, PESOS_HEALTH, type EstadoCobranca } from '@/lib/adm/metricas';
+import {
+  calcularHealthScore,
+  COBRANCA_DETALHE,
+  COBRANCA_NORM,
+  consolidarVisoes,
+  faixaDeScore,
+  interpolar,
+  METAS_HEALTH,
+  PESOS_HEALTH,
+  type EstadoCobranca,
+} from '@/lib/adm/metricas';
 import { getEscopo, getVisaoGeral } from '@/lib/adm/queries';
 import { SEGMENTO_ROTULO, type ComponenteHealth, type Escopo, type FatiaDistribuicao, type UsuarioLista, type VisaoGeralPropriedade } from '@/lib/adm/types';
 
@@ -400,13 +410,44 @@ function Saude({ usuario }: { usuario: UsuarioLista }) {
       </ul>
 
       <p className="mt-4 text-xs text-muted-foreground">
-        Frequência, amplitude e profundidade são calculadas por propriedade dentro de{' '}
-        <code>adm.atividade_propriedade</code> e agregadas para a conta pela MEDIANA — a lista mestra
-        projeta o total, não as parcelas. O número acima é sempre o da view, o mesmo que ordena
-        &quot;quem está em risco&quot;.
+        As parcelas vêm de <code>adm.atividade_propriedade</code>, agregadas para a conta e
+        normalizadas por <code>calcularHealthScore()</code> — a MESMA função que os testes cobrem,
+        com as MESMAS constantes que o SQL usa. O número grande continua sendo o da view, que é o
+        que ordena &quot;quem está em risco&quot; na lista mestra: se ele e a soma das parcelas
+        discordarem, é sinal de que a fórmula do SQL e a do TypeScript saíram de sincronia.
       </p>
     </section>
   );
+}
+
+/**
+ * As normas dos três componentes de USO, tiradas de `calcularHealthScore()`.
+ *
+ * Por que passar pela função em vez de interpolar aqui: ela é a única
+ * implementação testada da fórmula (56 casos em metricas.test.ts), e antes
+ * desta mudança ela era CÓDIGO MORTO — a tela reconstruía dois componentes à
+ * mão e deixava três sem valor, porque a view não projetava as entradas. Agora
+ * projeta, e a fórmula tem um dono só.
+ *
+ * A cobrança continua vindo de `COBRANCA_NORM` direto: o estado dela é derivado
+ * das bandeiras da conta, não das janelas de atividade.
+ */
+function normaDe(u: UsuarioLista): { frequencia: number; amplitude: number; profundidade: number } {
+  const score = calcularHealthScore({
+    diasSemLancar: u.dias_sem_lancar,
+    diasComLancamento30d: u.dias_distintos_30d,
+    modulos90d: u.modulos_90d,
+    cobranca: estadoDeCobranca(u),
+    animaisComEvento90d: u.animais_com_evento_90d,
+    animaisVivos: u.animais_ativos,
+  });
+  const norma = (chave: ComponenteHealth['chave']) =>
+    score.componentes.find((c) => c.chave === chave)?.norm ?? 0;
+  return {
+    frequencia: norma('frequencia'),
+    amplitude: norma('amplitude'),
+    profundidade: norma('profundidade'),
+  };
 }
 
 function componentesHealth(u: UsuarioLista): LinhaHealth[] {
@@ -427,16 +468,16 @@ function componentesHealth(u: UsuarioLista): LinhaHealth[] {
       chave: 'frequencia',
       rotulo: 'Frequência 30d',
       peso: PESOS_HEALTH.frequencia,
-      norm: null,
-      detalhe: `${formatarInteiro(u.lancamentos_30d)} lançamentos em 30 dias`,
+      norm: normaDe(u).frequencia,
+      detalhe: `${formatarInteiro(u.dias_distintos_30d)} dias distintos com lançamento (${formatarInteiro(u.lancamentos_30d)} lançamentos)`,
       meta: `${METAS_HEALTH.frequenciaMeta} dias DISTINTOS com lançamento`,
     },
     {
       chave: 'amplitude',
       rotulo: 'Amplitude 90d',
       peso: PESOS_HEALTH.amplitude,
-      norm: null,
-      detalhe: u.ultimo_modulo ? `módulo mais recente: ${u.ultimo_modulo}` : 'nenhum módulo usado',
+      norm: normaDe(u).amplitude,
+      detalhe: `${formatarInteiro(u.modulos_90d)} de 8 módulos em 90 dias${u.ultimo_modulo ? ` · mais recente: ${u.ultimo_modulo}` : ''}`,
       meta: `${METAS_HEALTH.amplitudeMeta} dos 8 módulos de trabalho diário`,
     },
     {
@@ -444,27 +485,19 @@ function componentesHealth(u: UsuarioLista): LinhaHealth[] {
       rotulo: 'Cobrança',
       peso: PESOS_HEALTH.cobranca,
       norm: COBRANCA_NORM[cobranca],
-      detalhe: DETALHE_COBRANCA[cobranca],
+      detalhe: COBRANCA_DETALHE[cobranca],
       meta: 'escada fixa — cortesia vale cheio, pagamento vencido vale 0,3',
     },
     {
       chave: 'profundidade',
       rotulo: 'Profundidade',
       peso: PESOS_HEALTH.profundidade,
-      norm: null,
-      detalhe: `${formatarInteiro(u.animais_ativos)} animais vivos no escopo`,
+      norm: normaDe(u).profundidade,
+      detalhe: `${formatarInteiro(u.animais_com_evento_90d)} de ${formatarInteiro(u.animais_ativos)} animais com evento em 90 dias`,
       meta: `${Math.round(METAS_HEALTH.profundidadeMeta * 100)}% do rebanho com evento em 90 dias`,
     },
   ];
 }
-
-const DETALHE_COBRANCA: Record<EstadoCobranca, string> = {
-  'em-dia': 'acesso em dia',
-  cortesia: 'cortesia — risco de receita, não de churn',
-  'so-extensao': 'acesso só por extensão manual',
-  inadimplente: 'com acesso, mas com pagamento pendente',
-  'sem-acesso': 'sem acesso',
-};
 
 /**
  * A mesma escada da view, reconstruída do que a lista mestra projeta. A única

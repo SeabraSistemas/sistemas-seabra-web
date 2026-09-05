@@ -64,11 +64,21 @@ export const COBRANCA_NORM: Record<EstadoCobranca, number> = {
   'sem-acesso': 0,
 };
 
-const COBRANCA_DETALHE: Record<EstadoCobranca, string> = {
+/**
+ * O texto de cada estado de cobrança, na decomposição do score.
+ *
+ * EXPORTADO e único: a ficha do cliente mantinha uma segunda tabela com as
+ * mesmas chaves e palavras diferentes ('cortesia (sem receita)' aqui contra
+ * 'cortesia — risco de receita, não de churn' lá). Duas tabelas com as mesmas
+ * chaves divergem em silêncio, e o operador via uma explicação na tela e outra
+ * em qualquer lugar que reusasse esta. Ficou a redação mais explicativa, que é
+ * a que serve a quem está decidindo se liga para o cliente.
+ */
+export const COBRANCA_DETALHE: Record<EstadoCobranca, string> = {
   'em-dia': 'acesso em dia',
-  cortesia: 'cortesia (sem receita)',
-  'so-extensao': 'só extensão manual',
-  inadimplente: 'pagamento vencido',
+  cortesia: 'cortesia — risco de receita, não de churn',
+  'so-extensao': 'acesso só por extensão manual',
+  inadimplente: 'com acesso, mas com pagamento pendente',
   'sem-acesso': 'sem acesso',
 };
 
