@@ -584,8 +584,11 @@ select
       u.email,
       regexp_replace(coalesce(u.whatsapp_pessoal, ''), '[^0-9]', '', 'g'),
       regexp_replace(coalesce(u.cpf, ''),              '[^0-9]', '', 'g'),
-      esc.nome,
-      esc.numero_criador
+      -- `pp`, nao `esc`: o lateral `esc` so agrega contagem
+      -- (total_propriedades, animais_ativos); quem carrega nome e numero de
+      -- criador e o lateral da propriedade PRINCIPAL.
+      pp.nome,
+      pp.numero_criador
     ),
     'áàâãäéèêëíìîïóòôõöúùûüçñÁÀÂÃÄÉÈÊËÍÌÎÏÓÒÔÕÖÚÙÛÜÇÑ',
     'aaaaaeeeeiiiiooooouuuucnAAAAAEEEEIIIIOOOOOUUUUCN'

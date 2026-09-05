@@ -149,7 +149,7 @@ cross join lateral (
     (select count(*) from public.diagnostico_gestacao dg
       where dg.propriedade_id = p.id
         and dg.data_diagnostico >= current_date - interval '12 months'
-        and lower(btrim(dg.diagnostico)) = 'gestante')::int
+        and lower(btrim(dg.diagnostico::text)) = 'gestante')::int
                                                              as diagnosticos_positivos_12m,
 
     (select count(*) from public.aborto ab

@@ -13,7 +13,9 @@ Cada um tem arquivo e linha. Copie daqui para baixo.
 Estou trabalhando no painel `/adm` do site institucional, que lê o Supabase deste app. Lendo as
 migrations e o código Dart para montar as views de leitura, encontrei cinco coisas que parecem
 defeito **neste repositório**. Não toquei em nada aqui — só reporto, com a citação de cada uma.
-Algumas eu não consigo confirmar de fora, e digo quais.
+
+**Dois deles foram confirmados contra o banco de produção em 05/09/2026** (consultas de leitura,
+via Management API) e estão marcados com ✅. Os outros três vêm da leitura do código.
 
 ### 1. 🔴 Qualquer pessoa com o APK pode se promover a administrador
 
@@ -39,15 +41,22 @@ todo cadastro novo de confirmar e-mail** — a policy antiga era `to PUBLIC`, qu
 `supabase_auth_admin` sob o qual o trigger `handle_email_confirmed()` insere em `public.usuarios`,
 e a nova é `to anon, authenticated`, que não o inclui.
 
-Duas consultas resolvem essa dúvida, e elas precisam ser rodadas **contra o banco**:
+**✅ ESSA DÚVIDA JÁ FOI RESOLVIDA CONTRA O BANCO (05/09/2026):**
 
-```sql
-select p.proname, p.prosecdef, pg_get_userbyid(p.proowner) as dono
-  from pg_proc p join pg_namespace n on n.oid = p.pronamespace
- where p.proname = 'handle_email_confirmed';
+```
+handle_email_confirmed   security_definer = true   dono = postgres
+public.usuarios          dono = postgres   rls = true   force_rls = FALSE
+```
 
-select relowner::regrole, relrowsecurity, relforcerowsecurity
-  from pg_class where oid = 'public.usuarios'::regclass;
+A função é `SECURITY DEFINER` do `postgres`, a tabela é do `postgres`, e `force_rls` é **false** —
+o INSERT do trigger passa por cima da RLS. **Fechar a policy pública NÃO quebra o cadastro.**
+O bloqueante da migration está resolvido; sobram os outros três achados do `§7`.
+
+E o buraco está aberto agora, medido no banco:
+
+```
+update_own_user      UPDATE   using = true    with_check = (nenhum)
+insert_user_public   INSERT                   with_check = true
 ```
 
 Há mais três achados importantes sobre essa migration no `§7` do documento — entre eles que a
@@ -109,15 +118,21 @@ No resto do repositório a grafia é minúscula: contei **35 escritas com `'ativ
 `'Ativo'`**, e o `check` de `tecnico_propriedades` (`2026_07_09_tecnico_consultor_schema.sql:47`)
 usa minúsculo.
 
-**Não consigo confirmar de fora** qual grafia `rebanho.status` realmente guarda. Se for minúscula
-(o que as 35 escritas sugerem), então a view devolve vazio, as duas funções de contagem devolvem
-sempre 0, e os dois índices nunca são usados — ocupando espaço e sendo mantidos a cada escrita.
+**✅ CONFIRMADO CONTRA O BANCO (05/09/2026).** `select status, count(*) from public.rebanho
+group by 1` devolve:
 
-Uma consulta resolve:
-
-```sql
-select status, count(*) from public.rebanho group by 1 order by 2 desc;
 ```
+inativo   8300
+ativo     5975
+```
+
+**Nenhuma linha com `'Ativo'`.** Ou seja, em produção, agora:
+
+- a view `view_animais_localizacao` devolve **vazio**;
+- `count_animais_in_baia` e `count_animais_in_setor` devolvem **sempre 0**;
+- os dois índices parciais nunca são usados — ocupam espaço e são mantidos a cada escrita.
+
+Isso não é mais hipótese. É o estado atual.
 
 ### 5. 🟡 O branch de admin global de `app_propriedades_acessiveis()` está morto
 
@@ -129,6 +144,21 @@ dele cai no branch seguinte sem erro nenhum.
 
 Foi por causa disso que o `/adm` do site calcula o escopo de propriedades em SQL com
 `service_role`, em vez de confiar na RLS.
+
+### 6. 🟡 Um animal com `status = 'ativo'` e `data_venda` preenchida
+
+Apareceu ao conferir uma contagem: existe **1 linha** em `rebanho` com `status = 'ativo'` e
+`data_venda` não nula ao mesmo tempo. São estados que se contradizem — um animal vendido não
+deveria continuar ativo.
+
+```sql
+select id, numero_animal, propriedade_id, status, data_venda
+  from public.rebanho where status = 'ativo' and data_venda is not null;
+```
+
+É uma linha só, então não muda número nenhum de forma relevante — mas vale entender como ela
+chegou nesse estado, porque o caminho que produziu uma pode produzir mais. Provavelmente uma venda
+registrada sem passar pelo fluxo que muda o status.
 
 ---
 
