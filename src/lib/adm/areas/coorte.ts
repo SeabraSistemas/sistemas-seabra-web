@@ -354,7 +354,19 @@ export function indiceMes(periodo: string | null | undefined): number | null {
  */
 export function mesEmCurso(agora: Date): string {
   const dia = diaCivil(agora);
-  return (dia ?? new Date().toISOString().slice(0, 10)).slice(0, 7);
+  // Instante inválido devolve '' — NUNCA o relógio do runtime.
+  //
+  // O fallback anterior era `new Date().toISOString()`, e ele cometia de uma vez
+  // os dois defeitos que esta função existe para não cometer: a forma da matriz
+  // passava a depender do relógio do SERVIDOR (um agregado com relógio
+  // escondido é impossível de conferir) e do mês do UTC (às 23h de 31/03 em
+  // Brasília, o UTC já está em abril — a coorte de março mudaria de lugar).
+  //
+  // Com '', `indiceMes` devolve null e `montarMatriz` sai pela matriz vazia:
+  // a tela mostra "sem dados" em vez de uma matriz plausível e errada. Um
+  // `agora` inválido é bug de quem chama, e a resposta honesta é não desenhar.
+  if (dia === null) return '';
+  return dia.slice(0, 7);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

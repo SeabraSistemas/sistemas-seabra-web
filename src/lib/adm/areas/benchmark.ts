@@ -152,7 +152,7 @@ const JANELA: Record<MetricaBenchmark, string> = {
  */
 const FALTA_LANCAR: Record<MetricaBenchmark, string> = {
   producao_por_lactante_dia:
-    'Faltam lançamentos de controle leiteiro ou de produção diária nos últimos 90 dias — e fêmeas marcadas como lactantes, que são o denominador da conta.',
+    'Faltam lançamentos de controle leiteiro ou de produção diária nos últimos 30 dias — e fêmeas marcadas como lactantes, que são o denominador da conta.',
   custo_litro:
     'Falta rodar a estimativa de custo no app: sem um snapshot salvo não existe custo por litro, e nenhum outro lançamento produz esse número.',
   taxa_prenhez:

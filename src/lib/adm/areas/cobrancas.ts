@@ -420,9 +420,15 @@ export interface ResumoCobrancas {
   cobrancas: number;
 
   pagas: number;
+  /**
+   * Quantas das pagas têm valor conhecido — o DIVISOR do ticket médio.
+   * Separado de `pagas` porque uma cobrança paga sem valor não vale R$ 0: vale
+   * um número que o banco não guardou, e contá-la dilui o ticket.
+   */
+  pagasComValor: number;
   /** Soma das pagas, o histórico inteiro. Não é MRR nem receita de 12 meses. */
   recebido: number;
-  /** Média das pagas. null quando não houve nenhuma — nunca 0. */
+  /** Média das pagas COM VALOR. null quando não há nenhuma — nunca 0. */
   ticketMedio: number | null;
 
   emAberto: number;
@@ -455,6 +461,7 @@ export function resumirCobrancas(linhas: readonly LinhaCobranca[]): ResumoCobran
   const resumo: ResumoCobrancas = {
     cobrancas: linhas.length,
     pagas: 0,
+    pagasComValor: 0,
     recebido: 0,
     ticketMedio: null,
     emAberto: 0,
@@ -479,6 +486,12 @@ export function resumirCobrancas(linhas: readonly LinhaCobranca[]): ResumoCobran
       case 'paga':
         resumo.pagas += 1;
         resumo.recebido += valor;
+        // O DIVISOR do ticket médio conta só quem tem valor CONHECIDO. Uma
+        // cobrança paga sem valor não vale R$ 0 — ela vale um número que o
+        // banco não guardou; jogá-la no divisor dilui o ticket para baixo e
+        // afirma um preço que o produto não tem. É a mesma família do
+        // `ticketMedio` ser null em vez de zero, três linhas abaixo.
+        if (l.valor != null) resumo.pagasComValor += 1;
         break;
       case 'em_aberto':
         resumo.emAberto += 1;
@@ -505,7 +518,7 @@ export function resumirCobrancas(linhas: readonly LinhaCobranca[]): ResumoCobran
   resumo.contasInadimplentes = contas.size;
   // null e não 0: "nenhuma cobrança paga" e "ticket médio de R$ 0,00" são coisas
   // diferentes, e a segunda seria uma afirmação falsa sobre o preço do produto.
-  resumo.ticketMedio = resumo.pagas > 0 ? resumo.recebido / resumo.pagas : null;
+  resumo.ticketMedio = resumo.pagasComValor > 0 ? resumo.recebido / resumo.pagasComValor : null;
 
   return resumo;
 }

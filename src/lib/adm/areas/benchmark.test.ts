@@ -606,13 +606,6 @@ test('a janela publicada bate com o período que a explicação conta ao criador
 
 test(
   'a frase do que falta lançar cita a mesma janela do número — senão manda o criador procurar dado fora do período',
-  {
-    skip:
-      'BUG em src/lib/adm/areas/benchmark.ts: FALTA_LANCAR.producao_por_lactante_dia diz "nos últimos 90 dias" ' +
-      'enquanto JANELA.producao_por_lactante_dia (e a view, current_date - 29) dizem 30 dias. É o resíduo do ' +
-      'mesmo defeito que a revisão da Fase 2 já corrigiu em JANELA. Não corrigido aqui de propósito: mudar texto ' +
-      'que vai ao cliente é decisão do dono do painel.',
-  },
   async () => {
     for (const c of await seisMetricasEmBranco()) {
       const daJanela = periodosCitados(c.janela);

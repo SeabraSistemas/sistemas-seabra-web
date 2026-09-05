@@ -447,17 +447,9 @@ describe('lista e célula genérica', () => {
 // Defeitos encontrados escrevendo estes testes. Ficam aqui, pulados e com o
 // caso montado, para a decisão de mudar comportamento ser explícita.
 // ─────────────────────────────────────────────────────────────────────────────
-describe('defeitos abertos', () => {
+describe('defeitos que já foram bug (não podem voltar)', () => {
   test(
-    'formatarDataHora com date puro devolve o dia anterior às 21h',
-    {
-      skip:
-        'BUG: formatarDataHora() chama paraDate() ANTES de testar o formato de data pura, e ' +
-        "new Date('2026-09-04') é meia-noite UTC = 03/09 21h em São Paulo. O fallback " +
-        '`if (!d) return formatarData(iso)` nunca roda para data pura, porque o parse dá certo. ' +
-        'Nenhuma tela passa hoje uma coluna `date` por aqui, mas o módulo promete no cabeçalho ' +
-        'que data pura NUNCA vira Date — e esta é a única função que quebra a promessa.',
-    },
+    'formatarDataHora com date puro mostra o dia certo — data pura é texto, não instante',
     () => {
       assert.equal(formatarDataHora('2026-09-04'), '04/09/2026');
     },
@@ -465,12 +457,6 @@ describe('defeitos abertos', () => {
 
   test(
     'soma de negativos que quase zera não pode imprimir "-0,0"',
-    {
-      skip:
-        'BUG: semZeroNegativo() só corrige o -0 exato. Um resíduo de IEEE-754 como ' +
-        '(0.3 - 0.1 - 0.2) = -2.7e-17 arredonda para -0 DEPOIS, dentro do Intl, e sai "-0,0 L" / ' +
-        '"-0%" na tela. É o caso que a função diz cobrir: soma de negativos que zera.',
-    },
     () => {
       const residuo = 0.3 - 0.1 - 0.2;
       assert.equal(formatarNumero(residuo, 1), '0,0');
@@ -481,15 +467,7 @@ describe('defeitos abertos', () => {
   );
 
   test(
-    'timestamp sem fuso é formatado igual no servidor e no cliente',
-    {
-      skip:
-        'BUG latente: uma coluna `timestamp without time zone` chega do PostgREST sem sufixo ' +
-        "('2026-09-05T02:30:00') e new Date() a interpreta no fuso da MÁQUINA: o servidor em UTC " +
-        'imprime 04/09 23:30 e o browser em -03 imprime 05/09 02:30 — dia diferente, erro de ' +
-        'hidratação. Só alcança o escape hatch (formatarValorCru), que renderiza qualquer coluna ' +
-        'de qualquer view. Nenhuma view do schema `adm` usa timestamp sem fuso hoje.',
-    },
+    'timestamp sem fuso é ancorado em UTC: servidor e cliente imprimem o mesmo',
     () => {
       const naive = '2026-09-05T02:30:00';
       assert.equal(

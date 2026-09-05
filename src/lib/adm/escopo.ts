@@ -106,8 +106,15 @@ export function resolverEscopo(
     // única" são a mesma coisa — mostrar a única evita uma tela agregada de 1.
     selecionada = lista.length === 1 ? lista[0] : null;
   } else if (typeof selecao === 'number') {
-    // fora do escopo => consolidado (null), nunca outra fazenda no lugar.
-    selecionada = lista.find((p) => p.id === selecao) ?? null;
+    // Id fora do escopo => consolidado (null), NUNCA outra fazenda no lugar.
+    //
+    // Com UMA propriedade só, porém, "consolidado" e "a única" são exatamente o
+    // mesmo conjunto — e cair em null aqui apagava o banner "dados de <dono>"
+    // enquanto `idsDoEscopo()` continuava devolvendo a fazenda herdada: a tela
+    // mostrava o rebanho de outra pessoa sem dizer de quem era. Mostrar a única
+    // não é "outra fazenda no lugar", é a mesma que o escopo já tinha.
+    const achada = lista.find((p) => p.id === selecao);
+    selecionada = achada ?? (lista.length === 1 ? lista[0] : null);
   } else if (lista.length === 1) {
     selecionada = lista[0];
   } else {

@@ -47,8 +47,19 @@ function nfDecimal(casas: number): Intl.NumberFormat {
 }
 
 /** -0 existe em JS e imprime "-0"; qualquer soma de negativos que zera cai nisso. */
-function semZeroNegativo(n: number): number {
-  return n === 0 ? 0 : n;
+/**
+ * Mata o "-0,0" na tela — e o exato E o que NASCE no arredondamento.
+ *
+ * `n === 0` sozinho só pegava o -0 literal. Uma soma de negativos que quase
+ * zera (o clássico `0.3 - 0.1 - 0.2 = -2,7e-17`) passava batido aqui e virava
+ * -0 lá dentro do Intl, saindo "-0,0 L" e "-0%" — que é exatamente o caso que
+ * esta função existe para cobrir. Por isso o arredondamento acontece ANTES da
+ * checagem, com as mesmas casas que o formatador vai usar.
+ */
+function semZeroNegativo(n: number, casas = 0): number {
+  const fator = 10 ** casas;
+  const arredondado = Math.round(n * fator) / fator;
+  return arredondado === 0 ? 0 : arredondado;
 }
 
 function finito(n: number | null | undefined): n is number {
@@ -62,17 +73,17 @@ export function formatarInteiro(n: number | null | undefined): string {
 
 /** Número com casas fixas — casas fixas, e não "até N", para a coluna alinhar. */
 export function formatarNumero(n: number | null | undefined, casas = 1): string {
-  return finito(n) ? nfDecimal(casas).format(semZeroNegativo(n)) : VAZIO;
+  return finito(n) ? nfDecimal(casas).format(semZeroNegativo(n, casas)) : VAZIO;
 }
 
 /** R$ 1.234,56 */
 export function formatarMoeda(n: number | null | undefined): string {
-  return finito(n) ? nfMoeda.format(semZeroNegativo(n)) : VAZIO;
+  return finito(n) ? nfMoeda.format(semZeroNegativo(n, 2)) : VAZIO;
 }
 
 /** R$ 12,3 mil — só para card de KPI, nunca para valor de cobrança (que precisa dos centavos). */
 export function formatarMoedaCompacta(n: number | null | undefined): string {
-  return finito(n) ? nfMoedaCompacta.format(semZeroNegativo(n)) : VAZIO;
+  return finito(n) ? nfMoedaCompacta.format(semZeroNegativo(n, 2)) : VAZIO;
 }
 
 /**
@@ -82,7 +93,7 @@ export function formatarMoedaCompacta(n: number | null | undefined): string {
  */
 export function formatarPercentual(fracao: number | null | undefined, casas = 0): string {
   if (!finito(fracao)) return VAZIO;
-  return `${nfDecimal(casas).format(semZeroNegativo(fracao * 100))}%`;
+  return `${nfDecimal(casas).format(semZeroNegativo(fracao * 100, casas))}%`;
 }
 
 /** Variação relativa com sinal explícito: "+12%" / "−8%" (menos tipográfico, alinha com o dígito). */
@@ -96,11 +107,11 @@ export function formatarVariacao(fracao: number | null | undefined, casas = 0): 
 
 /** Litros de leite — 1 casa: a balança do tanque não tem resolução melhor que isso. */
 export function formatarLitros(n: number | null | undefined, casas = 1): string {
-  return finito(n) ? `${nfDecimal(casas).format(semZeroNegativo(n))} L` : VAZIO;
+  return finito(n) ? `${nfDecimal(casas).format(semZeroNegativo(n, casas))} L` : VAZIO;
 }
 
 export function formatarKg(n: number | null | undefined, casas = 1): string {
-  return finito(n) ? `${nfDecimal(casas).format(semZeroNegativo(n))} kg` : VAZIO;
+  return finito(n) ? `${nfDecimal(casas).format(semZeroNegativo(n, casas))} kg` : VAZIO;
 }
 
 export function formatarBooleano(v: boolean | null | undefined): string {
@@ -145,9 +156,26 @@ const dtfDiaCivil = new Intl.DateTimeFormat('en-CA', {
   day: '2-digit',
 });
 
+/**
+ * Um timestamp SEM FUSO ('2026-09-05T02:30:00') é ancorado em UTC antes de
+ * virar Date.
+ *
+ * Sem isso, `new Date()` o interpreta no fuso da MÁQUINA: o servidor da Vercel
+ * (UTC) imprime 04/09 23:30 e o browser em -03 imprime 05/09 02:30 — dia
+ * diferente, e o React acusa erro de hidratação. Nenhuma view do schema `adm`
+ * usa `timestamp without time zone` hoje, mas o escape hatch renderiza qualquer
+ * coluna de qualquer tabela do app, onde elas existem.
+ *
+ * UTC e não São Paulo: é o que o Postgres devolve nessas colunas quando o
+ * servidor está em UTC, e o ponto aqui é ser DETERMINÍSTICO — os dois lados
+ * chegando ao mesmo instante importa mais do que qual convenção se escolhe.
+ */
+const SEM_FUSO = /^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}(:\d{2}(\.\d+)?)?$/;
+
 function paraDate(iso: string | Date | null | undefined): Date | null {
   if (iso == null || iso === '') return null;
-  const d = iso instanceof Date ? iso : new Date(iso);
+  const bruto = typeof iso === 'string' && SEM_FUSO.test(iso) ? `${iso.replace(' ', 'T')}Z` : iso;
+  const d = bruto instanceof Date ? bruto : new Date(bruto);
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
@@ -174,6 +202,15 @@ export function formatarData(iso: string | Date | null | undefined): string {
 
 /** 04/09/2026 14:32 — só para carimbo de created_at, onde a hora importa. */
 export function formatarDataHora(iso: string | Date | null | undefined): string {
+  // DATA PURA VEM PRIMEIRO, pela mesma razão de formatarData(): '2026-09-04'
+  // não é um instante, é texto. Parseá-la dá meia-noite UTC, que em São Paulo
+  // é 21h do dia ANTERIOR — e a tela mostraria 03/09 para uma pesagem lançada
+  // no dia 4. Sem hora para exibir, delega.
+  //
+  // O `if (!d) return formatarData(iso)` abaixo NÃO cobria este caso: o parse
+  // de uma data pura dá certo, então o fallback nunca rodava.
+  if (typeof iso === 'string' && SO_DATA.test(iso)) return formatarData(iso);
+
   const d = paraDate(iso);
   if (!d) return formatarData(iso);
   return dtfDataHora.format(d).replace(', ', ' ');

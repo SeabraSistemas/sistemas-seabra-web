@@ -45,19 +45,35 @@ export interface OpcoesLidas {
 }
 
 /**
- * Um valor de faceta pode ser texto, número ou data conforme o tipo declarado
- * no catálogo. Converter na hora certa importa: `f.peso=40..80` precisa virar
- * número, senão o Postgres compara '40' com '9' como texto e '9' ganha.
+ * Converte um valor de faceta para o tipo da coluna. Converter na hora certa
+ * importa: `f.peso=40..80` precisa virar número, senão o Postgres compara '40'
+ * com '9' como texto e '9' ganha.
+ *
+ * Converte um valor de faceta para o tipo da coluna — ou devolve `undefined`
+ * quando ele NÃO É LEGÍVEL naquele tipo.
+ *
+ * `undefined` e não o texto cru: um `f.peso_atual=40kg` virando `eq '40kg'`
+ * numa coluna numérica faz o Postgres responder 22P02, e `listarTabela()`
+ * devolve erro — **a tabela inteira deixa de abrir** por causa de um filtro
+ * que este módulo promete, no próprio cabeçalho, descartar em silêncio. E o
+ * caminho mais provável para isso é o mais banal: um link salvo nos favoritos
+ * do Felipe depois que uma coluna mudou de tipo no app.
  */
-function converter(coluna: ReturnType<typeof getColuna>, bruto: string): string | number | boolean {
+function converter(
+  coluna: ReturnType<typeof getColuna>,
+  bruto: string,
+): string | number | boolean | undefined {
   if (!coluna) return bruto;
   if (coluna.tipo === 'numero') {
     const n = Number(bruto.replace(',', '.'));
-    return Number.isFinite(n) ? n : bruto;
+    return Number.isFinite(n) ? n : undefined;
   }
   if (coluna.tipo === 'booleano') return bruto === BOOLEANO_SIM;
   return bruto;
 }
+
+/** Um literal de data que o Postgres aceita: 'YYYY-MM-DD' ou ISO completo. */
+const DATA_LITERAL = /^\d{4}-\d{2}-\d{2}([T ].*)?$/;
 
 /** Recorta `de..ate` aceitando extremo vazio dos dois lados. */
 function partirIntervalo(bruto: string): { de: string | null; ate: string | null } | null {
@@ -115,6 +131,13 @@ export function lerOpcoesTabela(
         }
         continue;
       }
+      // Nem período relativo, nem intervalo, nem literal de data: descarta.
+      // Sem isto, `f.created_at=31d` (um período relativo digitado errado) vira
+      // `eq '31d'` num timestamp e derruba a tabela com 22P02.
+      if (!DATA_LITERAL.test(bruto)) {
+        ignorados.push(nome);
+        continue;
+      }
       filtros.push({ coluna: nome, op: 'eq', valor: bruto });
       continue;
     }
@@ -123,11 +146,21 @@ export function lerOpcoesTabela(
     if (coluna.tipo === 'numero') {
       const faixa = partirIntervalo(bruto);
       if (faixa) {
-        if (faixa.de != null) filtros.push({ coluna: nome, op: 'gte', valor: converter(coluna, faixa.de) as number });
-        if (faixa.ate != null) filtros.push({ coluna: nome, op: 'lte', valor: converter(coluna, faixa.ate) as number });
+        const de = faixa.de == null ? undefined : converter(coluna, faixa.de);
+        const ate = faixa.ate == null ? undefined : converter(coluna, faixa.ate);
+        // Extremo ilegível não vira predicado — mas o outro lado do intervalo
+        // continua valendo: `40..abc` é um "acima de 40" perfeitamente útil.
+        if (typeof de === 'number') filtros.push({ coluna: nome, op: 'gte', valor: de });
+        if (typeof ate === 'number') filtros.push({ coluna: nome, op: 'lte', valor: ate });
+        if (de === undefined && ate === undefined) ignorados.push(nome);
         continue;
       }
-      filtros.push({ coluna: nome, op: 'eq', valor: converter(coluna, bruto) });
+      const valorNumerico = converter(coluna, bruto);
+      if (valorNumerico === undefined) {
+        ignorados.push(nome);
+        continue;
+      }
+      filtros.push({ coluna: nome, op: 'eq', valor: valorNumerico });
       continue;
     }
 
@@ -163,10 +196,17 @@ export function lerOpcoesTabela(
       filtros.push({ coluna: nome, op: 'nulo' });
       continue;
     }
-    if (reais.length === 1) {
-      filtros.push({ coluna: nome, op: 'eq', valor: converter(coluna, reais[0]) });
+    const convertidos = reais
+      .map((v) => converter(coluna, v))
+      .filter((v): v is string | number | boolean => v !== undefined);
+    if (convertidos.length === 0) {
+      ignorados.push(nome);
+      continue;
+    }
+    if (convertidos.length === 1) {
+      filtros.push({ coluna: nome, op: 'eq', valor: convertidos[0] });
     } else {
-      filtros.push({ coluna: nome, op: 'in', valores: reais.map((v) => converter(coluna, v) as string | number) });
+      filtros.push({ coluna: nome, op: 'in', valores: convertidos as (string | number)[] });
     }
   }
 

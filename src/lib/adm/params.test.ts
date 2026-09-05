@@ -265,19 +265,11 @@ test('o tamanho da página só aceita inteiro positivo; o cursor passa opaco', (
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Defeito encontrado — não corrigido de propósito
+// Defeito que já foi bug: um filtro ilegível derrubava a tabela inteira
 // ─────────────────────────────────────────────────────────────────────────────
 
 test(
-  'valor ilegível num campo tipado deveria ser descartado como uma coluna desconhecida',
-  {
-    skip:
-      'BUG: converter() devolve o texto cru quando o número não é finito, e a coluna de data aceita ' +
-      'qualquer literal fora da gramática. `f.peso_atual=40kg` vira eq "40kg" numa coluna numérica e ' +
-      '`f.created_at=31d` vira eq "31d" num timestamp: o PostgREST responde 22P02 e listarTabela() ' +
-      'devolve erro — a tabela inteira deixa de abrir por causa de um filtro que o módulo promete ' +
-      'descartar em silêncio.',
-  },
+  'valor ilegível num campo tipado é descartado, como uma coluna desconhecida',
   () => {
     assert.deepEqual(ler(REBANHO, 'f.peso_atual=40kg').opcoes.filtros, []);
     assert.deepEqual(ler(REBANHO, 'f.created_at=31d').opcoes.filtros, []);

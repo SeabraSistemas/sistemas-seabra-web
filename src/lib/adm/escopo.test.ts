@@ -333,18 +333,11 @@ test('com uma propriedade em foco, o total é só o dela — não o do escopo in
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Defeito encontrado — não corrigido de propósito
+// Defeito que já foi bug: o banner de origem sumindo com os números no lugar
 // ─────────────────────────────────────────────────────────────────────────────
 
 test(
-  'com uma fazenda só, ?prop fora do escopo apaga o banner de origem sem apagar os números',
-  {
-    skip:
-      'BUG: com 1 propriedade e ?prop=<id que não é dela>, resolverEscopo() devolve selecionada=null; ' +
-      'avisoDeOrigem() então cai no ramo "sem alvo", escopoConsolidado() é false (1 não é >1) e o banner ' +
-      'obrigatório some — enquanto idsDoEscopo() continua devolvendo a fazenda herdada. O SeletorPropriedade ' +
-      'rotula "Sem propriedade" e a tela mostra o rebanho do produtor dono sem dizer de quem é.',
-  },
+  'com uma fazenda só, ?prop fora do escopo mantém o banner de origem — os números são dela',
   () => {
     const escopo = resolverEscopo(conta('colaborador', { nome: 'Rui' }), [
       fazenda(41, { vinculo: 'herdado', dono_nome: 'Joana Alves', animais_ativos: 210 }),
