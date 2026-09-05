@@ -41,7 +41,7 @@ import * as Modulo from 'node:module';
 import { describe, test } from 'node:test';
 
 import { VIEWS_FASE_3, type LinhaCobranca } from '@/lib/adm/areas/contrato';
-import type { ResumoCobrancas, SituacaoCobranca } from '@/lib/adm/areas/cobrancas';
+import type { ResumoCobrancas } from '@/lib/adm/areas/cobrancas';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // O dublê do transporte
