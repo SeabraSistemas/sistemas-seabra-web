@@ -41,3 +41,6 @@ yarn-error.log*
 next-env.d.ts
 
 .vercel
+
+# claude code — permissões locais da máquina, não versionar
+.claude/settings.local.json
