@@ -541,7 +541,7 @@ $fase2$;
 
 
 -- ############################################################################
--- BLOCO 6 -- CONTRATO DA FASE 3. As quatro views declaradas em VIEWS_FASE_3
+-- BLOCO 6 -- CONTRATO DA FASE 3. As cinco views declaradas em VIEWS_FASE_3
 -- (src/lib/adm/areas/contrato.ts) existem, com ESTE nome exato, e a service_role
 -- le todas.
 --
@@ -551,10 +551,12 @@ $fase2$;
 -- ela se disfarca de "a carteira nao tem dados".
 --
 -- ORDEM: este bloco roda depois de supabase/adm/adm_09_carteira_fase3.sql, que
--- e o arquivo que cria as quatro. O cabecalho deste arquivo lista a ordem dos
--- demais; some a ele o adm_09, imediatamente antes desta verificacao.
+-- cria quatro delas, e de supabase/adm/adm_10_propriedades.sql, que cria a
+-- quinta -- o diretorio de propriedades. O cabecalho deste arquivo lista a ordem
+-- dos demais; some a ele o adm_09 e o adm_10, imediatamente antes desta
+-- verificacao.
 --
--- Os quatro nomes estao escritos LITERALMENTE, um por linha, para serem lidos
+-- Os cinco nomes estao escritos LITERALMENTE, um por linha, para serem lidos
 -- lado a lado com VIEWS_FASE_3 sem nenhuma interpretacao no meio.
 -- ############################################################################
 
@@ -563,6 +565,7 @@ declare
   -- Espelho de VIEWS_FASE_3. Uma linha por view, com a interface que ela
   -- implementa ao lado -- se um nome mudar de um lado, o diff mostra os dois.
   v_esperadas text[] := array[
+    'propriedades_lista',     -- LinhaPropriedade            adm_10
     'coorte_retencao',        -- LinhaCoorte                 adm_09
     'benchmark_referencia',   -- LinhaBenchmarkReferencia    adm_09
     'benchmark_propriedade',  -- LinhaBenchmarkPropriedade   adm_09
@@ -582,6 +585,9 @@ declare
   v_existem int;
   v_falta   text;
   v_txt     text;
+  v_linhas  bigint;
+  v_props   bigint;
+  v_dup     bigint;
 begin
   select count(*) into v_existem
     from unnest(v_esperadas) e
@@ -591,19 +597,20 @@ begin
     from unnest(v_esperadas) e
    where to_regclass('adm.' || e) is null;
 
-  -- 27) As quatro existem. As duas mensagens sao diferentes de proposito:
+  -- 27) As cinco existem. As duas mensagens sao diferentes de proposito:
   -- "nenhuma" e um arquivo que faltou rodar; "algumas" e divergencia de NOME,
   -- que e o defeito que este bloco existe para pegar.
   if v_existem = 0 then
-    raise exception 'FALHA 27: nenhuma das 4 views da Fase 3 existe -- '
-                    'rode supabase/adm/adm_09_carteira_fase3.sql';
+    raise exception 'FALHA 27: nenhuma das 5 views da Fase 3 existe -- '
+                    'rode supabase/adm/adm_09_carteira_fase3.sql e '
+                    'supabase/adm/adm_10_propriedades.sql';
   elsif v_falta is not null then
     raise exception 'FALHA 27: view(s) da Fase 3 ausente(s) em adm: % -- '
                     'confira o nome CARACTERE A CARACTERE contra VIEWS_FASE_3 em '
                     'src/lib/adm/areas/contrato.ts.', v_falta;
   end if;
 
-  -- 28) A service_role LE as quatro. Sem o grant, a tela abre, nao da erro, e
+  -- 28) A service_role LE as cinco. Sem o grant, a tela abre, nao da erro, e
   -- mostra estado vazio -- indistinguivel de "esta carteira nao tem dados".
   select string_agg(e, ', ' order by e) into v_txt
     from unnest(v_esperadas) e
@@ -619,6 +626,12 @@ begin
   -- uma coorte inteira, ou um benchmark comparando a propriedade com ela mesma.
   select string_agg(x.v || ' (falta ' || x.col || ')', ', ' order by x.v, x.col) into v_txt
     from (values
+      -- `id` e a linha; `produtor_id` e para onde ela navega
+      -- (/adm/u/<dono>?prop=<id>). produtor_id NULO e RESPOSTA -- fazenda de
+      -- consultoria, sem produtor no sistema -- entao o assert confere a
+      -- existencia da COLUNA, nunca o valor dela.
+      ('propriedades_lista',    'id'),
+      ('propriedades_lista',    'produtor_id'),
       ('coorte_retencao',       'coorte'),
       ('coorte_retencao',       'mes'),
       ('benchmark_referencia',  'segmento'),
@@ -648,7 +661,7 @@ begin
   -- cadastrado): sem linha, nao ha nome errado a encontrar. O Bloco 7 abaixo
   -- mostra o tamanho real da amostra, que e onde esse caso aparece.
   -- Efeito colateral valioso: `create view` NAO executa o corpo da view, entao
-  -- este assert e o Bloco 7 sao o primeiro lugar em que as quatro views da Fase 3
+  -- este assert, o 31 e o Bloco 7 sao o primeiro lugar em que as views da Fase 3
   -- realmente RODAM -- e o unico que pega um erro de tipo que so aparece em
   -- execucao. Ele varre as cinco views de area para toda a carteira: leva
   -- segundos, e e o preco de descobrir isso aqui em vez de na tela.
@@ -669,8 +682,38 @@ begin
                     'METRICAS_BENCHMARK: %', v_txt;
   end if;
 
-  raise notice 'BLOCO 6 (contrato da Fase 3): 4 views presentes, com ancora, grant e '
-               'vocabulario fechado de metricas -- 4 asserts OK';
+  -- 31) CARDINALIDADE DO DIRETORIO: uma linha por FAZENDA, nem mais nem menos.
+  -- E o que LinhaPropriedade promete ("mesma cardinalidade") e o que a tela
+  -- conta em cima. Os dois defeitos possiveis tem causas opostas, e os dois sao
+  -- silenciosos:
+  --   DUPLICATA -- um join que devia ser 1:1 e nao e (o dono resolvido pelas
+  --     DUAS colunas de vinculo, ou `assinaturas`, que nao tem UNIQUE por
+  --     usuario_id). Aparece como a mesma fazenda listada duas vezes, com o
+  --     rebanho dela contado duas vezes no total da tela.
+  --   FALTA -- um INNER JOIN onde tinha de ser LEFT. O que some primeiro e a
+  --     fazenda de CONSULTORIA (produtor_id NULL, sem assinatura, as vezes sem
+  --     lancamento nenhum), que e justamente o motivo de a view existir.
+  --
+  -- Efeito colateral valioso, o mesmo do assert 30: `create view` NAO executa o
+  -- corpo da view. Este assert e o unico lugar em que adm.propriedades_lista
+  -- roda antes da tela -- e portanto o unico que pega um erro de tipo que so
+  -- aparece em execucao (o round(double precision, n) que ja derrubou um
+  -- arquivo inteiro nesta obra).
+  select count(*)                      into v_linhas from adm.propriedades_lista;
+  select count(*)                      into v_props  from public.propriedades;
+  select count(*) - count(distinct id) into v_dup    from adm.propriedades_lista;
+  if v_linhas <> v_props or v_dup <> 0 then
+    raise exception 'FALHA 31: adm.propriedades_lista devolve % linha(s) para % '
+                    'propriedade(s), com % id(s) repetido(s) -- o contrato promete UMA '
+                    'linha por fazenda. Sobrando: join 1:N (dono ou assinatura). '
+                    'Faltando: INNER JOIN onde tinha de ser LEFT -- e o que some antes '
+                    'de tudo e a fazenda de consultoria, sem produtor_id.',
+                    v_linhas, v_props, v_dup;
+  end if;
+
+  raise notice 'BLOCO 6 (contrato da Fase 3): 5 views presentes, com ancora, grant, '
+               'vocabulario fechado de metricas e uma linha por fazenda no '
+               'diretorio -- 5 asserts OK';
 end
 $fase3$;
 

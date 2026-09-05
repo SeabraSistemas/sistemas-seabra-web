@@ -29,9 +29,12 @@ interface ItemNav {
 
 const ITENS: ItemNav[] = [
   { href: '/adm/carteira', rotulo: 'Carteira' },
-  // '/adm/u/' é a ficha do cliente e '/adm/p/' a da propriedade: as duas se
   // alcançam pela lista mestra, então as duas pertencem a "Usuários".
-  { href: '/adm/usuarios', rotulo: 'Usuários', prefixos: ['/adm/u/', '/adm/p/', '/adm/propriedades'] },
+  // O diretório do TENANT REAL do banco (93 tabelas carregam propriedade_id).
+  // Não tem prefixo próprio de propósito: a ficha de uma fazenda é a do dono,
+  // em '/adm/u/', então lá quem acende é "Usuários" — que é onde o operador
+  // está de fato.
+  { href: '/adm/propriedades', rotulo: 'Propriedades' },
   { href: '/adm/consultores', rotulo: 'Consultores', prefixos: ['/adm/c/'] },
 ];
 

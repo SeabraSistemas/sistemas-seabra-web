@@ -168,14 +168,15 @@ export default async function CarteiraPage() {
           href="/adm/carteira/risco"
         />
 
-        {/* O único card sem link: o destino natural é /adm/propriedades, que
-            ainda não existe (o AdmNav já reserva o caminho). Apontar para uma
-            rota inexistente daria 404 — pior do que um card que não clica. Assim
-            que a lista de propriedades entrar, o href é uma linha. */}
+        {/* Era o único card sem link enquanto /adm/propriedades não existia.
+            O destino é o diretório ancorado no tenant real — e ele é o caminho
+            de volta que faltava para este número, que é justamente o que NÃO
+            bate com a contagem de contas. */}
         <KpiCard
           rotulo="Propriedades"
           valor={formatarInteiro(kpis.propriedades)}
           detalhe="o tenant real do banco — não o número de contas"
+          href="/adm/propriedades"
         />
 
         <KpiCard

@@ -60,10 +60,23 @@ receita as (
   from assinaturas
 ),
 base as (
-  select
-    count(*)::int                                                       as contas_total,
-    coalesce(sum(u.animais_ativos), 0)::int                             as animais_ativos
-  from adm.usuarios_lista u
+  select count(*)::int as contas_total from adm.usuarios_lista
+),
+rebanho_da_base as (
+  -- ANIMAIS SOMADOS POR PROPRIEDADE, nunca por conta.
+  --
+  -- `adm.usuarios_lista.animais_ativos` e a soma do ESCOPO da conta -- certo na
+  -- linha do usuario ("quantos animais esta conta alcanca"), e catastrofico
+  -- somado entre todos: o mesmo rebanho conta uma vez para o produtor, outra
+  -- para cada colaborador, outra para cada tecnico com vinculo, outra para cada
+  -- admin de associacao, e MAIS UMA VEZ INTEIRA para cada admin geral, que
+  -- entra por `cross join public.propriedades` (adm_01:180-186).
+  --
+  -- Com ~40 contas e um admin geral, o card mostrava um MULTIPLO dos 13.040
+  -- animais reais -- e o operador ia de la para /adm/propriedades, que mostra o
+  -- numero certo com o mesmo rotulo, na mesma sessao.
+  select coalesce(sum(v.animais_ativos), 0)::int as animais_ativos
+  from adm.propriedade_visao_geral v
 ),
 propriedades as (
   select count(*)::int as propriedades from public.propriedades
@@ -97,13 +110,13 @@ select
   r.vencendo_7d,
   r.inadimplentes,
   p.propriedades,
-  b.animais_ativos,
+  rb.animais_ativos,
   us.mau,
   us.wau,
   us.dau,
   us.silenciosos,
   us.nunca_lancaram
-from receita r, base b, propriedades p, uso us;
+from receita r, base b, rebanho_da_base rb, propriedades p, uso us;
 
 comment on view adm.carteira_kpis is
   'Uma linha com os KPIs de /adm/carteira. MRR real (normalizado por ciclo, sem cortesia) ao lado do MRR de tabela.';

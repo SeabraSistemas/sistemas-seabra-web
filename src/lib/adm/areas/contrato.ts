@@ -409,6 +409,17 @@ export interface LinhaBenchmarkPropriedade {
 export const MINIMO_BENCHMARK = 7;
 
 /**
+ * Dias sem lançamento a partir dos quais uma fazenda com acesso ativo é
+ * "silenciosa" — a regra de risco mais usada do painel.
+ *
+ * Mora AQUI, e não no módulo da área, porque o Client Component da lista também
+ * precisa dela para a faceta de atividade: um `server-only` não pode ser
+ * importado de lá, e duas cópias do número fariam o card "Silenciosas há +30
+ * dias" abrir uma lista com outra quantidade — sem erro de compilação nenhum.
+ */
+export const DIAS_SILENCIO = 30;
+
+/**
  * Coorte de retenção: uma linha por (mês de entrada, mês de vida). O gráfico é
  * a matriz triangular clássica.
  */
