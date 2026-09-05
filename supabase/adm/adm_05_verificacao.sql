@@ -538,3 +538,181 @@ begin
   raise notice 'BLOCO 5 (contrato da Fase 2): 10 views presentes, com ancora e grant -- 3 asserts OK';
 end
 $fase2$;
+
+
+-- ############################################################################
+-- BLOCO 6 -- CONTRATO DA FASE 3. As quatro views declaradas em VIEWS_FASE_3
+-- (src/lib/adm/areas/contrato.ts) existem, com ESTE nome exato, e a service_role
+-- le todas.
+--
+-- Mesma razao de ser do Bloco 5, e por isso a mesma forma: nome de view e nome
+-- de coluna sao declarados no contrato, o SQL implementa, e a divergencia tem de
+-- quebrar AQUI -- na migration, onde da para consertar -- e nao na tela, onde
+-- ela se disfarca de "a carteira nao tem dados".
+--
+-- ORDEM: este bloco roda depois de supabase/adm/adm_09_carteira_fase3.sql, que
+-- e o arquivo que cria as quatro. O cabecalho deste arquivo lista a ordem dos
+-- demais; some a ele o adm_09, imediatamente antes desta verificacao.
+--
+-- Os quatro nomes estao escritos LITERALMENTE, um por linha, para serem lidos
+-- lado a lado com VIEWS_FASE_3 sem nenhuma interpretacao no meio.
+-- ############################################################################
+
+do $fase3$
+declare
+  -- Espelho de VIEWS_FASE_3. Uma linha por view, com a interface que ela
+  -- implementa ao lado -- se um nome mudar de um lado, o diff mostra os dois.
+  v_esperadas text[] := array[
+    'coorte_retencao',        -- LinhaCoorte                 adm_09
+    'benchmark_referencia',   -- LinhaBenchmarkReferencia    adm_09
+    'benchmark_propriedade',  -- LinhaBenchmarkPropriedade   adm_09
+    'cobrancas_lista'         -- LinhaCobranca               adm_09
+  ];
+  -- Espelho de METRICAS_BENCHMARK. Lista FECHADA de proposito: cada metrica
+  -- exigiu uma decisao de denominador, janela e unidade, e a tela so sabe
+  -- rotular e orientar (maior e melhor?) o que esta em BENCHMARK_INFO.
+  v_metricas text[] := array[
+    'producao_por_lactante_dia',
+    'custo_litro',
+    'taxa_prenhez',
+    'gmd_medio',
+    'taxa_mortalidade',
+    'intervalo_partos_dias'
+  ];
+  v_existem int;
+  v_falta   text;
+  v_txt     text;
+begin
+  select count(*) into v_existem
+    from unnest(v_esperadas) e
+   where to_regclass('adm.' || e) is not null;
+
+  select string_agg(e, ', ' order by e) into v_falta
+    from unnest(v_esperadas) e
+   where to_regclass('adm.' || e) is null;
+
+  -- 27) As quatro existem. As duas mensagens sao diferentes de proposito:
+  -- "nenhuma" e um arquivo que faltou rodar; "algumas" e divergencia de NOME,
+  -- que e o defeito que este bloco existe para pegar.
+  if v_existem = 0 then
+    raise exception 'FALHA 27: nenhuma das 4 views da Fase 3 existe -- '
+                    'rode supabase/adm/adm_09_carteira_fase3.sql';
+  elsif v_falta is not null then
+    raise exception 'FALHA 27: view(s) da Fase 3 ausente(s) em adm: % -- '
+                    'confira o nome CARACTERE A CARACTERE contra VIEWS_FASE_3 em '
+                    'src/lib/adm/areas/contrato.ts.', v_falta;
+  end if;
+
+  -- 28) A service_role LE as quatro. Sem o grant, a tela abre, nao da erro, e
+  -- mostra estado vazio -- indistinguivel de "esta carteira nao tem dados".
+  select string_agg(e, ', ' order by e) into v_txt
+    from unnest(v_esperadas) e
+   where not has_table_privilege('service_role', ('adm.' || e)::regclass, 'SELECT');
+  if v_txt is not null then
+    raise exception 'FALHA 28: service_role sem SELECT em view(s) da Fase 3: % -- '
+                    'falta o `grant select ... to service_role` depois do create', v_txt;
+  end if;
+
+  -- 29) Cada uma mantem as COLUNAS DE ANCORA por onde a tela filtra e monta a
+  -- matriz. Uma coluna renomeada nao da erro no PostgREST: o campo some do JSON
+  -- e o TypeScript le `undefined`, que na tela vira 0 -- "0% de retencao" para
+  -- uma coorte inteira, ou um benchmark comparando a propriedade com ela mesma.
+  select string_agg(x.v || ' (falta ' || x.col || ')', ', ' order by x.v, x.col) into v_txt
+    from (values
+      ('coorte_retencao',       'coorte'),
+      ('coorte_retencao',       'mes'),
+      ('benchmark_referencia',  'segmento'),
+      ('benchmark_referencia',  'metrica'),
+      ('benchmark_referencia',  'n'),
+      ('benchmark_propriedade', 'propriedade_id'),
+      ('benchmark_propriedade', 'segmento'),
+      ('benchmark_propriedade', 'metrica'),
+      ('cobrancas_lista',       'pagamento_id'),
+      ('cobrancas_lista',       'usuario_id')
+    ) as x(v, col)
+   where not exists (
+     select 1 from information_schema.columns c
+      where c.table_schema = 'adm'
+        and c.table_name   = x.v
+        and c.column_name  = x.col
+   );
+  if v_txt is not null then
+    raise exception 'FALHA 29: view(s) da Fase 3 sem coluna de ancora: %', v_txt;
+  end if;
+
+  -- 30) O VOCABULARIO DE METRICAS E FECHADO. As duas views de benchmark so podem
+  -- emitir os seis nomes de METRICAS_BENCHMARK: um nome a mais chega na tela sem
+  -- rotulo, sem unidade e sem saber se maior e melhor -- e apareceria como uma
+  -- linha muda no comparativo em vez de um erro.
+  -- ⚠️ Passa por vacuo com a base vazia (nenhuma propriedade com segmento
+  -- cadastrado): sem linha, nao ha nome errado a encontrar. O Bloco 7 abaixo
+  -- mostra o tamanho real da amostra, que e onde esse caso aparece.
+  -- Efeito colateral valioso: `create view` NAO executa o corpo da view, entao
+  -- este assert e o Bloco 7 sao o primeiro lugar em que as quatro views da Fase 3
+  -- realmente RODAM -- e o unico que pega um erro de tipo que so aparece em
+  -- execucao. Ele varre as cinco views de area para toda a carteira: leva
+  -- segundos, e e o preco de descobrir isso aqui em vez de na tela.
+  select string_agg(distinct b.metrica, ', ') into v_txt
+    from adm.benchmark_propriedade b
+   where not (b.metrica = any(v_metricas));
+  if v_txt is not null then
+    raise exception 'FALHA 30: adm.benchmark_propriedade emite metrica fora de '
+                    'METRICAS_BENCHMARK: % -- acrescentar metrica e trabalho de '
+                    'produto (contrato + BENCHMARK_INFO + SQL), nao so de SQL.', v_txt;
+  end if;
+
+  select string_agg(distinct r.metrica, ', ') into v_txt
+    from adm.benchmark_referencia r
+   where not (r.metrica = any(v_metricas));
+  if v_txt is not null then
+    raise exception 'FALHA 30: adm.benchmark_referencia emite metrica fora de '
+                    'METRICAS_BENCHMARK: %', v_txt;
+  end if;
+
+  raise notice 'BLOCO 6 (contrato da Fase 3): 4 views presentes, com ancora, grant e '
+               'vocabulario fechado de metricas -- 4 asserts OK';
+end
+$fase3$;
+
+
+-- ############################################################################
+-- BLOCO 7 -- RETRATO DA FASE 3. Nao assere nada: mostra o tamanho da amostra e
+-- as pontas da carteira, para voce conferir ANTES de a tela afirmar qualquer
+-- coisa a um cliente.
+--
+-- A linha que mais importa e "segmentos com base >= 7": MINIMO_BENCHMARK e 7, e
+-- abaixo disso a tela ESCONDE a comparacao. Se este numero vier 0, o benchmark
+-- existe, funciona, e nao vai aparecer em lugar nenhum -- e isso e uma
+-- descoberta a fazer aqui, nao na frente do criador.
+-- ############################################################################
+
+select 'coortes de cadastro'                as metrica, count(distinct coorte)::text as valor
+  from adm.coorte_retencao
+union all
+select 'contas na maior coorte',
+       coalesce(max(tamanho) filter (where mes = 0), 0)::text
+  from adm.coorte_retencao
+union all
+select 'retencao no mes 6 (media das coortes que ja chegaram la)',
+       coalesce(to_char(avg(retencao) filter (where mes = 6) * 100, 'FM990D0') || '%', 'sem coorte com 6 meses')
+  from adm.coorte_retencao
+union all
+select 'propriedades no benchmark',         count(distinct propriedade_id)::text
+  from adm.benchmark_propriedade
+union all
+select 'segmentos com regua',               count(distinct segmento)::text
+  from adm.benchmark_referencia
+union all
+select 'segmentos x metricas com base >= 7 (MINIMO_BENCHMARK)', count(*)::text
+  from adm.benchmark_referencia where n >= 7
+union all
+select 'metricas sem NENHUMA propriedade medida', count(*)::text
+  from adm.benchmark_referencia where n = 0
+union all
+select 'cobrancas registradas',             count(*)::text from adm.cobrancas_lista
+union all
+select 'cobrancas inadimplentes',           count(*)::text
+  from adm.cobrancas_lista where inadimplente
+union all
+select 'maior atraso em aberto (dias)',     coalesce(max(dias_de_atraso)::text, '-')
+  from adm.cobrancas_lista;

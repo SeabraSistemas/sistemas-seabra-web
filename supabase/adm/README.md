@@ -1,6 +1,6 @@
 # SQL do `/adm` — fronteira de leitura no Supabase do SeabraApp
 
-Oito arquivos que criam tudo que o painel `/adm` do site precisa **ler** no banco do
+Nove arquivos que criam tudo que o painel `/adm` do site precisa **ler** no banco do
 `seabra-app-main`, mais a trilha de auditoria que ele **escreve**. Nada aqui roda sozinho:
 o Felipe executa à mão, no SQL Editor do painel Supabase.
 
@@ -22,21 +22,24 @@ batiza nada** — se um dia divergir, quem manda é o TypeScript.
 | 5 | `adm_06_carteira.sql` | As 3 views agregadas de `/adm/carteira` | sim |
 | 6 | `adm_07_areas.sql` | As 8 views de área da ficha do cliente (Fase 2) | sim |
 | 7 | `adm_08_consultoria.sql` | `consultores_lista` e `consultor_carteira` (Fase 2) | sim |
-| 8 | `adm_05_verificacao.sql` | Os asserts. Falha alto se algo estiver errado | sim |
+| 8 | `adm_09_carteira_fase3.sql` | Coorte de retenção, benchmark entre criadores e a lista de cobranças (Fase 3) | sim |
+| 9 | `adm_05_verificacao.sql` | Os asserts. Falha alto se algo estiver errado | sim |
 
 **O número no arquivo não é a ordem.** O `adm_05` numera 05 por história e roda por
 ÚLTIMO — sempre, e de novo a cada vez que qualquer um dos outros for reexecutado.
 
 Duas razões, e a segunda é a que importa:
 
-1. o Bloco 5 dele exige as 10 views da Fase 2, que só existem depois do `adm_07` e do `adm_08`.
-   Rodá-lo antes aborta ali, e o operador nem chega a saber que faltam três arquivos;
+1. os Blocos 5 e 6 dele exigem as 10 views da Fase 2 e as 4 da Fase 3, que só existem depois do
+   `adm_07`, do `adm_08` e do `adm_09`. Rodá-lo antes aborta ali, e o operador nem chega a saber
+   que faltam arquivos;
 2. **a guarda de LGPD passaria no vácuo.** Os asserts 4a/4b/4c — nenhuma view do schema `adm`
    projetando `cpf`, senha, coordenada, e-mail ou whatsapp cru — varrem o `information_schema`
    e só enxergam as views **que já existem**. Rodá-los antes do `adm_06`/`07`/`08` os faz
    passar sem nunca olhar para as views novas, que são justamente as que ninguém auditou ainda.
 
-Depois de cada arquivo que cria view — `adm_01`, `adm_02`, `adm_06`, `adm_07` e `adm_08` — faça o
+Depois de cada arquivo que cria view — `adm_01`, `adm_02`, `adm_06`, `adm_07`, `adm_08` e
+`adm_09` — faça o
 passo manual do PostgREST (abaixo). Sem recarregar o cache, a view existe no banco e o painel
 continua respondendo `PGRST205`.
 

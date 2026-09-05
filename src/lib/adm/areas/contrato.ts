@@ -273,6 +273,11 @@ export const ABAS_CLIENTE: AbaCliente[] = [
   { slug: 'equipe', rotulo: 'Equipe', noDossie: false },
   { slug: 'vitrine', rotulo: 'Vitrine', noDossie: false },
   { slug: 'assinatura', rotulo: 'Assinatura', noDossie: false },
+  // Fase 3. Entra antes de Tabelas porque o escape hatch é o fim da lista por
+  // desenho (é o catálogo cru, não uma área), e `noDossie: true` porque a
+  // comparação com a mediana do segmento é justamente o que dá valor comercial
+  // à peça em PDF — ver a proposta de conteúdo do dossiê no §D4 do desenho.
+  { slug: 'benchmark', rotulo: 'Benchmark', noDossie: true },
   { slug: 'tabelas', rotulo: 'Tabelas', noDossie: false },
 ];
 
@@ -328,7 +333,7 @@ export const BENCHMARK_INFO: Record<MetricaBenchmark, MetricaInfo> = {
     unidade: 'L',
     casas: 2,
     maiorEhMelhor: true,
-    explicacao: 'Quanto cada fêmea em lactação entrega por dia, em média, nos últimos 90 dias.',
+    explicacao: 'Quanto cada fêmea em lactação entrega por dia, em média, nos últimos 30 dias.',
   },
   custo_litro: {
     rotulo: 'Custo por litro',

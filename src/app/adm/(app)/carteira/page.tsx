@@ -107,6 +107,30 @@ export default async function CarteiraPage() {
         <p className="text-xs tabular-nums text-muted-foreground">lido agora, {formatarDataHora(agora)}</p>
       </header>
 
+      {/*
+        As três telas de profundidade da carteira. Elas existem desde a Fase 3 e
+        ficaram um tempo alcançáveis só digitando a URL — o sintoma disso ("a
+        tela não existe") é indistinguível de não ter sido implementada. Aqui,
+        e não no <AdmNav>: são seções DESTA página, não áreas de primeiro nível
+        ao lado de Usuários e Consultores.
+      */}
+      <nav className="flex flex-wrap gap-2">
+        {[
+          { href: '/adm/carteira/receita', rotulo: 'Receita', detalhe: 'cobranças, MRR e inadimplência' },
+          { href: '/adm/carteira/risco', rotulo: 'Risco', detalhe: 'os quatro baldes de churn' },
+          { href: '/adm/carteira/adocao', rotulo: 'Adoção', detalhe: 'coorte de retenção' },
+        ].map((item) => (
+          <Link
+            key={item.href}
+            href={item.href}
+            className="group rounded-xl border border-border bg-card px-4 py-3 transition-colors hover:border-primary/60"
+          >
+            <span className="block text-sm text-foreground group-hover:text-primary">{item.rotulo}</span>
+            <span className="mt-0.5 block text-xs text-muted-foreground">{item.detalhe}</span>
+          </Link>
+        ))}
+      </nav>
+
       {/* ── KPIs ─────────────────────────────────────────────────────────── */}
       <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <KpiCard
@@ -120,7 +144,10 @@ export default async function CarteiraPage() {
             MESMO indicador. O real vai ser MENOR que o de tabela, e a troca só
             fica confiável com os dois lado a lado até o Felipe parar de
             estranhar (§2 do desenho). Sem `variacao`: pintar a diferença de
-            vermelho diria que o número honesto é um problema. */}
+            vermelho diria que o número honesto é um problema.
+
+            O link leva a /adm/carteira/receita, e não à lista de usuários: é lá
+            que este número é decomposto em cobrança a cobrança. */}
         <KpiCard
           destaque
           rotulo="MRR mensal"
@@ -131,14 +158,14 @@ export default async function CarteiraPage() {
               {formatarMoeda(kpis.arpu)}
             </>
           }
-          href={`${USUARIOS}?f.origem=pagante&sort=-valor`}
+          href="/adm/carteira/receita"
         />
 
         <KpiCard
           rotulo="Receita em risco"
           valor={formatarMoeda(kpis.receitaEmRisco)}
           detalhe={`${formatarInteiro(kpis.inadimplentes)} vencidos · ${formatarInteiro(kpis.vencendo7d)} vencendo em 7 dias`}
-          href={`${USUARIOS}?f.cobranca=vencido,vencendo7d&sort=-valor`}
+          href="/adm/carteira/risco"
         />
 
         {/* O único card sem link: o destino natural é /adm/propriedades, que
