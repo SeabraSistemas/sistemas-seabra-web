@@ -290,6 +290,7 @@ export const ABAS_CLIENTE: AbaCliente[] = [
  * consome, `adm_05` falha se faltar. Ver o cabeçalho deste arquivo.
  */
 export const VIEWS_FASE_3 = {
+  propriedades: 'propriedades_lista',
   coorte: 'coorte_retencao',
   benchmarkReferencia: 'benchmark_referencia',
   benchmarkPropriedade: 'benchmark_propriedade',
@@ -438,4 +439,54 @@ export interface LinhaCobranca {
   /** Vencida e não paga. */
   inadimplente: boolean;
   dias_de_atraso: number | null;
+}
+
+/**
+ * O DIRETÓRIO DE PROPRIEDADES — `adm.propriedades_lista`.
+ *
+ * Por que existe uma lista de PROPRIEDADES ao lado da de usuários: o tenant
+ * real do banco é `propriedade_id` (93 tabelas o carregam), e é a fazenda que o
+ * Felipe gere — o usuário é só quem loga nela. Uma conta pode ter duas
+ * fazendas; uma fazenda de consultoria pode não ter produtor nenhum no sistema.
+ * Nos dois casos a lista de usuários responde a pergunta errada.
+ *
+ * A linha NÃO abre uma tela nova: ela navega para a ficha que já existe,
+ * `/adm/u/<dono>?prop=<id>`. Uma segunda ficha de propriedade duplicaria as 13
+ * abas para ganhar nada.
+ */
+export interface LinhaPropriedade {
+  id: number;
+  nome: string;
+  numero_criador: string | null;
+  cidade: string | null;
+  estado: string | null;
+  segmentos: string[];
+
+  /**
+   * O dono, quando existe. NULL numa fazenda de consultoria: o técnico atende
+   * um cliente que não usa o app, e a tela precisa dizer isso em vez de mostrar
+   * um espaço vazio que parece dado faltando.
+   */
+  produtor_id: number | null;
+  produtor_nome: string | null;
+
+  animais_ativos: number;
+  lactantes: number;
+
+  /** D2 — o sinal de vida, o mesmo da lista de usuários. */
+  ultimo_lancamento_em: string | null;
+  ultimo_modulo: string | null;
+  lancamentos_30d: number;
+  dias_sem_lancar: number | null;
+
+  /** Quem mais trabalha nesta fazenda. É a "relação de colaboradores" da lista. */
+  colaboradores: number;
+  tecnicos_vinculados: number;
+
+  /** Da assinatura do DONO — a fazenda não assina, o produtor assina. */
+  plano_nome: string | null;
+  status_efetivo: string | null;
+  acesso_ativo: boolean;
+
+  health_score: number | null;
 }
