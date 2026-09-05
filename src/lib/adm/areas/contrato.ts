@@ -291,6 +291,7 @@ export const ABAS_CLIENTE: AbaCliente[] = [
  */
 export const VIEWS_FASE_3 = {
   propriedades: 'propriedades_lista',
+  pagamentosPorCliente: 'pagamentos_por_cliente',
   coorte: 'coorte_retencao',
   benchmarkReferencia: 'benchmark_referencia',
   benchmarkPropriedade: 'benchmark_propriedade',
@@ -500,4 +501,42 @@ export interface LinhaPropriedade {
   acesso_ativo: boolean;
 
   health_score: number | null;
+}
+
+/**
+ * QUEM PAGOU E QUANTO — `adm.pagamentos_por_cliente`.
+ *
+ * Uma linha por cliente que já teve alguma cobrança, com o total do HISTÓRICO
+ * INTEIRO. É a pergunta que a tela de receita não respondia: ela mostrava
+ * "recebido nos últimos 12 meses" e a lista de cobranças uma a uma, mas nunca
+ * o acumulado por cliente nem o total de tudo.
+ *
+ * `total_pago` é histórico e NÃO é MRR: um cliente que pagou 12 meses e saiu
+ * aparece com o total alto e MRR zero. Os dois números respondem perguntas
+ * diferentes e a tela mostra ambos lado a lado.
+ */
+export interface LinhaPagamentosCliente {
+  usuario_id: number;
+  nome: string;
+  plano_nome: string | null;
+  status_efetivo: string | null;
+
+  /** A conta está desativada? (`usuarios.ativo = false`) */
+  ativo: boolean;
+  /** A assinatura dá acesso hoje? São coisas diferentes — ver o filtro da tela. */
+  acesso_ativo: boolean;
+
+  pagamentos: number;
+  /** Soma de tudo que ele já pagou, desde sempre. */
+  total_pago: number;
+  em_aberto: number;
+  /** Vencido e não pago. */
+  vencido: number;
+
+  primeiro_pagamento: string | null;
+  ultimo_pagamento: string | null;
+  /** Meses entre o primeiro pagamento e hoje — a "idade" comercial do cliente. */
+  meses_como_cliente: number | null;
+  /** O que ele paga por mês hoje. 0 para quem saiu ou é cortesia. */
+  mrr_atual: number | null;
 }

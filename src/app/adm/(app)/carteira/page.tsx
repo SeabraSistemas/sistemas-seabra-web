@@ -108,7 +108,7 @@ export default async function CarteiraPage() {
       </header>
 
       {/*
-        As três telas de profundidade da carteira. Elas existem desde a Fase 3 e
+        As quatro telas de profundidade da carteira. Elas existem desde a Fase 3 e
         ficaram um tempo alcançáveis só digitando a URL — o sintoma disso ("a
         tela não existe") é indistinguível de não ter sido implementada. Aqui,
         e não no <AdmNav>: são seções DESTA página, não áreas de primeiro nível
@@ -117,6 +117,7 @@ export default async function CarteiraPage() {
       <nav className="flex flex-wrap gap-2">
         {[
           { href: '/adm/carteira/receita', rotulo: 'Receita', detalhe: 'cobranças, MRR e inadimplência' },
+          { href: '/adm/carteira/pagamentos', rotulo: 'Pagamentos', detalhe: 'quem pagou e quanto, por cliente' },
           { href: '/adm/carteira/risco', rotulo: 'Risco', detalhe: 'os quatro baldes de churn' },
           { href: '/adm/carteira/adocao', rotulo: 'Adoção', detalhe: 'coorte de retenção' },
         ].map((item) => (

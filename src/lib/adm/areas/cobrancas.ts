@@ -2,7 +2,14 @@ import 'server-only';
 
 import { VIEWS_FASE_3, type LinhaCobranca } from '@/lib/adm/areas/contrato';
 import { admClient, semConfigSupabase } from '@/lib/adm/supabase-admin';
-import { erro, ok, semConfig, type Resultado } from '@/lib/adm/types';
+import {
+  numeroDe,
+  paginarView,
+  textoDe,
+  type Consulta,
+  type Linha as LinhaBruta,
+} from '@/lib/adm/areas/leitura';
+import { ok, type Resultado } from '@/lib/adm/types';
 
 /**
  * ÁREA COBRANÇAS — a leitura de `adm.cobrancas_lista` e o VOCABULÁRIO DE DINHEIRO
@@ -105,103 +112,28 @@ const PROJECAO = {
 const SELECT = Object.keys(PROJECAO).join(',');
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Plumbing local
+// Plumbing — agora COMPARTILHADO
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Gêmeo do plumbing de `src/lib/adm/queries.ts` e de `areas/consultoria.ts`, e a
- * duplicação é a mesma decisão de lá: aquelas funções são privadas dos seus
- * módulos, e importar `queries.ts` (54 KB) para usar `numero()` arrastaria junto
- * a lista mestra, a carteira e o catálogo do escape hatch. O que NÃO pode
- * divergir é o comportamento — mesma paginação obrigatória, mesmo `Resultado`,
- * mesma tradução de código do PostgREST para 'sem-config'. No dia em que isto
- * virar `src/lib/adm/pg.ts`, este arquivo é um dos primeiros a trocar.
+ * Isto era um bloco de ~85 linhas copiado aqui dentro, com a justificativa de
+ * que importar `queries.ts` (54 KB) para usar `numero()` arrastaria junto a
+ * lista mestra, a carteira e o catálogo do escape hatch — e que "no dia em que
+ * isto virar um módulo próprio, este arquivo é um dos primeiros a trocar".
+ *
+ * Esse dia chegou quando `areas/pagamentos-cliente.ts` precisou do MESMO
+ * comportamento e a cópia viraria a terceira. `areas/leitura.ts` é o módulo
+ * pequeno que faltava: só a leitura paginada e a classificação de erro, sem
+ * arrastar nada da lista mestra junto.
  */
-type Linha = Record<string, unknown>;
+type Linha = LinhaBruta;
 
-type ErroPostgrest = { message: string; code?: string };
+const paginar = (fabrica: (de: number, ate: number) => Consulta) =>
+  paginarView(VIEW, SQL_FASE_3, fabrica);
 
-type Resposta = { data: unknown[] | null; error: ErroPostgrest | null };
+const texto = textoDe;
+const numero = numeroDe;
 
-/** Superfície mínima do query builder do supabase-js usada aqui. */
-type Consulta = {
-  order(coluna: string, opcoes?: { ascending?: boolean; nullsFirst?: boolean }): Consulta;
-  range(de: number, ate: number): Consulta;
-} & PromiseLike<Resposta>;
-
-/**
- * PGRST106 schema fora do Exposed schemas · PGRST205/42P01 view inexistente ·
- * 42501 sem privilégio · 3F000 schema inexistente. Nos cinco a ação é a mesma: o
- * banco não foi preparado. Isso é 'sem-config', não 'erro' — e a diferença
- * importa muito nesta área: uma tela de receita vazia por falta de migration é
- * indistinguível de uma carteira que não fatura nada.
- */
-const CODIGOS_SEM_CONFIG = new Set(['PGRST106', 'PGRST205', '42P01', '42501', '3F000']);
-
-function falha<T>(e: ErroPostgrest): Resultado<T> {
-  console.error('[adm] falha de leitura', `adm.${VIEW}`, e.code ?? '', e.message);
-  if (e.code && CODIGOS_SEM_CONFIG.has(e.code)) {
-    return semConfig(
-      `A view "adm.${VIEW}" não está acessível (${e.code}). Rode ${SQL_FASE_3}, confirme que o ` +
-        'schema "adm" está em Settings → API → Exposed schemas e recarregue o cache do PostgREST ' +
-        '(Settings → API → Reload schema cache) — view nova em schema já exposto só aparece depois disso.',
-    );
-  }
-  return erro(`[adm] ${VIEW}: ${e.message}`);
-}
-
-/** 1000 = o `db-max-rows` do PostgREST; pedir mais numa página não traz mais nada. */
-const PAGE = 1000;
-
-/**
- * 20.000 cobranças. É folga de uma ordem de grandeza sobre o volume real (uma
- * cobrança por mês por assinante, sobre dezenas de assinaturas), e o teto existe
- * para o dia em que não for: acima dele a função devolve ERRO em vez de uma lista
- * truncada. Uma tabela de dinheiro cortada pela metade continua parecendo uma
- * tabela de dinheiro — é o pior jeito de errar nesta tela.
- */
-const HARD_CAP = 20;
-
-async function paginar(fabrica: (de: number, ate: number) => Consulta): Promise<Resultado<Linha[]>> {
-  const saida: Linha[] = [];
-  for (let pagina = 0; pagina < HARD_CAP; pagina++) {
-    const de = pagina * PAGE;
-    const { data, error } = await fabrica(de, de + PAGE - 1);
-    if (error) return falha<Linha[]>(error);
-    if (!data || data.length === 0) break;
-    saida.push(...comoLinhas(data));
-    if (data.length < PAGE) break;
-    if (pagina === HARD_CAP - 1) {
-      return erro(
-        `[adm] ${VIEW}: passou de ${HARD_CAP * PAGE} cobranças e o resultado seria truncado. ` +
-          'A tela precisa passar a filtrar por período no banco antes de somar qualquer coisa.',
-      );
-    }
-  }
-  return ok(saida);
-}
-
-function comoLinhas(valores: unknown[]): Linha[] {
-  return valores.filter((v): v is Linha => typeof v === 'object' && v !== null);
-}
-
-function texto(v: unknown): string | null {
-  if (typeof v === 'string') return v.trim() === '' ? null : v;
-  if (typeof v === 'number') return String(v);
-  return null;
-}
-
-function numero(v: unknown): number | null {
-  if (typeof v === 'number') return Number.isFinite(v) ? v : null;
-  // `numeric(10,2)` do Postgres chega como STRING pelo PostgREST sempre que a
-  // precisão não cabe em double. Ignorar isso zeraria a coluna de valor da tela
-  // de receita inteira, sem uma linha de erro em lugar nenhum.
-  if (typeof v === 'string' && v.trim() !== '') {
-    const n = Number(v);
-    return Number.isFinite(n) ? n : null;
-  }
-  return null;
-}
 
 function inteiro(v: unknown): number {
   return Math.round(numero(v) ?? 0);

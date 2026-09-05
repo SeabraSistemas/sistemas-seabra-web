@@ -541,7 +541,7 @@ $fase2$;
 
 
 -- ############################################################################
--- BLOCO 6 -- CONTRATO DA FASE 3. As cinco views declaradas em VIEWS_FASE_3
+-- BLOCO 6 -- CONTRATO DA FASE 3. As seis views declaradas em VIEWS_FASE_3
 -- (src/lib/adm/areas/contrato.ts) existem, com ESTE nome exato, e a service_role
 -- le todas.
 --
@@ -551,12 +551,13 @@ $fase2$;
 -- ela se disfarca de "a carteira nao tem dados".
 --
 -- ORDEM: este bloco roda depois de supabase/adm/adm_09_carteira_fase3.sql, que
--- cria quatro delas, e de supabase/adm/adm_10_propriedades.sql, que cria a
--- quinta -- o diretorio de propriedades. O cabecalho deste arquivo lista a ordem
--- dos demais; some a ele o adm_09 e o adm_10, imediatamente antes desta
+-- cria quatro delas, de supabase/adm/adm_10_propriedades.sql, que cria o
+-- diretorio de propriedades, e de supabase/adm/adm_11_pagamentos_cliente.sql,
+-- que cria o acumulado por cliente. O cabecalho deste arquivo lista a ordem dos
+-- demais; some a ele o adm_09, o adm_10 e o adm_11, imediatamente antes desta
 -- verificacao.
 --
--- Os cinco nomes estao escritos LITERALMENTE, um por linha, para serem lidos
+-- Os seis nomes estao escritos LITERALMENTE, um por linha, para serem lidos
 -- lado a lado com VIEWS_FASE_3 sem nenhuma interpretacao no meio.
 -- ############################################################################
 
@@ -569,7 +570,8 @@ declare
     'coorte_retencao',        -- LinhaCoorte                 adm_09
     'benchmark_referencia',   -- LinhaBenchmarkReferencia    adm_09
     'benchmark_propriedade',  -- LinhaBenchmarkPropriedade   adm_09
-    'cobrancas_lista'         -- LinhaCobranca               adm_09
+    'cobrancas_lista',        -- LinhaCobranca               adm_09
+    'pagamentos_por_cliente'  -- LinhaPagamentosCliente      adm_11
   ];
   -- Espelho de METRICAS_BENCHMARK. Lista FECHADA de proposito: cada metrica
   -- exigiu uma decisao de denominador, janela e unidade, e a tela so sabe
@@ -597,20 +599,21 @@ begin
     from unnest(v_esperadas) e
    where to_regclass('adm.' || e) is null;
 
-  -- 27) As cinco existem. As duas mensagens sao diferentes de proposito:
+  -- 27) As seis existem. As duas mensagens sao diferentes de proposito:
   -- "nenhuma" e um arquivo que faltou rodar; "algumas" e divergencia de NOME,
   -- que e o defeito que este bloco existe para pegar.
   if v_existem = 0 then
-    raise exception 'FALHA 27: nenhuma das 5 views da Fase 3 existe -- '
-                    'rode supabase/adm/adm_09_carteira_fase3.sql e '
-                    'supabase/adm/adm_10_propriedades.sql';
+    raise exception 'FALHA 27: nenhuma das 6 views da Fase 3 existe -- '
+                    'rode supabase/adm/adm_09_carteira_fase3.sql, '
+                    'supabase/adm/adm_10_propriedades.sql e '
+                    'supabase/adm/adm_11_pagamentos_cliente.sql';
   elsif v_falta is not null then
     raise exception 'FALHA 27: view(s) da Fase 3 ausente(s) em adm: % -- '
                     'confira o nome CARACTERE A CARACTERE contra VIEWS_FASE_3 em '
                     'src/lib/adm/areas/contrato.ts.', v_falta;
   end if;
 
-  -- 28) A service_role LE as cinco. Sem o grant, a tela abre, nao da erro, e
+  -- 28) A service_role LE as seis. Sem o grant, a tela abre, nao da erro, e
   -- mostra estado vazio -- indistinguivel de "esta carteira nao tem dados".
   select string_agg(e, ', ' order by e) into v_txt
     from unnest(v_esperadas) e
@@ -641,7 +644,11 @@ begin
       ('benchmark_propriedade', 'segmento'),
       ('benchmark_propriedade', 'metrica'),
       ('cobrancas_lista',       'pagamento_id'),
-      ('cobrancas_lista',       'usuario_id')
+      ('cobrancas_lista',       'usuario_id'),
+      -- `usuario_id` e a linha e o destino do link (/adm/u/<id>/assinatura);
+      -- `total_pago` e a coluna que a tela ordena, soma e desenha em barra.
+      ('pagamentos_por_cliente', 'usuario_id'),
+      ('pagamentos_por_cliente', 'total_pago')
     ) as x(v, col)
    where not exists (
      select 1 from information_schema.columns c
@@ -651,6 +658,39 @@ begin
    );
   if v_txt is not null then
     raise exception 'FALHA 29: view(s) da Fase 3 sem coluna de ancora: %', v_txt;
+  end if;
+
+  -- 29b) VENCIDO ESTA DENTRO DE EM_ABERTO, nunca ao lado.
+  --
+  -- `em_aberto` e PENDING + OVERDUE; `vencido` e o recorte disso que ja passou
+  -- da data. A tela mostra os dois em cards vizinhos e escreve a relacao na
+  -- sub-linha -- e essa frase so continua verdadeira enquanto a view mantiver a
+  -- contencao. Alguem que edite um dos dois `filter (where ...)` sem olhar o
+  -- outro produz uma tela em que "R$ X em aberto, dos quais R$ Y vencidos" tem
+  -- Y > X: aritmeticamente impossivel, visualmente plausivel, e sem erro nenhum.
+  --
+  -- Roda a view de verdade (mesmo efeito colateral util dos asserts 30 e 31).
+  select count(*) into v_linhas
+    from adm.pagamentos_por_cliente
+   where vencido > em_aberto;
+  if v_linhas > 0 then
+    raise exception 'FALHA 29b: % cliente(s) com vencido MAIOR que em_aberto em '
+                    'adm.pagamentos_por_cliente -- vencido tem de ser um '
+                    'subconjunto de em_aberto. Confira os dois `filter (where '
+                    'p.status ...)` em supabase/adm/adm_11_pagamentos_cliente.sql.', v_linhas;
+  end if;
+
+  -- 29c) Ninguem entra na tela com dinheiro negativo. `round(coalesce(...), 2)`
+  -- nunca produz negativo a partir de dados sadios: se aparecer, e estorno
+  -- somado com sinal trocado, e uma linha negativa arrasta o TOTAL da tela para
+  -- baixo sem que nada na pagina indique de onde veio.
+  select count(*) into v_linhas
+    from adm.pagamentos_por_cliente
+   where total_pago < 0 or em_aberto < 0 or vencido < 0 or pagamentos < 0;
+  if v_linhas > 0 then
+    raise exception 'FALHA 29c: % linha(s) com valor negativo em '
+                    'adm.pagamentos_por_cliente -- o total da tela sai errado e '
+                    'nada na pagina mostra a causa.', v_linhas;
   end if;
 
   -- 30) O VOCABULARIO DE METRICAS E FECHADO. As duas views de benchmark so podem

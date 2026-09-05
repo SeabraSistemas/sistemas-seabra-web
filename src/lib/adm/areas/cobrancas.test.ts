@@ -354,16 +354,24 @@ describe('STATUS_PAGO e STATUS_EM_ABERTO', () => {
       return t.skip('supabase/adm/*.sql não está neste checkout');
     }
 
+    // QUALQUER alias, não só `pa`. O regex antigo era `pa\.status` e adm_11
+    // apelida a tabela de `p` — o arquivo mais novo com dinheiro dentro passava
+    // inteiro por fora da conferência, e o teste continuava verde.
+    //
+    // O que separa "status de pagamento" de "status de qualquer outra coisa" não
+    // é o alias, é o VOCABULÁRIO: só entra na conferência o conjunto que contém
+    // ao menos um status conhecido do Asaas. Assim um `r.status in ('ativo',
+    // 'inativo')` do rebanho é ignorado em vez de reprovado.
+    const CONHECIDOS = new Set([...STATUS_PAGO, ...STATUS_EM_ABERTO]);
     const conjuntos: string[][] = [];
     for (const arquivo of readdirSync(dirSql).filter((n) => n.endsWith('.sql'))) {
       const sql = readFileSync(new URL(arquivo, dirSql), 'utf8');
-      for (const [, lista] of sql.matchAll(/pa\.status\s+in\s*\(([^)]*)\)/gi)) {
-        conjuntos.push(
-          lista
-            .split(',')
-            .map((s) => s.trim().replace(/^'|'$/g, ''))
-            .sort(),
-        );
+      for (const [, lista] of sql.matchAll(/\b\w+\.status\s+in\s*\(([^)]*)\)/gi)) {
+        const valores = lista
+          .split(',')
+          .map((s) => s.trim().replace(/^'|'$/g, ''))
+          .sort();
+        if (valores.some((v) => CONHECIDOS.has(v))) conjuntos.push(valores);
       }
     }
 
