@@ -4,6 +4,7 @@ import { VIEWS_FASE_3, type LinhaPagamentosCliente } from '@/lib/adm/areas/contr
 import { numeroDe, paginarView, textoDe, type Consulta, type Linha } from '@/lib/adm/areas/leitura';
 import { admClient, semConfigSupabase } from '@/lib/adm/supabase-admin';
 import { ok, type Resultado } from '@/lib/adm/types';
+import { SEPARADOR_VALORES } from '@/lib/adm/url';
 
 /**
  * QUEM PAGOU E QUANTO.
@@ -121,6 +122,25 @@ export const SITUACAO_CLIENTE_AJUDA: Record<SituacaoCliente, string> = {
   inadimplente: 'A conta existe e funciona, mas a assinatura não dá mais acesso — parou de pagar, venceu, ou nunca ativou.',
   desativado: 'A conta foi desativada: a pessoa não entra mais no aplicativo, independente da assinatura.',
 };
+
+/**
+ * Lê `?f.situacao=` da URL — a MESMA leitura para a tela e para a exportação.
+ *
+ * Nasceu dentro de `/adm/carteira/pagamentos/page.tsx` e foi movida para cá
+ * quando a exportação (CSV/XLSX) precisou do idêntico recorte: duas cópias da
+ * mesma allowlist divergem na primeira vez que alguém mexer numa só, e aí o
+ * arquivo baixado deixa de bater com o que está na tela — o defeito que esta
+ * área inteira existe para evitar (ver o cabeçalho de `leitura.ts`).
+ *
+ * Allowlist: valor desconhecido é DESCARTADO em silêncio, e não vira erro — um
+ * link salvo meses atrás, com um nome de situação que mudou desde então, deve
+ * abrir sem filtro em vez de dar erro.
+ */
+export function lerSituacoesClienteDaUrl(bruto: string | null): SituacaoCliente[] {
+  if (!bruto) return [];
+  const pedidas = bruto.split(SEPARADOR_VALORES).map((v) => v.trim());
+  return SITUACOES_CLIENTE.filter((s) => pedidas.includes(s));
+}
 
 export function situacaoDoCliente(l: LinhaPagamentosCliente): SituacaoCliente {
   // A ordem é a regra: conta desativada vence tudo. Uma conta desligada com

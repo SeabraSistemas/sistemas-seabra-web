@@ -87,7 +87,10 @@ const {
   STATUS_PAGO,
   contarPorSituacao,
   filtrarCobrancas,
+  lerOrdemCobrancaDaUrl,
+  lerSituacoesDaUrl,
   listarCobrancas,
+  ordenarCobrancas,
   resumirCobrancas,
   situacaoDaCobranca,
 } = await import('@/lib/adm/areas/cobrancas');
@@ -642,6 +645,116 @@ describe('filtrarCobrancas', () => {
     });
     const deUmaVez = filtrarCobrancas(CARTEIRA, { situacoes: ['vencida'], de: '2026-08-01' });
     assert.deepEqual(ids(emDoisPassos), ids(deUmaVez));
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// lerSituacoesDaUrl — nasceu na página, mora aqui para a exportação não divergir
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('lerSituacoesDaUrl', () => {
+  test('ausente ou vazio é "sem filtro" — devolve tudo, nunca nada', () => {
+    assert.deepEqual(lerSituacoesDaUrl(null), []);
+    assert.deepEqual(lerSituacoesDaUrl(''), []);
+  });
+
+  test('valor desconhecido é descartado em silêncio, não vira erro', () => {
+    assert.deepEqual(lerSituacoesDaUrl('em_disputa'), []);
+    assert.deepEqual(lerSituacoesDaUrl('vencida,em_disputa'), ['vencida']);
+  });
+
+  test('a ordem da saída é a de SITUACOES, não a da URL', () => {
+    assert.deepEqual(lerSituacoesDaUrl('vencida,paga'), ['paga', 'vencida']);
+  });
+
+  test('valor repetido não duplica a situação na saída', () => {
+    assert.deepEqual(lerSituacoesDaUrl('paga,paga'), ['paga']);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// lerOrdemCobrancaDaUrl / ordenarCobrancas — nasceram na página, moram aqui
+// pelo mesmo motivo de lerSituacoesDaUrl: a exportação precisa da MESMA ordem
+// que a tabela está mostrando.
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('lerOrdemCobrancaDaUrl', () => {
+  test('ausente ou vazio cai no padrão: vencimento, descendente', () => {
+    assert.deepEqual(lerOrdemCobrancaDaUrl(null), { chave: 'vencimento', ascendente: false });
+    assert.deepEqual(lerOrdemCobrancaDaUrl(''), { chave: 'vencimento', ascendente: false });
+  });
+
+  test('sem sinal é ascendente; "-" na frente é descendente', () => {
+    assert.deepEqual(lerOrdemCobrancaDaUrl('valor'), { chave: 'valor', ascendente: true });
+    assert.deepEqual(lerOrdemCobrancaDaUrl('-valor'), { chave: 'valor', ascendente: false });
+  });
+
+  test('chave desconhecida (link velho, coluna renomeada) volta ao padrão — não é erro', () => {
+    assert.deepEqual(lerOrdemCobrancaDaUrl('coluna_que_nao_existe_mais'), {
+      chave: 'vencimento',
+      ascendente: false,
+    });
+  });
+
+  test('só a primeira chave de uma lista é usada — não há ordenação em cascata aqui', () => {
+    assert.deepEqual(lerOrdemCobrancaDaUrl('valor,atraso'), { chave: 'valor', ascendente: true });
+  });
+});
+
+describe('ordenarCobrancas', () => {
+  const A = cobranca({ pagamento_id: 1, usuario_nome: 'Ana', valor: 100, data_vencimento: '2026-08-01' });
+  const B = cobranca({ pagamento_id: 2, usuario_nome: 'Beto', valor: 300, data_vencimento: '2026-09-01' });
+  const C = cobranca({ pagamento_id: 3, usuario_nome: 'Carla', valor: 200, data_vencimento: null });
+
+  test('ordena por valor ascendente', () => {
+    const r = ordenarCobrancas([B, A, C], { chave: 'valor', ascendente: true });
+    assert.deepEqual(r.map((l) => l.pagamento_id), [1, 3, 2]);
+  });
+
+  test('ordena por vencimento descendente (o padrão da tela)', () => {
+    const r = ordenarCobrancas([A, C, B], { chave: 'vencimento', ascendente: false });
+    // C não tem vencimento — nulo vai para o FIM nos dois sentidos, nunca "antes
+    // de tudo" nem "depois de tudo" por acidente de comparação.
+    assert.deepEqual(r.map((l) => l.pagamento_id), [2, 1, 3]);
+  });
+
+  test('nulo fica no fim também ASCENDENTE — a regra não se inverte com o sinal', () => {
+    const r = ordenarCobrancas([A, C, B], { chave: 'vencimento', ascendente: true });
+    assert.deepEqual(r.map((l) => l.pagamento_id), [1, 2, 3]);
+  });
+
+  test('situação ordena pelo RÓTULO em português, não pela chave interna', () => {
+    // 'Em aberto' < 'Paga' < 'Vencida' alfabeticamente — se ordenasse pela chave
+    // ('em_aberto' | 'paga' | 'vencida') o resultado coincidiria aqui, mas só
+    // por acidente: o teste fixa o rótulo como a fonte da ordem.
+    const pendente = cobranca({ pagamento_id: 4, status: 'PENDING', data_vencimento: '2027-01-01' });
+    const paga = cobranca({ pagamento_id: 5, status: 'CONFIRMED' });
+    // `inadimplente` é um campo PRECOMPUTADO pela view, independente do status —
+    // `situacaoDaCobranca` só o consulta, não o deriva. Sem marcá-lo aqui, este
+    // OVERDUE classificaria como 'em_aberto', não 'vencida' — a mesma armadilha
+    // que `PAGA_ATRASADA` existe para ensinar em outro teste deste arquivo.
+    const vencida = cobranca({
+      pagamento_id: 6,
+      status: 'OVERDUE',
+      data_vencimento: '2020-01-01',
+      inadimplente: true,
+    });
+    const r = ordenarCobrancas([vencida, paga, pendente], { chave: 'situacao', ascendente: true });
+    assert.deepEqual(r.map((l) => l.pagamento_id), [4, 5, 6]);
+  });
+
+  test('empate na chave desempata por pagamento_id — sem isso a paginação pularia e repetiria linha', () => {
+    const empateA = cobranca({ pagamento_id: 10, valor: 100 });
+    const empateB = cobranca({ pagamento_id: 20, valor: 100 });
+    const r = ordenarCobrancas([empateA, empateB], { chave: 'valor', ascendente: true });
+    assert.deepEqual(r.map((l) => l.pagamento_id), [20, 10]);
+  });
+
+  test('não muta a lista recebida', () => {
+    const original = [B, A, C];
+    const copia = [...original];
+    ordenarCobrancas(original, { chave: 'valor', ascendente: true });
+    assert.deepEqual(original, copia);
   });
 });
 

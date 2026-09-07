@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, ChevronsUpDown } from 'lucide-react';
 
 import { EstadoVazio } from '@/components/adm/EstadoVazio';
+import { ExportBotoes } from '@/components/adm/ExportBotoes';
 import { KpiCard } from '@/components/adm/KpiCard';
 import { SerieTemporal } from '@/components/adm/charts/SerieTemporal';
 import {
@@ -18,9 +19,13 @@ import {
   SITUACOES,
   contarPorSituacao,
   filtrarCobrancas,
+  lerOrdemCobrancaDaUrl,
+  lerSituacoesDaUrl,
   listarCobrancas,
+  ordenarCobrancas,
   resumirCobrancas,
   situacaoDaCobranca,
+  type ChaveOrdemCobranca,
   type SituacaoCobranca,
 } from '@/lib/adm/areas/cobrancas';
 import type { LinhaCobranca } from '@/lib/adm/areas/contrato';
@@ -139,68 +144,6 @@ const SITUACAO_CLASSE: Record<SituacaoCobranca, string> = {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Ordenação — a mesma gramática de `?sort=`, interpretada no servidor
-// ─────────────────────────────────────────────────────────────────────────────
-
-type ChaveOrdem = 'usuario' | 'plano' | 'valor' | 'situacao' | 'vencimento' | 'pagamento' | 'atraso';
-
-const ORDENADORES: Record<ChaveOrdem, (l: LinhaCobranca) => string | number | null> = {
-  usuario: (l) => l.usuario_nome,
-  plano: (l) => l.plano_nome,
-  valor: (l) => l.valor,
-  // Ordena pelo RÓTULO e não pela chave: a ordem alfabética de "Em aberto,
-  // Paga, Vencida" é a que o operador vê na coluna. Ordenar por 'em_aberto' |
-  // 'paga' | 'vencida' daria quase o mesmo resultado por acidente e outro
-  // qualquer no dia em que um rótulo mudar.
-  situacao: (l) => SITUACAO_ROTULO[situacaoDaCobranca(l)],
-  vencimento: (l) => l.data_vencimento,
-  pagamento: (l) => l.data_pagamento,
-  atraso: (l) => l.dias_de_atraso,
-};
-
-const ORDEM_PADRAO: { chave: ChaveOrdem; ascendente: boolean } = { chave: 'vencimento', ascendente: false };
-
-function ehChaveOrdem(valor: string): valor is ChaveOrdem {
-  return Object.prototype.hasOwnProperty.call(ORDENADORES, valor);
-}
-
-/** '-valor' → { valor, desc }. Mesma grafia do `?sort=` da `<AdmTable>` (o '-'
- *  é descendente), aceitando um nível só: aqui não há Shift+clique para empilhar. */
-function lerOrdem(bruto: string | null): { chave: ChaveOrdem; ascendente: boolean } {
-  const texto = (bruto ?? '').split(SEPARADOR_VALORES)[0]?.trim() ?? '';
-  if (texto === '') return ORDEM_PADRAO;
-  const ascendente = !texto.startsWith('-');
-  const chave = ascendente ? texto.replace(/^\+/, '') : texto.slice(1);
-  // Chave desconhecida (link velho, coluna renomeada) volta ao default em vez de
-  // virar erro: um favorito do Felipe não pode quebrar uma tela de dinheiro.
-  return ehChaveOrdem(chave) ? { chave, ascendente } : ORDEM_PADRAO;
-}
-
-/** NULO SEMPRE POR ÚLTIMO, nos dois sentidos — a regra herdada do `DataTable` do
- *  /katmandu e mantida na `<AdmTable>`: inverter a direção não pode encher a
- *  primeira página de linhas vazias. */
-function comparar(a: string | number | null, b: string | number | null, sinal: number): number {
-  if (a == null && b == null) return 0;
-  if (a == null) return 1;
-  if (b == null) return -1;
-  if (typeof a === 'string' && typeof b === 'string') return a.localeCompare(b, 'pt-BR') * sinal;
-  if (a < b) return -1 * sinal;
-  if (a > b) return 1 * sinal;
-  return 0;
-}
-
-function ordenar(linhas: LinhaCobranca[], ordem: { chave: ChaveOrdem; ascendente: boolean }): LinhaCobranca[] {
-  const pegar = ORDENADORES[ordem.chave];
-  const sinal = ordem.ascendente ? 1 : -1;
-  return [...linhas].sort((a, b) => {
-    const r = comparar(pegar(a), pegar(b), sinal);
-    // Desempate pela chave: sem ele, duas cobranças do mesmo dia trocam de lugar
-    // entre uma página e a seguinte, e a paginação passa a pular e repetir linha.
-    return r !== 0 ? r : b.pagamento_id - a.pagamento_id;
-  });
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
 // URL
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -233,15 +176,6 @@ function primeiro(valor: string | string[] | undefined): string | null {
   return texto == null || texto.trim() === '' ? null : texto.trim();
 }
 
-function lerSituacoes(bruto: string | null): SituacaoCobranca[] {
-  if (!bruto) return [];
-  const pedidas = bruto.split(SEPARADOR_VALORES).map((v) => v.trim());
-  // Allowlist: valor desconhecido é DESCARTADO em silêncio, e não vira erro — a
-  // mesma decisão de `lerOpcoesTabela()` em params.ts, e pelo mesmo motivo (link
-  // salvo meses atrás, situação renomeada desde então).
-  return SITUACOES.filter((s) => pedidas.includes(s));
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
 // Página
 // ─────────────────────────────────────────────────────────────────────────────
@@ -266,7 +200,7 @@ export default async function ReceitaPage({ searchParams }: { searchParams: Prom
 
   // O recorte de período é lido cedo porque o resumo, os contadores e a tabela
   // dependem dele — os três têm que falar do mesmo conjunto.
-  const situacoesSel = lerSituacoes(primeiro(sp[P_SITUACAO]));
+  const situacoesSel = lerSituacoesDaUrl(primeiro(sp[P_SITUACAO]));
   const periodoSel = primeiro(sp[P_VENCIMENTO]);
   const periodoAtivo = periodoSel && ehPeriodoRelativo(periodoSel) ? periodoSel : null;
   const desde = periodoAtivo ? diaCivil(inicioDoPeriodo(periodoAtivo, agora)) : null;
@@ -297,8 +231,8 @@ export default async function ReceitaPage({ searchParams }: { searchParams: Prom
   // A situação NÃO entra aqui de propósito: ela é o próprio filtro que os chips
   // aplicam, e contá-la aqui zeraria o contador de todo chip não selecionado.
   const filtradas = filtrarCobrancas(noPeriodo, { situacoes });
-  const ordem = lerOrdem(primeiro(sp.sort));
-  const ordenadas = ordenar(filtradas, ordem);
+  const ordem = lerOrdemCobrancaDaUrl(primeiro(sp.sort));
+  const ordenadas = ordenarCobrancas(filtradas, ordem);
 
   const tamanhoBruto = Number(primeiro(sp.size));
   const tamanho = (TAMANHOS as readonly number[]).includes(tamanhoBruto) ? tamanhoBruto : TAMANHO_PADRAO;
@@ -328,7 +262,7 @@ export default async function ReceitaPage({ searchParams }: { searchParams: Prom
             , como receita que nunca existiu.
           </p>
         </div>
-        <div className="flex flex-col items-end gap-1 text-xs text-muted-foreground">
+        <div className="flex flex-col items-end gap-1.5 text-xs text-muted-foreground">
           <p className="tabular-nums">lido agora, {formatarDataHora(agora)}</p>
           <nav className="flex gap-2">
             <Link href="/adm/carteira" className="underline-offset-4 hover:text-foreground hover:underline">
@@ -338,6 +272,18 @@ export default async function ReceitaPage({ searchParams }: { searchParams: Prom
               Risco →
             </Link>
           </nav>
+          {/* O arquivo carrega os MESMOS `f.situacao`/`f.vencimento`/`sort` da
+              tabela — nunca outro recorte, e nunca outra ordem, do que está
+              na grade. */}
+          <ExportBotoes
+            tela="receita"
+            parametros={{
+              [P_SITUACAO]: primeiro(sp[P_SITUACAO]) ?? undefined,
+              [P_VENCIMENTO]: primeiro(sp[P_VENCIMENTO]) ?? undefined,
+              sort: primeiro(sp.sort) ?? undefined,
+            }}
+            contagem={ordenadas.length}
+          />
         </div>
       </header>
 
@@ -661,8 +607,8 @@ function Cabecalho({
   children,
 }: {
   sp: Params;
-  chave: ChaveOrdem;
-  ordem: { chave: ChaveOrdem; ascendente: boolean };
+  chave: ChaveOrdemCobranca;
+  ordem: { chave: ChaveOrdemCobranca; ascendente: boolean };
   numerica?: boolean;
   children: React.ReactNode;
 }) {

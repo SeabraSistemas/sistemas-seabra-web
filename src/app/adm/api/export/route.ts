@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 
 import { extrairIp, extrairUserAgent, registrarAcesso } from '@/lib/adm/audit';
+import { contentDisposition } from '@/lib/adm/export-tabular';
 import { formatarValorCru } from '@/lib/adm/format';
 import { getAdmSession } from '@/lib/adm/guard';
 import { lerSelecaoParam } from '@/lib/adm/escopo';
@@ -53,16 +54,6 @@ const MAX_PAGINAS = 200;
 
 function erroJson(status: number, mensagem: string) {
   return NextResponse.json({ erro: mensagem }, { status });
-}
-
-/**
- * Nome do arquivo. Vai em `filename*` (RFC 5987) porque nome de criador tem
- * acento, e navegador com `filename=` puro entrega "Fazenda SÃ£o JosÃ©.csv".
- */
-function contentDisposition(base: string, extensao: string): string {
-  const limpo = base.replace(/[^\p{L}\p{N} ._-]/gu, '').trim() || 'export';
-  const asciiSeguro = limpo.normalize('NFD').replace(/[\u0300-\u036F]/g, '').replace(/[^\w .-]/g, '_');
-  return `attachment; filename="${asciiSeguro}.${extensao}"; filename*=UTF-8''${encodeURIComponent(limpo)}.${extensao}`;
 }
 
 /**

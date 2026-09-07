@@ -530,6 +530,50 @@ export function montarMatriz(linhas: readonly LinhaCoorte[], agora: Date): Matri
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Exportação — a matriz em formato longo
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Uma célula da matriz, achatada: (coorte, mês de vida) → o que aconteceu. */
+export interface LinhaExportCoorte {
+  /** 'YYYY-MM' do mês de entrada — a mesma chave de FaixaCoorte.coorte. */
+  coorte: string;
+  /** Contas que entraram nesta coorte — o denominador (regra 3). */
+  tamanhoCoorte: number;
+  /** Mês de vida: 0 = o mês de entrada. */
+  mes: number;
+  ativos: number;
+  /** ativos / tamanhoCoorte, 0..1. */
+  retencao: number;
+}
+
+/**
+ * Achata a matriz para exportação: uma linha por célula que de fato aconteceu.
+ *
+ * NÃO PRECISA REAPLICAR AS TRÊS RECUSAS DO CABEÇALHO — elas já aconteceram na
+ * hora de montar `matriz`. Uma coorte pequena demais (regra 3) ou nova demais
+ * (regra 2) nunca chega a `faixas`; e dentro de cada faixa, um mês além do
+ * horizonte é `null` e este loop pula exatamente essas células. Reproduzir
+ * qualquer uma das três regras aqui seria uma segunda cópia que pode divergir
+ * da primeira — a exportação lê o resultado já filtrado, não refiltra.
+ */
+export function linhasExportCoorte(matriz: MatrizRetencao): LinhaExportCoorte[] {
+  const linhas: LinhaExportCoorte[] = [];
+  for (const faixa of matriz.faixas) {
+    for (const celula of faixa.celulas) {
+      if (celula == null) continue;
+      linhas.push({
+        coorte: faixa.coorte,
+        tamanhoCoorte: faixa.tamanho,
+        mes: celula.mes,
+        ativos: celula.ativos,
+        retencao: celula.retencao,
+      });
+    }
+  }
+  return linhas;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Os cards
 // ─────────────────────────────────────────────────────────────────────────────
 

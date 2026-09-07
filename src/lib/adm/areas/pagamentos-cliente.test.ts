@@ -73,6 +73,7 @@ const {
   SITUACOES_CLIENTE,
   contarPorSituacao,
   filtrarPorSituacao,
+  lerSituacoesClienteDaUrl,
   listarPagamentosPorCliente,
   resumirPagamentos,
   situacaoDoCliente,
@@ -234,6 +235,40 @@ describe('filtrarPorSituacao', () => {
 
   test('não devolve o mesmo array — a tela não pode mutar a lista da consulta', () => {
     assert.notEqual(filtrarPorSituacao(CARTEIRA, []), CARTEIRA);
+  });
+});
+
+describe('lerSituacoesClienteDaUrl', () => {
+  // Esta função nasceu DENTRO da página (/adm/carteira/pagamentos) e foi
+  // movida para cá quando a exportação precisou da MESMA leitura de
+  // `?f.situacao=`. O risco que este bloco protege não é a função em si — é
+  // duas cópias dela divergindo depois que alguém mexer só numa.
+
+  test('ausente ou vazio é "sem filtro" — devolve tudo, nunca nada', () => {
+    assert.deepEqual(lerSituacoesClienteDaUrl(null), []);
+    assert.deepEqual(lerSituacoesClienteDaUrl(''), []);
+  });
+
+  test('valor desconhecido é descartado em silêncio, não vira erro', () => {
+    // Um link salvo meses atrás, com um nome de situação que mudou desde
+    // então, tem que abrir a tela sem filtro — não uma página de erro.
+    assert.deepEqual(lerSituacoesClienteDaUrl('cancelado'), []);
+    assert.deepEqual(lerSituacoesClienteDaUrl('pagando,cancelado'), ['pagando']);
+  });
+
+  test('duas situações válidas, e a ordem é a de SITUACOES_CLIENTE, não a da URL', () => {
+    // A URL pede "desativado,pagando" (ordem invertida); a saída respeita a
+    // ordem canônica dos chips, para o resultado não depender de como alguém
+    // digitou o link.
+    assert.deepEqual(lerSituacoesClienteDaUrl('desativado,pagando'), ['pagando', 'desativado']);
+  });
+
+  test('valor repetido não duplica a situação na saída', () => {
+    assert.deepEqual(lerSituacoesClienteDaUrl('pagando,pagando'), ['pagando']);
+  });
+
+  test('espaço ao redor do valor é ignorado', () => {
+    assert.deepEqual(lerSituacoesClienteDaUrl(' pagando , inadimplente '), ['pagando', 'inadimplente']);
   });
 });
 

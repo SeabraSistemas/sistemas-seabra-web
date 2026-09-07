@@ -1,6 +1,7 @@
 import Link from 'next/link';
 
 import { EstadoVazio } from '@/components/adm/EstadoVazio';
+import { ExportBotoes } from '@/components/adm/ExportBotoes';
 import { KpiCard } from '@/components/adm/KpiCard';
 import {
   Table,
@@ -17,6 +18,7 @@ import {
   SITUACOES_CLIENTE,
   contarPorSituacao,
   filtrarPorSituacao,
+  lerSituacoesClienteDaUrl,
   listarPagamentosPorCliente,
   resumirPagamentos,
   situacaoDoCliente,
@@ -105,18 +107,6 @@ function comQuery(sp: Params, mudancas: Record<string, string | null>): string {
   return qs ? `${ROTA}?${qs}` : ROTA;
 }
 
-/**
- * Allowlist: situação desconhecida é DESCARTADA em silêncio, e não vira erro. É
- * a mesma decisão da /receita e pelo mesmo motivo — um link salvo meses atrás,
- * com um nome de situação que mudou desde então, deve abrir a tela sem filtro em
- * vez de uma página de erro.
- */
-function lerSituacoes(bruto: string | null): SituacaoCliente[] {
-  if (!bruto) return [];
-  const pedidas = bruto.split(SEPARADOR_VALORES).map((v) => v.trim());
-  return SITUACOES_CLIENTE.filter((s) => pedidas.includes(s));
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
 // Página
 // ─────────────────────────────────────────────────────────────────────────────
@@ -132,7 +122,7 @@ export default async function PagamentosPage({ searchParams }: { searchParams: P
   if (!resultado.ok) return <EstadoVazio resultado={resultado} />;
 
   const todos = resultado.dados;
-  const situacoes = lerSituacoes(primeiro(sp[P_SITUACAO]));
+  const situacoes = lerSituacoesClienteDaUrl(primeiro(sp[P_SITUACAO]));
   const filtrados = filtrarPorSituacao(todos, situacoes);
 
   // Contagem sobre a BASE INTEIRA, não sobre o recorte: contar sobre o filtro
@@ -168,7 +158,16 @@ export default async function PagamentosPage({ searchParams }: { searchParams: P
             {formatarMoeda(resumoBase.totalRecebido)} recebidos desde o primeiro pagamento
           </p>
         </div>
-        <p className="text-xs tabular-nums text-muted-foreground">lido agora, {formatarDataHora(agora)}</p>
+        <div className="flex flex-col items-end gap-1.5">
+          <p className="text-xs tabular-nums text-muted-foreground">lido agora, {formatarDataHora(agora)}</p>
+          {/* A URL do arquivo carrega o MESMO `f.situacao` que filtrou a tabela
+              abaixo — nunca a base inteira quando um filtro está ligado. */}
+          <ExportBotoes
+            tela="pagamentos"
+            parametros={{ [P_SITUACAO]: primeiro(sp[P_SITUACAO]) ?? undefined }}
+            contagem={filtrados.length}
+          />
+        </div>
       </header>
 
       {/* ── Os cards ─────────────────────────────────────────────────────── */}

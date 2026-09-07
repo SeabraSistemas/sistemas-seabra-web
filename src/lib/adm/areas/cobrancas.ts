@@ -10,6 +10,7 @@ import {
   type Linha as LinhaBruta,
 } from '@/lib/adm/areas/leitura';
 import { ok, type Resultado } from '@/lib/adm/types';
+import { SEPARADOR_VALORES } from '@/lib/adm/url';
 
 /**
  * ÁREA COBRANÇAS — a leitura de `adm.cobrancas_lista` e o VOCABULÁRIO DE DINHEIRO
@@ -205,6 +206,24 @@ export const SITUACAO_REGRA: Record<SituacaoCobranca, string> = {
 };
 
 /**
+ * Lê `?f.situacao=` da URL — a MESMA leitura para a tela e para a exportação.
+ *
+ * Nasceu dentro de `/adm/carteira/receita/page.tsx` e foi movida para cá pelo
+ * mesmo motivo de `lerSituacoesClienteDaUrl` em `pagamentos-cliente.ts`: a
+ * exportação (CSV/XLSX) precisa do idêntico recorte, e duas cópias da mesma
+ * allowlist divergem na primeira vez que só uma for editada.
+ *
+ * Allowlist: valor desconhecido é DESCARTADO em silêncio, e não vira erro — um
+ * link salvo meses atrás, com uma situação renomeada desde então, deve abrir
+ * sem filtro em vez de dar erro.
+ */
+export function lerSituacoesDaUrl(bruto: string | null): SituacaoCobranca[] {
+  if (!bruto) return [];
+  const pedidas = bruto.split(SEPARADOR_VALORES).map((v) => v.trim());
+  return SITUACOES.filter((s) => pedidas.includes(s));
+}
+
+/**
  * Status técnico → situação de negócio.
  *
  * A ORDEM DOS TESTES É A REGRA. Pago vence tudo: uma cobrança paga com 40 dias de
@@ -342,6 +361,78 @@ export function contarPorSituacao(linhas: readonly LinhaCobranca[]): Record<Situ
   };
   for (const l of linhas) contagem[situacaoDaCobranca(l)] += 1;
   return contagem;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Ordenação — nasceu na página, mora aqui pelo mesmo motivo de lerSituacoesDaUrl
+//
+// A exportação (CSV/XLSX) precisa produzir o arquivo na MESMA ordem que a
+// tabela em `/adm/carteira/receita/page.tsx` está mostrando — senão o operador
+// baixa um arquivo em ordem diferente da que está olhando na tela, e some a
+// garantia central desta área: "a URL da tela mais o formato".
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type ChaveOrdemCobranca = 'usuario' | 'plano' | 'valor' | 'situacao' | 'vencimento' | 'pagamento' | 'atraso';
+
+const ORDENADORES_COBRANCA: Record<ChaveOrdemCobranca, (l: LinhaCobranca) => string | number | null> = {
+  usuario: (l) => l.usuario_nome,
+  plano: (l) => l.plano_nome,
+  valor: (l) => l.valor,
+  // Ordena pelo RÓTULO e não pela chave: é a ordem alfabética que o operador vê
+  // na coluna. Ordenar pela chave interna daria quase o mesmo resultado por
+  // acidente e outro qualquer no dia em que um rótulo mudar.
+  situacao: (l) => SITUACAO_ROTULO[situacaoDaCobranca(l)],
+  vencimento: (l) => l.data_vencimento,
+  pagamento: (l) => l.data_pagamento,
+  atraso: (l) => l.dias_de_atraso,
+};
+
+export const ORDEM_PADRAO_COBRANCA: { chave: ChaveOrdemCobranca; ascendente: boolean } = {
+  chave: 'vencimento',
+  ascendente: false,
+};
+
+function ehChaveOrdemCobranca(valor: string): valor is ChaveOrdemCobranca {
+  return Object.prototype.hasOwnProperty.call(ORDENADORES_COBRANCA, valor);
+}
+
+/** '-valor' → { valor, desc }. Mesma grafia do `?sort=` da `<AdmTable>` (o '-'
+ *  é descendente), aceitando um nível só: aqui não há Shift+clique para empilhar. */
+export function lerOrdemCobrancaDaUrl(bruto: string | null): { chave: ChaveOrdemCobranca; ascendente: boolean } {
+  const texto = (bruto ?? '').split(SEPARADOR_VALORES)[0]?.trim() ?? '';
+  if (texto === '') return ORDEM_PADRAO_COBRANCA;
+  const ascendente = !texto.startsWith('-');
+  const chave = ascendente ? texto.replace(/^\+/, '') : texto.slice(1);
+  // Chave desconhecida (link velho, coluna renomeada) volta ao default em vez de
+  // virar erro: um favorito do Felipe não pode quebrar uma tela de dinheiro.
+  return ehChaveOrdemCobranca(chave) ? { chave, ascendente } : ORDEM_PADRAO_COBRANCA;
+}
+
+/** NULO SEMPRE POR ÚLTIMO, nos dois sentidos — a regra herdada do `DataTable` do
+ *  /katmandu e mantida na `<AdmTable>`: inverter a direção não pode encher a
+ *  primeira página de linhas vazias. */
+function compararOrdemCobranca(a: string | number | null, b: string | number | null, sinal: number): number {
+  if (a == null && b == null) return 0;
+  if (a == null) return 1;
+  if (b == null) return -1;
+  if (typeof a === 'string' && typeof b === 'string') return a.localeCompare(b, 'pt-BR') * sinal;
+  if (a < b) return -1 * sinal;
+  if (a > b) return 1 * sinal;
+  return 0;
+}
+
+export function ordenarCobrancas(
+  linhas: readonly LinhaCobranca[],
+  ordem: { chave: ChaveOrdemCobranca; ascendente: boolean },
+): LinhaCobranca[] {
+  const pegar = ORDENADORES_COBRANCA[ordem.chave];
+  const sinal = ordem.ascendente ? 1 : -1;
+  return [...linhas].sort((a, b) => {
+    const r = compararOrdemCobranca(pegar(a), pegar(b), sinal);
+    // Desempate pela chave: sem ele, duas cobranças do mesmo dia trocam de lugar
+    // entre uma página e a seguinte, e a paginação passa a pular e repetir linha.
+    return r !== 0 ? r : b.pagamento_id - a.pagamento_id;
+  });
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

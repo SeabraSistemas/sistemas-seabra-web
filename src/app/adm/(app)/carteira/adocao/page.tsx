@@ -1,12 +1,14 @@
 import Link from 'next/link';
 
 import { EstadoVazio } from '@/components/adm/EstadoVazio';
+import { ExportBotoes } from '@/components/adm/ExportBotoes';
 import { KpiCard } from '@/components/adm/KpiCard';
 import { MatrizCoorte } from '@/components/adm/charts/MatrizCoorte';
 import {
   MINIMO_COORTE,
   TETO_COLUNAS,
   getCoorte,
+  linhasExportCoorte,
   montarMatriz,
   resumoAdocao,
   type CoortesDescartadas,
@@ -87,7 +89,10 @@ export default async function AdocaoPage() {
             )}
           </p>
         </div>
-        <p className="text-xs tabular-nums text-muted-foreground">lido agora, {formatarDataHora(agora)}</p>
+        <div className="flex flex-col items-end gap-1.5">
+          <p className="text-xs tabular-nums text-muted-foreground">lido agora, {formatarDataHora(agora)}</p>
+          <ExportBotoes tela="adocao" contagem={linhasExportCoorte(matriz).length} />
+        </div>
       </header>
 
       {matriz.faixas.length === 0 ? (

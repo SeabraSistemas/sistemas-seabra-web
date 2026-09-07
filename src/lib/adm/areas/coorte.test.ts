@@ -31,6 +31,7 @@ import {
   MINIMO_COORTE,
   TETO_COLUNAS,
   indiceMes,
+  linhasExportCoorte,
   mesEmCurso,
   montarMatriz,
   resumoAdocao,
@@ -619,6 +620,45 @@ describe('montarMatriz · entrada que não deveria existir', () => {
     const original = JSON.stringify(CARTEIRA);
     montarMatriz(CARTEIRA, AGORA);
     assert.equal(JSON.stringify(CARTEIRA), original);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// linhasExportCoorte — a matriz achatada para exportação
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('linhasExportCoorte', () => {
+  test('achata na ordem das faixas (mais nova primeiro) e, dentro dela, por mês crescente', () => {
+    const m = montarMatriz(CARTEIRA, AGORA);
+    const l = linhasExportCoorte(m);
+
+    // 2026-07 (2 contas) caiu pela regra 3; 2026-09 (entrou no mês em curso)
+    // caiu pela regra 2 — nenhuma das duas pode aparecer no arquivo.
+    // 2026-08 mês 1 É setembro, o mês em curso: existe na view, e mesmo assim
+    // não pode virar linha — é a regra 2 outra vez, agora dentro de uma faixa
+    // que por outro lado É válida.
+    assert.deepEqual(
+      l.map((r) => `${r.coorte}/${r.mes}`),
+      ['2026-08/0', '2026-06/0', '2026-06/1', '2026-06/2', '2026-03/0', '2026-03/1', '2026-03/2', '2026-03/3', '2026-03/4', '2026-03/5'],
+    );
+  });
+
+  test('cada linha carrega o denominador (tamanhoCoorte) ao lado do numerador — nunca um sozinho', () => {
+    const m = montarMatriz(CARTEIRA, AGORA);
+    const l = linhasExportCoorte(m);
+    const linha0603 = l.find((r) => r.coorte === '2026-06' && r.mes === 0);
+    assert.deepEqual(linha0603, { coorte: '2026-06', tamanhoCoorte: 5, mes: 0, ativos: 5, retencao: 1 });
+    const linha2603 = l.find((r) => r.coorte === '2026-03' && r.mes === 3);
+    assert.deepEqual(linha2603, { coorte: '2026-03', tamanhoCoorte: 20, mes: 3, ativos: 15, retencao: 0.75 });
+  });
+
+  test('total de linhas é a soma dos meses FECHADOS de cada faixa válida — 1 + 3 + 6', () => {
+    const m = montarMatriz(CARTEIRA, AGORA);
+    assert.equal(linhasExportCoorte(m).length, 10);
+  });
+
+  test('matriz vazia exporta lista vazia, não erro', () => {
+    assert.deepEqual(linhasExportCoorte(montarMatriz([], AGORA)), []);
   });
 });
 
