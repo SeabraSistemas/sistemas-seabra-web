@@ -191,7 +191,7 @@ export function Dossie({ dados }: { dados: DadosDossie }) {
               granularidade="dia"
               buracos="vazio"
               altura={240}
-              formatarValor={(v) => formatarLitros(v)}
+              formato="litros"
             />
           </div>
         </SecaoDossie>

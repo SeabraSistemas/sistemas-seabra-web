@@ -199,7 +199,7 @@ export default async function ReproducaoPage({
                 ]}
                 granularidade="mes"
                 buracos="zero"
-                formatarValor={(v) => formatarInteiro(v)}
+                formato="inteiro"
                 altura={280}
               />
             </div>

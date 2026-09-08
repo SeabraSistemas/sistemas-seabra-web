@@ -154,7 +154,7 @@ export default async function FinanceiroPage({
           <div className="mt-3">
             <DistribuicaoBarras
               dados={fin.despesaPorSetor}
-              formatarValor={formatarMoeda}
+              formato="moeda"
               larguraRotulo={150}
               mostrarPercentual
               mensagemVazia="Sem despesa lançada por setor nos últimos 12 meses."
@@ -323,7 +323,7 @@ function CustoNoTempo({ fin }: { fin: FinanceiroProdutor }) {
         series={[{ chave: 'custo_litro', nome: 'Custo por litro', pontos: fin.custoLitroSerie }]}
         granularidade="mes"
         buracos="vazio"
-        formatarValor={formatarMoeda}
+        formato="moeda"
         // Base zero é a regra para contagem e receita; aqui seria errada. Custo
         // por litro é razão e vive numa faixa estreita: ancorado em zero, R$ 2,10
         // contra R$ 1,70 vira um traço reto e a variação — que é a informação —

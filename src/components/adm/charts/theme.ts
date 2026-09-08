@@ -20,7 +20,16 @@
 
 import type { CSSProperties } from 'react';
 import type { FatiaDistribuicao } from '@/lib/adm/types';
-import { VAZIO, formatarDiaCurto, formatarInteiro, formatarMes, formatarNumero } from '@/lib/adm/format';
+import {
+  VAZIO,
+  formatarDiaCurto,
+  formatarInteiro,
+  formatarKg,
+  formatarLitros,
+  formatarMes,
+  formatarMoeda,
+  formatarNumero,
+} from '@/lib/adm/format';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Cores
@@ -303,13 +312,37 @@ export function eixoDePeriodos(periodos: readonly string[], granularidade: Granu
 
 /**
  * Formatador default de qualquer gráfico. Inteiro sai sem casa decimal (4.820
- * animais, não 4.820,0) e fracionário sai com uma. Quem precisa de R$ ou de L
- * passa `formatarValor` — os formatadores certos já existem em
- * src/lib/adm/format.ts e nenhum gráfico deve reimplementá-los.
+ * animais, não 4.820,0) e fracionário sai com uma.
  */
 export function formatarValorPadrao(valor: number | null | undefined): string {
   if (typeof valor !== 'number' || !Number.isFinite(valor)) return VAZIO;
   return Number.isInteger(valor) ? formatarInteiro(valor) : formatarNumero(valor, 1);
+}
+
+/**
+ * Quem precisa de R$, L ou kg passa `formato`, uma CHAVE — nunca a função de
+ * `src/lib/adm/format.ts` diretamente. `SerieTemporal` e `DistribuicaoBarras`
+ * são Client Components; uma página server passando `formatarValor={formatarMoeda}`
+ * manda uma FUNÇÃO pela fronteira RSC, e o React recusa em runtime com "Functions
+ * cannot be passed directly to Client Components" — 500 na tela, não aviso de
+ * build. Esse foi exatamente o defeito que existiu aqui antes desta chave
+ * existir: compilava, passava no lint, e quebrava a primeira vez que alguém
+ * abriu a tela com dado de verdade.
+ */
+export type ChaveFormato = 'inteiro' | 'moeda' | 'numero1' | 'litros' | 'litros0' | 'kg';
+
+const FORMATADORES_POR_CHAVE: Record<ChaveFormato, (valor: number) => string> = {
+  inteiro: formatarInteiro,
+  moeda: formatarMoeda,
+  numero1: (v) => formatarNumero(v, 1),
+  litros: (v) => formatarLitros(v),
+  litros0: (v) => formatarLitros(v, 0),
+  kg: (v) => formatarKg(v),
+};
+
+/** Resolve a chave na função — chamado DENTRO do componente client, nunca antes. */
+export function resolverFormatador(chave: ChaveFormato | undefined): (valor: number) => string {
+  return chave ? FORMATADORES_POR_CHAVE[chave] : formatarValorPadrao;
 }
 
 /** O recharts entrega o valor como number | string | array; aqui só number interessa. */

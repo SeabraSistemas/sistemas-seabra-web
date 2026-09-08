@@ -148,7 +148,7 @@ export default async function SanidadePage({
                 ]}
                 granularidade="mes"
                 buracos="zero"
-                formatarValor={(v) => formatarInteiro(v)}
+                formato="inteiro"
                 altura={260}
                 mensagemVazia="Nenhum óbito lançado em 12 meses"
               />

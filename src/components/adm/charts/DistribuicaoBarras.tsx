@@ -17,7 +17,8 @@ import {
   comoNumero,
   corSerie,
   encurtar,
-  formatarValorPadrao,
+  resolverFormatador,
+  type ChaveFormato,
 } from './theme';
 
 interface Props {
@@ -28,7 +29,12 @@ interface Props {
   altura?: number;
   /** Largura reservada aos rótulos. Suba para nome de propriedade, desça para UF. */
   larguraRotulo?: number;
-  formatarValor?: (valor: number) => string;
+  /**
+   * Default: inteiro sem casa, fracionário com uma. Passe 'moeda'/'litros'/etc —
+   * uma CHAVE, nunca a função de format.ts. Este é um Client Component; ver o
+   * comentário de `resolverFormatador` em ./theme.
+   */
+  formato?: ChaveFormato;
   /** Acrescenta o percentual do total ao lado do valor. */
   mostrarPercentual?: boolean;
   mensagemVazia?: string;
@@ -58,10 +64,12 @@ export function DistribuicaoBarras({
   maximo = 8,
   altura,
   larguraRotulo = 132,
-  formatarValor = formatarValorPadrao,
+  formato,
   mostrarPercentual = false,
   mensagemVazia = MENSAGEM_VAZIA,
 }: Props) {
+  const formatarValor = useMemo(() => resolverFormatador(formato), [formato]);
+
   const linhas = useMemo<LinhaBarra[]>(() => {
     const fatias = agregarOutros(dados, maximo);
     const total = fatias.reduce((acc, f) => acc + f.valor, 0);

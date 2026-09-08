@@ -28,10 +28,11 @@ import {
   corSerie,
   detectarGranularidade,
   eixoDePeriodos,
-  formatarValorPadrao,
+  resolverFormatador,
   rotuloEixo,
   rotuloExtenso,
   tracoSerie,
+  type ChaveFormato,
   type Granularidade,
 } from './theme';
 
@@ -62,8 +63,14 @@ interface Props {
    */
   buracos?: 'zero' | 'vazio';
   altura?: number;
-  /** Default: inteiro sem casa, fracionário com uma. Passe formatarMoeda/formatarLitros. */
-  formatarValor?: (valor: number) => string;
+  /**
+   * Default: inteiro sem casa, fracionário com uma. Passe 'moeda'/'litros'/etc —
+   * uma CHAVE, nunca a função de format.ts. Este é um Client Component; uma
+   * função vinda de uma página server quebra a serialização RSC em runtime
+   * ("Functions cannot be passed directly to Client Components"), não em build.
+   * Ver o comentário de `resolverFormatador` em ./theme.
+   */
+  formato?: ChaveFormato;
   /**
    * Default true. Série de contagem e de receita PRECISA da base zero, senão uma
    * variação de 2% ocupa a altura toda do card e parece um tombo. O caso
@@ -95,10 +102,12 @@ export function SerieTemporal({
   tipo,
   buracos = 'zero',
   altura = ALTURA_PADRAO,
-  formatarValor = formatarValorPadrao,
+  formato,
   ancorarEmZero = true,
   mensagemVazia = MENSAGEM_VAZIA,
 }: Props) {
+  const formatarValor = useMemo(() => resolverFormatador(formato), [formato]);
+
   // Um id por instância: duas séries temporais na mesma página compartilhariam o
   // <linearGradient> se o id fosse constante, e a segunda repintaria a primeira.
   const idBase = useId().replace(/:/g, '');

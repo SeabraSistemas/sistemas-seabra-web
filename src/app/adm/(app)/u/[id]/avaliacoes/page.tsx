@@ -270,7 +270,7 @@ function Evolucao({ aval }: { aval: LinhaAvaliacoes }) {
           series={[{ chave: 'pontuacao', nome: 'Pontuação média', pontos: serie }]}
           granularidade="mes"
           buracos="vazio"
-          formatarValor={(v) => formatarNumero(v, 1)}
+          formato="numero1"
           mensagemVazia="Sem avaliação pontuada no período."
         />
       </div>

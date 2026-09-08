@@ -128,7 +128,7 @@ export default async function VisaoGeralPage({
                   series={[{ chave: 'producao', nome: 'Litros do tanque', pontos: visao.producaoDiaria90d }]}
                   granularidade="dia"
                   buracos="vazio"
-                  formatarValor={(v) => formatarLitros(v, 0)}
+                  formato="litros0"
                 />
               </div>
             </section>

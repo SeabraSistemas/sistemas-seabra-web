@@ -241,7 +241,7 @@ export default async function CarteiraPage() {
         <Painel titulo="Receita mensal" descricao="últimos 12 meses">
           <SerieTemporal
             series={[{ chave: 'receita', nome: 'Receita', pontos: receitaMensal }]}
-            formatarValor={formatarMoeda}
+            formato="moeda"
             altura={200}
           />
         </Painel>
@@ -249,7 +249,7 @@ export default async function CarteiraPage() {
         <Painel titulo="Novos clientes por mês" descricao="últimos 12 meses">
           <SerieTemporal
             series={[{ chave: 'novos', nome: 'Novos clientes', pontos: novosClientesMensal }]}
-            formatarValor={formatarInteiro}
+            formato="inteiro"
             altura={200}
           />
         </Painel>
@@ -259,7 +259,7 @@ export default async function CarteiraPage() {
         <Painel titulo="Por segmento" descricao="propriedades">
           <DistribuicaoBarras
             dados={porSegmento.map(rotularSegmento)}
-            formatarValor={formatarInteiro}
+            formato="inteiro"
             mostrarPercentual
             larguraRotulo={140}
             mensagemVazia="Nenhuma propriedade classificada por segmento."
@@ -269,7 +269,7 @@ export default async function CarteiraPage() {
         <Painel titulo="Por estado" descricao="propriedades">
           <DistribuicaoBarras
             dados={porEstado}
-            formatarValor={formatarInteiro}
+            formato="inteiro"
             mostrarPercentual
             // UF cabe em pouco espaço; a cauda longa vira "Outros (n)" sozinha.
             larguraRotulo={64}
@@ -280,7 +280,7 @@ export default async function CarteiraPage() {
 
       {porPlano.length > 0 && (
         <Painel titulo="Por plano" descricao="contas">
-          <DistribuicaoBarras dados={porPlano} formatarValor={formatarInteiro} mostrarPercentual larguraRotulo={160} />
+          <DistribuicaoBarras dados={porPlano} formato="inteiro" mostrarPercentual larguraRotulo={160} />
         </Painel>
       )}
 
