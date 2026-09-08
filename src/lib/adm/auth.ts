@@ -170,3 +170,39 @@ export const OPCOES_COOKIE_LIMPEZA = {
   path: '/adm',
   maxAge: 0,
 };
+
+/**
+ * Recusa POST vindo de outro site (login e logout, os dois únicos POSTs do
+ * /adm sem sessão para conferir). O cookie é sameSite 'strict', então um form
+ * de terceiro nunca autentica ninguém — mas sem esta checagem qualquer página
+ * do mundo dispara tentativa em nome do visitante, queimando o rate limit
+ * dele e enchendo a auditoria de ruído.
+ *
+ * MORA AQUI, e não duplicada em cada route.ts: existiu como duas cópias
+ * idênticas (login e logout) até o dia em que só o login ganhou o ajuste do
+ * `Origin: null` abaixo — o logout ficou com a versão velha, e "Sair" passou
+ * a devolver 403 pro próprio Felipe sem ninguém perceber que era o MESMO bug
+ * já corrigido em outro lugar. Duas cópias de uma checagem de segurança são
+ * duas chances de UMA delas ficar pra trás.
+ *
+ * Origin ausente é aceito: navegador antigo omite o header em POST de mesma
+ * origem, e recusar aí trancaria o Felipe para fora por causa do navegador.
+ *
+ * `Origin: null` (a STRING literal "null", não o header ausente) é a mesma
+ * história com outra cara: Chrome manda esse valor em certas configurações de
+ * proteção de rastreamento, inclusive em POST de mesma origem — confirmado em
+ * produção (aba normal E anônima, ambas com `origin=null` no log). `new
+ * URL('null')` lançaria e cairia no `catch`, recusando um POST legítimo.
+ */
+export function mesmaOrigem(request: Request, url: URL): boolean {
+  const origem = request.headers.get('origin');
+  if (!origem || origem === 'null') return true;
+  try {
+    // Atrás do proxy da Vercel o host real chega em x-forwarded-host; comparar
+    // com url.host puro daria falso negativo em produção.
+    const host = request.headers.get('x-forwarded-host') ?? request.headers.get('host') ?? url.host;
+    return new URL(origem).host === host;
+  } catch {
+    return false;
+  }
+}

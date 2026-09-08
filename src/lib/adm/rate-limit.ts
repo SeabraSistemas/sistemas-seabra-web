@@ -64,7 +64,7 @@ const GLOBAL_BLOQUEIO_MS = 30 * 60 * 1000;
  */
 export const PISO_LATENCIA_MS = 400;
 
-export type MotivoTentativa = 'ok' | 'senha' | 'usuario' | 'totp' | 'bloqueado' | 'config';
+export type MotivoTentativa = 'ok' | 'senha' | 'usuario' | 'gesto' | 'bloqueado' | 'config';
 
 export interface BloqueioLogin {
   bloqueado: boolean;

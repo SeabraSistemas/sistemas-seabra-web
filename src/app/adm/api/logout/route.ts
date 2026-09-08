@@ -1,6 +1,6 @@
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
-import { ADM_COOKIE, OPCOES_COOKIE_LIMPEZA, verificarSessao } from '@/lib/adm/auth';
+import { ADM_COOKIE, OPCOES_COOKIE_LIMPEZA, mesmaOrigem, verificarSessao } from '@/lib/adm/auth';
 import { extrairIp, extrairUserAgent, registrarAcesso } from '@/lib/adm/audit';
 
 /**
@@ -19,17 +19,6 @@ export const dynamic = 'force-dynamic';
 
 /** sid = randomBytes(16).toString('hex') em auth.ts — 32 hexadecimais, nada mais. */
 const FORMATO_SID = /^[0-9a-f]{32}$/;
-
-function mesmaOrigem(request: Request, url: URL): boolean {
-  const origem = request.headers.get('origin');
-  if (!origem) return true;
-  try {
-    const host = request.headers.get('x-forwarded-host') ?? request.headers.get('host') ?? url.host;
-    return new URL(origem).host === host;
-  } catch {
-    return false;
-  }
-}
 
 export async function POST(request: Request) {
   const url = new URL(request.url);
