@@ -9,6 +9,7 @@ const LINKS = [
   { href: '/katmandu/pesagem', label: 'Pesagem' },
   { href: '/katmandu/lote', label: 'Lote' },
   { href: '/katmandu/movimentar', label: 'Movimentar' },
+  { href: '/katmandu/categoria', label: 'Categoria' },
   { href: '/katmandu/baixa', label: 'Baixa' },
 ];
 

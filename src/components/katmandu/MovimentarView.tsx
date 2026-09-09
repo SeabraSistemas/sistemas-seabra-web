@@ -4,30 +4,55 @@ import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FilterSelect } from './FilterSelect';
 import { FilterMultiSelect } from './FilterMultiSelect';
 import { MetricCard } from './MetricCard';
 import { DataTable, type DataTableColumn } from './DataTable';
 import { DESTINO_LABEL, DESTINO_ORDEM } from '@/lib/katmandu/filters';
-import { SEM_LOCAL, SEM_LOCAL_LABEL, type AnimalRebanho } from '@/lib/katmandu/types';
+import { SEM_LOCAL, SEM_LOCAL_LABEL, SEM_LOTE, SEM_LOTE_LABEL, type AnimalRebanho } from '@/lib/katmandu/types';
 
 type Estado = 'ideia' | 'confirmando' | 'enviando' | 'feito' | 'erro';
+type Modo = 'local' | 'lote';
 
-/**
- * Sentinelas só desta tela (o servidor recebe IDs, não filtros): permitem
- * marcar explicitamente "os que não têm lote/destino preenchido", que de
- * outro modo só entrariam pela ausência de filtro. Mesmo papel do SEM_LOCAL,
- * mas sem precisar cruzar a fronteira cliente/servidor.
- */
-const SEM_LOTE = '__sem_lote__';
+/** Sentinela só desta tela: marca explicitamente "os que não têm destino preenchido" (server recebe IDs, não filtros). */
 const SEM_DESTINO = '__sem_destino__';
 
 /**
- * Só oferece a sentinela "Sem lote"/"Sem destino" quando existe pelo menos um
- * valor real pra contrastar: hoje a coluna Destino está 100% vazia na
- * planilha, e um filtro com a única opção "Sem destino" seria um clique que
- * não recorta nada (com a lista vazia o filtro aparece desabilitado, que é a
- * leitura honesta de "não há o que filtrar aqui").
+ * Descreve o eixo principal da movimentação (local ou lote) e o eixo
+ * secundário usado só pra refinar o recorte dentro dele — os dois papéis se
+ * invertem conforme `modo`, mas a mecânica é a mesma dos dois lados.
+ */
+function config(modo: Modo) {
+  return modo === 'local'
+    ? {
+        campo: 'local' as const,
+        labelPrincipal: 'Local',
+        labelSecundario: 'Lote',
+        principalDe: (a: AnimalRebanho) => a.local,
+        secundarioDe: (a: AnimalRebanho) => a.lote,
+        sentinelaPrincipal: SEM_LOCAL,
+        sentinelaPrincipalLabel: SEM_LOCAL_LABEL,
+        sentinelaSecundaria: SEM_LOTE,
+        sentinelaSecundariaLabel: SEM_LOTE_LABEL,
+      }
+    : {
+        campo: 'lote' as const,
+        labelPrincipal: 'Lote',
+        labelSecundario: 'Local',
+        principalDe: (a: AnimalRebanho) => a.lote,
+        secundarioDe: (a: AnimalRebanho) => a.local,
+        sentinelaPrincipal: SEM_LOTE,
+        sentinelaPrincipalLabel: SEM_LOTE_LABEL,
+        sentinelaSecundaria: SEM_LOCAL,
+        sentinelaSecundariaLabel: SEM_LOCAL_LABEL,
+      };
+}
+
+/**
+ * Só oferece a sentinela "Sem X" quando existe pelo menos um valor real pra
+ * contrastar: com a lista de opções vazia o filtro aparece desabilitado, que
+ * é a leitura honesta de "não há o que filtrar aqui".
  */
 function comSentinela(reais: string[], sentinela: string, temVazios: boolean): string[] {
   return reais.length > 0 && temVazios ? [...reais, sentinela] : reais;
@@ -40,18 +65,27 @@ function contar(valores: string[]): Record<string, number> {
 }
 
 /**
- * Movimentação por recorte: local de origem => lote(s) => destino(s), em
- * cascata (cada filtro só oferece o que existe dentro do anterior). Um mesmo
- * pasto costuma misturar lotes e destinos diferentes, e mover o pasto inteiro
- * junto era justamente o que não dava pra fazer antes.
+ * Movimentação por recorte: local (ou lote) de origem => lote/local => destino(s)
+ * de desempenho, em cascata (cada filtro só oferece o que existe dentro do
+ * anterior). "Por local" move o pasto/baia inteiro (ou uma fatia dele por
+ * lote/destino); "Por lote" faz o mesmo trocando o eixo principal pro lote.
  *
  * Filtro vazio = "todos" (convenção dos outros filtros do dashboard), então
- * escolher só o local reproduz o comportamento antigo de mover tudo.
+ * escolher só a origem reproduz o comportamento de mover tudo que está nela.
  */
-export function MovimentarView({ animais, locais }: { animais: AnimalRebanho[]; locais: string[] }) {
+export function MovimentarView({
+  animais,
+  locais,
+  lotes: lotesDisponiveis,
+}: {
+  animais: AnimalRebanho[];
+  locais: string[];
+  lotes: string[];
+}) {
   const router = useRouter();
+  const [modo, setModo] = useState<Modo>('local');
   const [origem, setOrigem] = useState('');
-  const [lotes, setLotes] = useState<string[]>([]);
+  const [secundarios, setSecundarios] = useState<string[]>([]);
   const [destinos, setDestinos] = useState<string[]>([]);
   const [para, setPara] = useState('');
   const [verAnimais, setVerAnimais] = useState(false);
@@ -59,51 +93,60 @@ export function MovimentarView({ animais, locais }: { animais: AnimalRebanho[]; 
   const [resultado, setResultado] = useState<{ movidos: number; ignorados: number; logFalhou?: boolean } | null>(null);
   const [erro, setErro] = useState<string | null>(null);
 
+  const cfg = useMemo(() => config(modo), [modo]);
+  const opcoesPrincipais = modo === 'local' ? locais : lotesDisponiveis;
+
   const ativos = useMemo(() => animais.filter((a) => a.baixa == null), [animais]);
 
-  const contagemLocal = useMemo(() => contar(ativos.map((a) => a.local || SEM_LOCAL)), [ativos]);
+  const contagemPrincipal = useMemo(
+    () => contar(ativos.map((a) => cfg.principalDe(a) || cfg.sentinelaPrincipal)),
+    [ativos, cfg],
+  );
 
   const opcoesOrigem = useMemo(() => {
-    const comAnimais = locais.filter((l) => (contagemLocal[l] ?? 0) > 0);
-    return (contagemLocal[SEM_LOCAL] ?? 0) > 0 ? [...comAnimais, SEM_LOCAL] : comAnimais;
-  }, [locais, contagemLocal]);
-  const opcoesPara = useMemo(() => locais.filter((l) => l !== origem), [locais, origem]);
+    const comAnimais = opcoesPrincipais.filter((l) => (contagemPrincipal[l] ?? 0) > 0);
+    return (contagemPrincipal[cfg.sentinelaPrincipal] ?? 0) > 0 ? [...comAnimais, cfg.sentinelaPrincipal] : comAnimais;
+  }, [opcoesPrincipais, contagemPrincipal, cfg]);
+  const opcoesPara = useMemo(() => opcoesPrincipais.filter((l) => l !== origem), [opcoesPrincipais, origem]);
 
   // Cascata: cada nível parte do conjunto já estreitado pelo nível acima.
   const naOrigem = useMemo(
-    () => (origem ? ativos.filter((a) => (a.local || SEM_LOCAL) === origem) : []),
-    [ativos, origem],
+    () => (origem ? ativos.filter((a) => (cfg.principalDe(a) || cfg.sentinelaPrincipal) === origem) : []),
+    [ativos, origem, cfg],
   );
 
-  const contagemLote = useMemo(() => contar(naOrigem.map((a) => a.lote ?? SEM_LOTE)), [naOrigem]);
-  const opcoesLote = useMemo(() => {
-    const nomes = Object.keys(contagemLote)
-      .filter((l) => l !== SEM_LOTE)
+  const contagemSecundaria = useMemo(
+    () => contar(naOrigem.map((a) => cfg.secundarioDe(a) ?? cfg.sentinelaSecundaria)),
+    [naOrigem, cfg],
+  );
+  const opcoesSecundarias = useMemo(() => {
+    const nomes = Object.keys(contagemSecundaria)
+      .filter((l) => l !== cfg.sentinelaSecundaria)
       .sort();
-    return comSentinela(nomes, SEM_LOTE, Boolean(contagemLote[SEM_LOTE]));
-  }, [contagemLote]);
+    return comSentinela(nomes, cfg.sentinelaSecundaria, Boolean(contagemSecundaria[cfg.sentinelaSecundaria]));
+  }, [contagemSecundaria, cfg]);
 
-  const noLote = useMemo(
-    () => naOrigem.filter((a) => lotes.length === 0 || lotes.includes(a.lote ?? SEM_LOTE)),
-    [naOrigem, lotes],
+  const noSecundario = useMemo(
+    () => naOrigem.filter((a) => secundarios.length === 0 || secundarios.includes(cfg.secundarioDe(a) ?? cfg.sentinelaSecundaria)),
+    [naOrigem, secundarios, cfg],
   );
 
-  const contagemDestino = useMemo(() => contar(noLote.map((a) => a.destino ?? SEM_DESTINO)), [noLote]);
+  const contagemDestino = useMemo(() => contar(noSecundario.map((a) => a.destino ?? SEM_DESTINO)), [noSecundario]);
   const opcoesDestino = useMemo(() => {
     const presentes = DESTINO_ORDEM.filter((d) => contagemDestino[d]);
     return comSentinela(presentes, SEM_DESTINO, Boolean(contagemDestino[SEM_DESTINO]));
   }, [contagemDestino]);
 
   const selecionados = useMemo(
-    () => noLote.filter((a) => destinos.length === 0 || destinos.includes(a.destino ?? SEM_DESTINO)),
-    [noLote, destinos],
+    () => noSecundario.filter((a) => destinos.length === 0 || destinos.includes(a.destino ?? SEM_DESTINO)),
+    [noSecundario, destinos],
   );
 
-  function nomeLocal(l: string): string {
-    return l === SEM_LOCAL ? SEM_LOCAL_LABEL : l;
+  function nomePrincipal(l: string): string {
+    return l === cfg.sentinelaPrincipal ? cfg.sentinelaPrincipalLabel : l;
   }
-  function nomeLote(l: string): string {
-    return l === SEM_LOTE ? 'Sem lote' : l;
+  function nomeSecundario(l: string): string {
+    return l === cfg.sentinelaSecundaria ? cfg.sentinelaSecundariaLabel : l;
   }
   function nomeDestino(d: string): string {
     return d === SEM_DESTINO ? 'Sem destino' : (DESTINO_LABEL[d as keyof typeof DESTINO_LABEL] ?? d);
@@ -112,27 +155,45 @@ export function MovimentarView({ animais, locais }: { animais: AnimalRebanho[]; 
   /** "lotes A, B · destino Melhor" — só o que o usuário de fato restringiu. */
   const recorte = useMemo(() => {
     const partes: string[] = [];
-    if (lotes.length > 0) partes.push(`${lotes.length === 1 ? 'lote' : 'lotes'} ${lotes.map(nomeLote).join(', ')}`);
+    if (secundarios.length > 0) {
+      const rotulo = secundarios.length === 1 ? cfg.labelSecundario.toLowerCase() : `${cfg.labelSecundario.toLowerCase()}s`;
+      const nomes = secundarios.map((s) => (s === cfg.sentinelaSecundaria ? cfg.sentinelaSecundariaLabel : s));
+      partes.push(`${rotulo} ${nomes.join(', ')}`);
+    }
     if (destinos.length > 0) {
       partes.push(`${destinos.length === 1 ? 'destino' : 'destinos'} ${destinos.map(nomeDestino).join(', ')}`);
     }
     return partes.join(' · ');
-  }, [lotes, destinos]);
+  }, [secundarios, destinos, cfg]);
+
+  function trocarModo(v: string) {
+    setModo(v === 'lote' ? 'lote' : 'local');
+    setOrigem('');
+    setSecundarios([]);
+    setDestinos([]);
+    setPara('');
+    setVerAnimais(false);
+    setEstado('ideia');
+    setResultado(null);
+    setErro(null);
+  }
 
   function trocarOrigem(v: string) {
     setOrigem(v);
-    setLotes([]);
+    setSecundarios([]);
     setDestinos([]);
     if (v === para) setPara('');
     setEstado('ideia');
   }
 
-  function trocarLotes(v: string[]) {
-    setLotes(v);
-    // Um destino escolhido antes pode não existir no novo recorte de lotes —
-    // mantê-lo marcado deixaria a seleção vazia sem o usuário entender por quê.
+  function trocarSecundarios(v: string[]) {
+    setSecundarios(v);
+    // Um destino escolhido antes pode não existir no novo recorte — mantê-lo
+    // marcado deixaria a seleção vazia sem o usuário entender por quê.
     const permitidos = new Set<string>(
-      naOrigem.filter((a) => v.length === 0 || v.includes(a.lote ?? SEM_LOTE)).map((a) => a.destino ?? SEM_DESTINO),
+      naOrigem
+        .filter((a) => v.length === 0 || v.includes(cfg.secundarioDe(a) ?? cfg.sentinelaSecundaria))
+        .map((a) => a.destino ?? SEM_DESTINO),
     );
     setDestinos((atual) => atual.filter((d) => permitidos.has(d)));
     setEstado('ideia');
@@ -140,7 +201,7 @@ export function MovimentarView({ animais, locais }: { animais: AnimalRebanho[]; 
 
   function reiniciar() {
     setOrigem('');
-    setLotes([]);
+    setSecundarios([]);
     setDestinos([]);
     setPara('');
     setVerAnimais(false);
@@ -156,7 +217,7 @@ export function MovimentarView({ animais, locais }: { animais: AnimalRebanho[]; 
       const res = await fetch('/api/katmandu/movimentar', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ origem, destino: para, ids: selecionados.map((a) => a.idAnimal) }),
+        body: JSON.stringify({ campo: cfg.campo, origem, destino: para, ids: selecionados.map((a) => a.idAnimal) }),
       });
       const data = (await res.json()) as {
         ok: boolean;
@@ -181,7 +242,12 @@ export function MovimentarView({ animais, locais }: { animais: AnimalRebanho[]; 
 
   const colunas: DataTableColumn<AnimalRebanho>[] = [
     { key: 'id', header: 'N° manejo', cell: (a) => a.idAnimal, sortValue: (a) => a.idAnimal },
-    { key: 'lote', header: 'Lote', cell: (a) => a.lote ?? '—', sortValue: (a) => a.lote },
+    {
+      key: 'secundario',
+      header: cfg.labelSecundario,
+      cell: (a) => cfg.secundarioDe(a) ?? '—',
+      sortValue: (a) => cfg.secundarioDe(a),
+    },
     {
       key: 'destino',
       header: 'Destino',
@@ -194,9 +260,17 @@ export function MovimentarView({ animais, locais }: { animais: AnimalRebanho[]; 
   return (
     <div className="flex flex-col gap-6">
       <div className="rounded-xl border border-border bg-card p-4 sm:p-6">
+        <Tabs value={modo} onValueChange={trocarModo} className="mb-4">
+          <TabsList>
+            <TabsTrigger value="local">Por local</TabsTrigger>
+            <TabsTrigger value="lote">Por lote</TabsTrigger>
+          </TabsList>
+        </Tabs>
+
         <p className="mb-4 text-sm text-muted-foreground">
-          Move os animais ativos de um local pra outro. Sem marcar lote ou destino, vai o local inteiro; marcando, vão
-          só os animais do recorte. Animais com baixa não são afetados.
+          Move os animais ativos de um {cfg.labelPrincipal.toLowerCase()} pra outro. Sem marcar{' '}
+          {cfg.labelSecundario.toLowerCase()} ou destino, vai o {cfg.labelPrincipal.toLowerCase()} inteiro; marcando,
+          vão só os animais do recorte. Animais com baixa não são afetados.
         </p>
 
         <div className="flex flex-wrap items-end gap-4">
@@ -205,16 +279,16 @@ export function MovimentarView({ animais, locais }: { animais: AnimalRebanho[]; 
             value={origem}
             onChange={trocarOrigem}
             options={opcoesOrigem}
-            labelDe={(l) => `${nomeLocal(l)} (${contagemLocal[l] ?? 0})`}
+            labelDe={(l) => `${nomePrincipal(l)} (${contagemPrincipal[l] ?? 0})`}
             placeholder="Selecione"
             triggerClassName="w-full sm:w-56"
           />
           <FilterMultiSelect
-            label="Lote"
-            values={lotes}
-            onChange={trocarLotes}
-            options={opcoesLote}
-            labelDe={(l) => `${nomeLote(l)} (${contagemLote[l] ?? 0})`}
+            label={cfg.labelSecundario}
+            values={secundarios}
+            onChange={trocarSecundarios}
+            options={opcoesSecundarias}
+            labelDe={(l) => `${nomeSecundario(l)} (${contagemSecundaria[l] ?? 0})`}
             triggerClassName="w-full sm:w-44"
           />
           <FilterMultiSelect
@@ -244,7 +318,7 @@ export function MovimentarView({ animais, locais }: { animais: AnimalRebanho[]; 
         {origem && (
           <div className="mt-4 grid grid-cols-2 gap-3 sm:flex sm:flex-wrap">
             <div className="sm:w-44">
-              <MetricCard id="ativos" label={`Ativos em ${nomeLocal(origem)}`} value={String(naOrigem.length)} />
+              <MetricCard id="ativos" label={`Ativos em ${nomePrincipal(origem)}`} value={String(naOrigem.length)} />
             </div>
             <div className="sm:w-44">
               <MetricCard id="selecionados" label="Vão mover" value={String(selecionados.length)} />
@@ -281,7 +355,7 @@ export function MovimentarView({ animais, locais }: { animais: AnimalRebanho[]; 
             <div className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-background p-3 text-sm">
               <span>
                 Mover <strong className="tabular-nums">{selecionados.length}</strong> animais ativos de{' '}
-                <strong>{nomeLocal(origem)}</strong>
+                <strong>{nomePrincipal(origem)}</strong>
                 {recorte && <> ({recorte})</>} pra <strong>{para}</strong>?
               </span>
               <div className="flex gap-2">
@@ -304,11 +378,11 @@ export function MovimentarView({ animais, locais }: { animais: AnimalRebanho[]; 
           {estado === 'feito' && resultado && (
             <div className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-background p-3 text-sm">
               <span>
-                {resultado.movidos} animais movidos de <strong>{nomeLocal(origem)}</strong> pra <strong>{para}</strong>.
+                {resultado.movidos} animais movidos de <strong>{nomePrincipal(origem)}</strong> pra <strong>{para}</strong>.
                 {resultado.ignorados > 0 && (
                   <span className="ml-1 text-muted-foreground">
-                    {resultado.ignorados} ficaram de fora — mudaram de local ou receberam baixa na planilha depois que
-                    esta tela carregou.
+                    {resultado.ignorados} ficaram de fora — mudaram de {cfg.labelPrincipal.toLowerCase()} ou receberam
+                    baixa na planilha depois que esta tela carregou.
                   </span>
                 )}
                 {resultado.logFalhou && (

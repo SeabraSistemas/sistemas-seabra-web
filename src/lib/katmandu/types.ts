@@ -20,6 +20,10 @@ export type Sexo = 'macho' | 'femea' | null;
 export const SEM_LOCAL = '__sem_local__';
 export const SEM_LOCAL_LABEL = 'Sem local';
 
+/** Mesmo papel de SEM_LOCAL/SEM_LOCAL_LABEL, pro Lote — usado como origem/destino em Movimentar por lote. */
+export const SEM_LOTE = '__sem_lote__';
+export const SEM_LOTE_LABEL = 'Sem lote';
+
 /** Subgrupo de desempenho (campo "Destino" da Pesagem): melhor/mediano/pior. */
 export type Destino = 'melhor' | 'mediano' | 'pior' | null;
 

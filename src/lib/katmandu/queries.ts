@@ -43,7 +43,7 @@ function destinoDe(raw: string | undefined): Destino {
   if (!v) return null;
   if (v.includes('melhor') || v.includes('cabeceira')) return 'melhor';
   if (v.includes('pior') || v.includes('fundo')) return 'pior';
-  if (v.includes('medi')) return 'mediano';
+  if (v.includes('medi') || v.includes('meio')) return 'mediano';
   return null;
 }
 
@@ -53,7 +53,7 @@ function destinoDe(raw: string | undefined): Destino {
  * "8f6ab158") em vez do nome resolvido — a aba `Lotes` é o lookup que faltava
  * aplicar. Resolver aqui, na leitura, corrige nas três abas de uma vez.
  */
-async function getLoteMap(): Promise<Map<string, string>> {
+export async function getLoteMap(): Promise<Map<string, string>> {
   const rows = await getSheetValues('Lotes');
   const map = new Map<string, string>();
   if (!rows) return map;
@@ -66,11 +66,31 @@ async function getLoteMap(): Promise<Map<string, string>> {
   return map;
 }
 
-/** Nome do lote já resolvido passa direto; um ID cru conhecido na aba `Lotes` vira o nome (coluna B). */
-function resolverLote(raw: string | undefined, loteMap: Map<string, string>): string | null {
+/**
+ * Mesmo esquema de `getLoteMap`, pra aba `local` ("ID local" -> "Local").
+ * RebanhoProd/Pesagem/Baixa guardavam o nome do local direto até a aba
+ * `local` ganhar uma coluna de ID própria; linhas gravadas depois disso
+ * trazem o ID cru (ex: "vcbdho0026") em vez do nome — resolver aqui cobre as
+ * duas gerações de dado na mesma coluna.
+ */
+export async function getLocalMap(): Promise<Map<string, string>> {
+  const rows = await getSheetValues('local');
+  const map = new Map<string, string>();
+  if (!rows) return map;
+  const [, ...body] = rows;
+  for (const [chaveRaw, valorRaw] of body) {
+    const chave = parseText(chaveRaw);
+    const valor = parseText(valorRaw);
+    if (chave && valor) map.set(chave, valor);
+  }
+  return map;
+}
+
+/** Valor já resolvido (nome) passa direto; uma chave crua conhecida no mapa vira o nome. */
+export function resolverComMapa(raw: string | undefined, mapa: Map<string, string>): string | null {
   const texto = parseText(raw);
   if (!texto) return null;
-  return loteMap.get(texto) ?? texto;
+  return mapa.get(texto) ?? texto;
 }
 
 /**
@@ -81,7 +101,11 @@ function resolverLote(raw: string | undefined, loteMap: Map<string, string>): st
  * RebanhoProd conserta isso e economiza duas leituras de aba por request.
  */
 export async function getRebanho(): Promise<AnimalRebanho[]> {
-  const [rows, loteMap] = await Promise.all([getSheetValues('RebanhoProd'), getLoteMap()]);
+  const [rows, loteMap, localMap] = await Promise.all([
+    getSheetValues('RebanhoProd'),
+    getLoteMap(),
+    getLocalMap(),
+  ]);
 
   return toObjects(rows).map((r) => {
     const idAnimal = parseText(r['ID animal']) ?? '';
@@ -102,16 +126,20 @@ export async function getRebanho(): Promise<AnimalRebanho[]> {
       destino: destinoDe(r['Destino']),
       entradaEngorda: parseText(r['Entrada engorda']),
       diasEmEngorda: parseNumber(r['Dias em engorda']),
-      lote: resolverLote(r['Lote'], loteMap),
+      lote: resolverComMapa(r['Lote'], loteMap),
       pdi: parseNumber(r['pdi']),
       ultimoManejo: parseText(r['data_ultima_pesagem']),
-      local: parseText(r['local']),
+      local: resolverComMapa(r['local'], localMap),
     };
   }).filter((a) => a.idAnimal !== '');
 }
 
 export async function getPesagem(): Promise<PesagemRegistro[]> {
-  const [rows, loteMap] = await Promise.all([getSheetValues('Pesagem'), getLoteMap()]);
+  const [rows, loteMap, localMap] = await Promise.all([
+    getSheetValues('Pesagem'),
+    getLoteMap(),
+    getLocalMap(),
+  ]);
   return toObjects(rows).map((r) => {
     const diasVida = parseNumber(r['Dias de vida']);
     return {
@@ -126,26 +154,30 @@ export async function getPesagem(): Promise<PesagemRegistro[]> {
       gpd: parseNumber(r['GPD']),
       pdi: parseNumber(r['pdi']),
       gpdi: parseNumber(r['gpdi']),
-      lote: resolverLote(r['Lote'], loteMap),
+      lote: resolverComMapa(r['Lote'], loteMap),
       destino: destinoDe(r['destino']),
       dataPesagem: parseText(r['Data da pesagem']),
       venda: parseText(r['Venda']),
       manejos: parseText(r['Manejos']),
       mesesVida: diasVida == null ? null : diasVida / 30,
-      local: parseText(r['local']),
+      local: resolverComMapa(r['local'], localMap),
     };
   }).filter((p) => p.idAnimal !== '');
 }
 
 export async function getBaixas(): Promise<Baixa[]> {
-  const [rows, loteMap] = await Promise.all([getSheetValues('Baixa'), getLoteMap()]);
+  const [rows, loteMap, localMap] = await Promise.all([
+    getSheetValues('Baixa'),
+    getLoteMap(),
+    getLocalMap(),
+  ]);
   return toObjects(rows).map((r) => ({
     idAnimal: parseText(r['ID animal']) ?? '',
     data: parseText(r['Data da baixa']),
     causa: parseText(r['Causa da baixa']),
     categoria: parseText(r['Categoria na baixa']),
-    lote: resolverLote(r['Lote'], loteMap),
-    local: parseText(r['local']),
+    lote: resolverComMapa(r['Lote'], loteMap),
+    local: resolverComMapa(r['local'], localMap),
     obs: parseText(r['OBS']),
   })).filter((b) => b.idAnimal !== '');
 }
