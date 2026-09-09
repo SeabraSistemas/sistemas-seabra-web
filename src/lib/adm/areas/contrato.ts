@@ -93,6 +93,26 @@ export interface LinhaReproducao {
   serie_mensal: PontoSerieNomeada[] | null;
   /** Funil: rótulos 'Coberturas', 'Diagnósticos', 'Positivos', 'Partos'. */
   funil: FatiaDistribuicao[] | null;
+  /**
+   * Fêmeas ativas cuja cobertura mais recente ainda não tem DG lançado depois
+   * dela, até o teto biológico de 155 dias. Ordenado por dias_desde_cobertura
+   * decrescente (a mais atrasada primeiro) — ver o comentário da view em
+   * adm_07_areas.sql para a regra exata.
+   */
+  dg_pendentes: LinhaDgPendente[] | null;
+}
+
+/** Um item da lista de DG pendente — ver `LinhaReproducao.dg_pendentes`. */
+export interface LinhaDgPendente {
+  numero_animal: string;
+  nome_animal: string | null;
+  /** Nome da baia, ou null quando o animal não tem baia cadastrada. */
+  baia: string | null;
+  /** 'YYYY-MM-DD' */
+  data_ultima_cobertura: string;
+  dias_desde_cobertura: number;
+  /** 'Monta controlada' | 'Monta livre' | 'Inseminação' | 'Transferência de embrião' */
+  tipo_cobertura: string;
 }
 
 export interface LinhaSanidade {

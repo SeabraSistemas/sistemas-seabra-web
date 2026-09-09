@@ -156,6 +156,33 @@ create index concurrently if not exists idx_rebanho_setor_id
 
 
 -- ############################################################################
+-- BLOCO G -- Reproducao: lista de DG pendente (adm.propriedade_reproducao)
+--
+-- A view precisa, para CADA femea ativa, a cobertura MAIS RECENTE entre as
+-- quatro formas (monta controlada, monta livre, inseminacao, TE) e se ja existe
+-- diagnostico DEPOIS dela. Sem indice nenhuma das quatro tabelas de cobertura
+-- tem coluna alem da PK -- e `diagnostico_gestacao` tambem nao. Isso vira seq
+-- scan nas quatro tabelas de cobertura POR FEMEA da propriedade (o lateral
+-- correlacionado em adm_07), nao uma vez por pagina.
+-- ############################################################################
+
+create index concurrently if not exists idx_monta_controlada_femea
+  on public.monta_controlada (animal_id_femea, data_da_cobertura desc);
+
+create index concurrently if not exists idx_monta_livre_femea
+  on public.monta_livre (animal_id_femea, data_entrada_reprodutor desc);
+
+create index concurrently if not exists idx_inseminacao_femea
+  on public.inseminacao (animal_id_femea, data_inseminacao desc);
+
+create index concurrently if not exists idx_transferencia_embriao_receptora_data
+  on public.transferencia_embriao (receptora_id, data_transferencia desc);
+
+create index concurrently if not exists idx_diagnostico_gestacao_animal
+  on public.diagnostico_gestacao (animal_id, data_diagnostico desc);
+
+
+-- ############################################################################
 -- BLOCO E -- estatisticas
 --
 -- Indice novo que o planner nao conhece pode simplesmente nao ser escolhido.
@@ -199,7 +226,7 @@ select c.relname as indice_invalido
  order by 1;
 
 -- F2. Os indices deste arquivo existem, e os dois parciais de localizacao agora
--- apontam para 'ativo' minusculo. Esperado: 13 linhas, e nenhuma com 'Ativo'.
+-- apontam para 'ativo' minusculo. Esperado: 18 linhas, e nenhuma com 'Ativo'.
 select c.relname as indice, pg_get_indexdef(c.oid) as definicao
   from pg_class c
   join pg_namespace n on n.oid = c.relnamespace
@@ -211,7 +238,9 @@ select c.relname as indice, pg_get_indexdef(c.oid) as definicao
      'idx_manejo_propriedade_data',
      'idx_controle_leiteiro_propriedade_created', 'idx_producao_diaria_propriedade_created',
      'idx_manejo_propriedade_created', 'idx_pesagem_propriedade_created',
-     'idx_rebanho_baia_id', 'idx_rebanho_setor_id')
+     'idx_rebanho_baia_id', 'idx_rebanho_setor_id',
+     'idx_monta_controlada_femea', 'idx_monta_livre_femea', 'idx_inseminacao_femea',
+     'idx_transferencia_embriao_receptora_data', 'idx_diagnostico_gestacao_animal')
  order by 1;
 
 -- F3. Prova de que o indice mais caro esta sendo usado: o plano abaixo tem que

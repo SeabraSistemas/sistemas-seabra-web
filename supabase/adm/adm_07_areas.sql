@@ -56,11 +56,15 @@
 --   * a AML tem duas colunas ACENTUADAS entre 32 sem acento
 -- ═════════════════════════════════════════════════════════════════════════════
 
-drop view if exists adm.propriedade_reproducao;
-drop view if exists adm.propriedade_sanidade;
-drop view if exists adm.propriedade_crescimento;
+-- propriedade_reproducao, propriedade_crescimento, propriedade_sanidade e
+-- propriedade_financeiro NAO entram neste drop: adm_09_carteira_fase3.sql criou
+-- adm.benchmark_propriedade por cima das quatro (taxa_prenhez, gmd_medio,
+-- taxa_mortalidade, custo_litro), e um `drop` aqui exige CASCADE -- que
+-- derrubaria benchmark_propriedade e, com ela, benchmark_referencia. As quatro
+-- usam `create or replace view` mais abaixo, que o Postgres aceita sem tocar em
+-- quem depende, DESDE QUE toda coluna nova entre no FIM da lista de select
+-- (nunca no meio, nunca removendo uma existente).
 drop view if exists adm.propriedade_avaliacoes;
-drop view if exists adm.propriedade_financeiro;
 drop view if exists adm.propriedade_estrutura;
 drop view if exists adm.propriedade_equipe;
 drop view if exists adm.criador_vitrine;
@@ -81,7 +85,7 @@ drop view if exists adm.criador_vitrine;
 -- uma com o SEU nome de coluna de data -- nenhuma se chama `data_cobertura`.
 -- ─────────────────────────────────────────────────────────────────────────────
 
-create view adm.propriedade_reproducao as
+create or replace view adm.propriedade_reproducao as
 select
   p.id                                                       as propriedade_id,
 
@@ -109,7 +113,8 @@ select
   reb.femeas_ativas,
   reb.gestantes,
   ser.serie_mensal,
-  fun.funil
+  fun.funil,
+  dgp.dg_pendentes
 
 from public.propriedades p
 
@@ -276,7 +281,72 @@ cross join lateral (
       (3, 'Positivos',    rep.diagnosticos_positivos_12m),
       (4, 'Partos',       par.partos_12m)
     ) as f(ordem, rotulo, valor)
-) fun;
+) fun
+
+cross join lateral (
+  -- DG PENDENTE: femea ativa cuja cobertura MAIS RECENTE (a mais nova entre as
+  -- quatro formas -- ver o comentario do topo desta view) ainda nao tem
+  -- diagnostico de gestacao lancado DEPOIS dela.
+  --
+  -- O teto de 155 dias e o limite biologico da gestacao caprina (~150d) com
+  -- folga de 5: acima disso "sem DG" ja nao e uma pendencia de lancamento, e uma
+  -- femea que pariu ou abortou sem registro -- outro problema, que esta lista
+  -- nao mistura com o de quem so esta atrasado para diagnosticar.
+  --
+  -- O LATERAL CORRELACIONADO RODA POR FEMEA (`c`, abaixo, referencia `r.id` da
+  -- linha de fora): e por isso que os cinco indices de adm_04_indices.sql BLOCO G
+  -- existem. Sem eles isto e sequential scan nas quatro tabelas de cobertura por
+  -- femea da propriedade.
+  select coalesce(jsonb_agg(jsonb_build_object(
+             'numero_animal',         d.numero_animal,
+             'nome_animal',           d.nome_animal,
+             'baia',                  d.baia,
+             'data_ultima_cobertura', d.data_cobertura,
+             'dias_desde_cobertura',  d.dias_desde_cobertura,
+             'tipo_cobertura',        d.tipo_cobertura)
+           order by d.dias_desde_cobertura desc), '[]'::jsonb) as dg_pendentes
+    from (
+      select r.numero_animal, r.nome_animal, b.nome_baia as baia,
+             c.data_cobertura, c.tipo_cobertura,
+             (current_date - c.data_cobertura)::int as dias_desde_cobertura
+        from public.rebanho r
+        left join public.baias b on b.id = r.baia_id
+        cross join lateral (
+          -- a cobertura MAIS RECENTE desta femea, entre as quatro formas.
+          select cob.data_cobertura, cob.tipo_cobertura
+            from (
+              select data_da_cobertura        as data_cobertura, 'Monta controlada'::text as tipo_cobertura
+                from public.monta_controlada where animal_id_femea = r.id
+              union all
+              select data_entrada_reprodutor, 'Monta livre'
+                from public.monta_livre where animal_id_femea = r.id
+              union all
+              select data_inseminacao, 'Inseminação'
+                from public.inseminacao where animal_id_femea = r.id
+              union all
+              select data_transferencia::date, 'Transferência de embrião'
+                from public.transferencia_embriao where receptora_id = r.id
+            ) cob
+           order by cob.data_cobertura desc
+           limit 1
+        ) c
+       where r.propriedade_id = p.id
+         and r.sexo = 'fêmea'
+         and r.status = 'ativo'
+         and r.data_venda is null
+         and c.data_cobertura is not null
+         and (current_date - c.data_cobertura) between 0 and 155
+         and not exists (
+           select 1 from public.diagnostico_gestacao dg
+            where dg.animal_id = r.id
+              and dg.data_diagnostico >= c.data_cobertura
+         )
+       -- Defesa contra um caso patologico (propriedade com milhares de femeas
+       -- todas cobertas e nenhum DG): a lista e para caber numa mensagem de
+       -- WhatsApp, nao para ser um relatorio de auditoria de tres digitos.
+       limit 500
+    ) d
+) dgp;
 
 comment on view adm.propriedade_reproducao is
   'Aba Reproducao, uma linha por propriedade. Parto = par distinto (mae_id, data_de_nascimento): '
@@ -297,7 +367,7 @@ grant select on adm.propriedade_reproducao to service_role;
 -- criadores que descartam muito.
 -- ─────────────────────────────────────────────────────────────────────────────
 
-create view adm.propriedade_sanidade as
+create or replace view adm.propriedade_sanidade as
 select
   p.id                                                       as propriedade_id,
   san.casos_12m,
@@ -460,7 +530,7 @@ grant select on adm.propriedade_sanidade to service_role;
 -- preenchimento nao esta garantido.
 -- ─────────────────────────────────────────────────────────────────────────────
 
-create view adm.propriedade_crescimento as
+create or replace view adm.propriedade_crescimento as
 select
   p.id                                                       as propriedade_id,
   pes.pesagens_12m,
@@ -769,7 +839,7 @@ grant select on adm.propriedade_avaliacoes to service_role;
 --                               a UNICA serie temporal financeira pronta no banco
 -- ─────────────────────────────────────────────────────────────────────────────
 
-create view adm.propriedade_financeiro as
+create or replace view adm.propriedade_financeiro as
 select
   p.id                                                       as propriedade_id,
 

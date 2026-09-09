@@ -130,6 +130,16 @@ const reproducaoA: LinhaReproducao = {
     { rotulo: 'Coberturas', valor: 10 },
     { rotulo: 'Partos', valor: 7 },
   ],
+  dg_pendentes: [
+    {
+      numero_animal: 'A1',
+      nome_animal: null,
+      baia: 'G1',
+      data_ultima_cobertura: '2026-01-01',
+      dias_desde_cobertura: 60,
+      tipo_cobertura: 'Monta livre',
+    },
+  ],
 };
 
 const reproducaoB: LinhaReproducao = {
@@ -155,6 +165,16 @@ const reproducaoB: LinhaReproducao = {
   funil: [
     { rotulo: 'Coberturas', valor: 3 },
     { rotulo: 'Partos', valor: 9 },
+  ],
+  dg_pendentes: [
+    {
+      numero_animal: 'B1',
+      nome_animal: 'Bela',
+      baia: 'G2',
+      data_ultima_cobertura: '2026-02-01',
+      dias_desde_cobertura: 90,
+      tipo_cobertura: 'Inseminação',
+    },
   ],
 };
 
@@ -385,6 +405,30 @@ const AREAS: AreaSobTeste[] = [
         esperado: [
           { rotulo: 'Coberturas', valor: 13 },
           { rotulo: 'Partos', valor: 16 },
+        ],
+      },
+      // Concatenado e reordenado pelo mais atrasado (dias_desde_cobertura desc) —
+      // igual a `piores_gmd` em crescimento.ts, nunca média nem soma: cada item é
+      // um animal, e a união de duas fazendas é o conjunto dos dois.
+      dg_pendentes: {
+        tipo: 'valor',
+        esperado: [
+          {
+            numero_animal: 'B1',
+            nome_animal: 'Bela',
+            baia: 'G2',
+            data_ultima_cobertura: '2026-02-01',
+            dias_desde_cobertura: 90,
+            tipo_cobertura: 'Inseminação',
+          },
+          {
+            numero_animal: 'A1',
+            nome_animal: null,
+            baia: 'G1',
+            data_ultima_cobertura: '2026-01-01',
+            dias_desde_cobertura: 60,
+            tipo_cobertura: 'Monta livre',
+          },
         ],
       },
     },

@@ -1,6 +1,11 @@
 import 'server-only';
 
-import { VIEWS_FASE_2, type LinhaReproducao, type PontoSerieNomeada } from '@/lib/adm/areas/contrato';
+import {
+  VIEWS_FASE_2,
+  type LinhaDgPendente,
+  type LinhaReproducao,
+  type PontoSerieNomeada,
+} from '@/lib/adm/areas/contrato';
 import { fundirFatias } from '@/lib/adm/metricas';
 import { admClient, semConfigSupabase } from '@/lib/adm/supabase-admin';
 import { erro, ok, semConfig, type FatiaDistribuicao, type PontoSerie, type Resultado } from '@/lib/adm/types';
@@ -66,6 +71,7 @@ const PROJECAO = {
   gestantes: true,
   serie_mensal: true,
   funil: true,
+  dg_pendentes: true,
 } satisfies Record<keyof LinhaReproducao, true>;
 
 /** Nunca `select('*')`: a projeção explícita é o que impede uma coluna nova da
@@ -104,6 +110,76 @@ export interface EtapaFunil {
   conversao: number | null;
   /** Fração em relação ao topo. Serve para a largura da barra. */
   doTopo: number | null;
+}
+
+/**
+ * Atraso mínimo, em dias desde a cobertura, para uma fêmea sem DG entrar na
+ * lista de pendência da tela — abaixo disso é só "ainda não deu tempo", não
+ * atraso. A view em adm_07_areas.sql já corta o teto superior (155 dias, o
+ * limite biológico da gestação); este é o piso, e é do usuário escolher: o
+ * app GAS que inspirou esta tela oferecia 45 ou 60 dias, ou um valor customizado.
+ */
+export const DG_LIMIAR_PADRAO = 60;
+export const DG_LIMIARES_RAPIDOS = [45, 60] as const;
+
+/**
+ * Agrupa `dg_pendentes` por baia e aplica o piso de dias — a mesma lista serve
+ * o card e o texto de WhatsApp, então o filtro mora aqui, não duplicado nos dois
+ * lugares que a consomem.
+ */
+export interface GrupoDgPendente {
+  baia: string;
+  animais: LinhaDgPendente[];
+}
+
+export function agruparDgPendentes(linha: LinhaReproducao, limiarDias: number): GrupoDgPendente[] {
+  const filtrados = (linha.dg_pendentes ?? []).filter((a) => a.dias_desde_cobertura >= limiarDias);
+
+  const porBaia = new Map<string, LinhaDgPendente[]>();
+  for (const animal of filtrados) {
+    const chave = animal.baia?.trim() || 'Sem baia';
+    const lista = porBaia.get(chave);
+    if (lista) lista.push(animal);
+    else porBaia.set(chave, [animal]);
+  }
+
+  return [...porBaia.entries()]
+    .map(([baia, animais]) => ({ baia, animais }))
+    .sort((a, b) => {
+      // "Sem baia" sempre por último — o mesmo critério de baiaStatsList do GAS
+      // que inspirou esta tela: é o grupo de pior qualidade de cadastro, não um
+      // lugar real para o consultor visitar.
+      if (a.baia === 'Sem baia') return b.baia === 'Sem baia' ? 0 : 1;
+      if (b.baia === 'Sem baia') return -1;
+      return a.baia.localeCompare(b.baia, 'pt-BR');
+    });
+}
+
+/** Texto pronto para colar no WhatsApp — um grupo por baia, mais atrasado primeiro dentro dele. */
+export function textoWhatsAppDgPendentes(grupos: GrupoDgPendente[], limiarDias: number): string {
+  if (grupos.length === 0) return '';
+
+  const total = grupos.reduce((acc, g) => acc + g.animais.length, 0);
+  const linhas: string[] = [
+    `*Diagnóstico de gestação — mais de ${limiarDias} dias de cobertura (${total}):*`,
+    '',
+  ];
+
+  for (const grupo of grupos) {
+    linhas.push(`*${grupo.baia}:*`);
+    for (const animal of grupo.animais) {
+      const nome = animal.nome_animal?.trim();
+      const identificador = nome ? `${animal.numero_animal} - ${nome}` : animal.numero_animal;
+      linhas.push(`• Nº ${identificador} (${animal.dias_desde_cobertura} dias — coberta em ${formatarDataBR(animal.data_ultima_cobertura)})`);
+    }
+  }
+
+  return linhas.join('\n');
+}
+
+function formatarDataBR(isoDate: string): string {
+  const [ano, mes, dia] = isoDate.split('-');
+  return `${dia}/${mes}/${ano}`;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -194,6 +270,24 @@ function fatias(v: unknown): FatiaDistribuicao[] | null {
   return linhas.map((l) => ({ rotulo: texto(l.rotulo) ?? 'Não informado', valor: numero(l.valor) ?? 0 }));
 }
 
+function dgPendentes(v: unknown): LinhaDgPendente[] | null {
+  const linhas = objetos(v);
+  if (!linhas) return null;
+  const itens = linhas
+    .map((l) => ({
+      numero_animal: texto(l.numero_animal) ?? '—',
+      nome_animal: texto(l.nome_animal),
+      baia: texto(l.baia),
+      data_ultima_cobertura: texto(l.data_ultima_cobertura) ?? '',
+      dias_desde_cobertura: inteiro(l.dias_desde_cobertura),
+      tipo_cobertura: texto(l.tipo_cobertura) ?? 'Cobertura',
+    }))
+    // Sem data de cobertura o item não serve para nada que a tela faz com ele
+    // (ordenar, filtrar por dias, escrever no texto do WhatsApp).
+    .filter((item) => item.data_ultima_cobertura !== '');
+  return itens.length > 0 ? itens : null;
+}
+
 function pontosNomeados(v: unknown): PontoSerieNomeada[] | null {
   const linhas = objetos(v);
   if (!linhas) return null;
@@ -235,6 +329,7 @@ export function reproducaoVazia(propriedadeId: number): LinhaReproducao {
     gestantes: 0,
     serie_mensal: null,
     funil: null,
+    dg_pendentes: null,
   };
 }
 
@@ -264,6 +359,7 @@ export async function getReproducao(propriedadeId: number): Promise<Resultado<Li
     gestantes: inteiro(l.gestantes),
     serie_mensal: pontosNomeados(l.serie_mensal),
     funil: fatias(l.funil),
+    dg_pendentes: dgPendentes(l.dg_pendentes),
   });
 }
 
@@ -389,6 +485,14 @@ export function consolidarReproducao(linhas: LinhaReproducao[]): LinhaReproducao
   // na tela é etapasDoFunil(), não esta linha. Aqui só se soma.
   const funis = linhas.flatMap((l) => l.funil ?? []);
 
+  // Concatena e reordena pelo mais atrasado — igual a `piores_gmd` em
+  // crescimento.ts. O teto de 500 é o mesmo da view (adm_07_areas.sql): o
+  // consolidado de várias fazendas não pode superar o de uma só por construção.
+  const dgPendentesConsolidado = linhas
+    .flatMap((l) => l.dg_pendentes ?? [])
+    .sort((a, b) => b.dias_desde_cobertura - a.dias_desde_cobertura)
+    .slice(0, 500);
+
   return {
     // Consolidado não é de nenhuma propriedade. Zero em vez do id da primeira:
     // carregar o id da fazenda nº 1 num objeto que soma 15 é exatamente o bug
@@ -410,5 +514,6 @@ export function consolidarReproducao(linhas: LinhaReproducao[]): LinhaReproducao
     gestantes: soma((l) => l.gestantes),
     serie_mensal: serie,
     funil: funis.length > 0 ? fundirFatias(funis) : null,
+    dg_pendentes: dgPendentesConsolidado.length > 0 ? dgPendentesConsolidado : null,
   };
 }

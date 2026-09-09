@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { BotaoCopiar } from '@/components/adm/BotaoCopiar';
 import { EstadoVazio } from '@/components/adm/EstadoVazio';
 import { KpiCard } from '@/components/adm/KpiCard';
 import { DistribuicaoBarras } from '@/components/adm/charts/DistribuicaoBarras';
@@ -8,12 +9,17 @@ import { TabelaGenerica } from '@/components/adm/TabelaGenerica';
 import {
   CURVA_COBERTURAS,
   CURVA_PARTOS,
+  DG_LIMIARES_RAPIDOS,
+  DG_LIMIAR_PADRAO,
+  agruparDgPendentes,
   consolidarReproducao,
   curvaMensal,
   etapasDoFunil,
   funilInvertido,
   getReproducao,
+  textoWhatsAppDgPendentes,
   type EtapaFunil,
+  type GrupoDgPendente,
 } from '@/lib/adm/areas/reproducao';
 import { idsDoEscopo, lerSelecaoParam, type SelecaoPropriedade } from '@/lib/adm/escopo';
 import { VAZIO, formatarInteiro, formatarNumero, formatarPercentual } from '@/lib/adm/format';
@@ -75,6 +81,7 @@ export default async function ReproducaoPage({
   const sp = await searchParams;
   const selecao = lerSelecaoParam(sp.prop);
   const agora = new Date();
+  const limiarDg = lerLimiarDg(sp.dg);
 
   const registro = getRegistro(TABELA);
   if (!registro) notFound();
@@ -212,6 +219,10 @@ export default async function ReproducaoPage({
         </div>
       )}
 
+      {rep && (
+        <DiagnosticoGestacaoPendente rep={rep} limiarDg={limiarDg} usuarioId={usuarioId} selecao={selecao} />
+      )}
+
       <section className="rounded-2xl border border-border bg-card p-4">
         <h2 className="text-base">Outras tabelas de reprodução</h2>
         <p className="mt-0.5 text-xs text-muted-foreground">
@@ -300,6 +311,140 @@ function Cards({ rep, consolidado }: { rep: LinhaReproducao; consolidado: boolea
  *  (IPP e IPP em meses) sem dizer qual é qual. */
 function formatarDias(dias: number | null): string {
   return dias === null ? VAZIO : `${formatarInteiro(dias)} d`;
+}
+
+/** `?dg=` é texto de fora: só vira número depois de validado, e cai no padrão
+ *  para qualquer coisa que não seja um inteiro razoável (o teto da view já é
+ *  155, então nada acima disso faz sentido como piso). */
+function lerLimiarDg(bruto: string | string[] | undefined): number {
+  const valor = Array.isArray(bruto) ? bruto[0] : bruto;
+  const numero = Number.parseInt(valor ?? '', 10);
+  return Number.isFinite(numero) && numero >= 0 && numero <= 155 ? numero : DG_LIMIAR_PADRAO;
+}
+
+/**
+ * Lista de ação da aba: fêmeas cobertas sem DG lançado, agrupadas por baia —
+ * igual ao painel "Diagnóstico de Gestação (60D+)" do app GAS que inspirou esta
+ * seção, mas sem heurística de planilha: `dg_pendentes` já vem certo da view,
+ * cruzando as quatro tabelas de cobertura com `diagnostico_gestacao`.
+ *
+ * O LIMIAR (`?dg=`) é piso, não filtro de UI client-side: trocar de 45 para 60
+ * dias é outra URL, então a lista renderizada e o texto do WhatsApp SEMPRE
+ * concordam — não tem como copiar um texto diferente do que a tela mostra.
+ */
+function DiagnosticoGestacaoPendente({
+  rep,
+  limiarDg,
+  usuarioId,
+  selecao,
+}: {
+  rep: LinhaReproducao;
+  limiarDg: number;
+  usuarioId: number;
+  selecao: SelecaoPropriedade;
+}) {
+  const grupos = agruparDgPendentes(rep, limiarDg);
+  const total = grupos.reduce((acc, g) => acc + g.animais.length, 0);
+  const totalSemFiltro = rep.dg_pendentes?.length ?? 0;
+
+  const sufixoProp = selecao == null ? '' : `prop=${selecao}&`;
+  const linkLimiar = (dias: number) => `?${sufixoProp}dg=${dias}`;
+
+  return (
+    <section className="rounded-2xl border border-border bg-card p-4">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <div>
+          <h2 className="text-base">Diagnóstico de gestação pendente</h2>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            Cobriu, e ainda não tem DG lançado depois da cobertura — até 155 dias, o limite biológico
+            da gestação. Acima disso já não é atraso de lançamento, é outro problema.
+          </p>
+        </div>
+        <div className="flex items-center gap-1">
+          {DG_LIMIARES_RAPIDOS.map((dias) => (
+            <Link
+              key={dias}
+              href={linkLimiar(dias)}
+              className={`rounded-full border px-3 py-1 text-xs transition-colors ${
+                dias === limiarDg
+                  ? 'border-primary bg-primary text-primary-foreground'
+                  : 'border-border bg-secondary text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {dias} dias
+            </Link>
+          ))}
+        </div>
+      </div>
+
+      {total === 0 ? (
+        <p className="mt-3 text-sm text-muted-foreground">
+          {totalSemFiltro === 0
+            ? 'Nenhuma fêmea coberta sem DG no momento.'
+            : `Nenhuma pendência com ${formatarInteiro(limiarDg)}+ dias — mas há ${formatarInteiro(totalSemFiltro)} coberturas mais recentes ainda sem DG.`}
+        </p>
+      ) : (
+        <>
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+            <p className="text-xs text-muted-foreground">
+              {formatarInteiro(total)} fêmeas em {formatarInteiro(grupos.length)}{' '}
+              {grupos.length === 1 ? 'baia' : 'baias'}
+            </p>
+            <BotaoCopiar texto={textoWhatsAppDgPendentes(grupos, limiarDg)} rotulo="Copiar para WhatsApp" />
+          </div>
+
+          <div className="mt-3 flex flex-col gap-4">
+            {grupos.map((grupo) => (
+              <GrupoBaia key={grupo.baia} grupo={grupo} />
+            ))}
+          </div>
+        </>
+      )}
+
+      <p className="mt-3 border-t border-border pt-3 text-xs text-muted-foreground">
+        Para ver o histórico completo, abra a{' '}
+        <a
+          href={`/adm/u/${usuarioId}/tabelas/diagnostico_gestacao${selecao == null ? '' : `?prop=${selecao}`}`}
+          className="text-foreground underline underline-offset-4"
+        >
+          tabela de diagnósticos
+        </a>
+        .
+      </p>
+    </section>
+  );
+}
+
+function GrupoBaia({ grupo }: { grupo: GrupoDgPendente }) {
+  return (
+    <div>
+      <h3 className="text-sm text-muted-foreground">
+        {grupo.baia} <span className="tabular-nums">· {formatarInteiro(grupo.animais.length)}</span>
+      </h3>
+      <ol className="mt-1 flex flex-col divide-y divide-border">
+        {grupo.animais.map((animal) => (
+          <li
+            key={`${animal.numero_animal}-${animal.data_ultima_cobertura}`}
+            className="flex items-baseline justify-between gap-3 py-1.5 text-sm"
+          >
+            <span className="flex min-w-0 items-baseline gap-2">
+              <span className="truncate text-foreground">
+                {animal.nome_animal?.trim() || animal.numero_animal}
+              </span>
+              {animal.nome_animal?.trim() && (
+                <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
+                  {animal.numero_animal}
+                </span>
+              )}
+            </span>
+            <span className="shrink-0 tabular-nums text-muted-foreground">
+              {formatarInteiro(animal.dias_desde_cobertura)} d · {animal.tipo_cobertura}
+            </span>
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
 }
 
 /**
