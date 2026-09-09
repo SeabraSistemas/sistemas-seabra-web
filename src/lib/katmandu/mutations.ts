@@ -44,14 +44,23 @@ function dataHojeBR(): string {
   return new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo' }).format(new Date());
 }
 
-/** Serial de data no mesmo esquema do Sheets/Excel: dias desde 30/12/1899. */
-const SHEETS_EPOCH_UTC = Date.UTC(1899, 11, 30);
-
-/** Serial de "hoje" em America/Sao_Paulo — mesmo fuso que `dataHojeBR` usa pro log de movimentação. */
-function serialDeHoje(): number {
+/**
+ * "Hoje − dias" em America/Sao_Paulo, formatado "DD/MM/AAAA" (mesmo padrão
+ * de `dataHojeBR`). Usado só pra escrever em célula de DATA — e só funciona
+ * como data de verdade gravando com `valueInputOption: 'USER_ENTERED'`
+ * (`batchUpdateCells(updates, 'USER_ENTERED')`), nunca RAW: já quebrou em
+ * produção uma vez gravando o serial numérico cru (RAW não reconhece
+ * "08/09/2025" como data, e reconhece "45908" só como número puro — a coluna
+ * ficava certa no VALOR mas perdia a formatação de data, e a fórmula de
+ * "Idade (dias)" passava a exibir o resultado como data também).
+ */
+function hojeMenosDiasBR(dias: number): string {
   const hojeBR = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(new Date());
   const [ano, mes, dia] = hojeBR.split('-').map(Number);
-  return Math.round((Date.UTC(ano, mes - 1, dia) - SHEETS_EPOCH_UTC) / 86400000);
+  const alvo = new Date(Date.UTC(ano, mes - 1, dia - dias));
+  const dd = String(alvo.getUTCDate()).padStart(2, '0');
+  const mm = String(alvo.getUTCMonth() + 1).padStart(2, '0');
+  return `${dd}/${mm}/${alvo.getUTCFullYear()}`;
 }
 
 /**
@@ -196,7 +205,7 @@ export async function alterarCategoria(
   const idxBaixa = header.indexOf('Causa da baixa');
   if (idxId === -1 || idxNascimento === -1 || idxBaixa === -1) return { alterados: 0, ignorados: alvo.size };
 
-  const novaData = String(serialDeHoje() - diasMin);
+  const novaData = hojeMenosDiasBR(diasMin);
   const letraNascimento = colunaParaLetra(idxNascimento);
   const updates: { range: string; value: string }[] = [];
   const casados = new Set<string>();
@@ -213,6 +222,6 @@ export async function alterarCategoria(
   const ignorados = alvo.size - casados.size;
   if (updates.length === 0) return { alterados: 0, ignorados };
 
-  const ok = await batchUpdateCells(updates);
+  const ok = await batchUpdateCells(updates, 'USER_ENTERED');
   return ok ? { alterados: updates.length, ignorados } : { alterados: 0, ignorados: alvo.size };
 }

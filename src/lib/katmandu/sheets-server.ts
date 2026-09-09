@@ -70,8 +70,17 @@ export async function getSheetValues(range: string): Promise<string[][] | null> 
  * casam, sem reescrever a coluna inteira (evitaria o mesmo problema de
  * drift de linha que a releitura fresca em mutations.ts tenta minimizar).
  * false se faltar config ou a escrita falhar.
+ *
+ * `valueInputOption` default RAW (texto puro, ex. nome de local/lote) —
+ * `USER_ENTERED` é OBRIGATÓRIO pra escrever em célula de data (ex. "Data de
+ * nascimento"): RAW não faz Sheets reconhecer "08/09/2025" como data, grava
+ * como texto puro e quebra qualquer fórmula que dependa dela (ver
+ * alterarCategoria em mutations.ts, achado o jeito difícil).
  */
-export async function batchUpdateCells(updates: { range: string; value: string }[]): Promise<boolean> {
+export async function batchUpdateCells(
+  updates: { range: string; value: string }[],
+  valueInputOption: 'RAW' | 'USER_ENTERED' = 'RAW',
+): Promise<boolean> {
   if (updates.length === 0) return true;
   try {
     const creds = await credenciais();
@@ -81,7 +90,7 @@ export async function batchUpdateCells(updates: { range: string; value: string }
       method: 'POST',
       headers: { Authorization: `Bearer ${creds.token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        valueInputOption: 'RAW',
+        valueInputOption,
         data: updates.map((u) => ({ range: u.range, values: [[u.value]] })),
       }),
     });
