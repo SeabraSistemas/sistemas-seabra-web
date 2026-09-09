@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Input } from '@/components/ui/input';
+import { ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { FilterSelect } from './FilterSelect';
 import { MetricCard } from './MetricCard';
@@ -29,30 +29,32 @@ export function AlterarCategoriaView({ animais: todos }: { animais: AnimalRebanh
   const router = useRouter();
   const animais = useMemo(() => todos.filter((a) => a.baixa == null), [todos]);
 
-  const [busca, setBusca] = useState('');
+  const [local, setLocal] = useState('');
+  const [lote, setLote] = useState('');
   const [categoria, setCategoria] = useState('');
   const [sexo, setSexo] = useState('');
-  const [lote, setLote] = useState('');
-  const [local, setLocal] = useState('');
   const [faixa, setFaixa] = useState<FaixaCategoria | ''>('');
   const [verAnimais, setVerAnimais] = useState(false);
   const [estado, setEstado] = useState<Estado>('ideia');
   const [resultado, setResultado] = useState<{ alterados: number; ignorados: number } | null>(null);
   const [erro, setErro] = useState<string | null>(null);
 
+  // Local e Lote vêm primeiro e um dos dois é obrigatório — o resto (Categoria,
+  // Sexo, faixa alvo, preview, ação) só aparece depois de escolhido algum dos
+  // dois, pra nunca deixar alterar categoria do rebanho inteiro sem recorte.
   const condicoes = useMemo((): Condicao<AnimalRebanho>[] => [
-    { key: 'busca', test: (a) => !busca || a.idAnimal.toLowerCase().includes(busca.toLowerCase()) },
+    { key: 'local', test: (a) => !local || a.local === local },
+    { key: 'lote', test: (a) => !lote || a.lote === lote },
     { key: 'categoria', test: (a) => !categoria || a.categoria === categoria },
     { key: 'sexo', test: (a) => !sexo || sexoLabel(a) === sexo },
-    { key: 'lote', test: (a) => !lote || a.lote === lote },
-    { key: 'local', test: (a) => !local || a.local === local },
-  ], [busca, categoria, sexo, lote, local]);
+  ], [local, lote, categoria, sexo]);
 
-  const categorias = useMemo(() => opcoesExcluindo(animais, condicoes, 'categoria', (a) => a.categoria), [animais, condicoes]);
-  const lotes = useMemo(() => opcoesExcluindo(animais, condicoes, 'lote', (a) => a.lote), [animais, condicoes]);
   const locais = useMemo(() => opcoesExcluindo(animais, condicoes, 'local', (a) => a.local), [animais, condicoes]);
+  const lotes = useMemo(() => opcoesExcluindo(animais, condicoes, 'lote', (a) => a.lote), [animais, condicoes]);
+  const categorias = useMemo(() => opcoesExcluindo(animais, condicoes, 'categoria', (a) => a.categoria), [animais, condicoes]);
 
   const filtrados = useMemo(() => filtrarPor(animais, condicoes), [animais, condicoes]);
+  const escopoDefinido = Boolean(local || lote);
 
   function trocarFiltro(setter: (v: string) => void) {
     return (v: string) => {
@@ -62,7 +64,6 @@ export function AlterarCategoriaView({ animais: todos }: { animais: AnimalRebanh
   }
 
   function reiniciar() {
-    setBusca('');
     setCategoria('');
     setSexo('');
     setLote('');
@@ -116,60 +117,54 @@ export function AlterarCategoriaView({ animais: todos }: { animais: AnimalRebanh
   return (
     <div className="flex flex-col gap-6">
       <div className="rounded-xl border border-border bg-card p-4 sm:p-6">
-        <p className="mb-4 text-sm text-muted-foreground">
-          Corrige em lote a categoria de animais lançados com idade errada: filtra os animais, escolhe a faixa certa e
-          a Data de nascimento de cada um vira o primeiro dia dessa faixa — a categoria (macho/fêmea) recalcula
-          sozinha a partir daí. Animais com baixa não são afetados.
-        </p>
-
-        <div className="grid grid-cols-2 gap-3 sm:flex sm:flex-wrap sm:items-end sm:gap-4">
-          <div className="flex min-w-0 flex-col gap-1">
-            <span className="text-xs text-muted-foreground">N° manejo</span>
-            <Input
-              value={busca}
-              onChange={(e) => trocarFiltro(setBusca)(e.target.value)}
-              placeholder="Buscar…"
-              className="h-9 w-full sm:w-40"
-            />
-          </div>
-          <FilterSelect label="Categoria atual" value={categoria} onChange={trocarFiltro(setCategoria)} options={categorias} />
-          <FilterSelect label="Sexo" value={sexo} onChange={trocarFiltro(setSexo)} options={['Macho', 'Fêmea']} />
-          <FilterSelect label="Lote" value={lote} onChange={trocarFiltro(setLote)} options={lotes} />
+        <div className="flex flex-wrap items-end gap-4">
           <FilterSelect label="Local" value={local} onChange={trocarFiltro(setLocal)} options={locais} />
+          <FilterSelect label="Lote" value={lote} onChange={trocarFiltro(setLote)} options={lotes} />
         </div>
 
-        <div className="mt-4 flex flex-wrap items-end gap-4">
-          <FilterSelect
-            label="Nova categoria"
-            value={faixa}
-            onChange={(v) => {
-              setFaixa(v as FaixaCategoria | '');
-              setEstado('ideia');
-            }}
-            options={FAIXAS_CATEGORIA.map((f) => f.valor)}
-            labelDe={(v) => FAIXAS_CATEGORIA.find((f) => f.valor === v)?.label ?? v}
-            placeholder="Selecione"
-            triggerClassName="w-full sm:w-72"
-          />
-        </div>
+        {!escopoDefinido && (
+          <p className="mt-3 text-sm text-muted-foreground">Selecione um Local ou um Lote pra continuar.</p>
+        )}
 
-        <div className="mt-4 grid grid-cols-2 gap-3 sm:flex sm:flex-wrap">
-          <div className="sm:w-44">
-            <MetricCard id="filtrados" label="No recorte" value={String(filtrados.length)} />
-          </div>
-        </div>
+        {escopoDefinido && (
+          <>
+            <div className="mt-4 flex flex-wrap items-end gap-4">
+              <FilterSelect label="Categoria" value={categoria} onChange={trocarFiltro(setCategoria)} options={categorias} />
+              <FilterSelect label="Sexo" value={sexo} onChange={trocarFiltro(setSexo)} options={['Macho', 'Fêmea']} />
+            </div>
 
-        {filtrados.length > 0 && (
-          <div className="mt-4">
-            <Button type="button" size="sm" variant="outline" onClick={() => setVerAnimais((v) => !v)}>
-              {verAnimais ? 'Esconder animais' : `Ver os ${filtrados.length} animais`}
-            </Button>
-            {verAnimais && (
-              <div className="mt-3">
-                <DataTable columns={colunas} rows={filtrados} rowKey={(a) => a.idAnimal} />
+            <div className="mt-4 flex flex-wrap items-end gap-4">
+              <div className="sm:w-44">
+                <MetricCard id="filtrados" label="Selecionados" value={String(filtrados.length)} />
+              </div>
+              <ArrowRight className="mb-2.5 size-4 shrink-0 text-muted-foreground" />
+              <FilterSelect
+                label="Mudar para"
+                value={faixa}
+                onChange={(v) => {
+                  setFaixa(v as FaixaCategoria | '');
+                  setEstado('ideia');
+                }}
+                options={FAIXAS_CATEGORIA.map((f) => f.valor)}
+                labelDe={(v) => FAIXAS_CATEGORIA.find((f) => f.valor === v)?.label ?? v}
+                placeholder="Selecione"
+                triggerClassName="w-full sm:w-72"
+              />
+            </div>
+
+            {filtrados.length > 0 && (
+              <div className="mt-4">
+                <Button type="button" size="sm" variant="outline" onClick={() => setVerAnimais((v) => !v)}>
+                  {verAnimais ? 'Esconder animais' : `Ver os ${filtrados.length} animais`}
+                </Button>
+                {verAnimais && (
+                  <div className="mt-3">
+                    <DataTable columns={colunas} rows={filtrados} rowKey={(a) => a.idAnimal} />
+                  </div>
+                )}
               </div>
             )}
-          </div>
+          </>
         )}
 
         <div className="mt-6 flex flex-col gap-3">
@@ -177,7 +172,7 @@ export function AlterarCategoriaView({ animais: todos }: { animais: AnimalRebanh
             <Button
               type="button"
               className="w-fit"
-              disabled={!faixa || filtrados.length === 0}
+              disabled={!escopoDefinido || !faixa || filtrados.length === 0}
               onClick={() => setEstado('confirmando')}
             >
               Alterar categoria
