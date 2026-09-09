@@ -48,6 +48,32 @@ function destinoDe(raw: string | undefined): Destino {
 }
 
 /**
+ * Mapa "ID lote" (coluna A) -> "Lote" (coluna B) da aba `Lotes`. Em
+ * RebanhoProd/Pesagem/Baixa a coluna "Lote" às vezes vem como o ID cru (ex:
+ * "8f6ab158") em vez do nome resolvido — a aba `Lotes` é o lookup que faltava
+ * aplicar. Resolver aqui, na leitura, corrige nas três abas de uma vez.
+ */
+async function getLoteMap(): Promise<Map<string, string>> {
+  const rows = await getSheetValues('Lotes');
+  const map = new Map<string, string>();
+  if (!rows) return map;
+  const [, ...body] = rows;
+  for (const [chaveRaw, valorRaw] of body) {
+    const chave = parseText(chaveRaw);
+    const valor = parseText(valorRaw);
+    if (chave && valor) map.set(chave, valor);
+  }
+  return map;
+}
+
+/** Nome do lote já resolvido passa direto; um ID cru conhecido na aba `Lotes` vira o nome (coluna B). */
+function resolverLote(raw: string | undefined, loteMap: Map<string, string>): string | null {
+  const texto = parseText(raw);
+  if (!texto) return null;
+  return loteMap.get(texto) ?? texto;
+}
+
+/**
  * RebanhoProd tem 105 colunas — `Lote` (CR) e `Data última pesagem` (CY) são
  * nativas e 388/388 preenchidas. A primeira versão juntava esses dois campos
  * das abas `Lote` e `Pesagem`; a aba `Lote` está VAZIA (0 linhas) na planilha
@@ -55,7 +81,7 @@ function destinoDe(raw: string | undefined): Destino {
  * RebanhoProd conserta isso e economiza duas leituras de aba por request.
  */
 export async function getRebanho(): Promise<AnimalRebanho[]> {
-  const rows = await getSheetValues('RebanhoProd');
+  const [rows, loteMap] = await Promise.all([getSheetValues('RebanhoProd'), getLoteMap()]);
 
   return toObjects(rows).map((r) => {
     const idAnimal = parseText(r['ID animal']) ?? '';
@@ -76,7 +102,7 @@ export async function getRebanho(): Promise<AnimalRebanho[]> {
       destino: destinoDe(r['Destino']),
       entradaEngorda: parseText(r['Entrada engorda']),
       diasEmEngorda: parseNumber(r['Dias em engorda']),
-      lote: parseText(r['Lote']),
+      lote: resolverLote(r['Lote'], loteMap),
       pdi: parseNumber(r['pdi']),
       ultimoManejo: parseText(r['data_ultima_pesagem']),
       local: parseText(r['local']),
@@ -85,7 +111,7 @@ export async function getRebanho(): Promise<AnimalRebanho[]> {
 }
 
 export async function getPesagem(): Promise<PesagemRegistro[]> {
-  const rows = await getSheetValues('Pesagem');
+  const [rows, loteMap] = await Promise.all([getSheetValues('Pesagem'), getLoteMap()]);
   return toObjects(rows).map((r) => {
     const diasVida = parseNumber(r['Dias de vida']);
     return {
@@ -100,7 +126,7 @@ export async function getPesagem(): Promise<PesagemRegistro[]> {
       gpd: parseNumber(r['GPD']),
       pdi: parseNumber(r['pdi']),
       gpdi: parseNumber(r['gpdi']),
-      lote: parseText(r['Lote']),
+      lote: resolverLote(r['Lote'], loteMap),
       destino: destinoDe(r['destino']),
       dataPesagem: parseText(r['Data da pesagem']),
       venda: parseText(r['Venda']),
@@ -112,13 +138,13 @@ export async function getPesagem(): Promise<PesagemRegistro[]> {
 }
 
 export async function getBaixas(): Promise<Baixa[]> {
-  const rows = await getSheetValues('Baixa');
+  const [rows, loteMap] = await Promise.all([getSheetValues('Baixa'), getLoteMap()]);
   return toObjects(rows).map((r) => ({
     idAnimal: parseText(r['ID animal']) ?? '',
     data: parseText(r['Data da baixa']),
     causa: parseText(r['Causa da baixa']),
     categoria: parseText(r['Categoria na baixa']),
-    lote: parseText(r['Lote']),
+    lote: resolverLote(r['Lote'], loteMap),
     local: parseText(r['local']),
     obs: parseText(r['OBS']),
   })).filter((b) => b.idAnimal !== '');
