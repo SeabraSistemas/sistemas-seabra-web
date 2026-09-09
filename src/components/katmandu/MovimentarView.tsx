@@ -283,60 +283,72 @@ export function MovimentarView({
             placeholder="Selecione"
             triggerClassName="w-full sm:w-56"
           />
-          <FilterMultiSelect
-            label={cfg.labelSecundario}
-            values={secundarios}
-            onChange={trocarSecundarios}
-            options={opcoesSecundarias}
-            labelDe={(l) => `${nomeSecundario(l)} (${contagemSecundaria[l] ?? 0})`}
-            triggerClassName="w-full sm:w-44"
-          />
-          <FilterMultiSelect
-            label="Destino"
-            values={destinos}
-            onChange={(v) => {
-              setDestinos(v);
-              setEstado('ideia');
-            }}
-            options={opcoesDestino}
-            labelDe={(d) => `${nomeDestino(d)} (${contagemDestino[d] ?? 0})`}
-            triggerClassName="w-full sm:w-44"
-          />
-          <ArrowRight className="mb-2.5 size-4 shrink-0 text-muted-foreground" />
-          <FilterSelect
-            label="Para"
-            value={para}
-            onChange={(v) => {
-              setPara(v);
-              setEstado('ideia');
-            }}
-            options={opcoesPara}
-            placeholder="Selecione"
-          />
         </div>
 
-        {origem && (
-          <div className="mt-4 grid grid-cols-2 gap-3 sm:flex sm:flex-wrap">
-            <div className="sm:w-44">
-              <MetricCard id="ativos" label={`Ativos em ${nomePrincipal(origem)}`} value={String(naOrigem.length)} />
-            </div>
-            <div className="sm:w-44">
-              <MetricCard id="selecionados" label="Vão mover" value={String(selecionados.length)} />
-            </div>
-          </div>
+        {!origem && (
+          <p className="mt-3 text-sm text-muted-foreground">Selecione um {cfg.labelPrincipal} pra continuar.</p>
         )}
 
-        {origem && selecionados.length > 0 && (
-          <div className="mt-4">
-            <Button type="button" size="sm" variant="outline" onClick={() => setVerAnimais((v) => !v)}>
-              {verAnimais ? 'Esconder animais' : `Ver os ${selecionados.length} animais`}
-            </Button>
-            {verAnimais && (
-              <div className="mt-3">
-                <DataTable columns={colunas} rows={selecionados} rowKey={(a) => a.idAnimal} />
+        {origem && (
+          <>
+            <div className="mt-4 flex flex-wrap items-end gap-4">
+              <FilterMultiSelect
+                label={cfg.labelSecundario}
+                values={secundarios}
+                onChange={trocarSecundarios}
+                options={opcoesSecundarias}
+                labelDe={(l) => `${nomeSecundario(l)} (${contagemSecundaria[l] ?? 0})`}
+                triggerClassName="w-full sm:w-44"
+              />
+              <FilterMultiSelect
+                label="Destino"
+                values={destinos}
+                onChange={(v) => {
+                  setDestinos(v);
+                  setEstado('ideia');
+                }}
+                options={opcoesDestino}
+                labelDe={(d) => `${nomeDestino(d)} (${contagemDestino[d] ?? 0})`}
+                triggerClassName="w-full sm:w-44"
+              />
+            </div>
+
+            <div className="mt-4 flex flex-wrap items-end gap-4">
+              <div className="grid grid-cols-2 gap-3 sm:flex sm:flex-wrap">
+                <div className="sm:w-44">
+                  <MetricCard id="ativos" label={`Ativos em ${nomePrincipal(origem)}`} value={String(naOrigem.length)} />
+                </div>
+                <div className="sm:w-44">
+                  <MetricCard id="selecionados" label="Vão mover" value={String(selecionados.length)} />
+                </div>
+              </div>
+              <ArrowRight className="mb-2.5 size-4 shrink-0 text-muted-foreground" />
+              <FilterSelect
+                label="Para"
+                value={para}
+                onChange={(v) => {
+                  setPara(v);
+                  setEstado('ideia');
+                }}
+                options={opcoesPara}
+                placeholder="Selecione"
+                triggerClassName="w-full sm:w-56"
+              />
+            </div>
+
+            {selecionados.length > 0 && (
+              <div className="mt-4">
+                <Button type="button" size="sm" variant="outline" onClick={() => setVerAnimais((v) => !v)}>
+                  {verAnimais ? 'Esconder animais' : `Ver os ${selecionados.length} animais`}
+                </Button>
+                {verAnimais && (
+                  <div className="mt-3">
+                    <DataTable columns={colunas} rows={selecionados} rowKey={(a) => a.idAnimal} />
+                  </div>
+                )}
               </div>
             )}
-          </div>
+          </>
         )}
 
         <div className="mt-6 flex flex-col gap-3">
