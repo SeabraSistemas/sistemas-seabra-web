@@ -314,13 +314,8 @@ export function MovimentarView({
             </div>
 
             <div className="mt-4 flex flex-wrap items-end gap-4">
-              <div className="grid grid-cols-2 gap-3 sm:flex sm:flex-wrap">
-                <div className="sm:w-44">
-                  <MetricCard id="ativos" label={`Ativos em ${nomePrincipal(origem)}`} value={String(naOrigem.length)} />
-                </div>
-                <div className="sm:w-44">
-                  <MetricCard id="selecionados" label="Vão mover" value={String(selecionados.length)} />
-                </div>
+              <div className="sm:w-44">
+                <MetricCard id="selecionados" label="Selecionados" value={String(selecionados.length)} />
               </div>
               <ArrowRight className="mb-2.5 size-4 shrink-0 text-muted-foreground" />
               <FilterSelect
