@@ -197,6 +197,18 @@ create index concurrently if not exists idx_controle_leiteiro_propriedade_data
 
 
 -- ############################################################################
+-- BLOCO I -- Producao diaria por data (adm_14_producao.sql)
+--
+-- Mesma historia do BLOCO H: o indice que existia era por `created_at` (quando
+-- a linha foi digitada) e a tela filtra por `data_producao` (o dia da ordenha).
+-- Lancamento retroativo faz as duas divergirem.
+-- ############################################################################
+
+create index concurrently if not exists idx_producao_diaria_propriedade_data
+  on public.producao_diaria (propriedade_id, data_producao desc);
+
+
+-- ############################################################################
 -- BLOCO E -- estatisticas
 --
 -- Indice novo que o planner nao conhece pode simplesmente nao ser escolhido.
@@ -240,7 +252,7 @@ select c.relname as indice_invalido
  order by 1;
 
 -- F2. Os indices deste arquivo existem, e os dois parciais de localizacao agora
--- apontam para 'ativo' minusculo. Esperado: 19 linhas, e nenhuma com 'Ativo'.
+-- apontam para 'ativo' minusculo. Esperado: 20 linhas, e nenhuma com 'Ativo'.
 select c.relname as indice, pg_get_indexdef(c.oid) as definicao
   from pg_class c
   join pg_namespace n on n.oid = c.relnamespace
@@ -255,7 +267,7 @@ select c.relname as indice, pg_get_indexdef(c.oid) as definicao
      'idx_rebanho_baia_id', 'idx_rebanho_setor_id',
      'idx_monta_controlada_femea', 'idx_monta_livre_femea', 'idx_inseminacao_femea',
      'idx_transferencia_embriao_receptora_data', 'idx_diagnostico_gestacao_animal',
-     'idx_controle_leiteiro_propriedade_data')
+     'idx_controle_leiteiro_propriedade_data', 'idx_producao_diaria_propriedade_data')
  order by 1;
 
 -- F3. Prova de que o indice mais caro esta sendo usado: o plano abaixo tem que

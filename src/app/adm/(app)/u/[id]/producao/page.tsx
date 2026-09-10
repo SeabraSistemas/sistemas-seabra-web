@@ -113,28 +113,41 @@ export default async function ProducaoPage({
       )}
 
       {/*
-        O controle leiteiro tem tela própria, e não uma seção aqui: os números
-        dele são de UM DIA (o dia do controle), enquanto tudo acima é janela
-        móvel de 30/90 dias. Cards vizinhos de recortes diferentes com a mesma
-        cara é o jeito mais fácil de um painel mentir.
+        Duas telas à parte, e não mais seções aqui: os números do controle são de
+        UM DIA (o dia da pesagem) e os do detalhe diário são por dia lançado,
+        enquanto os cards acima são janela móvel de 30/90 dias. Cards vizinhos de
+        recortes diferentes com a mesma cara é o jeito mais fácil de um painel
+        mentir.
       */}
-      <section className="rounded-2xl border border-border bg-card p-4">
-        <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <div>
-            <h2 className="text-base">Controle leiteiro individual</h2>
-            <p className="mt-0.5 text-xs text-muted-foreground">
-              Quem entregou os litros: pesagem por animal no dia do controle, com ranking, média por
-              baia e distribuição por faixa de produção.
-            </p>
-          </div>
+      <div className="grid gap-4 lg:grid-cols-2">
+        <section className="rounded-2xl border border-border bg-card p-4">
+          <h2 className="text-base">Produção diária em detalhe</h2>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            Quais dias faltam (não só quantos), divisão entre 1ª e 2ª ordenha, litros por lactante
+            ao longo do tempo e o mês a mês.
+          </p>
+          <Link
+            href={`/adm/u/${usuarioId}/producao/diaria${selecao == null ? '' : `?prop=${selecao}`}`}
+            className="mt-3 inline-block rounded-full border border-primary bg-primary px-3 py-1 text-sm text-primary-foreground transition-opacity hover:opacity-90"
+          >
+            Abrir produção diária
+          </Link>
+        </section>
+
+        <section className="rounded-2xl border border-border bg-card p-4">
+          <h2 className="text-base">Controle leiteiro individual</h2>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            Quem entregou os litros: pesagem por animal no dia do controle, com ranking, média por
+            baia e distribuição por faixa de produção.
+          </p>
           <Link
             href={`/adm/u/${usuarioId}/producao/controle${selecao == null ? '' : `?prop=${selecao}`}`}
-            className="shrink-0 rounded-full border border-primary bg-primary px-3 py-1 text-sm text-primary-foreground transition-opacity hover:opacity-90"
+            className="mt-3 inline-block rounded-full border border-primary bg-primary px-3 py-1 text-sm text-primary-foreground transition-opacity hover:opacity-90"
           >
             Abrir controle
           </Link>
-        </div>
-      </section>
+        </section>
+      </div>
 
       <section className="rounded-2xl border border-border bg-card p-4">
         <h2 className="text-base">Outras tabelas de produção</h2>

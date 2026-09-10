@@ -322,6 +322,39 @@ export interface LinhaSessaoControle {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// PRODUÇÃO DIÁRIA — o dia a dia do tanque, implementado em adm_14_producao.sql
+//
+// A aba Produção mostra 30/90 dias em card e série. Esta view sustenta a tela
+// que responde o que aquela não responde: QUAIS dias faltam, quanto vem de cada
+// ordenha, e como a produtividade por lactante andou — que é a métrica que sobe
+// quando o rebanho melhora e o volume total esconde quando o plantel encolhe.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const VIEWS_PRODUCAO = {
+  dia: 'producao_dia',
+} as const;
+
+export type ViewProducao = (typeof VIEWS_PRODUCAO)[keyof typeof VIEWS_PRODUCAO];
+export const NOMES_VIEWS_PRODUCAO: ViewProducao[] = Object.values(VIEWS_PRODUCAO);
+
+export interface LinhaProducaoDia {
+  propriedade_id: number;
+  /** 'YYYY-MM-DD'. PODE ESTAR NO FUTURO: 1.500 linhas de uma propriedade estão
+   *  datadas entre 2035 e 2039. Quem separa é `separarFuturos()`. */
+  data: string;
+  /** `total_producao` — auditado, bate 100% com a soma das duas ordenhas. */
+  litros: number;
+  litros_1_ordenha: number | null;
+  litros_2_ordenha: number | null;
+  lactantes: number;
+  /** litros ÷ lactantes. null quando não há lactante lançado no dia. */
+  litros_por_lactante: number | null;
+  /** 'duas_ordenhas' | 'ordenha_1' | 'ordenha_2' */
+  modo: string | null;
+  observacao: string | null;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // ÓBITOS — o detalhe de cada morte, implementado em adm_13_obitos.sql
 //
 // A aba Sanidade responde "quantos morreram e a que taxa" (12 meses, série,
