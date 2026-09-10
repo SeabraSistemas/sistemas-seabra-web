@@ -555,6 +555,45 @@ export interface LinhaInventario {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// NASCIMENTOS — a cria como evento, implementada em adm_19_nascimentos.sql
+//
+// Não existe tabela de parto: o parto é o INSERT das crias em `rebanho` com
+// mae_id. O tamanho da ninhada sai de uma window function sobre (mãe, dia) — e
+// é ele que permite a leitura que nenhuma outra tela faz: peso ao nascer POR
+// TAMANHO DE NINHADA, já que cria única nasce mais pesada que gemelar.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const VIEWS_NASCIMENTO = {
+  detalhe: 'nascimento_detalhe',
+} as const;
+
+export type ViewNascimento = (typeof VIEWS_NASCIMENTO)[keyof typeof VIEWS_NASCIMENTO];
+export const NOMES_VIEWS_NASCIMENTO: ViewNascimento[] = Object.values(VIEWS_NASCIMENTO);
+
+export interface LinhaNascimento {
+  propriedade_id: number;
+  animal_id: number;
+  numero_animal: string;
+  nome_animal: string | null;
+  sexo: string | null;
+  status: string | null;
+  /** 'YYYY-MM-DD' */
+  data_nascimento: string;
+  /** CRU: há 237 valores ≤ 0 e 27 acima de 10 kg, o maior deles 408. */
+  peso_ao_nascer: number | null;
+  origem: string | null;
+  mae_id: number | null;
+  mae_numero: string | null;
+  mae_nome: string | null;
+  pai_id: number | null;
+  /** Crias no mesmo parto. null quando não há mãe cadastrada — nunca 1 por suposição. */
+  ninhada: number | null;
+  data_obito: string | null;
+  /** Dias entre nascimento e óbito. null para quem está vivo. */
+  idade_ao_morrer: number | null;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // ÓBITOS — o detalhe de cada morte, implementado em adm_13_obitos.sql
 //
 // A aba Sanidade responde "quantos morreram e a que taxa" (12 meses, série,

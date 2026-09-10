@@ -136,6 +136,24 @@ export default async function RebanhoPage({
         </div>
       </section>
 
+      <section className="rounded-2xl border border-border bg-card p-4">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <div>
+            <h2 className="text-base">Nascimentos</h2>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Sazonalidade de parição, prolificidade, e o cruzamento que nenhuma outra tela faz:
+              peso ao nascer por tamanho de ninhada — cria única nasce mais pesada que gemelar.
+            </p>
+          </div>
+          <Link
+            href={`/adm/u/${usuarioId}/rebanho/nascimentos${selecao == null ? '' : `?prop=${selecao}`}`}
+            className="shrink-0 rounded-full border border-primary bg-primary px-3 py-1 text-sm text-primary-foreground transition-opacity hover:opacity-90"
+          >
+            Abrir nascimentos
+          </Link>
+        </div>
+      </section>
+
       <TabelaGenerica
         tabela={chaveRota(registro)}
         linhas={tabelaRes.ok ? tabelaRes.dados.linhas : []}
