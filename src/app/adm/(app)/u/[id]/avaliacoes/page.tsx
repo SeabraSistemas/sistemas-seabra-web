@@ -145,6 +145,24 @@ export default async function AvaliacoesPage({
         </div>
       </section>
 
+      <section className="rounded-2xl border border-border bg-card p-4">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <div>
+            <h2 className="text-base">Medidas corporais</h2>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              A fita métrica: perfil de cada medida em centímetros, animais remedidos e as medições
+              com valor impossível — que quase sempre são campo trocado na coleta.
+            </p>
+          </div>
+          <Link
+            href={`/adm/u/${usuarioId}/avaliacoes/medidas${selecao == null ? '' : `?prop=${selecao}`}`}
+            className="shrink-0 rounded-full border border-primary bg-primary px-3 py-1 text-sm text-primary-foreground transition-opacity hover:opacity-90"
+          >
+            Abrir medidas
+          </Link>
+        </div>
+      </section>
+
       <TabelaGenerica
         tabela={chaveRota(registro)}
         linhas={tabelaRes.ok ? tabelaRes.dados.linhas : []}

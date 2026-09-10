@@ -448,6 +448,51 @@ export interface LinhaAml {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// MEDIDAS — a fita métrica, implementada em adm_17_medidas.sql
+//
+// Irmã da AML: mesmo técnico, mesma visita, mesmo animal. A AML dá a NOTA, a
+// medida dá o CENTÍMETRO — e as duas compartilham a coluna `tipo` suja, tratada
+// pela MESMA `normalizarTipo()`.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const VIEWS_MEDIDA = {
+  detalhe: 'medida_detalhe',
+} as const;
+
+export type ViewMedida = (typeof VIEWS_MEDIDA)[keyof typeof VIEWS_MEDIDA];
+export const NOMES_VIEWS_MEDIDA: ViewMedida[] = Object.values(VIEWS_MEDIDA);
+
+export interface LinhaMedida {
+  propriedade_id: number;
+  medida_id: number;
+  animal_id: number;
+  numero_animal: string;
+  nome_animal: string | null;
+  sexo: string | null;
+  /** 'YYYY-MM-DD' */
+  data_medida: string;
+  tecnico_id: number | null;
+  /** CRU — mesmas grafias sujas da AML ('fêmea' e 'femea'). */
+  tipo: string | null;
+
+  /** Centímetros. Vem com 7 valores implausíveis (abaixo de 30 cm) de propósito. */
+  perimetro_toracico: number | null;
+  altura: number | null;
+  altura_garupa: number | null;
+  largura_peito: number | null;
+  largura_garupa: number | null;
+
+  /** Úbere — só em fêmea. */
+  ligamento_posterior: number | null;
+  ligamento_suspensorio: number | null;
+  volume_ubere: number | null;
+  diametro_tetos: number | null;
+
+  /** Só em macho: 14 das 155 medições. */
+  circunferencia_escrotal: number | null;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // ÓBITOS — o detalhe de cada morte, implementado em adm_13_obitos.sql
 //
 // A aba Sanidade responde "quantos morreram e a que taxa" (12 meses, série,
