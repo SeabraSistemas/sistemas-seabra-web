@@ -397,6 +397,57 @@ export interface LinhaLactacao {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// AML — a avaliação morfológica linear, implementada em adm_16_aml.sql
+//
+// A aba Avaliações mostra o radar dos 16 pontos e a pontuação mensal. Esta view
+// sustenta a tela que responde QUEM foi avaliado, com que nota, e quanto do
+// rebanho já passou pelo avaliador.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const VIEWS_AML = {
+  detalhe: 'aml_detalhe',
+} as const;
+
+export type ViewAml = (typeof VIEWS_AML)[keyof typeof VIEWS_AML];
+export const NOMES_VIEWS_AML: ViewAml[] = Object.values(VIEWS_AML);
+
+export interface LinhaAml {
+  propriedade_id: number;
+  aml_id: number;
+  animal_id: number;
+  numero_animal: string;
+  nome_animal: string | null;
+  sexo: string | null;
+  /** 'YYYY-MM-DD' */
+  data_avaliacao: string;
+  tecnico_id: number | null;
+  /** CRU: mistura sexo e tipo de ficha, com acento inconsistente ('fêmea' e 'femea'). */
+  tipo: string | null;
+  /** 0 a 100 — a nota composta. Aqui, e só aqui, maior é melhor. */
+  pontuacao_total: number | null;
+
+  /** Os nove pontos de corpo — presentes em toda avaliação. Escala 1 a 9. */
+  p1_mobilidade: number | null;
+  p2_largura_peito: number | null;
+  p3_profundidade_corporal: number | null;
+  p4_angulo_garupa: number | null;
+  p6_membros_lateral: number | null;
+  p8_capacidade: number | null;
+  p9_largura_garupa: number | null;
+  p15_membros_anterior: number | null;
+  p16_estrutura_ossea: number | null;
+
+  /** Os sete de úbere — NULOS em macho, por ausência do órgão. */
+  p5_profundidade_ubere: number | null;
+  p7_ligamento_anterior: number | null;
+  p10_ligamento_posterior: number | null;
+  p11_volume_ubere: number | null;
+  p12_ligamento_suspensorio: number | null;
+  p13_posicao_tetos: number | null;
+  p14_diametro_tetos: number | null;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // ÓBITOS — o detalhe de cada morte, implementado em adm_13_obitos.sql
 //
 // A aba Sanidade responde "quantos morreram e a que taxa" (12 meses, série,

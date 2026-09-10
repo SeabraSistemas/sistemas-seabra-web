@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Award, TrendingDown } from 'lucide-react';
 import { EstadoVazio } from '@/components/adm/EstadoVazio';
@@ -120,6 +121,29 @@ export default async function AvaliacoesPage({
       {aval && <Cards aval={aval} consolidado={consolidado} />}
       {aval && !semAvaliacao(aval) && <Radar aval={aval} consolidado={consolidado} />}
       {aval && !semAvaliacao(aval) && <Evolucao aval={aval} />}
+
+      {/*
+        A AML em detalhe tem tela própria: aqui o radar é a MÉDIA da fazenda, e
+        lá a pergunta é por animal — quem foi avaliado, com que nota, e quanto do
+        plantel já passou pelo avaliador.
+      */}
+      <section className="rounded-2xl border border-border bg-card p-4">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <div>
+            <h2 className="text-base">AML animal a animal</h2>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Cobertura do plantel, distribuição das notas, dispersão de cada característica e o
+              ranking das maiores pontuações.
+            </p>
+          </div>
+          <Link
+            href={`/adm/u/${usuarioId}/avaliacoes/aml${selecao == null ? '' : `?prop=${selecao}`}`}
+            className="shrink-0 rounded-full border border-primary bg-primary px-3 py-1 text-sm text-primary-foreground transition-opacity hover:opacity-90"
+          >
+            Abrir AML
+          </Link>
+        </div>
+      </section>
 
       <TabelaGenerica
         tabela={chaveRota(registro)}
