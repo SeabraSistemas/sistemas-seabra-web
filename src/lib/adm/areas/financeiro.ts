@@ -330,3 +330,28 @@ export function margemPercentual(f: FinanceiroProdutor): number | null {
 export function temLancamentos(f: FinanceiroProdutor): boolean {
   return f.lancamentos12m > 0 || f.receita12m != null || f.despesa12m != null;
 }
+
+/**
+ * Teto acima do qual "custo por litro" deixa de significar o que o leitor supõe.
+ *
+ * O leite de cabra é pago ao produtor na casa de R$ 3 a R$ 6 o litro. Um custo
+ * de R$ 15 já é três vezes o preço de venda — e a base tem um snapshot com
+ * R$ 36,97, numa fazenda que produzia 20 litros por dia.
+ */
+export const CUSTO_LITRO_TETO = 15;
+
+/**
+ * O número é aritmeticamente correto e mesmo assim não é comparável.
+ *
+ * Isso NÃO é um filtro de erro: R$ 36,97 por litro é o que dá quando o custo
+ * fixo da fazenda é dividido por uma produção quase nula. A conta está certa; o
+ * que está errado é ler esse valor como "o custo de produzir leite aqui" e
+ * compará-lo com o de quem produz em escala.
+ *
+ * Por isso a tela NÃO esconde o valor — ela anota o motivo ao lado. Esconder
+ * apagaria justamente o sinal de que aquela operação ainda não é comercial, que
+ * é a informação de verdade.
+ */
+export function custoLitroForaDaFaixa(f: FinanceiroProdutor): boolean {
+  return f.custoLitro != null && f.custoLitro > CUSTO_LITRO_TETO;
+}

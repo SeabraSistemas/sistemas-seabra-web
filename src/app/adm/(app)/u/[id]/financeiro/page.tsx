@@ -7,7 +7,9 @@ import { DistribuicaoBarras } from '@/components/adm/charts/DistribuicaoBarras';
 import { SerieTemporal } from '@/components/adm/charts/SerieTemporal';
 import { TabelaGenerica } from '@/components/adm/TabelaGenerica';
 import {
+  CUSTO_LITRO_TETO,
   consolidarFinanceiro,
+  custoLitroForaDaFaixa,
   getFinanceiro,
   margemPercentual,
   temLancamentos,
@@ -239,6 +241,14 @@ function Cards({ fin, agora }: { fin: FinanceiroProdutor; agora: Date }) {
   const custo = razao(fin.custoLitro);
   const lucro = razao(fin.lucroLactanteMes);
 
+  // O quinto estado do custo por litro: o número existe, está aritmeticamente
+  // certo e mesmo assim não é comparável — custo fixo dividido por uma produção
+  // quase nula. Não se esconde o valor; anota-se o motivo, porque é ele que diz
+  // que a operação ainda não é comercial.
+  if (custoLitroForaDaFaixa(fin)) {
+    custo.detalhe = `acima de ${formatarMoeda(CUSTO_LITRO_TETO)}/L — custo fixo sobre produção muito pequena, não é comparável`;
+  }
+
   return (
     <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
       <KpiCard
@@ -262,7 +272,12 @@ function Cards({ fin, agora }: { fin: FinanceiroProdutor; agora: Date }) {
         valor={formatarInteiro(fin.lancamentos12m)}
         detalhe="receita e despesa somadas"
       />
-      <KpiCard rotulo="Custo por litro" valor={custo.valor} detalhe={custo.detalhe} />
+      <KpiCard
+        rotulo="Custo por litro"
+        valor={custo.valor}
+        detalhe={custo.detalhe}
+        className={custoLitroForaDaFaixa(fin) ? 'border-destructive/40' : undefined}
+      />
       <KpiCard rotulo="Lucro por lactante/mês" valor={lucro.valor} detalhe={lucro.detalhe} />
       <KpiCard
         rotulo="Última estimativa"
