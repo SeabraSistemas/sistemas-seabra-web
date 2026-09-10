@@ -678,6 +678,42 @@ export interface LinhaManejo {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// VENDAS — a saída comercial, em adm_22_vendas.sql
+//
+// ⚠️ `valor` NUNCA é null e é ZERO em 87% das vendas: o criador registra a saída
+// do animal sem informar quanto recebeu. `com_valor` é o denominador obrigatório
+// de qualquer conta de dinheiro — dividir a receita por todas as vendas daria um
+// preço médio sete vezes menor que o real.
+
+export const VIEWS_VENDA = {
+  detalhe: 'venda_detalhe',
+} as const;
+
+export type ViewVenda = (typeof VIEWS_VENDA)[keyof typeof VIEWS_VENDA];
+export const NOMES_VIEWS_VENDA: ViewVenda[] = Object.values(VIEWS_VENDA);
+
+export interface LinhaVenda {
+  propriedade_id: number;
+  venda_id: number;
+  animal_id: number;
+  numero_animal: string;
+  nome_animal: string | null;
+  sexo: string | null;
+  categoria: string | null;
+  /** 'YYYY-MM-DD' */
+  data_venda: string;
+  /** Zero em 87% das linhas — ausência de lançamento, não venda de graça. */
+  valor: number | null;
+  /** valor > 0. O denominador de tudo que envolve dinheiro nesta área. */
+  com_valor: boolean;
+  data_de_nascimento: string | null;
+  /** Dias. null sem data de nascimento; pode vir negativa por erro de cadastro. */
+  idade_ao_vender: number | null;
+  peso_atual: number | null;
+  observacao: string | null;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // ÓBITOS — o detalhe de cada morte, implementado em adm_13_obitos.sql
 //
 // A aba Sanidade responde "quantos morreram e a que taxa" (12 meses, série,
