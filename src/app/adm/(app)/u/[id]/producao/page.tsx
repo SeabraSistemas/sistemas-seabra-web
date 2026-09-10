@@ -112,6 +112,30 @@ export default async function ProducaoPage({
         </section>
       )}
 
+      {/*
+        O controle leiteiro tem tela própria, e não uma seção aqui: os números
+        dele são de UM DIA (o dia do controle), enquanto tudo acima é janela
+        móvel de 30/90 dias. Cards vizinhos de recortes diferentes com a mesma
+        cara é o jeito mais fácil de um painel mentir.
+      */}
+      <section className="rounded-2xl border border-border bg-card p-4">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <div>
+            <h2 className="text-base">Controle leiteiro individual</h2>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Quem entregou os litros: pesagem por animal no dia do controle, com ranking, média por
+              baia e distribuição por faixa de produção.
+            </p>
+          </div>
+          <Link
+            href={`/adm/u/${usuarioId}/producao/controle${selecao == null ? '' : `?prop=${selecao}`}`}
+            className="shrink-0 rounded-full border border-primary bg-primary px-3 py-1 text-sm text-primary-foreground transition-opacity hover:opacity-90"
+          >
+            Abrir controle
+          </Link>
+        </div>
+      </section>
+
       <section className="rounded-2xl border border-border bg-card p-4">
         <h2 className="text-base">Outras tabelas de produção</h2>
         <p className="mt-0.5 text-xs text-muted-foreground">

@@ -183,6 +183,20 @@ create index concurrently if not exists idx_diagnostico_gestacao_animal
 
 
 -- ############################################################################
+-- BLOCO H -- Controle leiteiro por data (adm_12_leite.sql)
+--
+-- A tela do controle filtra por (propriedade_id, data_controle), e o unico
+-- indice que `controle_leiteiro` tinha com propriedade_id era por `created_at`
+-- -- que e QUANDO A LINHA FOI DIGITADA, nao o dia do controle. Lancamento
+-- retroativo (o normal: pesa-se no curral, digita-se depois) faz as duas datas
+-- divergirem, entao aquele indice nao serve para este filtro.
+-- ############################################################################
+
+create index concurrently if not exists idx_controle_leiteiro_propriedade_data
+  on public.controle_leiteiro (propriedade_id, data_simples desc);
+
+
+-- ############################################################################
 -- BLOCO E -- estatisticas
 --
 -- Indice novo que o planner nao conhece pode simplesmente nao ser escolhido.
@@ -226,7 +240,7 @@ select c.relname as indice_invalido
  order by 1;
 
 -- F2. Os indices deste arquivo existem, e os dois parciais de localizacao agora
--- apontam para 'ativo' minusculo. Esperado: 18 linhas, e nenhuma com 'Ativo'.
+-- apontam para 'ativo' minusculo. Esperado: 19 linhas, e nenhuma com 'Ativo'.
 select c.relname as indice, pg_get_indexdef(c.oid) as definicao
   from pg_class c
   join pg_namespace n on n.oid = c.relnamespace
@@ -240,7 +254,8 @@ select c.relname as indice, pg_get_indexdef(c.oid) as definicao
      'idx_manejo_propriedade_created', 'idx_pesagem_propriedade_created',
      'idx_rebanho_baia_id', 'idx_rebanho_setor_id',
      'idx_monta_controlada_femea', 'idx_monta_livre_femea', 'idx_inseminacao_femea',
-     'idx_transferencia_embriao_receptora_data', 'idx_diagnostico_gestacao_animal')
+     'idx_transferencia_embriao_receptora_data', 'idx_diagnostico_gestacao_animal',
+     'idx_controle_leiteiro_propriedade_data')
  order by 1;
 
 -- F3. Prova de que o indice mais caro esta sendo usado: o plano abaixo tem que

@@ -269,6 +269,59 @@ export interface LinhaCarteiraConsultor {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// CONTROLE LEITEIRO — a pesagem individual, implementada em adm_12_leite.sql
+//
+// Mesma regra das fases anteriores: nome declarado aqui, SQL implementa,
+// TypeScript consome.
+//
+// A DIFERENÇA DESTAS DUAS para as views de área: elas NÃO têm uma linha por
+// propriedade. A pergunta que respondem ("o que deu o controle do dia 09/03")
+// tem uma data no meio, e a data é escolhida na tela — então as views são
+// filtráveis por (propriedade_id, data_controle) em vez de entregarem um jsonb
+// com uma data que o SQL escolheu sozinho.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const VIEWS_LEITE = {
+  animais: 'controle_leiteiro_animal',
+  sessoes: 'controle_leiteiro_sessoes',
+} as const;
+
+export type ViewLeite = (typeof VIEWS_LEITE)[keyof typeof VIEWS_LEITE];
+export const NOMES_VIEWS_LEITE: ViewLeite[] = Object.values(VIEWS_LEITE);
+
+/** Uma linha por (propriedade, dia de controle, animal) — as ordenhas somadas. */
+export interface LinhaControleAnimal {
+  propriedade_id: number;
+  /** 'YYYY-MM-DD' */
+  data_controle: string;
+  animal_id: number;
+  numero_animal: string;
+  nome_animal: string | null;
+  baia: string | null;
+  /** sum(litros_produzidos) do dia — nunca `total_produzido`, que está nulo em 39% dos casos. */
+  litros: number;
+  /** Quantas ordenhas do dia entraram na soma (1 ou 2 no uso normal). */
+  ordenhas: number;
+  /** null = DEL não medido naquele controle (metade das linhas do banco). */
+  del: number | null;
+}
+
+/** Resumo de um dia de controle — alimenta o seletor de data e a série histórica. */
+export interface LinhaSessaoControle {
+  propriedade_id: number;
+  /** 'YYYY-MM-DD' */
+  data_controle: string;
+  animais: number;
+  animais_com_leite: number;
+  litros_total: number;
+  /** litros ÷ animais que deram leite. null quando nenhum deu. */
+  media_com_leite: number | null;
+  del_medio: number | null;
+  /** Denominador do DEL médio — "91 dias" sobre 3 animais não é o mesmo que sobre 90. */
+  animais_com_del: number;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Abas — a ordem e os rótulos ficam aqui para o layout e o dossiê concordarem
 // ─────────────────────────────────────────────────────────────────────────────
 
