@@ -638,6 +638,46 @@ export interface LinhaPesagem {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// MANEJO — o lançamento desmembrado por tipo, em adm_21_manejo.sql
+//
+// ⚠️ UMA LINHA POR (MANEJO, TIPO): `tipo_manejo` é um array e a view faz unnest,
+// porque a mesma ida ao curral registra FAMACHA, escore e casco de uma vez.
+// Contar manejos exige contar `manejo_id` DISTINTO — nunca linhas.
+
+export const VIEWS_MANEJO = {
+  detalhe: 'manejo_detalhe',
+} as const;
+
+export type ViewManejo = (typeof VIEWS_MANEJO)[keyof typeof VIEWS_MANEJO];
+export const NOMES_VIEWS_MANEJO: ViewManejo[] = Object.values(VIEWS_MANEJO);
+
+export interface LinhaManejo {
+  propriedade_id: number;
+  manejo_id: number;
+  /** 'famacha' | 'peso' | 'escore_condicao_corporal' | 'casco' | ... */
+  tipo: string;
+  animal_id: number;
+  numero_animal: string;
+  nome_animal: string | null;
+  categoria: string | null;
+  /** 'YYYY-MM-DD' */
+  data_manejo: string;
+  /** Escala INVERTIDA: 1 é saudável, 5 é anêmico grave. */
+  famacha: number | null;
+  escore_corporal: number | null;
+  /** Texto livre e sujo: 'Feito', 'False' (booleano vazado), 'A fazer', 'trincado'... */
+  casco_status: string | null;
+  protocolo_sanitario: string | null;
+  diagnostico_gestacao: string | null;
+  dias_gestacao: number | null;
+  observacao: string | null;
+  /** California Mastitis Test, metades esquerda e direita. Só 9 linhas na base. */
+  cmt_me: string | null;
+  cmt_md: string | null;
+  sessao_coletivo_id: string | null;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // ÓBITOS — o detalhe de cada morte, implementado em adm_13_obitos.sql
 //
 // A aba Sanidade responde "quantos morreram e a que taxa" (12 meses, série,
