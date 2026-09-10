@@ -161,6 +161,21 @@ export default async function ProducaoPage({
             Abrir lactações
           </Link>
         </section>
+
+        <section className="rounded-2xl border border-border bg-card p-4 lg:col-span-2">
+          <h2 className="text-base">Secagens</h2>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            O período seco — dias entre a secagem e o parto seguinte, calculado aqui porque a coluna
+            do app não serve. Secar tarde faz a próxima lactação vir menor, e o prejuízo só aparece
+            meses depois.
+          </p>
+          <Link
+            href={`/adm/u/${usuarioId}/producao/secagens${selecao == null ? '' : `?prop=${selecao}`}`}
+            className="mt-3 inline-block rounded-full border border-primary bg-primary px-3 py-1 text-sm text-primary-foreground transition-opacity hover:opacity-90"
+          >
+            Abrir secagens
+          </Link>
+        </section>
       </div>
 
       <section className="rounded-2xl border border-border bg-card p-4">

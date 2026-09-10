@@ -714,6 +714,40 @@ export interface LinhaVenda {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// SECAGEM — o período seco calculado, em adm_23_secagem.sql
+//
+// ⚠️ `secagem.del` do app não serve: 33% de preenchimento e máximo de 20.617
+// dias. O número que importa — quantos dias a fêmea ficou seca até o parto
+// seguinte — sai calculado na view, do mesmo jeito que o GMD em adm_20.
+
+export const VIEWS_SECAGEM = {
+  detalhe: 'secagem_detalhe',
+} as const;
+
+export type ViewSecagem = (typeof VIEWS_SECAGEM)[keyof typeof VIEWS_SECAGEM];
+export const NOMES_VIEWS_SECAGEM: ViewSecagem[] = Object.values(VIEWS_SECAGEM);
+
+export interface LinhaSecagem {
+  propriedade_id: number;
+  secagem_id: number;
+  animal_id: number;
+  numero_animal: string;
+  nome_animal: string | null;
+  categoria: string | null;
+  ordem_parto: number | null;
+  /** 'YYYY-MM-DD' */
+  data_secagem: string;
+  /** CRU: 'Natural', 'Manual', 'Pré-Parto', 'Espontânea', 'Estimada Automática' — e um 'natural'. */
+  tipo_secagem: string | null;
+  /** false = previsão do app, não evento acontecido. 159 das 765 linhas. */
+  confirmada: boolean | null;
+  proximo_parto: string | null;
+  /** Dias entre a secagem e o parto seguinte. null quando a fêmea ainda não pariu. */
+  periodo_seco: number | null;
+  observacao: string | null;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // ÓBITOS — o detalhe de cada morte, implementado em adm_13_obitos.sql
 //
 // A aba Sanidade responde "quantos morreram e a que taxa" (12 meses, série,
