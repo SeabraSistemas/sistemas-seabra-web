@@ -783,6 +783,41 @@ export interface LinhaCaso {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// MOVIMENTAÇÕES — o animal mudando de lugar, em adm_25_movimentacoes.sql
+//
+// A aba Estrutura conta baias, lotes e setores parados; esta view mostra o
+// movimento entre eles. `tipo` separa troca de LOTE (decisão de manejo) de troca
+// de BAIA/SETOR (lugar físico) — contar os dois juntos mistura as duas coisas.
+
+export const VIEWS_MOVIMENTACAO = {
+  detalhe: 'movimentacao_detalhe',
+} as const;
+
+export type ViewMovimentacao = (typeof VIEWS_MOVIMENTACAO)[keyof typeof VIEWS_MOVIMENTACAO];
+export const NOMES_VIEWS_MOVIMENTACAO: ViewMovimentacao[] = Object.values(VIEWS_MOVIMENTACAO);
+
+export interface LinhaMovimentacao {
+  propriedade_id: number;
+  movimentacao_id: number;
+  animal_id: number;
+  numero_animal: string;
+  nome_animal: string | null;
+  status_animal: string | null;
+  categoria: string | null;
+  /** 'lote' | 'localizacao' */
+  tipo: string | null;
+  /** 'YYYY-MM-DD' */
+  data_movimentacao: string;
+  /** null na PRIMEIRA movimentação do animal — não é dado faltando, é o passado. */
+  baia_origem: string | null;
+  baia_destino: string | null;
+  lote_origem: string | null;
+  lote_destino: string | null;
+  setor_destino: string | null;
+  observacao: string | null;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // ÓBITOS — o detalhe de cada morte, implementado em adm_13_obitos.sql
 //
 // A aba Sanidade responde "quantos morreram e a que taxa" (12 meses, série,
