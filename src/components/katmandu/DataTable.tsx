@@ -103,8 +103,16 @@ export function DataTable<T>({
                 </TableCell>
               </TableRow>
             ) : (
-              pageRows.map((row) => (
-                <TableRow key={rowKey(row)}>
+              pageRows.map((row, i) => (
+                // A chave leva o índice absoluto junto porque `rowKey` NÃO é
+                // garantidamente único: a planilha tem linhas duplicadas de
+                // verdade (o mesmo "ID animal" cadastrado duas vezes na
+                // RebanhoProd, a mesma pesagem lançada duas vezes na Pesagem).
+                // Com chave repetida o React perde uma das <tr> no mapa de
+                // reconciliação e nunca a remove: ao filtrar até sobrar nada, a
+                // linha antiga ficava colada na tela junto com o "Nenhum
+                // registro" — as linhas fantasma que apareciam no Rebanho.
+                <TableRow key={`${rowKey(row)}#${pageAtual * PAGE_SIZE + i}`}>
                   {columns.map((col) => (
                     <TableCell key={col.key} className={col.className}>
                       {col.cell(row)}
