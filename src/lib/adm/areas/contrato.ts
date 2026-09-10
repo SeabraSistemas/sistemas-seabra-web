@@ -594,6 +594,50 @@ export interface LinhaNascimento {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// PESAGEM — o evento e o GMD calculado, em adm_20_pesagem.sql
+//
+// A coluna `pesagem.gmd` do app está preenchida em 3% das linhas e com ordem de
+// grandeza errada; o GMD desta view sai da diferença entre pesagens
+// consecutivas do mesmo animal.
+//
+// ⚠️ ELE NÃO É O MESMO NÚMERO do card da aba Crescimento, e a diferença é
+// deliberada: lá a janela é de 12 meses e não há filtro de intervalo; aqui vale
+// todo o histórico e o intervalo precisa estar entre 15 e 365 dias (duas
+// pesagens com três dias de diferença transformam erro de balança em GMD alto).
+// Por isso a tela chama a métrica de "GMD entre pesagens", com o critério
+// impresso ao lado — dois nomes diferentes para dois recortes diferentes.
+
+export const VIEWS_PESAGEM = {
+  detalhe: 'pesagem_detalhe',
+} as const;
+
+export type ViewPesagem = (typeof VIEWS_PESAGEM)[keyof typeof VIEWS_PESAGEM];
+export const NOMES_VIEWS_PESAGEM: ViewPesagem[] = Object.values(VIEWS_PESAGEM);
+
+export interface LinhaPesagem {
+  propriedade_id: number;
+  pesagem_id: number;
+  animal_id: number;
+  numero_animal: string;
+  nome_animal: string | null;
+  sexo: string | null;
+  status_animal: string | null;
+  categoria: string | null;
+  /** 'YYYY-MM-DD' */
+  data_pesagem: string;
+  /** CRU: uma linha tem 408 kg e duas estão abaixo de 1 kg. */
+  peso_kg: number | null;
+  idade_dias: number | null;
+  peso_anterior: number | null;
+  dias_desde_anterior: number | null;
+  /** kg/dia. null na primeira pesagem, fora de 15..365 dias, ou fora de -1..2. */
+  gmd: number | null;
+  peso_ideal: number | null;
+  /** < 100 é o "abaixo da meta" da aba Crescimento. Só 25% das linhas têm. */
+  progresso: number | null;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // ÓBITOS — o detalhe de cada morte, implementado em adm_13_obitos.sql
 //
 // A aba Sanidade responde "quantos morreram e a que taxa" (12 meses, série,

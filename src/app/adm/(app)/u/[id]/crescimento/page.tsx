@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { EstadoVazio } from '@/components/adm/EstadoVazio';
 import { KpiCard } from '@/components/adm/KpiCard';
@@ -120,6 +121,28 @@ export default async function CrescimentoPage({
       {cres && <Cards cres={cres} consolidado={consolidado} />}
       {cres && <Nuvem cres={cres} consolidado={consolidado} metasDivergem={metasDivergem} />}
       {cres && <PioresGmd cres={cres} usuarioId={usuarioId} selecao={selecao} />}
+
+      {/*
+        As pesagens têm tela própria: aqui a nuvem mostra o retrato do rebanho,
+        lá a pergunta é o EVENTO — quando a fazenda pesa, quanto do plantel
+        passa pela balança e como o ganho se distribui.
+      */}
+      <section className="rounded-2xl border border-border bg-card p-4">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <div>
+            <h2 className="text-base">Pesagens em detalhe</h2>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Dias de curral, cobertura do plantel, distribuição do ganho e peso por categoria.
+            </p>
+          </div>
+          <Link
+            href={`/adm/u/${usuarioId}/crescimento/pesagens${sufixo}`}
+            className="shrink-0 rounded-full border border-primary bg-primary px-3 py-1 text-sm text-primary-foreground transition-opacity hover:opacity-90"
+          >
+            Abrir pesagens
+          </Link>
+        </div>
+      </section>
 
       <TabelaGenerica
         tabela={chaveRota(registro)}
