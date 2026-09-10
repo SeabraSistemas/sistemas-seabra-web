@@ -355,6 +355,48 @@ export interface LinhaProducaoDia {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// LACTAÇÕES — a lactação como unidade, implementada em adm_15_lactacoes.sql
+//
+// `lactacao` é a única tabela de lançamento SEM propriedade_id: o tenant só
+// existe via animal, e a view faz esse join. Quem consumir sem filtrar por
+// propriedade_id soma a carteira inteira.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const VIEWS_LACTACAO = {
+  detalhe: 'lactacao_detalhe',
+} as const;
+
+export type ViewLactacao = (typeof VIEWS_LACTACAO)[keyof typeof VIEWS_LACTACAO];
+export const NOMES_VIEWS_LACTACAO: ViewLactacao[] = Object.values(VIEWS_LACTACAO);
+
+export interface LinhaLactacao {
+  propriedade_id: number;
+  lactacao_id: number;
+  animal_id: number;
+  numero_animal: string;
+  nome_animal: string | null;
+  /** Preenchida em 100% das linhas — é o que permite comparar 1ª cria com as seguintes. */
+  ordem_parto: number | null;
+  /** 'YYYY-MM-DD' */
+  data_inicio: string;
+  /** coalesce(data_fim, data_termino). null = lactação ainda aberta. */
+  data_encerramento: string | null;
+  aberta: boolean;
+  /**
+   * Dias em lactação, CRU. Vem sujo: 1.418 linhas com valor ≤ 0 (min -59) e 119
+   * acima de 600 dias (max 3.593). Só os positivos entram em média.
+   */
+  dias: number | null;
+  /** Zero em 1.756 lactações — quase sempre lactação aberta que ainda não acumulou. */
+  total_leite: number | null;
+  /** Auditado: bate com total_leite ÷ dias em 4.974 de 4.974 casos. */
+  media_leite: number | null;
+  /** 'DEFINITIVO' | 'INFERIDO' | 'ESTIMATIVA' | 'sintetico' | null — a procedência do número. */
+  confianca: string | null;
+  metodo: string | null;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // ÓBITOS — o detalhe de cada morte, implementado em adm_13_obitos.sql
 //
 // A aba Sanidade responde "quantos morreram e a que taxa" (12 meses, série,

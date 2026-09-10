@@ -147,6 +147,20 @@ export default async function ProducaoPage({
             Abrir controle
           </Link>
         </section>
+
+        <section className="rounded-2xl border border-border bg-card p-4 lg:col-span-2">
+          <h2 className="text-base">Lactações</h2>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            Do parto à secagem: duração, total por lactação, comparação entre ordens de parto e as
+            maiores do rebanho. É a unidade que permite comparar uma fêmea com outra.
+          </p>
+          <Link
+            href={`/adm/u/${usuarioId}/producao/lactacoes${selecao == null ? '' : `?prop=${selecao}`}`}
+            className="mt-3 inline-block rounded-full border border-primary bg-primary px-3 py-1 text-sm text-primary-foreground transition-opacity hover:opacity-90"
+          >
+            Abrir lactações
+          </Link>
+        </section>
       </div>
 
       <section className="rounded-2xl border border-border bg-card p-4">

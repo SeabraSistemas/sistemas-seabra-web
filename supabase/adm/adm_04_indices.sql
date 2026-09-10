@@ -207,6 +207,19 @@ create index concurrently if not exists idx_controle_leiteiro_propriedade_data
 create index concurrently if not exists idx_producao_diaria_propriedade_data
   on public.producao_diaria (propriedade_id, data_producao desc);
 
+-- ############################################################################
+-- BLOCO J -- Lactacoes por animal (adm_15_lactacoes.sql)
+--
+-- `lactacao` nao tem propriedade_id: a view chega nela pelo animal. O unico
+-- indice por animal_id que existia e PARCIAL (`where data_fim is null`), ou
+-- seja, so enxerga lactacao aberta -- e a tela olha o historico inteiro. Sem
+-- este, o planner tem que varrer a tabela toda para montar a ficha de uma
+-- fazenda so.
+-- ############################################################################
+
+create index concurrently if not exists idx_lactacao_animal
+  on public.lactacao (animal_id, data_inicio desc);
+
 
 -- ############################################################################
 -- BLOCO E -- estatisticas
@@ -252,7 +265,7 @@ select c.relname as indice_invalido
  order by 1;
 
 -- F2. Os indices deste arquivo existem, e os dois parciais de localizacao agora
--- apontam para 'ativo' minusculo. Esperado: 20 linhas, e nenhuma com 'Ativo'.
+-- apontam para 'ativo' minusculo. Esperado: 21 linhas, e nenhuma com 'Ativo'.
 select c.relname as indice, pg_get_indexdef(c.oid) as definicao
   from pg_class c
   join pg_namespace n on n.oid = c.relnamespace
@@ -267,7 +280,8 @@ select c.relname as indice, pg_get_indexdef(c.oid) as definicao
      'idx_rebanho_baia_id', 'idx_rebanho_setor_id',
      'idx_monta_controlada_femea', 'idx_monta_livre_femea', 'idx_inseminacao_femea',
      'idx_transferencia_embriao_receptora_data', 'idx_diagnostico_gestacao_animal',
-     'idx_controle_leiteiro_propriedade_data', 'idx_producao_diaria_propriedade_data')
+     'idx_controle_leiteiro_propriedade_data', 'idx_producao_diaria_propriedade_data',
+     'idx_lactacao_animal')
  order by 1;
 
 -- F3. Prova de que o indice mais caro esta sendo usado: o plano abaixo tem que
