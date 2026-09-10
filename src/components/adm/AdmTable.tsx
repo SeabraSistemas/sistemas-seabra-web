@@ -555,6 +555,24 @@ export function AdmTable<T>({
   const [aberta, setAberta] = useState<T | null>(null);
 
   const dens = DENSIDADES[densidade];
+  /**
+   * `chave` sai do dado e nem sempre é único: a PK é, mas um par
+   * propriedade+data não, e o número do animal se repete dentro da mesma
+   * propriedade (dois animais diferentes com o mesmo nº, visto no rebanho real).
+   * Chave repetida faz o React deixar <tr> órfã na tela em vez de removê-la —
+   * o bug das linhas fantasma que apareceu no /katmandu. O sufixo entra só na
+   * 2ª ocorrência, então ordenar continua movendo a <tr> em vez de remontá-la.
+   */
+  const chaves = useMemo(() => {
+    const contagem = new Map<string, number>();
+    return daPagina.map((linha) => {
+      const base = chave(linha);
+      const n = contagem.get(base) ?? 0;
+      contagem.set(base, n + 1);
+      return n === 0 ? base : `${base}#${n}`;
+    });
+  }, [daPagina, chave]);
+
   const semLinhas = daPagina.length === 0;
 
   return (
@@ -695,9 +713,9 @@ export function AdmTable<T>({
                 </td>
               </tr>
             ) : (
-              daPagina.map((linha) => (
+              daPagina.map((linha, i) => (
                 <tr
-                  key={chave(linha)}
+                  key={chaves[i]}
                   onClick={(e) => {
                     // Célula com link ou botão dentro (copiar o `#`, abrir o
                     // WhatsApp, ir para a ficha) manda no próprio clique — o

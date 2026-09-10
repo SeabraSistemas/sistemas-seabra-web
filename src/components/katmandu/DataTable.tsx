@@ -53,6 +53,27 @@ export function DataTable<T>({
   const pageAtual = Math.min(page, totalPages - 1);
   const pageRows = sorted.slice(pageAtual * PAGE_SIZE, pageAtual * PAGE_SIZE + PAGE_SIZE);
 
+  /**
+   * `rowKey` sai do dado, e o dado tem duplicata de verdade: o mesmo "ID
+   * animal" cadastrado duas vezes na RebanhoProd, a mesma pesagem lançada duas
+   * vezes na Pesagem. Chave repetida faz o React guardar só uma das <tr> no
+   * mapa de reconciliação e nunca remover a outra — ao filtrar até sobrar nada,
+   * a linha antiga ficava colada na tela junto com o "Nenhum registro".
+   *
+   * O sufixo entra SÓ na 2ª ocorrência em diante: assim a chave de quem não tem
+   * xará continua saindo do dado, e ordenar a tabela ainda move a <tr> em vez de
+   * remontá-la.
+   */
+  const chaves = useMemo(() => {
+    const contagem = new Map<string, number>();
+    return pageRows.map((row) => {
+      const base = rowKey(row);
+      const n = contagem.get(base) ?? 0;
+      contagem.set(base, n + 1);
+      return n === 0 ? base : `${base}#${n}`;
+    });
+  }, [pageRows, rowKey]);
+
   function toggleSort(col: DataTableColumn<T>) {
     if (!col.sortValue) return;
     setPage(0);
@@ -104,15 +125,7 @@ export function DataTable<T>({
               </TableRow>
             ) : (
               pageRows.map((row, i) => (
-                // A chave leva o índice absoluto junto porque `rowKey` NÃO é
-                // garantidamente único: a planilha tem linhas duplicadas de
-                // verdade (o mesmo "ID animal" cadastrado duas vezes na
-                // RebanhoProd, a mesma pesagem lançada duas vezes na Pesagem).
-                // Com chave repetida o React perde uma das <tr> no mapa de
-                // reconciliação e nunca a remove: ao filtrar até sobrar nada, a
-                // linha antiga ficava colada na tela junto com o "Nenhum
-                // registro" — as linhas fantasma que apareciam no Rebanho.
-                <TableRow key={`${rowKey(row)}#${pageAtual * PAGE_SIZE + i}`}>
+                <TableRow key={chaves[i]}>
                   {columns.map((col) => (
                     <TableCell key={col.key} className={col.className}>
                       {col.cell(row)}
