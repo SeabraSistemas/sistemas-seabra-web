@@ -41,9 +41,9 @@ function sexoDe(raw: string | undefined): Sexo {
 function destinoDe(raw: string | undefined): Destino {
   const v = parseText(raw)?.toLowerCase();
   if (!v) return null;
-  if (v.includes('melhor') || v.includes('cabeceira')) return 'melhor';
-  if (v.includes('pior') || v.includes('fundo')) return 'pior';
-  if (v.includes('medi') || v.includes('meio')) return 'mediano';
+  if (v.includes('cabeceira') || v.includes('melhor')) return 'cabeceira';
+  if (v.includes('fundo') || v.includes('pior')) return 'fundo';
+  if (v.includes('meio') || v.includes('medi')) return 'meio';
   return null;
 }
 

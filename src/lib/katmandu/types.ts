@@ -24,8 +24,14 @@ export const SEM_LOCAL_LABEL = 'Sem local';
 export const SEM_LOTE = '__sem_lote__';
 export const SEM_LOTE_LABEL = 'Sem lote';
 
-/** Subgrupo de desempenho (campo "Destino" da Pesagem): melhor/mediano/pior. */
-export type Destino = 'melhor' | 'mediano' | 'pior' | null;
+/**
+ * Subgrupo de desempenho (campo "Destino" da Pesagem/RebanhoProd), na
+ * nomenclatura DO APLICATIVO: Cabeceira (melhores) / Meio / Fundo (piores).
+ * O dashboard chamava isso de melhor/mediano/pior, o que não batia com nenhum
+ * botão que o operador vê no app — `destinoDe` em queries.ts ainda aceita as
+ * duas grafias na leitura, porque a planilha tem histórico com as duas.
+ */
+export type Destino = 'cabeceira' | 'meio' | 'fundo' | null;
 
 export interface AnimalRebanho {
   idAnimal: string;

@@ -13,6 +13,7 @@ import { contagemPorCategoria, getRebanhoMetrics } from '@/lib/katmandu/metrics'
 import { formatNumber, numberBounds } from '@/lib/katmandu/format';
 import {
   DESTINO_LABEL,
+  destinoOrdinal,
   destinosPresentes,
   filtrarPor,
   opcoesExcluindo,
@@ -141,7 +142,7 @@ export function RebanhoView({ animais: todos }: { animais: AnimalRebanho[] }) {
     { key: 'local', header: 'Local', cell: (a) => a.local ?? '—', sortValue: (a) => a.local },
     { key: 'entrada', header: 'Entrada GMD', cell: (a) => a.entradaEngorda ?? '—', sortValue: (a) => a.entradaEngorda },
     { key: 'dias', header: 'Dias GMD', cell: (a) => formatNumber(a.diasEmEngorda), sortValue: (a) => a.diasEmEngorda },
-    { key: 'destino', header: 'Destino', cell: destinoLabel, sortValue: (a) => a.destino },
+    { key: 'destino', header: 'Destino', cell: destinoLabel, sortValue: (a) => destinoOrdinal(a.destino) },
     { key: 'manejo', header: 'Último manejo', cell: (a) => a.ultimoManejo ?? '—', sortValue: (a) => a.ultimoManejo },
   ];
 

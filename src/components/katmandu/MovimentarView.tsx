@@ -9,7 +9,7 @@ import { FilterSelect } from './FilterSelect';
 import { FilterMultiSelect } from './FilterMultiSelect';
 import { MetricCard } from './MetricCard';
 import { DataTable, type DataTableColumn } from './DataTable';
-import { DESTINO_LABEL, DESTINO_ORDEM } from '@/lib/katmandu/filters';
+import { DESTINO_LABEL, DESTINO_ORDEM, destinoOrdinal } from '@/lib/katmandu/filters';
 import { SEM_LOCAL, SEM_LOCAL_LABEL, SEM_LOTE, SEM_LOTE_LABEL, type AnimalRebanho } from '@/lib/katmandu/types';
 
 type Estado = 'ideia' | 'confirmando' | 'enviando' | 'feito' | 'erro';
@@ -152,7 +152,7 @@ export function MovimentarView({
     return d === SEM_DESTINO ? 'Sem destino' : (DESTINO_LABEL[d as keyof typeof DESTINO_LABEL] ?? d);
   }
 
-  /** "lotes A, B · destino Melhor" — só o que o usuário de fato restringiu. */
+  /** "lotes A, B · destino Cabeceira" — só o que o usuário de fato restringiu. */
   const recorte = useMemo(() => {
     const partes: string[] = [];
     if (secundarios.length > 0) {
@@ -252,7 +252,7 @@ export function MovimentarView({
       key: 'destino',
       header: 'Destino',
       cell: (a) => (a.destino ? DESTINO_LABEL[a.destino] : '—'),
-      sortValue: (a) => a.destino,
+      sortValue: (a) => destinoOrdinal(a.destino),
     },
     { key: 'categoria', header: 'Categoria', cell: (a) => a.categoria ?? '—', sortValue: (a) => a.categoria },
   ];

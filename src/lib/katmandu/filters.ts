@@ -1,12 +1,21 @@
 import type { Destino } from './types';
 
 export const DESTINO_LABEL: Record<NonNullable<Destino>, string> = {
-  melhor: 'Melhor',
-  mediano: 'Mediano',
-  pior: 'Pior',
+  cabeceira: 'Cabeceira',
+  meio: 'Meio',
+  fundo: 'Fundo',
 };
 
+/** Ordem dos botões no app: do melhor lote pro pior. Nunca alfabética. */
 export const DESTINO_ORDEM = Object.keys(DESTINO_LABEL) as NonNullable<Destino>[];
+
+/**
+ * Chave de ordenação da coluna Destino. Ordenar pelo valor cru daria ordem
+ * alfabética (Cabeceira, Fundo, Meio) — sem sentido pra uma escala.
+ */
+export function destinoOrdinal(d: Destino): number | null {
+  return d == null ? null : DESTINO_ORDEM.indexOf(d);
+}
 
 export function opcoes(valores: (string | null)[]): string[] {
   return Array.from(new Set(valores.filter((v): v is string => v != null))).sort();

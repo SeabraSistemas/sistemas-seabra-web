@@ -15,6 +15,7 @@ import { getPesagemMetrics } from '@/lib/katmandu/metrics';
 import { formatKg, formatNumber, numberBounds } from '@/lib/katmandu/format';
 import {
   DESTINO_LABEL,
+  destinoOrdinal,
   destinosPresentes,
   filtrarPor,
   opcoesExcluindo,
@@ -114,7 +115,7 @@ export function PesagemView({ registros }: { registros: PesagemRegistro[] }) {
       key: 'destino',
       header: 'Destino',
       cell: (r) => (r.destino ? DESTINO_LABEL[r.destino] : '—'),
-      sortValue: (r) => r.destino,
+      sortValue: (r) => destinoOrdinal(r.destino),
     },
   ];
 
