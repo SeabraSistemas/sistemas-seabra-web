@@ -322,6 +322,49 @@ export interface LinhaSessaoControle {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// ÓBITOS — o detalhe de cada morte, implementado em adm_13_obitos.sql
+//
+// A aba Sanidade responde "quantos morreram e a que taxa" (12 meses, série,
+// top 8 de suspeitas). Esta view responde a pergunta que decide manejo: QUEM
+// morreu, com que idade e de quê — mortalidade de neonato é colostro e higiene
+// de baia, mortalidade de adulto é outro assunto, e as duas somam no mesmo card.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const VIEWS_OBITO = {
+  detalhe: 'obito_detalhe',
+} as const;
+
+export type ViewObito = (typeof VIEWS_OBITO)[keyof typeof VIEWS_OBITO];
+export const NOMES_VIEWS_OBITO: ViewObito[] = Object.values(VIEWS_OBITO);
+
+export interface LinhaObito {
+  propriedade_id: number;
+  obito_id: number;
+  animal_id: number;
+  numero_animal: string;
+  nome_animal: string | null;
+  /** 'fêmea' COM ACENTO ou 'macho' — os valores reais da coluna. */
+  sexo: string | null;
+  categoria: string | null;
+  baia: string | null;
+  /** 'YYYY-MM-DD' */
+  data_obito: string;
+  data_de_nascimento: string | null;
+  /**
+   * Idade ao morrer, em dias. null quando o animal não tem data de nascimento
+   * (9% da base). PODE SER NEGATIVA: 10 óbitos têm nascimento lançado depois da
+   * morte, e a view entrega o número como está de propósito — quem classifica é
+   * `faixasEtarias()`, que dá a esses uma faixa própria em vez de escondê-los.
+   */
+  idade_dias: number | null;
+  /** Vazio quando ninguém anotou — 61% dos óbitos de hoje. */
+  suspeitas: string[];
+  diagnostico_obito: string | null;
+  sinais_clinicos: string | null;
+  observacao: string | null;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Abas — a ordem e os rótulos ficam aqui para o layout e o dossiê concordarem
 // ─────────────────────────────────────────────────────────────────────────────
 

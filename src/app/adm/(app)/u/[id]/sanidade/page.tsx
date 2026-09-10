@@ -204,6 +204,29 @@ export default async function SanidadePage({
         </div>
       )}
 
+      {/*
+        Óbitos ganham tela própria: aqui eles são contagem e taxa de 12 meses, e
+        a pergunta que decide manejo é a IDADE ao morrer — neonato é colostro e
+        baia de parto, adulto é outro assunto, e os dois somam no mesmo card.
+      */}
+      <section className="rounded-2xl border border-border bg-card p-4">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <div>
+            <h2 className="text-base">Mortalidade em detalhe</h2>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Quem morreu, com que idade e de quê: faixa etária, ranking de suspeitas e a lista
+              óbito a óbito.
+            </p>
+          </div>
+          <Link
+            href={`/adm/u/${usuarioId}/sanidade/obitos${selecao == null ? '' : `?prop=${selecao}`}`}
+            className="shrink-0 rounded-full border border-primary bg-primary px-3 py-1 text-sm text-primary-foreground transition-opacity hover:opacity-90"
+          >
+            Abrir óbitos
+          </Link>
+        </div>
+      </section>
+
       <section className="rounded-2xl border border-border bg-card p-4">
         <h2 className="text-base">Outras tabelas de sanidade</h2>
         <p className="mt-0.5 text-xs text-muted-foreground">
