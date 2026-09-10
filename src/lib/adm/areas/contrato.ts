@@ -493,6 +493,68 @@ export interface LinhaMedida {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// REBANHO — inventário e fluxo, implementados em adm_18_rebanho.sql
+//
+// A aba Rebanho conta o efetivo e reparte por categoria, raça e idade. Estas
+// views respondem o que ela não responde: POR ONDE os animais saíram — e o
+// achado que motivou o arquivo é que 79% dos inativos da base saíram sem motivo
+// nenhum registrado, com o padrão variando de 0% a 100% conforme a fazenda.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const VIEWS_REBANHO = {
+  animal: 'rebanho_animal',
+  inventario: 'rebanho_inventario',
+} as const;
+
+export type ViewRebanho = (typeof VIEWS_REBANHO)[keyof typeof VIEWS_REBANHO];
+export const NOMES_VIEWS_REBANHO: ViewRebanho[] = Object.values(VIEWS_REBANHO);
+
+/** 'ativo' | 'venda' | 'obito' | 'descarte' | 'sem_motivo' */
+export type MotivoSaida = 'ativo' | 'venda' | 'obito' | 'descarte' | 'sem_motivo';
+
+export interface LinhaAnimal {
+  propriedade_id: number;
+  animal_id: number;
+  numero_animal: string;
+  nome_animal: string | null;
+  sexo: string | null;
+  /** 'ativo' MINÚSCULO — o valor real da coluna. */
+  status: string | null;
+  categoria: string | null;
+  baia: string | null;
+  data_de_nascimento: string | null;
+  idade_dias: number | null;
+  peso_atual: number | null;
+  dias_em_lactacao: number | null;
+  ordem_parto: number | null;
+  gestacao_ativa: boolean | null;
+  status_reproducao: string | null;
+  data_venda: string | null;
+  motivo_saida: MotivoSaida;
+}
+
+export interface LinhaInventario {
+  propriedade_id: number;
+  ativos: number;
+  inativos: number;
+  saida_venda: number;
+  saida_obito: number;
+  saida_descarte: number;
+  /** O balde que torna mortalidade e descarte incalculáveis quando é grande. */
+  saida_sem_motivo: number;
+  /** Buracos de cadastro, só no efetivo ativo. */
+  sem_categoria: number;
+  sem_sexo: number;
+  sem_baia: number;
+  sem_nascimento: number;
+  /** Contradições: aparece no efetivo e não existe mais. */
+  ativos_com_obito: number;
+  ativos_com_venda: number;
+  /** (serie 'nascimentos' | 'vendas' | 'obitos', periodo 'YYYY-MM', valor) — 24 meses. */
+  fluxo_mensal: PontoSerieNomeada[] | null;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // ÓBITOS — o detalhe de cada morte, implementado em adm_13_obitos.sql
 //
 // A aba Sanidade responde "quantos morreram e a que taxa" (12 meses, série,

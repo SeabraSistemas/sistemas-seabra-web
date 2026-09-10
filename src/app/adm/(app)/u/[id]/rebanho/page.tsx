@@ -112,6 +112,30 @@ export default async function RebanhoPage({
         </div>
       )}
 
+      {/*
+        O inventário tem tela própria porque responde outra pergunta: aqui é
+        "quem está no rebanho", lá é "por onde saíram os que não estão" — e essa
+        segunda expõe que 79% dos inativos da base saíram sem motivo registrado,
+        o que torna mortalidade e descarte incalculáveis onde o número é alto.
+      */}
+      <section className="rounded-2xl border border-border bg-card p-4">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <div>
+            <h2 className="text-base">Inventário e fluxo</h2>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Efetivo por categoria e sexo, entradas e saídas de 24 meses, por onde os animais
+              saíram e os buracos de cadastro que viram &quot;—&quot; nas outras telas.
+            </p>
+          </div>
+          <Link
+            href={`/adm/u/${usuarioId}/rebanho/inventario${selecao == null ? '' : `?prop=${selecao}`}`}
+            className="shrink-0 rounded-full border border-primary bg-primary px-3 py-1 text-sm text-primary-foreground transition-opacity hover:opacity-90"
+          >
+            Abrir inventário
+          </Link>
+        </div>
+      </section>
+
       <TabelaGenerica
         tabela={chaveRota(registro)}
         linhas={tabelaRes.ok ? tabelaRes.dados.linhas : []}
