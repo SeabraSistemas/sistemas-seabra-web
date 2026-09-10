@@ -748,6 +748,41 @@ export interface LinhaSecagem {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// CLÍNICA — o caso e o desfecho dele, em adm_24_clinica.sql
+//
+// A tabela sozinha diz que o animal adoeceu; a view acrescenta o que aconteceu
+// DEPOIS, cruzando com óbito. ⚠️ `dias_ate_obito` é SEQUÊNCIA, não causa: quem
+// decide a janela em que a morte ainda se relaciona ao caso é o consumidor.
+
+export const VIEWS_CLINICA = {
+  detalhe: 'clinica_detalhe',
+} as const;
+
+export type ViewClinica = (typeof VIEWS_CLINICA)[keyof typeof VIEWS_CLINICA];
+export const NOMES_VIEWS_CLINICA: ViewClinica[] = Object.values(VIEWS_CLINICA);
+
+export interface LinhaCaso {
+  propriedade_id: number;
+  caso_id: number;
+  animal_id: number;
+  numero_animal: string;
+  nome_animal: string | null;
+  sexo: string | null;
+  categoria: string | null;
+  /** 'YYYY-MM-DD' */
+  data_do_caso: string;
+  suspeita: string | null;
+  /** 'sistema' (vem no app) | 'propriedade' (o criador criou) */
+  suspeita_tipo: string | null;
+  sinais: string | null;
+  /** Preenchido em 6% dos casos — qualquer leitura sobre tratamento fala desse pedaço. */
+  tratamento: string | null;
+  data_obito: string | null;
+  /** Dias entre o caso e o óbito posterior. null quando o animal está vivo. */
+  dias_ate_obito: number | null;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // ÓBITOS — o detalhe de cada morte, implementado em adm_13_obitos.sql
 //
 // A aba Sanidade responde "quantos morreram e a que taxa" (12 meses, série,
