@@ -7,6 +7,7 @@
     "about": "Sobre",
     "blog": "Blog",
     "contact": "Contato",
+    "whatsapp": "WhatsApp",
     "services": "Serviços",
     "criadores": "Criadores",
     "systems": "Sistemas",
@@ -218,6 +219,11 @@
     "cta": "Falar no WhatsApp",
     "trust": "Sem compromisso. Resposta em até 30 minutos."
   },
+  "agenda": {
+    "cta": "Agendar reunião",
+    "short": "Agendar",
+    "tooltip": "Agendar reunião de 1h"
+  },
   "footer": {
     "description": "Tecnologia para pecuária de precisão. Sistemas sob medida para gestão de rebanhos.",
     "solutions": "Soluções",
@@ -313,6 +319,9 @@
     "whatsappButton": "Iniciar conversa",
     "email": "Email",
     "emailButton": "Enviar email",
+    "schedule": "Reunião",
+    "scheduleDesc": "1 hora, por Google Meet, no horário que você escolher",
+    "scheduleButton": "Ver horários",
     "form": {
       "formTitle": "Envie uma mensagem",
       "formSubtitle": "Preencha o formulário abaixo e entraremos em contato via WhatsApp.",

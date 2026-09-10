@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { Link, usePathname, useRouter } from '@/i18n/routing';
-import { Menu, ChevronDown } from 'lucide-react';
+import { Menu, ChevronDown, CalendarClock } from 'lucide-react';
 import { AndroidIcon } from '@/components/shared/AndroidIcon';
+import { WhatsAppIcon } from '@/components/shared/WhatsAppIcon';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -16,6 +17,9 @@ import {
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion';
 import { LanguageSwitcher } from './LanguageSwitcher';
+import { AGENDA_URL, buildAgendaUrl } from '@/lib/agenda';
+import { buildWhatsAppUrl } from '@/lib/whatsapp';
+import { type Locale } from '@/i18n/config';
 import { cn } from '@/lib/utils';
 
 /**
@@ -58,9 +62,15 @@ const APK_URL = process.env.NEXT_PUBLIC_APK_URL || '';
 
 export function Header() {
   const t = useTranslations();
+  const locale = useLocale() as Locale;
   const pathname = usePathname();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+
+  // Mensagem padrão (sem UTM dinâmico) para não depender de window durante a
+  // primeira renderização client — mesmo motivo do agenda.ts não ler a URL.
+  const whatsappUrl = buildWhatsAppUrl({ locale });
+  const agendaUrl = buildAgendaUrl({ locale, utm: { utm_content: 'header' } });
 
   useEffect(() => {
     const handleScroll = () => {
@@ -181,6 +191,44 @@ export function Header() {
         <div className="hidden lg:flex items-center gap-2 shrink-0">
           <LanguageSwitcher />
 
+          {/* Contato: WhatsApp sempre disponível, Agendar só com AGENDA_URL
+              configurada. Um botão só em vez de dois disputando espaço com
+              "Entrar" — mesmo padrão de dropdown já usado ali ao lado. */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button className="rounded-full px-5 gap-1.5">
+                {t('header.contact')}
+                <ChevronDown className="h-3.5 w-3.5 opacity-70" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-60 p-1.5">
+              <DropdownMenuItem asChild>
+                <a
+                  href={whatsappUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full cursor-pointer rounded-lg px-3 py-2.5 text-sm gap-2"
+                >
+                  <WhatsAppIcon className="h-4 w-4 text-wa" />
+                  {t('header.whatsapp')}
+                </a>
+              </DropdownMenuItem>
+              {AGENDA_URL && (
+                <DropdownMenuItem asChild>
+                  <a
+                    href={agendaUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full cursor-pointer rounded-lg px-3 py-2.5 text-sm gap-2"
+                  >
+                    <CalendarClock className="h-4 w-4" strokeWidth={2} />
+                    {t('agenda.cta')}
+                  </a>
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" className="rounded-full px-5 gap-1.5">
@@ -213,12 +261,17 @@ export function Header() {
                 </DropdownMenuItem>
               )}
               <DropdownMenuSeparator />
+              {/* <a> proposital: /planos e /apresentacao são rewrites (next.config.ts)
+                  para HTML estático fora do [locale], sem prefixo de idioma. O <Link/>
+                  do next-intl prefixaria pt/en/es e quebraria o rewrite. */}
               <DropdownMenuItem asChild>
+                {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
                 <a href="/planos" className="w-full cursor-pointer rounded-lg px-3 py-2.5 text-sm">
                   {t('header.viewPlans')}
                 </a>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
+                {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
                 <a href="/apresentacao" className="w-full cursor-pointer rounded-lg px-3 py-2.5 text-sm">
                   {t('header.presentation')}
                 </a>
@@ -306,6 +359,34 @@ export function Header() {
                 </div>
 
                 <div className="p-6 border-t border-border space-y-3">
+                  <a
+                    href={whatsappUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => setIsOpen(false)}
+                    className="block"
+                  >
+                    <Button className="w-full h-12 rounded-full gap-2 bg-wa hover:bg-wa-hover text-wa-ink">
+                      <WhatsAppIcon className="h-4 w-4" />
+                      {t('header.whatsapp')}
+                    </Button>
+                  </a>
+
+                  {AGENDA_URL && (
+                    <a
+                      href={agendaUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => setIsOpen(false)}
+                      className="block"
+                    >
+                      <Button variant="outline" className="w-full h-12 rounded-full gap-2">
+                        <CalendarClock className="h-4 w-4" strokeWidth={2} />
+                        {t('agenda.cta')}
+                      </Button>
+                    </a>
+                  )}
+
                   {APK_URL && (
                     <a
                       href={APK_URL}
@@ -339,7 +420,10 @@ export function Header() {
                     </p>
                   )}
 
+                  {/* <a> proposital: ver comentário no dropdown desktop acima —
+                      são rewrites sem prefixo de locale. */}
                   <div className="flex items-center justify-center gap-4 pt-1">
+                    {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
                     <a
                       href="/planos"
                       onClick={() => setIsOpen(false)}
@@ -348,6 +432,7 @@ export function Header() {
                       {t('header.viewPlans')}
                     </a>
                     <span className="text-border">·</span>
+                    {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
                     <a
                       href="/apresentacao"
                       onClick={() => setIsOpen(false)}

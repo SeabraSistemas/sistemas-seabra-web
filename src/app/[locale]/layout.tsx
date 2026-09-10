@@ -7,6 +7,7 @@ import { locales, type Locale } from '@/i18n/config';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { WhatsAppButton } from '@/components/shared/WhatsAppButton';
+import { AgendaButton } from '@/components/shared/AgendaButton';
 import { OrganizationJsonLd, WebSiteJsonLd } from '@/components/seo/JsonLd';
 import { GoogleAnalytics } from '@/components/analytics/GoogleAnalytics';
 import '../globals.css';
@@ -121,6 +122,7 @@ export default async function LocaleLayout({
             <Footer />
           </div>
           <WhatsAppButton />
+          <AgendaButton />
         </NextIntlClientProvider>
       </body>
     </html>

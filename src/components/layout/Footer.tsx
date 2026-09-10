@@ -2,8 +2,9 @@
 
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/routing';
-import { Instagram, Facebook, Mail, Phone, MapPin } from 'lucide-react';
+import { Instagram, Facebook, Mail, Phone, MapPin, CalendarClock } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
+import { AGENDA_URL } from '@/lib/agenda';
 import { cn } from '@/lib/utils';
 
 const solutions = [
@@ -126,6 +127,19 @@ export function Footer() {
                 {t('footer.contact')}
               </h3>
               <ul className="space-y-4">
+                {AGENDA_URL && (
+                  <li>
+                    <a
+                      href={AGENDA_URL}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-start gap-3 text-sm text-foreground hover:text-primary transition-colors duration-200"
+                    >
+                      <CalendarClock className="h-4 w-4 mt-0.5 shrink-0" />
+                      <span>{t('agenda.cta')}</span>
+                    </a>
+                  </li>
+                )}
                 <li>
                   <a
                     href="mailto:sistemaseabra@gmail.com"
