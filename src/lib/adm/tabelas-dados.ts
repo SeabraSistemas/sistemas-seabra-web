@@ -718,7 +718,9 @@ const CLINICA: TabelaCatalogo = {
   rotulo: 'Casos clínicos',
   descricao:
     'Caso clínico do animal: suspeita, sinais e tratamento. Base da morbidade e do custo com medicamento. ' +
-    'O histórico encerrado vai para historico_clinico.',
+    'É esta tabela que o app mostra como histórico clínico (view_historico_clinico). A tabela ' +
+    'historico_clinico é só uma cópia feita por trigger no INSERT: não acompanha edição nem exclusão, ' +
+    'e guarda inclusive casos que o produtor apagou.',
   colunaTenant: 'propriedade_id',
   colunaData: 'data_do_caso',
   area: 'Sanidade',

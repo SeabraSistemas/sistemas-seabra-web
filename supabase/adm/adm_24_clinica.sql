@@ -25,6 +25,15 @@
 -- qualquer leitura sobre tratamento fala de 6% dos casos -- e a tela imprime esse
 -- denominador em vez de somar uma coluna quase vazia.
 --
+-- ⚠️ A FONTE E `clinica`, NAO `historico_clinico`. Parece o contrario pelo nome,
+-- e nao e. O trigger `registrar_caso_clinico` copia cada INSERT de `clinica` para
+-- `historico_clinico`, e nada mais escreve la: edicao nao chega, exclusao nao
+-- chega. O historico que o app mostra ao produtor (`view_historico_clinico`) e
+-- montado em cima de `clinica`, e excluir um caso no app apaga dele. As 102
+-- linhas que so existem em `historico_clinico` (48 delas de uma fazenda, todas
+-- criadas no mesmo dia) sao, portanto, casos APAGADOS -- soma-las aqui
+-- ressuscitaria lancamento que o produtor removeu.
+--
 -- Rodar DEPOIS de adm_01. Idempotente.
 -- ═════════════════════════════════════════════════════════════════════════════
 
