@@ -223,6 +223,29 @@ export default async function ReproducaoPage({
         <DiagnosticoGestacaoPendente rep={rep} limiarDg={limiarDg} usuarioId={usuarioId} selecao={selecao} />
       )}
 
+      {/*
+        Os serviços têm tela própria porque descem a CADA cobertura com quem
+        cobriu e o que aconteceu depois — é lá que se responde qual reprodutor
+        emprenha, que nenhum funil agregado responde.
+      */}
+      <section className="rounded-2xl border border-border bg-card p-4">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <div>
+            <h2 className="text-base">Qual reprodutor emprenha</h2>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Cada serviço com o bode ou sêmen e o desfecho — taxa de concepção por reprodutor, por
+              método e por ordem de parto, retornos ao cio e abortos com o dia da gestação.
+            </p>
+          </div>
+          <Link
+            href={`/adm/u/${usuarioId}/reproducao/servicos${selecao == null ? '' : `?prop=${selecao}`}`}
+            className="shrink-0 rounded-full border border-primary bg-primary px-3 py-1 text-sm text-primary-foreground transition-opacity hover:opacity-90"
+          >
+            Abrir serviços
+          </Link>
+        </div>
+      </section>
+
       <section className="rounded-2xl border border-border bg-card p-4">
         <h2 className="text-base">Outras tabelas de reprodução</h2>
         <p className="mt-0.5 text-xs text-muted-foreground">

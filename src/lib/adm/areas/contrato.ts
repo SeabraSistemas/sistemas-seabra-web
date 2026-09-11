@@ -818,6 +818,48 @@ export interface LinhaMovimentacao {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// SERVIÇO REPRODUTIVO — a cobertura e o desfecho dela, em adm_26_servicos.sql
+//
+// ⚠️ COBERTURA NÃO É SERVIÇO: 52% dos pares de coberturas consecutivas da mesma
+// fêmea estão a ≤ 3 dias — quase todos no mesmo dia: dupla cobertura, ou o
+// mesmo lançamento feito duas vezes. A view agrupa essas coberturas num serviço
+// só, e o desfecho de cada serviço fica na janela até o PRÓXIMO serviço da fêmea.
+
+export const VIEWS_SERVICO = {
+  detalhe: 'servico_reprodutivo',
+} as const;
+
+export type ViewServico = (typeof VIEWS_SERVICO)[keyof typeof VIEWS_SERVICO];
+export const NOMES_VIEWS_SERVICO: ViewServico[] = Object.values(VIEWS_SERVICO);
+
+export interface LinhaServico {
+  propriedade_id: number;
+  animal_id: number;
+  numero_animal: string;
+  nome_animal: string | null;
+  ordem_parto: number | null;
+  /** 'YYYY-MM-DD' — a data da PRIMEIRA cobertura do cio. */
+  data_servico: string;
+  /** 'Monta controlada' | 'Monta livre' | 'Inseminação' | 'Transferência de embrião' | 'Misto' */
+  metodo: string | null;
+  /** Bode (monta) ou identificação do sêmen (IA). */
+  reprodutor: string | null;
+  /** > 1 = paternidade ambígua: o serviço não é creditado a nenhum reprodutor. */
+  reprodutores_no_servico: number;
+  /** Coberturas agrupadas neste serviço (dupla IA no mesmo cio conta 2). */
+  coberturas: number;
+  proximo_servico: string | null;
+  dias_ate_proximo_servico: number | null;
+  data_dg: string | null;
+  /** 'gestante' | 'vazia' | 'aguardando' */
+  resultado_dg: string | null;
+  dias_ate_dg: number | null;
+  data_parto: string | null;
+  data_aborto: string | null;
+  categoria_pos_aborto: string | null;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // ÓBITOS — o detalhe de cada morte, implementado em adm_13_obitos.sql
 //
 // A aba Sanidade responde "quantos morreram e a que taxa" (12 meses, série,
