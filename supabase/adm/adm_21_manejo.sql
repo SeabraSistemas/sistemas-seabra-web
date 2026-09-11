@@ -30,6 +30,13 @@
 -- contagem de manejos, mas INCLUIR as linhas dele nas medias de FAMACHA: a
 -- medicao feita naquele animal foi real.
 --
+-- ⚠️ MANEJO SEM TIPO NAO SOME. 82 manejos (81 de uma fazenda, 2024-2025) tem o
+-- array `tipo_manejo` VAZIO -- e carregam 37 FAMACHA, 37 escores e 29 cascos.
+-- Com `cross join unnest` eles desapareciam da tela sem aviso, enquanto a aba
+-- Sanidade (adm_07) os contava: as duas telas discordavam sobre a mesma fazenda.
+-- O `left join ... on true` entrega UMA linha com `tipo` NULL, que o TypeScript
+-- rotula "Sem tipo informado" -- a medicao foi real, o que faltou foi marcar.
+--
 -- Rodar DEPOIS de adm_01. Idempotente.
 -- Indice: idx_manejo_propriedade_data (adm_04_indices.sql BLOCO A).
 -- ═════════════════════════════════════════════════════════════════════════════
@@ -67,14 +74,17 @@ select
   m.sessao_coletivo_id
 
 from public.manejo m
-cross join lateral unnest(m.tipo_manejo) as t(tipo)
+-- LEFT, e nao cross: manejo com array vazio vira UMA linha com tipo NULL em vez
+-- de sumir. Ver a nota do cabecalho.
+left join lateral unnest(m.tipo_manejo) as t(tipo) on true
 join public.rebanho r               on r.id = m.animal_id
 left join public.categoria_animal c on c.id = r.categoria
 where m.data_manejo is not null;
 
 comment on view adm.manejo_detalhe is
   'Uma linha por (manejo, TIPO): tipo_manejo e array e a view faz unnest, entao o mesmo manejo '
-  'aparece uma vez por tipo. Contar manejos exige count(distinct manejo_id). Filtrar SEMPRE por '
+  'aparece uma vez por tipo; tipo NULL e manejo lancado sem tipo (array vazio), uma linha so. '
+  'Contar manejos exige count(distinct manejo_id). Filtrar SEMPRE por '
   'propriedade_id, e por tipo quando a tela quiser um lancamento so.';
 
 revoke all on adm.manejo_detalhe from public;

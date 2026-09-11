@@ -17,6 +17,7 @@ import assert from 'node:assert/strict';
 
 import {
   FAMACHA_CRITICO,
+  SEM_TIPO,
   contarPorTipo,
   escalaFamacha,
   faixasDeEscore,
@@ -257,4 +258,27 @@ test('serieManejos: conta manejos distintos por mês — multi-tipo não vira pi
     { periodo: '2026-01', valor: 1 },
     { periodo: '2026-07', valor: 1 },
   ]);
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Manejo sem tipo — a medição que sumia
+// ─────────────────────────────────────────────────────────────────────────────
+
+test('contarPorTipo: manejo lançado sem tipo aparece como "Sem tipo informado", não some', () => {
+  // Regressão: 82 manejos da base têm o array tipo_manejo vazio, e o cross join
+  // da view os apagava da tela — com 37 FAMACHA dentro.
+  const tipos = contarPorTipo([
+    manejo({ manejo_id: 1, tipo: 'famacha' }),
+    manejo({ manejo_id: 2, tipo: SEM_TIPO }),
+  ]);
+  const sem = tipos.find((t) => t.chave === SEM_TIPO);
+  assert.equal(sem?.rotulo, 'Sem tipo informado');
+  assert.equal(sem?.manejos, 1);
+  assert.equal(rotuloDoTipo(SEM_TIPO), 'Sem tipo informado');
+  assert.equal(lerTipo(SEM_TIPO), SEM_TIPO, 'o filtro aceita a chave');
+});
+
+test('escalaFamacha: a medição de um manejo sem tipo conta — a leitura foi real', () => {
+  const escala = escalaFamacha([manejo({ manejo_id: 1, tipo: SEM_TIPO, famacha: 4 })]);
+  assert.equal(escala.find((g) => g.grau === 4)?.medicoes, 1);
 });

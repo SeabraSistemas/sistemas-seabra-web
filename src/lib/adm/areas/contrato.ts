@@ -654,7 +654,9 @@ export const NOMES_VIEWS_MANEJO: ViewManejo[] = Object.values(VIEWS_MANEJO);
 export interface LinhaManejo {
   propriedade_id: number;
   manejo_id: number;
-  /** 'famacha' | 'peso' | 'escore_condicao_corporal' | 'casco' | ... */
+  /** 'famacha' | 'peso' | 'escore_condicao_corporal' | 'casco' | ... — ou
+   *  'sem_tipo' quando o manejo foi lançado com o array vazio (a view entrega
+   *  NULL; é o mapeamento de manejos.ts que dá o nome). */
   tipo: string;
   animal_id: number;
   numero_animal: string;

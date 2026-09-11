@@ -52,7 +52,15 @@ export interface TipoManejo {
   detalhe: string;
 }
 
-/** Os dez tipos da base, do mais lançado para o menos. */
+/**
+ * Chave do manejo lançado SEM tipo (array vazio no app — 82 na base, 81 de uma
+ * fazenda, com 37 FAMACHA dentro). Não é valor do enum: a view entrega NULL, e é
+ * aqui que ele ganha nome. Sem isso as medições dele sumiam da tela.
+ */
+export const SEM_TIPO = 'sem_tipo';
+
+/** Os dez tipos da base, do mais lançado para o menos — e, por último, o manejo
+ *  lançado sem tipo. */
 export const TIPOS_MANEJO: TipoManejo[] = [
   { chave: 'famacha', rotulo: 'FAMACHA', detalhe: 'grau de anemia pela mucosa ocular' },
   { chave: 'peso', rotulo: 'Peso', detalhe: 'pesagem feita dentro do manejo' },
@@ -68,6 +76,11 @@ export const TIPOS_MANEJO: TipoManejo[] = [
   { chave: 'descarte', rotulo: 'Descarte', detalhe: 'baixa do animal — não tem tabela própria' },
   { chave: 'ubere', rotulo: 'Úbere', detalhe: 'avaliação de úbere' },
   { chave: 'cmt', rotulo: 'CMT', detalhe: 'California Mastitis Test, por metade do úbere' },
+  {
+    chave: SEM_TIPO,
+    rotulo: 'Sem tipo informado',
+    detalhe: 'manejo lançado sem marcar o tipo — as medições valem, o que faltou foi marcar',
+  },
 ];
 
 const ROTULOS = new Map(TIPOS_MANEJO.map((t) => [t.chave, t.rotulo]));
@@ -97,7 +110,14 @@ export async function listarManejos(
   const view = VIEWS_MANEJO.detalhe;
   const res = await paginarView(view, SQL_MANEJO, (de, ate) => {
     const base = supa.from(view).select(SELECT).eq('propriedade_id', propriedadeId);
-    const filtrada = tipo === null ? base : base.eq('tipo', tipo);
+    const filtrada =
+      tipo === null
+        ? base
+        : // Sem tipo é NULL na view, não um valor do enum: `eq` daria erro de
+          // valor inválido no Postgres.
+          tipo === SEM_TIPO
+          ? base.is('tipo', null)
+          : base.eq('tipo', tipo);
     return (filtrada as unknown as Consulta)
       // Ordem TOTAL: a mesma sessão de curral tem dezenas de linhas no mesmo dia,
       // e o mesmo manejo aparece uma vez por tipo — por isso id E tipo.
@@ -114,7 +134,7 @@ function paraManejo(l: Linha): LinhaManejo {
   return {
     propriedade_id: Math.round(numeroDe(l.propriedade_id) ?? 0),
     manejo_id: Math.round(numeroDe(l.manejo_id) ?? 0),
-    tipo: textoDe(l.tipo) ?? '',
+    tipo: textoDe(l.tipo) ?? SEM_TIPO,
     animal_id: Math.round(numeroDe(l.animal_id) ?? 0),
     numero_animal: textoDe(l.numero_animal) ?? '—',
     nome_animal: textoDe(l.nome_animal),
