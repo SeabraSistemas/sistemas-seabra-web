@@ -224,6 +224,30 @@ export default async function ReproducaoPage({
       )}
 
       {/*
+        O balanço é a pergunta de manejo da semana — quem está gestante e pare
+        quando, quem espera DG, quem já pode ir ao bode — avaliada HOJE, fêmea a
+        fêmea, pelos eventos e não pelo cadastro. O funil acima é a história dos
+        12 meses; o balanço é o estado de agora.
+      */}
+      <section className="rounded-2xl border border-border bg-card p-4">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <div>
+            <h2 className="text-base">Balanço reprodutivo de hoje</h2>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Cada fêmea ativa no seu grupo — gestante (com parto previsto), coberta aguardando DG,
+              vazia, pronta para cobrir — e as pendências: a secar, DG atrasado, parto vencido.
+            </p>
+          </div>
+          <Link
+            href={`/adm/u/${usuarioId}/reproducao/balanco${selecao == null ? '' : `?prop=${selecao}`}`}
+            className="shrink-0 rounded-full border border-primary bg-primary px-3 py-1 text-sm text-primary-foreground transition-opacity hover:opacity-90"
+          >
+            Abrir balanço
+          </Link>
+        </div>
+      </section>
+
+      {/*
         Os serviços têm tela própria porque descem a CADA cobertura com quem
         cobriu e o que aconteceu depois — é lá que se responde qual reprodutor
         emprenha, que nenhum funil agregado responde.

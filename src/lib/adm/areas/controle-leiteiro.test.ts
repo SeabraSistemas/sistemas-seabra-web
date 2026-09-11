@@ -85,6 +85,7 @@ function contexto(parcial: Partial<LinhaContextoControle> & { animal_id: number 
     dg_data: null,
     dg_resultado: null,
     aborto_data: null,
+    dg_dias_gestacao: null,
     ...parcial,
   };
 }
@@ -513,4 +514,47 @@ test('resumoReprodutivo: conta os estados, as prontas para cobrir e se houve alg
 
   const semNada = resumoReprodutivo(juntarContexto([animal({ animal_id: 1 })], [contexto({ animal_id: 1 })]));
   assert.equal(semNada.comAlgumEvento, false);
+});
+
+test('situacaoReprodutiva: a idade do feto no DG ancora a gestação — não a cobertura registrada', () => {
+  // Regressão (244): coberta em 01/03, DG vazio em 07/05, DG gestante em 29/05
+  // com 30 dias — emprenhou ~29/04 do bode do piquete, sem lançamento.
+  const s = situacaoReprodutiva(
+    contexto({
+      animal_id: 1,
+      servico_data: '2026-03-01',
+      dg_data: '2026-05-29',
+      dg_resultado: 'gestante',
+      dg_dias_gestacao: 30,
+    }),
+    '2026-08-07',
+  );
+  assert.equal(s.estado, 'gestante');
+  assert.equal(s.concepcao, '2026-04-29');
+  assert.equal(s.origemGestacao, 'feto');
+  assert.equal(s.partoPrevisto, '2026-09-26', 'concepção + 150, e não cobertura + 150 (29/07)');
+  assert.equal(s.diasDeGestacao, 100);
+  assert.equal(s.aSecar, true);
+  assert.equal(s.coberturaDivergente, true, '59 dias entre a cobertura lançada e a concepção');
+  assert.equal(s.dataCobertura, '2026-03-01', 'a cobertura registrada continua visível');
+});
+
+test('situacaoReprodutiva: feto perto da cobertura registrada não é divergência', () => {
+  const s = situacaoReprodutiva(
+    contexto({ animal_id: 1, servico_data: '2026-01-20', dg_data: '2026-03-01', dg_resultado: 'gestante', dg_dias_gestacao: 38 }),
+    CONTROLE,
+  );
+  assert.equal(s.concepcao, '2026-01-22');
+  assert.equal(s.coberturaDivergente, false);
+  assert.equal(s.partoPrevisto, '2026-06-21');
+});
+
+test('situacaoReprodutiva: gestante sem cobertura mas com idade do feto ganha parto previsto', () => {
+  const s = situacaoReprodutiva(
+    contexto({ animal_id: 1, dg_data: '2026-03-01', dg_resultado: 'gestante', dg_dias_gestacao: 45 }),
+    CONTROLE,
+  );
+  assert.equal(s.semCoberturaLancada, true);
+  assert.equal(s.origemGestacao, 'feto');
+  assert.equal(s.partoPrevisto, '2026-06-14');
 });

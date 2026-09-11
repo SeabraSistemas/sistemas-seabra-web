@@ -694,6 +694,9 @@ function LinhaLancamento({ animal, temSetor }: { animal: AnimalDoControle; temSe
       ? `cob. ${formatarData(situacao.dataCobertura)}${situacao.reprodutor ? ` · ${situacao.reprodutor}` : situacao.metodo ? ` · ${situacao.metodo}` : ''}`
       : null,
     situacao.dataDg ? `DG ${formatarData(situacao.dataDg)}` : null,
+    situacao.coberturaDivergente && situacao.concepcao
+      ? `emprenhou ~${formatarData(situacao.concepcao)} pelo feto — a cobertura lançada falhou`
+      : null,
     situacao.partoPrevisto ? `parto ~${formatarData(situacao.partoPrevisto)}` : null,
   ].filter(Boolean);
 

@@ -62,7 +62,14 @@ select
   sv.reprodutor                                               as servico_reprodutor,
   dg.data_diagnostico                                         as dg_data,
   dg.resultado                                                as dg_resultado,
-  ab.data_aborto                                              as aborto_data
+  ab.data_aborto                                              as aborto_data,
+
+  -- A idade do feto no DG (ultrassom). Quando existe, e ela -- e nao a data da
+  -- cobertura -- que diz quando a cabra emprenhou e quando pare: na 244, uma
+  -- cabra coberta em 01/03 deu DG vazio em 07/05 e DG gestante em 29/05 com 30
+  -- dias -- emprenhou por volta de 29/04, do bode do piquete, sem lancamento.
+  -- Pela cobertura o parto seria 29/07 (e "vencido"); pelo feto, fim de setembro.
+  dg.dias_de_gestacao                                         as dg_dias_gestacao
 
 from adm.controle_leiteiro_animal a
 join public.rebanho r on r.id = a.animal_id
@@ -107,7 +114,8 @@ left join lateral (
 ) sv on true
 
 left join lateral (
-  select d.data_diagnostico, lower(btrim(d.diagnostico::text)) as resultado
+  select d.data_diagnostico, lower(btrim(d.diagnostico::text)) as resultado,
+         nullif(d.dias_de_gestacao, 0) as dias_de_gestacao
     from public.diagnostico_gestacao d
    where d.animal_id = a.animal_id
      and d.data_diagnostico <= a.data_controle

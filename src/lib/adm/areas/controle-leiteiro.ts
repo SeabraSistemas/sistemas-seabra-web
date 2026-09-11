@@ -15,6 +15,11 @@ import {
   type Consulta,
   type Linha,
 } from '@/lib/adm/areas/leitura';
+import {
+  PRONTA_PARA_COBRIR_APOS,
+  situacaoReprodutiva,
+  type EstadoReprodutivo,
+} from '@/lib/adm/areas/situacao-reprodutiva';
 import { admClient, semConfigSupabase } from '@/lib/adm/supabase-admin';
 import { ok, type PontoSerie, type Resultado } from '@/lib/adm/types';
 
@@ -92,6 +97,7 @@ const PROJECAO_CONTEXTO = {
   dg_data: true,
   dg_resultado: true,
   aborto_data: true,
+  dg_dias_gestacao: true,
 } satisfies Record<keyof LinhaContextoControle, true>;
 
 const SELECT_SESSAO = Object.keys(PROJECAO_SESSAO).join(',');
@@ -205,6 +211,7 @@ function paraContexto(l: Linha): LinhaContextoControle {
     dg_data: textoDe(l.dg_data),
     dg_resultado: textoDe(l.dg_resultado),
     aborto_data: textoDe(l.aborto_data),
+    dg_dias_gestacao: numeroDe(l.dg_dias_gestacao),
   };
 }
 
@@ -595,138 +602,19 @@ export function juntarContexto(
   }));
 }
 
-export type EstadoReprodutivo =
-  | 'gestante'
-  | 'coberta'
-  | 'vazia'
-  | 'abortou'
-  | 'nao_coberta'
-  | 'sem_informacao';
-
-/** Gestação caprina: ~150 dias. É o que projeta o parto a partir da cobertura. */
-export const GESTACAO_DIAS = 150;
-/** A cabra gestante deveria estar SECA daqui em diante — 60 dias antes do parto. */
-export const SECAR_AOS_DIAS_DE_GESTACAO = GESTACAO_DIAS - 60;
-/** Cobertura sem DG depois disso é DG atrasado: com 45 dias o ultrassom já vê. */
-export const DG_ATRASADO_APOS = 45;
-/** Cobertura mais velha que isso sem DG nem parto não é "coberta" — é evento
- *  perdido. Mesma janela de gestação de areas/servicos.ts. */
-export const COBERTURA_VALIDA_ATE = 170;
-/** Não coberta com mais de 60 dias de lactação já pode voltar ao bode. */
-export const PRONTA_PARA_COBRIR_APOS = 60;
-
-export interface SituacaoReprodutiva {
-  estado: EstadoReprodutivo;
-  /** O texto da célula — curto, sem data (as datas vão nos campos). */
-  rotulo: string;
-  dataCobertura: string | null;
-  metodo: string | null;
-  reprodutor: string | null;
-  dataDg: string | null;
-  /** Dias entre a cobertura e o controle, quando há cobertura válida. */
-  diasDesdeCobertura: number | null;
-  /** Só para gestante COM cobertura conhecida: cobertura + 150 dias. */
-  partoPrevisto: string | null;
-  /** Gestante com mais de 90 dias de gestação e ainda no controle — devia estar seca. */
-  aSecar: boolean;
-  /** Coberta há mais de 45 dias e sem DG. */
-  dgAtrasado: boolean;
-  /** Gestante por DG sem nenhuma cobertura lançada — o funil invertido, por animal. */
-  semCoberturaLancada: boolean;
-}
-
-const UM_DIA = 86_400_000;
-
-function diasEntre(de: string, ate: string): number {
-  return Math.round((diaEmUtc(ate) - diaEmUtc(de)) / UM_DIA);
-}
-
-function somarDias(iso: string, dias: number): string {
-  return new Date(diaEmUtc(iso) + dias * UM_DIA).toISOString().slice(0, 10);
-}
-
-/**
- * O estado reprodutivo do animal NO DIA do controle, a partir dos eventos desde
- * o início da lactação — nunca dos caches de `rebanho`.
- *
- * A ordem é a do evento mais conclusivo, como em areas/servicos.ts: aborto >
- * diagnóstico > cobertura. Um DG anterior à última cobertura é de outro cio e
- * não vale; uma cobertura mais velha que `COBERTURA_VALIDA_ATE` sem DG nem
- * parto é evento perdido, não "coberta".
- */
-export function situacaoReprodutiva(
-  contexto: LinhaContextoControle | null,
-  dataControle: string,
-): SituacaoReprodutiva {
-  const base: SituacaoReprodutiva = {
-    estado: 'sem_informacao',
-    rotulo: 'Sem informação',
-    dataCobertura: null,
-    metodo: null,
-    reprodutor: null,
-    dataDg: null,
-    diasDesdeCobertura: null,
-    partoPrevisto: null,
-    aSecar: false,
-    dgAtrasado: false,
-    semCoberturaLancada: false,
-  };
-  if (!contexto || dataControle === '') return base;
-
-  const servico = contexto.servico_data;
-  const dg = contexto.dg_data;
-  const aborto = contexto.aborto_data;
-  const comServico = {
-    dataCobertura: servico,
-    metodo: contexto.servico_metodo,
-    reprodutor: contexto.servico_reprodutor,
-    diasDesdeCobertura: servico ? diasEntre(servico, dataControle) : null,
-  };
-
-  if (aborto && (!servico || aborto >= servico)) {
-    return { ...base, ...comServico, estado: 'abortou', rotulo: 'Abortou', dataDg: dg };
-  }
-
-  if (dg && (!servico || dg >= servico)) {
-    if (contexto.dg_resultado === 'gestante') {
-      const dias = comServico.diasDesdeCobertura;
-      return {
-        ...base,
-        ...comServico,
-        estado: 'gestante',
-        rotulo: 'Gestante',
-        dataDg: dg,
-        partoPrevisto: servico ? somarDias(servico, GESTACAO_DIAS) : null,
-        aSecar: dias !== null && dias >= SECAR_AOS_DIAS_DE_GESTACAO,
-        semCoberturaLancada: !servico,
-      };
-    }
-    if (contexto.dg_resultado === 'vazia') {
-      return { ...base, ...comServico, estado: 'vazia', rotulo: 'Vazia (DG negativo)', dataDg: dg };
-    }
-    // 'aguardando': o DG foi feito e não concluiu — continua coberta, sem resposta.
-    if (servico) {
-      return { ...base, ...comServico, estado: 'coberta', rotulo: 'Coberta, DG inconclusivo', dataDg: dg };
-    }
-  }
-
-  if (servico) {
-    const dias = comServico.diasDesdeCobertura ?? 0;
-    if (dias <= COBERTURA_VALIDA_ATE) {
-      return {
-        ...base,
-        ...comServico,
-        estado: 'coberta',
-        rotulo: 'Coberta, sem DG',
-        dgAtrasado: dias > DG_ATRASADO_APOS,
-      };
-    }
-    // Cobertura velha demais sem desfecho: não dá para chamar de coberta.
-    return { ...base, ...comServico, estado: 'nao_coberta', rotulo: 'Cobertura antiga, sem desfecho' };
-  }
-
-  return { ...base, estado: 'nao_coberta', rotulo: 'Não coberta desde o parto' };
-}
+// A regra do estado reprodutivo é compartilhada com o balanço reprodutivo e
+// mora em situacao-reprodutiva.ts; os nomes ficam re-exportados aqui para a
+// tela e os testes do controle não precisarem saber disso.
+export {
+  COBERTURA_VALIDA_ATE,
+  DG_ATRASADO_APOS,
+  GESTACAO_DIAS,
+  PRONTA_PARA_COBRIR_APOS,
+  SECAR_AOS_DIAS_DE_GESTACAO,
+  situacaoReprodutiva,
+  type EstadoReprodutivo,
+  type SituacaoReprodutiva,
+} from '@/lib/adm/areas/situacao-reprodutiva';
 
 export interface ResumoReprodutivo {
   animais: number;

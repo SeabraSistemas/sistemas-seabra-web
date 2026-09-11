@@ -350,6 +350,9 @@ export interface LinhaContextoControle {
   /** 'gestante' | 'vazia' | 'aguardando' */
   dg_resultado: string | null;
   aborto_data: string | null;
+  /** Idade do feto no DG (ultrassom), em dias. Quando existe, é ela que diz
+   *  quando a fêmea emprenhou — a cobertura registrada pode ser a que falhou. */
+  dg_dias_gestacao: number | null;
 }
 
 /** Resumo de um dia de controle — alimenta o seletor de data e a série histórica. */
@@ -931,6 +934,54 @@ export interface LinhaSaidaLeite {
    *  vêm juntos com ' + ' — nunca desaninhados, ou os litros contariam duas vezes. */
   destino: string | null;
   observacao: string | null;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FÊMEAS — cada fêmea ativa e o pé em que está HOJE, em adm_29_femeas.sql
+//
+// A base do balanço reprodutivo: último parto e a cobertura, o DG e o aborto
+// POSTERIORES a ele. ⚠️ Nada vem dos caches de `rebanho` (reproducao,
+// ultima_cobertura, data_dg) — o estado é reconstruído pelos eventos e
+// rotulado por areas/situacao-reprodutiva.ts, a mesma regra do controle.
+
+export const VIEWS_FEMEA = {
+  situacao: 'femea_situacao',
+} as const;
+
+export type ViewFemea = (typeof VIEWS_FEMEA)[keyof typeof VIEWS_FEMEA];
+export const NOMES_VIEWS_FEMEA: ViewFemea[] = Object.values(VIEWS_FEMEA);
+
+export interface LinhaFemea {
+  propriedade_id: number;
+  animal_id: number;
+  numero_animal: string;
+  nome_animal: string | null;
+  categoria: string | null;
+  baia: string | null;
+  setor: string | null;
+  data_de_nascimento: string | null;
+  idade_dias: number | null;
+  ordem_parto: number | null;
+  /** O mais recente entre a cria mais nova com mae_id, rebanho.data_ultimo_parto
+   *  e o início da última lactação — cada fazenda lança por um caminho. */
+  ultimo_parto: string | null;
+  dias_desde_parto: number | null;
+  /** Tem lactação aberta (data_fim nula). */
+  em_lactacao: boolean;
+  /** A última secagem depois do último parto. */
+  seca_em: string | null;
+  peso_atual: number | null;
+  ultima_pesagem: string | null;
+  servico_data: string | null;
+  servico_metodo: string | null;
+  servico_reprodutor: string | null;
+  dg_data: string | null;
+  /** 'gestante' | 'vazia' | 'aguardando' */
+  dg_resultado: string | null;
+  aborto_data: string | null;
+  /** Idade do feto no DG (ultrassom), em dias. Quando existe, é ela que diz
+   *  quando a fêmea emprenhou — a cobertura registrada pode ser a que falhou. */
+  dg_dias_gestacao: number | null;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
