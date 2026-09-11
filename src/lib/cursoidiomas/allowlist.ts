@@ -8,6 +8,7 @@
  */
 export const EMAILS_PERMITIDOS = [
   'felipeseabracl@gmail.com',
+  'rafaelaseabracl@gmail.com',
 ];
 
 export function emailPermitido(email: string): boolean {

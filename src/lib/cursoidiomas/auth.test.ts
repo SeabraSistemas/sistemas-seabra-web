@@ -53,6 +53,10 @@ describe('cursoidiomas/allowlist', () => {
   test('aceita e-mail da lista ignorando caixa e espaços', () => {
     assert.equal(emailPermitido(' FelipeSeabraCL@gmail.com '), true);
   });
+  test('os dois e-mails do curso entram', () => {
+    assert.equal(emailPermitido('felipeseabracl@gmail.com'), true);
+    assert.equal(emailPermitido('RafaelaSeabraCL@gmail.com'), true);
+  });
   test('recusa vazio e desconhecido', () => {
     assert.equal(emailPermitido(''), false);
     assert.equal(emailPermitido('alguem@exemplo.com'), false);
