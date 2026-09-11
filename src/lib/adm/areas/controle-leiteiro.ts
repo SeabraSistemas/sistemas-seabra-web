@@ -98,6 +98,7 @@ const PROJECAO_CONTEXTO = {
   dg_resultado: true,
   aborto_data: true,
   dg_dias_gestacao: true,
+  dg_negativo_data: true,
 } satisfies Record<keyof LinhaContextoControle, true>;
 
 const SELECT_SESSAO = Object.keys(PROJECAO_SESSAO).join(',');
@@ -212,6 +213,7 @@ function paraContexto(l: Linha): LinhaContextoControle {
     dg_resultado: textoDe(l.dg_resultado),
     aborto_data: textoDe(l.aborto_data),
     dg_dias_gestacao: numeroDe(l.dg_dias_gestacao),
+    dg_negativo_data: textoDe(l.dg_negativo_data),
   };
 }
 

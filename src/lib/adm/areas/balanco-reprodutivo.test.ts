@@ -18,11 +18,19 @@ import assert from 'node:assert/strict';
 
 import {
   APTA_A_PARTIR_DE_DIAS,
+  APTA_PESO_MINIMO_KG,
+  DEL_ALERTA_DIAS,
   PARTO_PROXIMO_DIAS,
   PARTO_VENCIDO_APOS,
+  SEM_BAIA,
+  alertasDel,
+  aplicarFiltro,
+  auditoriaCoberturas,
   avaliarFemeas,
+  lerFiltro,
   lerGrupo,
   ordenarPorGrupo,
+  porBaia,
   prontasParaCobrir,
   proximosPartos,
   resumoBalanco,
@@ -55,6 +63,7 @@ function femea(parcial: Partial<LinhaFemea> & { animal_id: number }): LinhaFemea
     dg_resultado: null,
     aborto_data: null,
     dg_dias_gestacao: null,
+    dg_negativo_data: null,
     ...parcial,
   };
 }
@@ -249,16 +258,112 @@ test('lerGrupo: só aceita chave da lista', () => {
   assert.equal(lerGrupo(undefined), null);
 });
 
-test('avaliarFemeas: parto "vencido" pela cobertura deixa de ser vencido quando o feto diz que emprenhou depois', () => {
-  const [pelaCobertura, peloFeto] = avaliarFemeas(
+test('avaliarFemeas: o feto só desloca o parto quando um DG negativo refutou a cobertura', () => {
+  const [pelaCobertura, refutada] = avaliarFemeas(
     [
-      femea({ animal_id: 1, servico_data: '2026-03-01', dg_data: '2026-05-29', dg_resultado: 'gestante' }),
-      femea({ animal_id: 2, servico_data: '2026-03-01', dg_data: '2026-05-29', dg_resultado: 'gestante', dg_dias_gestacao: 30 }),
+      femea({ animal_id: 1, servico_data: '2026-03-01', dg_data: '2026-05-29', dg_resultado: 'gestante', dg_dias_gestacao: 30 }),
+      femea({ animal_id: 2, servico_data: '2026-03-01', dg_negativo_data: '2026-05-07', dg_data: '2026-05-29', dg_resultado: 'gestante', dg_dias_gestacao: 30 }),
     ],
     HOJE,
   );
-  assert.equal(pelaCobertura.partoVencido, true, 'sem o feto, 01/03 + 150 = 29/07, 44 dias atrás');
-  assert.equal(peloFeto.partoVencido, false);
-  assert.equal(peloFeto.situacao.partoPrevisto, '2026-09-26');
-  assert.equal(peloFeto.partoProximo, true);
+  assert.equal(pelaCobertura.situacao.partoPrevisto, '2026-07-29', 'o "30 dias" é padrão digitado — a cobertura vale');
+  assert.equal(pelaCobertura.partoVencido, true);
+  assert.equal(pelaCobertura.situacao.dgDiasSuspeito, true);
+
+  assert.equal(refutada.situacao.partoPrevisto, '2026-09-26');
+  assert.equal(refutada.partoVencido, false);
+  assert.equal(refutada.partoProximo, true);
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Aptas por peso, alerta de DEL, auditoria e baias
+// ─────────────────────────────────────────────────────────────────────────────
+
+test('avaliarFemeas: cabrita com idade mas abaixo de 35 kg ainda é "jovem"; sem peso vale a idade e fica marcada', () => {
+  const [leve, pesada, semPeso] = avaliarFemeas(
+    [
+      femea({ animal_id: 1, idade_dias: 300, peso_atual: 28 }),
+      femea({ animal_id: 2, idade_dias: 300, peso_atual: APTA_PESO_MINIMO_KG }),
+      femea({ animal_id: 3, idade_dias: 300, peso_atual: null }),
+    ],
+    HOJE,
+  );
+  assert.equal(leve.grupo, 'jovem');
+  assert.equal(pesada.grupo, 'pronta');
+  assert.equal(semPeso.grupo, 'pronta');
+  assert.equal(semPeso.aptaSemPeso, true);
+  assert.equal(pesada.aptaSemPeso, false);
+});
+
+test('avaliarFemeas: alerta de DEL é lactação aberta há mais de 210 dias sem gestação', () => {
+  const [alerta, gestante, seca, recente] = avaliarFemeas(
+    [
+      femea({ animal_id: 1, ultimo_parto: '2026-01-01', dias_desde_parto: 253, em_lactacao: true }),
+      femea({ animal_id: 2, ultimo_parto: '2026-01-01', dias_desde_parto: 253, em_lactacao: true, servico_data: '2026-04-01', dg_data: '2026-05-15', dg_resultado: 'gestante' }),
+      femea({ animal_id: 3, ultimo_parto: '2026-01-01', dias_desde_parto: 253, em_lactacao: false }),
+      femea({ animal_id: 4, ultimo_parto: '2026-06-01', dias_desde_parto: 102, em_lactacao: true }),
+    ],
+    HOJE,
+  );
+  assert.equal(DEL_ALERTA_DIAS, 210);
+  assert.equal(alerta.alertaDel, true);
+  assert.equal(gestante.alertaDel, false, 'gestante com DEL alto é caso de secar, não de cobrir');
+  assert.equal(seca.alertaDel, false);
+  assert.equal(recente.alertaDel, false);
+  assert.deepEqual(alertasDel([alerta, gestante, seca, recente]).map((a) => a.femea.animal_id), [1]);
+});
+
+test('auditoriaCoberturas: lista o DG com idade do feto suspeita e a cobertura refutada, por data do DG', () => {
+  const lista = auditoriaCoberturas(
+    avaliarFemeas(
+      [
+        femea({ animal_id: 1, servico_data: '2026-02-16', dg_data: '2026-05-28', dg_resultado: 'gestante', dg_dias_gestacao: 30 }),
+        femea({ animal_id: 2, servico_data: '2026-03-01', dg_negativo_data: '2026-05-07', dg_data: '2026-05-20', dg_resultado: 'gestante', dg_dias_gestacao: 30 }),
+        femea({ animal_id: 3, servico_data: '2026-04-01', dg_data: '2026-05-15', dg_resultado: 'gestante', dg_dias_gestacao: 44 }),
+      ],
+      HOJE,
+    ),
+  );
+  assert.deepEqual(lista.map((a) => a.femea.animal_id), [2, 1], 'a 3 bate com a cobertura e não entra');
+});
+
+test('porBaia: barra por baia, DEL médio só das lactantes, ordem natural e "Sem baia" por último', () => {
+  const baias = porBaia(
+    avaliarFemeas(
+      [
+        femea({ animal_id: 1, baia: 'G1-10', ultimo_parto: '2026-06-01', dias_desde_parto: 102, em_lactacao: true }),
+        femea({ animal_id: 2, baia: 'G1-2', servico_data: '2026-08-20' }),
+        femea({ animal_id: 3, baia: 'G1-2', ultimo_parto: '2026-05-01', dias_desde_parto: 133, em_lactacao: true }),
+        femea({ animal_id: 4, baia: 'G1-2', servico_data: '2026-04-01', dg_data: '2026-05-15', dg_resultado: 'gestante', em_lactacao: false }),
+        femea({ animal_id: 5, baia: null, idade_dias: 100 }),
+      ],
+      HOJE,
+    ),
+  );
+  assert.deepEqual(
+    baias.map((b) => b.baia),
+    ['G1-2', 'G1-10', SEM_BAIA],
+  );
+  const g12 = baias[0];
+  assert.equal(g12.animais, 3);
+  assert.equal(g12.gestantes, 1);
+  assert.equal(g12.cobertas, 1);
+  assert.equal(g12.outras, 1);
+  assert.equal(g12.aptas, 1);
+  assert.equal(g12.delMedio, 133, 'só a lactante entra no DEL');
+});
+
+test('lerFiltro e aplicarFiltro: alerta de DEL e aptas', () => {
+  const avaliadas = avaliarFemeas(
+    [
+      femea({ animal_id: 1, ultimo_parto: '2026-01-01', dias_desde_parto: 253, em_lactacao: true }),
+      femea({ animal_id: 2, idade_dias: 300 }),
+    ],
+    HOJE,
+  );
+  assert.equal(lerFiltro('del'), 'del');
+  assert.equal(lerFiltro('x'), null);
+  assert.deepEqual(aplicarFiltro(avaliadas, 'del').map((a) => a.femea.animal_id), [1]);
+  assert.deepEqual(aplicarFiltro(avaliadas, 'aptas').map((a) => a.femea.animal_id), [1, 2], 'a 1 pariu há 253 dias e também está pronta');
+  assert.equal(aplicarFiltro(avaliadas, null).length, 2);
 });

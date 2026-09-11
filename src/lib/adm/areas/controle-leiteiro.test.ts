@@ -86,6 +86,7 @@ function contexto(parcial: Partial<LinhaContextoControle> & { animal_id: number 
     dg_resultado: null,
     aborto_data: null,
     dg_dias_gestacao: null,
+    dg_negativo_data: null,
     ...parcial,
   };
 }
@@ -516,40 +517,57 @@ test('resumoReprodutivo: conta os estados, as prontas para cobrir e se houve alg
   assert.equal(semNada.comAlgumEvento, false);
 });
 
-test('situacaoReprodutiva: a idade do feto no DG ancora a gestação — não a cobertura registrada', () => {
-  // Regressão (244): coberta em 01/03, DG vazio em 07/05, DG gestante em 29/05
-  // com 30 dias — emprenhou ~29/04 do bode do piquete, sem lançamento.
+test('situacaoReprodutiva: a cobertura registrada vence a idade do feto — o "30 dias" é valor padrão', () => {
+  // Regressão (244, Ximbica): coberta em 16/02, DG gestante em 28/05 lançado
+  // com "30 dias", pariu em 31/07 — 165 dias da cobertura. Pelo feto o parto
+  // seria 25/09. Auditado contra 73 partos: a cobertura acertou 64, o feto 9.
+  const s = situacaoReprodutiva(
+    contexto({ animal_id: 1, servico_data: '2026-02-16', dg_data: '2026-05-28', dg_resultado: 'gestante', dg_dias_gestacao: 30 }),
+    '2026-06-15',
+  );
+  assert.equal(s.estado, 'gestante');
+  assert.equal(s.concepcao, '2026-02-16');
+  assert.equal(s.origemGestacao, 'cobertura');
+  assert.equal(s.partoPrevisto, '2026-07-16');
+  assert.equal(s.diasDeGestacaoNoDg, 101, 'o que o feto devia ter no DG — "era 30"');
+  assert.equal(s.dgDiasSuspeito, true);
+  assert.equal(s.coberturaRefutada, false);
+});
+
+test('situacaoReprodutiva: DG negativo entre a cobertura e o positivo refuta a cobertura — aí o feto ancora', () => {
+  // 244: coberta em 01/03, DG vazio em 07/05, DG gestante em 29/05 com 30 dias.
+  // A cobertura de março não emprenhou; a fêmea emprenhou ~29/04 do bode do
+  // piquete, sem lançamento.
   const s = situacaoReprodutiva(
     contexto({
       animal_id: 1,
       servico_data: '2026-03-01',
+      dg_negativo_data: '2026-05-07',
       dg_data: '2026-05-29',
       dg_resultado: 'gestante',
       dg_dias_gestacao: 30,
     }),
     '2026-08-07',
   );
-  assert.equal(s.estado, 'gestante');
-  assert.equal(s.concepcao, '2026-04-29');
+  assert.equal(s.coberturaRefutada, true);
   assert.equal(s.origemGestacao, 'feto');
-  assert.equal(s.partoPrevisto, '2026-09-26', 'concepção + 150, e não cobertura + 150 (29/07)');
-  assert.equal(s.diasDeGestacao, 100);
-  assert.equal(s.aSecar, true);
-  assert.equal(s.coberturaDivergente, true, '59 dias entre a cobertura lançada e a concepção');
+  assert.equal(s.concepcao, '2026-04-29');
+  assert.equal(s.partoPrevisto, '2026-09-26', 'e não 29/07 pela cobertura refutada');
+  assert.equal(s.dgDiasSuspeito, false);
   assert.equal(s.dataCobertura, '2026-03-01', 'a cobertura registrada continua visível');
 });
 
-test('situacaoReprodutiva: feto perto da cobertura registrada não é divergência', () => {
+test('situacaoReprodutiva: feto perto da cobertura registrada não levanta suspeita', () => {
   const s = situacaoReprodutiva(
     contexto({ animal_id: 1, servico_data: '2026-01-20', dg_data: '2026-03-01', dg_resultado: 'gestante', dg_dias_gestacao: 38 }),
     CONTROLE,
   );
-  assert.equal(s.concepcao, '2026-01-22');
-  assert.equal(s.coberturaDivergente, false);
-  assert.equal(s.partoPrevisto, '2026-06-21');
+  assert.equal(s.concepcao, '2026-01-20', 'a cobertura, sempre que existe');
+  assert.equal(s.dgDiasSuspeito, false);
+  assert.equal(s.partoPrevisto, '2026-06-19');
 });
 
-test('situacaoReprodutiva: gestante sem cobertura mas com idade do feto ganha parto previsto', () => {
+test('situacaoReprodutiva: gestante sem cobertura lançada usa a idade do feto — é a única pista', () => {
   const s = situacaoReprodutiva(
     contexto({ animal_id: 1, dg_data: '2026-03-01', dg_resultado: 'gestante', dg_dias_gestacao: 45 }),
     CONTROLE,

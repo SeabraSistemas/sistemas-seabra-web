@@ -350,9 +350,13 @@ export interface LinhaContextoControle {
   /** 'gestante' | 'vazia' | 'aguardando' */
   dg_resultado: string | null;
   aborto_data: string | null;
-  /** Idade do feto no DG (ultrassom), em dias. Quando existe, é ela que diz
-   *  quando a fêmea emprenhou — a cobertura registrada pode ser a que falhou. */
+  /** Idade do feto lançada no DG, em dias. ⚠️ "30" é quase sempre valor padrão
+   *  digitado, não medida: a cobertura registrada vence, salvo se um DG negativo
+   *  a refutou (ver `dg_negativo_data`) ou se não há cobertura nenhuma. */
   dg_dias_gestacao: number | null;
+  /** O último DG NEGATIVO entre a cobertura e o DG positivo — a cobertura
+   *  registrada não emprenhou; a fêmea emprenhou depois, sem lançamento. */
+  dg_negativo_data: string | null;
 }
 
 /** Resumo de um dia de controle — alimenta o seletor de data e a série histórica. */
@@ -979,9 +983,13 @@ export interface LinhaFemea {
   /** 'gestante' | 'vazia' | 'aguardando' */
   dg_resultado: string | null;
   aborto_data: string | null;
-  /** Idade do feto no DG (ultrassom), em dias. Quando existe, é ela que diz
-   *  quando a fêmea emprenhou — a cobertura registrada pode ser a que falhou. */
+  /** Idade do feto lançada no DG, em dias. ⚠️ "30" é quase sempre valor padrão
+   *  digitado, não medida: a cobertura registrada vence, salvo se um DG negativo
+   *  a refutou (ver `dg_negativo_data`) ou se não há cobertura nenhuma. */
   dg_dias_gestacao: number | null;
+  /** O último DG NEGATIVO entre a cobertura e o DG positivo — a cobertura
+   *  registrada não emprenhou; a fêmea emprenhou depois, sem lançamento. */
+  dg_negativo_data: string | null;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

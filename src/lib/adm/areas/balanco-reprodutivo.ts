@@ -56,12 +56,18 @@ const PROJECAO = {
   dg_resultado: true,
   aborto_data: true,
   dg_dias_gestacao: true,
+  dg_negativo_data: true,
 } satisfies Record<keyof LinhaFemea, true>;
 
 const SELECT = Object.keys(PROJECAO).join(',');
 
-/** Cabrita passa a ser apta ao bode por volta dos 8 meses (e ~30 kg). */
-export const APTA_A_PARTIR_DE_DIAS = 240;
+/** Cabrita passa a ser apta ao bode aos 7 meses E 35 kg — os parâmetros que o
+ *  Felipe já usava no painel antigo. Sem peso lançado, vale só a idade. */
+export const APTA_A_PARTIR_DE_DIAS = 210;
+export const APTA_PESO_MINIMO_KG = 35;
+/** Em lactação há mais de 210 dias sem gestação: a cabra está passando do
+ *  ponto — a curva cai e ela não foi coberta. O alerta vermelho do painel antigo. */
+export const DEL_ALERTA_DIAS = 210;
 /** Parto previsto dentro desta janela é "próximo" — a lista da maternidade. */
 export const PARTO_PROXIMO_DIAS = 30;
 /** Parto previsto há mais tempo que isso e nada lançado: ou pariu e ninguém
@@ -112,6 +118,7 @@ function paraFemea(l: Linha): LinhaFemea {
     dg_resultado: textoDe(l.dg_resultado),
     aborto_data: textoDe(l.aborto_data),
     dg_dias_gestacao: numeroDe(l.dg_dias_gestacao),
+    dg_negativo_data: textoDe(l.dg_negativo_data),
   };
 }
 
@@ -149,7 +156,11 @@ export const GRUPOS: DescricaoGrupo[] = [
     rotulo: 'Paridas há pouco',
     detalhe: `menos de ${PRONTA_PARA_COBRIR_APOS} dias do parto — ainda no puerpério`,
   },
-  { chave: 'jovem', rotulo: 'Cabritas ainda novas', detalhe: `menos de ${APTA_A_PARTIR_DE_DIAS} dias de idade` },
+  {
+    chave: 'jovem',
+    rotulo: 'Cabritas ainda novas',
+    detalhe: `menos de ${APTA_A_PARTIR_DE_DIAS} dias de idade, ou abaixo de ${APTA_PESO_MINIMO_KG} kg`,
+  },
   { chave: 'sem_informacao', rotulo: 'Sem informação', detalhe: 'sem nascimento, sem parto e sem evento' },
 ];
 
@@ -175,6 +186,10 @@ export interface FemeaAvaliada {
   partoProximo: boolean;
   /** Parto previsto passou há mais de PARTO_VENCIDO_APOS dias e nada foi lançado. */
   partoVencido: boolean;
+  /** Em lactação há mais de DEL_ALERTA_DIAS sem estar gestante. */
+  alertaDel: boolean;
+  /** Cabrita com idade mas sem peso lançado — apta só pela idade. */
+  aptaSemPeso: boolean;
 }
 
 function grupoDe(femea: LinhaFemea, situacao: SituacaoReprodutiva): GrupoBalanco {
@@ -196,7 +211,9 @@ function grupoDe(femea: LinhaFemea, situacao: SituacaoReprodutiva): GrupoBalanco
     return femea.dias_desde_parto >= PRONTA_PARA_COBRIR_APOS ? 'pronta' : 'parida_recente';
   }
   if (femea.idade_dias !== null) {
-    return femea.idade_dias >= APTA_A_PARTIR_DE_DIAS ? 'pronta' : 'jovem';
+    if (femea.idade_dias < APTA_A_PARTIR_DE_DIAS) return 'jovem';
+    // Com peso lançado, o peso decide; sem peso, vale a idade (e a tela marca).
+    return femea.peso_atual !== null && femea.peso_atual < APTA_PESO_MINIMO_KG ? 'jovem' : 'pronta';
   }
   return 'sem_informacao';
 }
@@ -214,15 +231,22 @@ export function avaliarFemeas(femeas: LinhaFemea[], hoje: Date): FemeaAvaliada[]
   return femeas.map((femea) => {
     const situacao = situacaoReprodutiva(femea, hojeIso);
     const diasParaParto = situacao.partoPrevisto ? diasEntre(hojeIso, situacao.partoPrevisto) : null;
+    const grupo = grupoDe(femea, situacao);
     return {
       femea,
       situacao,
-      grupo: grupoDe(femea, situacao),
+      grupo,
       aSecar: situacao.aSecar && femea.em_lactacao,
       diasParaParto,
       partoProximo:
         diasParaParto !== null && diasParaParto >= -PARTO_VENCIDO_APOS && diasParaParto <= PARTO_PROXIMO_DIAS,
       partoVencido: diasParaParto !== null && diasParaParto < -PARTO_VENCIDO_APOS,
+      alertaDel:
+        femea.em_lactacao &&
+        situacao.estado !== 'gestante' &&
+        femea.dias_desde_parto !== null &&
+        femea.dias_desde_parto > DEL_ALERTA_DIAS,
+      aptaSemPeso: grupo === 'pronta' && femea.ultimo_parto === null && femea.peso_atual === null,
     };
   });
 }
@@ -239,6 +263,12 @@ export interface ResumoBalanco {
   /** Das prontas, quantas são cabritas (nunca pariram) e quantas já pariram. */
   prontasCabritas: number;
   prontasParidas: number;
+  /** Em lactação há mais de DEL_ALERTA_DIAS sem gestação. */
+  alertaDel: number;
+  /** Gestantes cujo DG foi lançado com idade do feto que discorda da cobertura. */
+  dgDiasSuspeitos: number;
+  /** Gestantes cuja cobertura registrada foi refutada por DG negativo. */
+  coberturasRefutadas: number;
   /** Alguma cobertura, DG ou aborto lançado para alguma fêmea. Sem isso os
    *  grupos são só idade e parto — e a tela diz que é falta de lançamento. */
   comAlgumEvento: boolean;
@@ -260,6 +290,9 @@ export function resumoBalanco(avaliadas: FemeaAvaliada[]): ResumoBalanco {
     semCoberturaLancada: avaliadas.filter((a) => a.situacao.semCoberturaLancada).length,
     prontasCabritas: prontas.filter((a) => a.femea.ultimo_parto === null).length,
     prontasParidas: prontas.filter((a) => a.femea.ultimo_parto !== null).length,
+    alertaDel: avaliadas.filter((a) => a.alertaDel).length,
+    dgDiasSuspeitos: avaliadas.filter((a) => a.situacao.dgDiasSuspeito).length,
+    coberturasRefutadas: avaliadas.filter((a) => a.situacao.coberturaRefutada).length,
     comAlgumEvento: avaliadas.some(
       (a) => a.femea.servico_data || a.femea.dg_data || a.femea.aborto_data,
     ),
@@ -303,4 +336,108 @@ export function ordenarPorGrupo(avaliadas: FemeaAvaliada[]): FemeaAvaliada[] {
       (posicao.get(a.grupo) ?? 99) - (posicao.get(b.grupo) ?? 99) ||
       a.femea.numero_animal.localeCompare(b.femea.numero_animal, 'pt-BR'),
   );
+}
+
+/** As de DEL alto sem gestação, de quem está há mais tempo em lactação para
+ *  quem está há menos — o alerta vermelho. */
+export function alertasDel(avaliadas: FemeaAvaliada[]): FemeaAvaliada[] {
+  return avaliadas
+    .filter((a) => a.alertaDel)
+    .sort(
+      (a, b) =>
+        (b.femea.dias_desde_parto ?? 0) - (a.femea.dias_desde_parto ?? 0) ||
+        a.femea.numero_animal.localeCompare(b.femea.numero_animal, 'pt-BR'),
+    );
+}
+
+/**
+ * A auditoria de coberturas: as gestantes em que a idade do feto lançada no DG
+ * discorda da cobertura registrada (o "30 dias" digitado por padrão), e as em
+ * que um DG negativo refutou a cobertura. Nos dois casos a tela mostra as duas
+ * versões da gestação — a que o app gravou e a que os eventos sustentam.
+ */
+export function auditoriaCoberturas(avaliadas: FemeaAvaliada[]): FemeaAvaliada[] {
+  return avaliadas
+    .filter((a) => a.situacao.dgDiasSuspeito || a.situacao.coberturaRefutada)
+    .sort(
+      (a, b) =>
+        (a.situacao.dataDg ?? '').localeCompare(b.situacao.dataDg ?? '') ||
+        a.femea.numero_animal.localeCompare(b.femea.numero_animal, 'pt-BR'),
+    );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Por baia — a visão do curral
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const SEM_BAIA = 'Sem baia';
+
+export interface BaiaBalanco {
+  baia: string;
+  animais: number;
+  /** DEL médio das que estão em lactação — dias desde o parto. null sem nenhuma. */
+  delMedio: number | null;
+  emLactacao: number;
+  gestantes: number;
+  cobertas: number;
+  /** Nem gestante nem coberta — vazias, prontas, paridas há pouco, jovens. */
+  outras: number;
+  aptas: number;
+  alertasDel: number;
+  femeas: FemeaAvaliada[];
+}
+
+/**
+ * O balanço repartido por baia, com a barra prenha/coberta/outras de cada uma.
+ * Ordem alfabética natural ("G1-2" antes de "G1-10"), "Sem baia" por último.
+ */
+export function porBaia(avaliadas: FemeaAvaliada[]): BaiaBalanco[] {
+  const grupos = new Map<string, FemeaAvaliada[]>();
+  for (const a of avaliadas) {
+    const chave = a.femea.baia?.trim() || SEM_BAIA;
+    const lista = grupos.get(chave);
+    if (lista) lista.push(a);
+    else grupos.set(chave, [a]);
+  }
+
+  const natural = new Intl.Collator('pt-BR', { numeric: true, sensitivity: 'base' });
+
+  return [...grupos.entries()]
+    .map(([baia, femeas]) => {
+      const lactantes = femeas.filter((a) => a.femea.em_lactacao && a.femea.dias_desde_parto !== null);
+      return {
+        baia,
+        animais: femeas.length,
+        delMedio:
+          lactantes.length > 0
+            ? lactantes.reduce((acc, a) => acc + (a.femea.dias_desde_parto ?? 0), 0) / lactantes.length
+            : null,
+        emLactacao: femeas.filter((a) => a.femea.em_lactacao).length,
+        gestantes: femeas.filter((a) => a.grupo === 'gestante').length,
+        cobertas: femeas.filter((a) => a.grupo === 'coberta').length,
+        outras: femeas.filter((a) => a.grupo !== 'gestante' && a.grupo !== 'coberta').length,
+        aptas: femeas.filter((a) => a.grupo === 'pronta').length,
+        alertasDel: femeas.filter((a) => a.alertaDel).length,
+        femeas: ordenarPorGrupo(femeas),
+      };
+    })
+    .sort((a, b) => {
+      if (a.baia === SEM_BAIA) return b.baia === SEM_BAIA ? 0 : 1;
+      if (b.baia === SEM_BAIA) return -1;
+      return natural.compare(a.baia, b.baia);
+    });
+}
+
+export type FiltroBalanco = 'del' | 'aptas';
+
+/** `?filtro=` é texto de fora: só vira filtro se estiver na lista. */
+export function lerFiltro(bruto: string | string[] | undefined): FiltroBalanco | null {
+  const valor = Array.isArray(bruto) ? bruto[0] : bruto;
+  return valor === 'del' || valor === 'aptas' ? valor : null;
+}
+
+export function aplicarFiltro(avaliadas: FemeaAvaliada[], filtro: FiltroBalanco | null): FemeaAvaliada[] {
+  if (filtro === 'del') return avaliadas.filter((a) => a.alertaDel);
+  if (filtro === 'aptas') return avaliadas.filter((a) => a.grupo === 'pronta');
+  return avaliadas;
 }

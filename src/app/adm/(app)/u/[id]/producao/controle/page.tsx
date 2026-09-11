@@ -694,8 +694,11 @@ function LinhaLancamento({ animal, temSetor }: { animal: AnimalDoControle; temSe
       ? `cob. ${formatarData(situacao.dataCobertura)}${situacao.reprodutor ? ` · ${situacao.reprodutor}` : situacao.metodo ? ` · ${situacao.metodo}` : ''}`
       : null,
     situacao.dataDg ? `DG ${formatarData(situacao.dataDg)}` : null,
-    situacao.coberturaDivergente && situacao.concepcao
-      ? `emprenhou ~${formatarData(situacao.concepcao)} pelo feto — a cobertura lançada falhou`
+    situacao.coberturaRefutada && situacao.concepcao
+      ? `DG negativo depois da cobertura — emprenhou ~${formatarData(situacao.concepcao)} pelo feto`
+      : null,
+    situacao.dgDiasSuspeito && situacao.diasDeGestacaoNoDg !== null
+      ? `DG lançado com ${ctx?.dg_dias_gestacao} dias; pela cobertura eram ${situacao.diasDeGestacaoNoDg}`
       : null,
     situacao.partoPrevisto ? `parto ~${formatarData(situacao.partoPrevisto)}` : null,
   ].filter(Boolean);

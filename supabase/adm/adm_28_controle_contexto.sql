@@ -69,7 +69,14 @@ select
   -- cabra coberta em 01/03 deu DG vazio em 07/05 e DG gestante em 29/05 com 30
   -- dias -- emprenhou por volta de 29/04, do bode do piquete, sem lancamento.
   -- Pela cobertura o parto seria 29/07 (e "vencido"); pelo feto, fim de setembro.
-  dg.dias_de_gestacao                                         as dg_dias_gestacao
+  dg.dias_de_gestacao                                         as dg_dias_gestacao,
+
+  -- O ultimo DG NEGATIVO entre a cobertura e o DG positivo. Quando existe, a
+  -- cobertura registrada foi refutada -- a femea emprenhou depois, do bode do
+  -- piquete, e ai a idade do feto e a unica pista da concepcao. Sem ele, a
+  -- cobertura vence o feto: auditado contra 73 partos, a cobertura acertou 64 e
+  -- o feto 9 -- o "30 dias" e valor padrao digitado, nao medida.
+  dgneg.data_diagnostico                                    as dg_negativo_data
 
 from adm.controle_leiteiro_animal a
 join public.rebanho r on r.id = a.animal_id
@@ -123,6 +130,18 @@ left join lateral (
    order by d.data_diagnostico desc
    limit 1
 ) dg on true
+
+left join lateral (
+  select v.data_diagnostico
+    from public.diagnostico_gestacao v
+   where v.animal_id = a.animal_id
+     and lower(btrim(v.diagnostico::text)) = 'vazia'
+     and sv.data_servico is not null
+     and v.data_diagnostico > sv.data_servico
+     and v.data_diagnostico < dg.data_diagnostico
+   order by v.data_diagnostico desc
+   limit 1
+) dgneg on true
 
 left join lateral (
   select ab.data_aborto

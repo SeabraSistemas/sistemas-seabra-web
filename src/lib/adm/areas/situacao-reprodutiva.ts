@@ -25,9 +25,12 @@ export interface EventosReprodutivos {
   /** 'gestante' | 'vazia' | 'aguardando' */
   dg_resultado: string | null;
   aborto_data: string | null;
-  /** Idade do feto no DG (ultrassom), em dias. Quando existe, é ela que ancora
-   *  a gestação — não a cobertura registrada, que pode ser a que falhou. */
+  /** Idade do feto lançada no DG. ⚠️ Quase sempre "30", valor padrão digitado:
+   *  só ancora a gestação quando não há cobertura registrada ou quando um DG
+   *  negativo refutou a cobertura. */
   dg_dias_gestacao?: number | null;
+  /** DG negativo entre a cobertura e o DG positivo — a cobertura foi refutada. */
+  dg_negativo_data?: string | null;
 }
 
 export type EstadoReprodutivo =
@@ -60,11 +63,13 @@ export interface SituacaoReprodutiva {
   dataDg: string | null;
   /** Dias entre a cobertura e o controle, quando há cobertura válida. */
   diasDesdeCobertura: number | null;
-  /** Só para gestante: a data em que emprenhou — pelo feto (DG − idade do feto)
-   *  quando o ultrassom mediu, senão a cobertura registrada. */
+  /** Só para gestante: a data em que emprenhou — a cobertura registrada; pelo
+   *  feto (DG − idade do feto) só sem cobertura ou com a cobertura refutada. */
   concepcao: string | null;
-  /** 'feto' | 'cobertura' — de onde veio `concepcao`. */
+  /** 'cobertura' | 'feto' — de onde veio `concepcao`. */
   origemGestacao: 'feto' | 'cobertura' | null;
+  /** Dias de gestação NO DIA do DG, pela concepção — o que o feto devia ter. */
+  diasDeGestacaoNoDg: number | null;
   /** Dias de gestação na data de referência, a partir de `concepcao`. */
   diasDeGestacao: number | null;
   /** Só para gestante com concepção conhecida: concepção + 150 dias. */
@@ -75,13 +80,16 @@ export interface SituacaoReprodutiva {
   dgAtrasado: boolean;
   /** Gestante por DG sem nenhuma cobertura lançada — o funil invertido, por animal. */
   semCoberturaLancada: boolean;
-  /** O feto diz que emprenhou longe da cobertura registrada: a cobertura
-   *  lançada falhou e o bode do piquete fez o serviço sem lançamento. */
-  coberturaDivergente: boolean;
+  /** A idade do feto lançada no DG discorda da cobertura em mais de 3 semanas:
+   *  é o "30 dias" digitado por padrão. A tela usa a cobertura e aponta. */
+  dgDiasSuspeito: boolean;
+  /** Um DG negativo veio depois da cobertura registrada: ela não emprenhou, a
+   *  fêmea emprenhou depois sem lançamento — e aí o feto é a única pista. */
+  coberturaRefutada: boolean;
 }
 
-/** Feto mais de 3 semanas fora da cobertura registrada é outro cio — a
- *  cobertura lançada não foi a que emprenhou. */
+/** Feto mais de 3 semanas fora da cobertura registrada não é medida — auditado
+ *  contra 73 partos, a cobertura acertou 64 e o feto 9. */
 export const DIVERGENCIA_COBERTURA_DIAS = 21;
 
 const UM_DIA = 86_400_000;
@@ -123,12 +131,14 @@ export function situacaoReprodutiva(
     diasDesdeCobertura: null,
     concepcao: null,
     origemGestacao: null,
+    diasDeGestacaoNoDg: null,
     diasDeGestacao: null,
     partoPrevisto: null,
     aSecar: false,
     dgAtrasado: false,
     semCoberturaLancada: false,
-    coberturaDivergente: false,
+    dgDiasSuspeito: false,
+    coberturaRefutada: false,
   };
   if (!contexto || dataControle === '') return base;
 
@@ -148,13 +158,18 @@ export function situacaoReprodutiva(
 
   if (dg && (!servico || dg >= servico)) {
     if (contexto.dg_resultado === 'gestante') {
-      // A idade do feto vence a cobertura: na 244, cabra coberta em 01/03 deu
-      // DG vazio em 07/05 e DG gestante em 29/05 com 30 dias — emprenhou por
-      // volta de 29/04, do bode do piquete, sem lançamento. Pela cobertura o
-      // parto seria 29/07 (e "vencido"); pelo feto, fim de setembro.
+      // A COBERTURA VENCE O FETO. A idade do feto lançada no DG é quase sempre
+      // "30" — o valor padrão do formulário, não uma medida: auditado contra 73
+      // partos em que as duas discordavam, a cobertura acertou 64 e o feto 9.
+      // O feto só ancora quando não há cobertura, ou quando um DG negativo
+      // entre a cobertura e o positivo mostrou que ela não emprenhou (aí a
+      // fêmea emprenhou depois, do bode do piquete, sem lançamento).
       const idadeFeto = contexto.dg_dias_gestacao ?? null;
-      const pelaFeto = idadeFeto !== null && idadeFeto > 0;
-      const concepcao = pelaFeto ? somarDias(dg, -idadeFeto) : servico;
+      const temFeto = idadeFeto !== null && idadeFeto > 0;
+      const negativo = contexto.dg_negativo_data ?? null;
+      const coberturaRefutada = servico !== null && negativo !== null && negativo > servico && negativo < dg;
+      const usarFeto = temFeto && (servico === null || coberturaRefutada);
+      const concepcao = usarFeto ? somarDias(dg, -idadeFeto) : servico;
       const diasDeGestacao = concepcao ? diasEntre(concepcao, dataControle) : null;
       return {
         ...base,
@@ -163,16 +178,18 @@ export function situacaoReprodutiva(
         rotulo: 'Gestante',
         dataDg: dg,
         concepcao,
-        origemGestacao: concepcao ? (pelaFeto ? 'feto' : 'cobertura') : null,
+        origemGestacao: concepcao ? (usarFeto ? 'feto' : 'cobertura') : null,
+        diasDeGestacaoNoDg: concepcao ? diasEntre(concepcao, dg) : null,
         diasDeGestacao,
         partoPrevisto: concepcao ? somarDias(concepcao, GESTACAO_DIAS) : null,
         aSecar: diasDeGestacao !== null && diasDeGestacao >= SECAR_AOS_DIAS_DE_GESTACAO,
         semCoberturaLancada: !servico,
-        coberturaDivergente:
-          pelaFeto &&
+        dgDiasSuspeito:
+          temFeto &&
+          !usarFeto &&
           servico !== null &&
-          concepcao !== null &&
-          Math.abs(diasEntre(servico, concepcao)) > DIVERGENCIA_COBERTURA_DIAS,
+          Math.abs(diasEntre(servico, somarDias(dg, -idadeFeto))) > DIVERGENCIA_COBERTURA_DIAS,
+        coberturaRefutada,
       };
     }
     if (contexto.dg_resultado === 'vazia') {
