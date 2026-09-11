@@ -91,9 +91,9 @@ export default async function AvaliacoesPage({
   const sufixo = selecao == null ? '' : `?prop=${selecao}`;
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-6">
       {excedeConsolidado && (
-        <p className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
+        <p className="painel text-sm text-muted-foreground">
           Este usuário alcança {formatarInteiro(escopo.propriedades.length)} propriedades — acima do
           teto de {TETO_CONSOLIDADO} para somar cards e gráficos numa tela só. Escolha uma fazenda no
           seletor acima. A tabela abaixo continua cobrindo o escopo inteiro.
@@ -101,7 +101,7 @@ export default async function AvaliacoesPage({
       )}
 
       {alvos.length === 0 && (
-        <p className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
+        <p className="painel text-sm text-muted-foreground">
           Sem propriedade no escopo — não há avaliação para mostrar.
         </p>
       )}
@@ -127,7 +127,7 @@ export default async function AvaliacoesPage({
         lá a pergunta é por animal — quem foi avaliado, com que nota, e quanto do
         plantel já passou pelo avaliador.
       */}
-      <section className="rounded-2xl border border-border bg-card p-4">
+      <section className="painel">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <div>
             <h2 className="text-base">AML animal a animal</h2>
@@ -145,7 +145,7 @@ export default async function AvaliacoesPage({
         </div>
       </section>
 
-      <section className="rounded-2xl border border-border bg-card p-4">
+      <section className="painel">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <div>
             <h2 className="text-base">Medidas corporais</h2>
@@ -260,7 +260,7 @@ function Radar({ aval, consolidado }: { aval: LinhaAvaliacoes; consolidado: bool
   const pontos = pontosDoRadar(aval.media_por_ponto);
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-base">Perfil morfológico do rebanho</h2>
         <p className="text-xs text-muted-foreground">
@@ -300,7 +300,7 @@ function Evolucao({ aval }: { aval: LinhaAvaliacoes }) {
   const serie = aval.pontuacao_mensal ?? [];
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-base">Pontuação média por mês</h2>
         <p className="text-xs text-muted-foreground">

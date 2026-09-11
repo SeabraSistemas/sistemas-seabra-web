@@ -186,7 +186,7 @@ export function BarraBenchmark({ comparacao }: { comparacao: ComparacaoMetrica }
   const distancia = c.publicavel ? distanciaAteMediana(c) : null;
 
   return (
-    <section className="flex flex-col rounded-2xl border border-border bg-card p-4">
+    <section className="painel flex flex-col">
       <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-1">
         <div className="min-w-0">
           <h3 className="text-sm text-foreground">{c.info.rotulo}</h3>

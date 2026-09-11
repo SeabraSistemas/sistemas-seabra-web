@@ -105,9 +105,9 @@ export default async function SanidadePage({
   const criticas = san ? medicoesCriticas(san) : 0;
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-6">
       {excedeConsolidado && (
-        <p className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
+        <p className="painel text-sm text-muted-foreground">
           Este usuário alcança {formatarInteiro(escopo.propriedades.length)} propriedades — acima do
           teto de {TETO_CONSOLIDADO} para somar cards e gráficos numa tela só. Escolha uma fazenda no
           seletor acima. A tabela abaixo continua cobrindo o escopo inteiro.
@@ -130,7 +130,7 @@ export default async function SanidadePage({
 
       {san && (
         <div className="grid gap-4 lg:grid-cols-2">
-          <section className="rounded-2xl border border-border bg-card p-4 lg:col-span-2">
+          <section className="painel lg:col-span-2">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <h2 className="text-base">Óbitos por mês · 12 meses</h2>
               <p className="text-xs text-muted-foreground">
@@ -209,7 +209,7 @@ export default async function SanidadePage({
         a pergunta que decide manejo é a IDADE ao morrer — neonato é colostro e
         baia de parto, adulto é outro assunto, e os dois somam no mesmo card.
       */}
-      <section className="rounded-2xl border border-border bg-card p-4">
+      <section className="painel">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <div>
             <h2 className="text-base">Mortalidade em detalhe</h2>
@@ -227,7 +227,7 @@ export default async function SanidadePage({
         </div>
       </section>
 
-      <section className="rounded-2xl border border-border bg-card p-4">
+      <section className="painel">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <div>
             <h2 className="text-base">Manejos por tipo de lançamento</h2>
@@ -246,7 +246,7 @@ export default async function SanidadePage({
         </div>
       </section>
 
-      <section className="rounded-2xl border border-border bg-card p-4">
+      <section className="painel">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <div>
             <h2 className="text-base">Casos clínicos e o desfecho deles</h2>
@@ -264,7 +264,7 @@ export default async function SanidadePage({
         </div>
       </section>
 
-      <section className="rounded-2xl border border-border bg-card p-4">
+      <section className="painel">
         <h2 className="text-base">Outras tabelas de sanidade</h2>
         <p className="mt-0.5 text-xs text-muted-foreground">
           Mesma grade, outro registro do catálogo. Óbitos e Descartes vivem na área Rebanho — o
@@ -392,7 +392,7 @@ function NotaDeManejo({
   const sufixo = selecao == null ? '' : `?prop=${selecao}`;
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <h2 className="text-base">Como os números de manejo foram contados</h2>
       <p className="mt-1 max-w-prose text-sm text-muted-foreground">
         Não existe tabela <code className="rounded bg-secondary px-1">descarte</code> no banco do
@@ -553,7 +553,7 @@ function Chips({
 
 function Painel({ titulo, nota, children }: { titulo: string; nota?: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <h2 className="text-base">{titulo}</h2>
       {nota && <p className="mt-0.5 text-xs text-muted-foreground">{nota}</p>}
       <div className="mt-3">{children}</div>

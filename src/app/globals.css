@@ -138,6 +138,20 @@
   }
 }
 
+/* ── /adm: a superfície de seção do painel ────────────────────────────────
+   Um utilitário em vez de "rounded-2xl border border-border bg-card p-4"
+   repetido 190 vezes: a densidade e a cara de TODAS as seções do painel se
+   ajustam aqui. Borda e fundo ligeiramente translúcidos sobre o canvas dão
+   profundidade sem gradiente nem sombra pesada; o filete claro no topo é o
+   único relevo, e é sutil de propósito. */
+@utility painel {
+  border-radius: 0.875rem;
+  border: 1px solid color-mix(in oklab, var(--border) 75%, transparent);
+  background: color-mix(in oklab, var(--card) 88%, transparent);
+  padding: 0.875rem 1rem;
+  box-shadow: inset 0 1px 0 0 rgb(255 255 255 / 0.035);
+}
+
 @layer utilities {
   .container-tight {
     @apply max-w-4xl mx-auto px-4 sm:px-6 lg:px-8;

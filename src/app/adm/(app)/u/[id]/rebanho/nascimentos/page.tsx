@@ -69,7 +69,7 @@ export default async function NascimentosPage({
     return (
       <div className="flex flex-col gap-4">
         <VoltarParaRebanho usuarioId={usuarioId} sufixo={sufixo} />
-        <p className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
+        <p className="painel text-sm text-muted-foreground">
           {escopo.propriedades.length === 0
             ? 'Sem propriedade no escopo — não há nascimento para mostrar.'
             : `Este usuário alcança ${formatarInteiro(escopo.propriedades.length)} propriedades. Peso ao nascer e prolificidade são de UM rebanho — escolha uma fazenda no seletor acima.`}
@@ -89,7 +89,7 @@ export default async function NascimentosPage({
   const maes = maesMaisProlificas(nascimentos);
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <VoltarParaRebanho usuarioId={usuarioId} sufixo={sufixo} />
@@ -103,7 +103,7 @@ export default async function NascimentosPage({
       </div>
 
       {nascimentos.length === 0 ? (
-        <p className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
+        <p className="painel text-sm text-muted-foreground">
           Nenhum nascimento em {ROTULO_PERIODO[periodo]}. Amplie o período acima — ou esta fazenda
           não lançou parição, que já é a informação.
         </p>
@@ -112,7 +112,7 @@ export default async function NascimentosPage({
           <Cards resumo={resumo} periodo={periodo} />
 
           {serie.length > 1 && (
-            <section className="rounded-2xl border border-border bg-card p-4">
+            <section className="painel">
               <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <h2 className="text-base">Nascimentos mês a mês</h2>
                 <p className="text-xs text-muted-foreground">
@@ -243,7 +243,7 @@ function Ninhadas({ ninhadas, resumo }: { ninhadas: GrupoNinhada[]; resumo: Resu
   if (ninhadas.length === 0) return null;
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-base">Peso e mortalidade por tamanho de ninhada</h2>
         <p className="text-xs text-muted-foreground">
@@ -301,7 +301,7 @@ function Pesos({ faixas, resumo }: { faixas: FaixaPeso[]; resumo: ResumoNascimen
   const maior = Math.max(...faixas.map((f) => f.crias), 1);
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-base">Distribuição do peso ao nascer</h2>
         <p className="text-xs text-muted-foreground">
@@ -363,7 +363,7 @@ function Maes({
   if (maes.length === 0) return null;
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-base">Mães que mais entregaram cria</h2>
         <p className="text-xs text-muted-foreground">No período escolhido.</p>

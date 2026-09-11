@@ -44,9 +44,9 @@ export default async function AdmAppLayout({ children }: { children: React.React
   const sessao = await requireAdmSession();
 
   return (
-    <div className="mx-auto w-full max-w-[1600px] px-4 py-6 sm:px-6 lg:px-8">
+    <div className="mx-auto w-full max-w-[1680px] px-4 sm:px-6 lg:px-8">
       <AdmNav usuario={sessao.sub} />
-      <main className="mt-6">{children}</main>
+      <main className="py-5">{children}</main>
     </div>
   );
 }

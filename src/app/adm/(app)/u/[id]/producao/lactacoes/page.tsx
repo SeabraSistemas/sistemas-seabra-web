@@ -68,7 +68,7 @@ export default async function LactacoesPage({
     return (
       <div className="flex flex-col gap-4">
         <VoltarParaProducao usuarioId={usuarioId} sufixo={sufixo} />
-        <p className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
+        <p className="painel text-sm text-muted-foreground">
           {escopo.propriedades.length === 0
             ? 'Sem propriedade no escopo — não há lactação para mostrar.'
             : `Este usuário alcança ${formatarInteiro(escopo.propriedades.length)} propriedades. Comparar 1ª cria com 3ª entre rebanhos diferentes não responde pergunta nenhuma — escolha uma fazenda no seletor acima.`}
@@ -89,7 +89,7 @@ export default async function LactacoesPage({
   const proc = procedencias(reais);
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-6">
       <div>
         <VoltarParaProducao usuarioId={usuarioId} sufixo={sufixo} />
         <h1 className="mt-1 text-lg">Lactações</h1>
@@ -111,7 +111,7 @@ export default async function LactacoesPage({
       )}
 
       {reais.length === 0 ? (
-        <p className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
+        <p className="painel text-sm text-muted-foreground">
           <strong className="font-medium text-foreground">Nenhuma lactação registrada.</strong> O app
           abre lactação a partir do parto — sem ela não há como comparar animais, nem medir
           persistência, nem calcular produção por cria.
@@ -123,7 +123,7 @@ export default async function LactacoesPage({
           <Procedencias procedencias={proc} resumo={resumo} />
 
           {serie.length > 1 && (
-            <section className="rounded-2xl border border-border bg-card p-4">
+            <section className="painel">
               <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <h2 className="text-base">Lactações iniciadas por mês</h2>
                 <p className="text-xs text-muted-foreground">
@@ -225,7 +225,7 @@ function Procedencias({
   resumo: ResumoLactacoes;
 }) {
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-base">De onde vem o número</h2>
         <p className="text-xs text-muted-foreground">
@@ -266,7 +266,7 @@ function Duracao({ faixas, resumo }: { faixas: FaixaDuracao[]; resumo: ResumoLac
   const maior = Math.max(...faixas.map((f) => f.lactacoes), 1);
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-base">Duração das lactações</h2>
         <p className="text-xs text-muted-foreground">
@@ -307,7 +307,7 @@ function PorOrdem({ ordens }: { ordens: OrdemParto[] }) {
   if (ordens.length === 0) return null;
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-base">Por ordem de parto</h2>
         <p className="text-xs text-muted-foreground">Só lactações encerradas.</p>
@@ -367,7 +367,7 @@ function Melhores({
   if (lactacoes.length === 0) return null;
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-base">Maiores lactações</h2>
         <p className="text-xs text-muted-foreground">

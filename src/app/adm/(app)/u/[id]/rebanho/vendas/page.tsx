@@ -76,7 +76,7 @@ export default async function VendasPage({
     return (
       <div className="flex flex-col gap-4">
         <VoltarParaRebanho usuarioId={usuarioId} sufixo={sufixo} />
-        <p className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
+        <p className="painel text-sm text-muted-foreground">
           {escopo.propriedades.length === 0
             ? 'Sem propriedade no escopo — não há venda para mostrar.'
             : `Este usuário alcança ${formatarInteiro(escopo.propriedades.length)} propriedades, e a proporção de vendas com preço lançado varia muito entre elas — somá-las esconderia quem não anota. Escolha uma no seletor acima.`}
@@ -97,7 +97,7 @@ export default async function VendasPage({
   const curvaReceita = serieReceita(vendas);
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <VoltarParaRebanho usuarioId={usuarioId} sufixo={sufixo} />
@@ -123,7 +123,7 @@ export default async function VendasPage({
       )}
 
       {vendas.length === 0 ? (
-        <p className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
+        <p className="painel text-sm text-muted-foreground">
           Nenhuma venda em {ROTULO_PERIODO[periodo]}. Amplie o período acima.
         </p>
       ) : (
@@ -131,7 +131,7 @@ export default async function VendasPage({
           <Cards resumo={resumo} periodo={periodo} />
 
           {curvaVendas.length > 1 && (
-            <section className="rounded-2xl border border-border bg-card p-4">
+            <section className="painel">
               <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <h2 className="text-base">Vendas e receita mês a mês</h2>
                 <p className="text-xs text-muted-foreground">
@@ -269,7 +269,7 @@ function Idades({ idades, resumo }: { idades: FaixaIdadeVenda[]; resumo: ResumoV
   const maior = Math.max(...idades.map((f) => f.vendas), 1);
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-base">Idade na saída</h2>
         <p className="text-xs text-muted-foreground">
@@ -326,7 +326,7 @@ function PorSexo({ sexos }: { sexos: SexoVenda[] }) {
   if (sexos.length === 0) return null;
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-base">Vendas por sexo</h2>
         <p className="text-xs text-muted-foreground">
@@ -381,7 +381,7 @@ function PorSexo({ sexos }: { sexos: SexoVenda[] }) {
 
 function Maiores({ vendas }: { vendas: LinhaVenda[] }) {
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-base">Maiores vendas</h2>
         <p className="text-xs text-muted-foreground">
@@ -428,7 +428,7 @@ function Tabela({
   sufixo: string;
 }) {
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-base">Vendas do período</h2>
         <p className="text-xs text-muted-foreground">

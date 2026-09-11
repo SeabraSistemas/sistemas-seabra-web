@@ -66,7 +66,7 @@ export default async function AmlPage({
     return (
       <div className="flex flex-col gap-4">
         <VoltarParaAvaliacoes usuarioId={usuarioId} sufixo={sufixo} />
-        <p className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
+        <p className="painel text-sm text-muted-foreground">
           {escopo.propriedades.length === 0
             ? 'Sem propriedade no escopo — não há avaliação para mostrar.'
             : `Este usuário alcança ${formatarInteiro(escopo.propriedades.length)} propriedades. A cobertura da AML é sobre o plantel de UMA fazenda — escolha uma no seletor acima.`}
@@ -91,7 +91,7 @@ export default async function AmlPage({
   const cobertura = alvo.animais_ativos > 0 ? resumo.animais / alvo.animais_ativos : null;
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-6">
       <div>
         <VoltarParaAvaliacoes usuarioId={usuarioId} sufixo={sufixo} />
         <h1 className="mt-1 text-lg">Avaliação morfológica linear</h1>
@@ -104,7 +104,7 @@ export default async function AmlPage({
       </div>
 
       {amls.length === 0 ? (
-        <p className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
+        <p className="painel text-sm text-muted-foreground">
           <strong className="font-medium text-foreground">Nenhuma AML registrada.</strong> A avaliação
           morfológica é o que transforma opinião sobre o animal em nota comparável — e é serviço de
           técnico habilitado, ou seja, é venda antes de ser dado.
@@ -114,7 +114,7 @@ export default async function AmlPage({
           <Cards resumo={resumo} cobertura={cobertura} plantel={alvo.animais_ativos} />
 
           {serie.length > 1 && (
-            <section className="rounded-2xl border border-border bg-card p-4">
+            <section className="painel">
               <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <h2 className="text-base">Avaliações por mês</h2>
                 <p className="text-xs text-muted-foreground">
@@ -210,7 +210,7 @@ function Faixas({ faixas, resumo }: { faixas: FaixaPontuacao[]; resumo: ResumoAm
   const maior = Math.max(...faixas.map((f) => f.avaliacoes), 1);
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-base">Distribuição da pontuação</h2>
         <p className="text-xs text-muted-foreground">
@@ -251,7 +251,7 @@ function Perfil({ medias, desiguais }: { medias: MediaPonto[]; desiguais: MediaP
   const chavesDesiguais = new Set(desiguais.map((d) => d.numero));
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-base">Perfil dos 16 pontos</h2>
         <p className="text-xs text-muted-foreground">
@@ -317,7 +317,7 @@ function Melhores({
   if (amls.length === 0) return null;
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-base">Maiores pontuações</h2>
         <p className="text-xs text-muted-foreground">

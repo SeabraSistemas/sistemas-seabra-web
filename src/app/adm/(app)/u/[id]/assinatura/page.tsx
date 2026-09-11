@@ -55,9 +55,9 @@ export default async function AssinaturaPage({ params }: { params: Promise<{ id:
   const semAssinatura = resumo.planoNome === null && resumo.statusEfetivo === null;
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-6">
       {semAssinatura && (
-        <p className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
+        <p className="painel text-sm text-muted-foreground">
           Esta conta não tem assinatura própria. É o normal do colaborador, que acessa o app pela
           assinatura do produtor dono — e é também um dos guard-rails que deixam o health score em
           branco.
@@ -206,7 +206,7 @@ function Pagamentos({ pagamentos, usuarioId }: { pagamentos: PagamentoLinha[]; u
       </div>
 
       {pagamentos.length === 0 ? (
-        <p className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
+        <p className="painel text-sm text-muted-foreground">
           Nenhuma cobrança registrada. Conta de cortesia, trial nunca convertido ou acesso só por
           extensão manual chegam aqui vazios — e isso é informação, não falha.
         </p>

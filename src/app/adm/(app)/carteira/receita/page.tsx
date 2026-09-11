@@ -374,7 +374,7 @@ export default async function ReceitaPage({ searchParams }: { searchParams: Prom
       </p>
 
       {/* ── Receita mês a mês ─────────────────────────────────────────────── */}
-      <section className="rounded-lg border border-border bg-card p-4">
+      <section className="painel">
         <div className="flex flex-wrap items-baseline justify-between gap-3">
           <h2 className="text-base leading-tight">Receita recebida por mês, em R$</h2>
           <span className="shrink-0 text-xs text-muted-foreground">

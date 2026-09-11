@@ -445,7 +445,7 @@ function Linha({
  */
 function ComoLer({ clientesSemCobranca }: { clientesSemCobranca: boolean }) {
   return (
-    <section className="rounded-2xl border border-border bg-card p-4 text-sm text-muted-foreground">
+    <section className="painel text-sm text-muted-foreground">
       <h2 className="text-xs uppercase tracking-wide text-foreground">Como ler</h2>
       <ul className="mt-2 flex flex-col gap-1.5">
         <li>

@@ -81,7 +81,7 @@ export default async function LayoutFichaUsuario({
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-5">
       <CabecalhoUsuario escopo={escopo.dados} />
       {children}
     </div>

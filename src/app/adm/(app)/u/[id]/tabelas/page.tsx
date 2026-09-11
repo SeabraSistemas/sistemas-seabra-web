@@ -55,7 +55,7 @@ export default async function IndiceTabelasPage({
   const comLinhas = contagens.filter((c) => (c.total ?? 0) > 0).length;
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-6">
       <header>
         <h1 className="text-xl">Todas as tabelas</h1>
         <p className="mt-1 max-w-3xl text-sm text-muted-foreground">

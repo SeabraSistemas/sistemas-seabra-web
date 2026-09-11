@@ -77,9 +77,9 @@ export default async function ProducaoPage({
   const consolidado = alvos.length > 1;
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-6">
       {excedeConsolidado && (
-        <p className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
+        <p className="painel text-sm text-muted-foreground">
           Este usuário alcança {formatarInteiro(escopo.propriedades.length)} propriedades — acima do
           teto de {TETO_CONSOLIDADO} para somar cards e gráficos numa tela só. Escolha uma fazenda no
           seletor acima. A tabela abaixo continua cobrindo o escopo inteiro.
@@ -89,7 +89,7 @@ export default async function ProducaoPage({
       {visao && <Cards visao={visao} consolidado={consolidado} />}
 
       {visao && (
-        <section className="rounded-2xl border border-border bg-card p-4">
+        <section className="painel">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
             <h2 className="text-base">Produção diária · últimos 90 dias</h2>
             <p className="text-xs text-muted-foreground">
@@ -120,7 +120,7 @@ export default async function ProducaoPage({
         mentir.
       */}
       <div className="grid gap-4 lg:grid-cols-2">
-        <section className="rounded-2xl border border-border bg-card p-4">
+        <section className="painel">
           <h2 className="text-base">Produção diária em detalhe</h2>
           <p className="mt-0.5 text-xs text-muted-foreground">
             Quais dias faltam (não só quantos), divisão entre 1ª e 2ª ordenha, litros por lactante
@@ -134,7 +134,7 @@ export default async function ProducaoPage({
           </Link>
         </section>
 
-        <section className="rounded-2xl border border-border bg-card p-4">
+        <section className="painel">
           <h2 className="text-base">Controle leiteiro individual</h2>
           <p className="mt-0.5 text-xs text-muted-foreground">
             Quem entregou os litros: pesagem por animal no dia do controle, com ranking, média por
@@ -148,7 +148,7 @@ export default async function ProducaoPage({
           </Link>
         </section>
 
-        <section className="rounded-2xl border border-border bg-card p-4 lg:col-span-2">
+        <section className="painel lg:col-span-2">
           <h2 className="text-base">Lactações</h2>
           <p className="mt-0.5 text-xs text-muted-foreground">
             Do parto à secagem: duração, total por lactação, comparação entre ordens de parto e as
@@ -162,7 +162,7 @@ export default async function ProducaoPage({
           </Link>
         </section>
 
-        <section className="rounded-2xl border border-border bg-card p-4 lg:col-span-2">
+        <section className="painel lg:col-span-2">
           <h2 className="text-base">Secagens</h2>
           <p className="mt-0.5 text-xs text-muted-foreground">
             O período seco — dias entre a secagem e o parto seguinte, calculado aqui porque a coluna
@@ -178,7 +178,7 @@ export default async function ProducaoPage({
         </section>
       </div>
 
-      <section className="rounded-2xl border border-border bg-card p-4">
+      <section className="painel">
         <h2 className="text-base">Outras tabelas de produção</h2>
         <p className="mt-0.5 text-xs text-muted-foreground">
           Mesma grade, outro registro do catálogo — controle leiteiro, lactações, secagem, saída de

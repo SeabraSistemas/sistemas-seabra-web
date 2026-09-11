@@ -77,7 +77,7 @@ export default async function ServicosPage({
     return (
       <div className="flex flex-col gap-4">
         <VoltarParaReproducao usuarioId={usuarioId} sufixo={sufixo} />
-        <p className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
+        <p className="painel text-sm text-muted-foreground">
           {escopo.propriedades.length === 0
             ? 'Sem propriedade no escopo — não há serviço reprodutivo para mostrar.'
             : `Este usuário alcança ${formatarInteiro(escopo.propriedades.length)} propriedades. O ranking por reprodutor é do plantel de UMA fazenda — escolha uma no seletor acima.`}
@@ -99,7 +99,7 @@ export default async function ServicosPage({
   const serie = serieServicos(servicos);
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-6">
       <div>
         <VoltarParaReproducao usuarioId={usuarioId} sufixo={sufixo} />
         <h1 className="mt-1 text-lg">Serviços reprodutivos</h1>
@@ -111,7 +111,7 @@ export default async function ServicosPage({
       </div>
 
       {servicos.length === 0 ? (
-        <p className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
+        <p className="painel text-sm text-muted-foreground">
           <strong className="font-medium text-foreground">Nenhuma cobertura registrada.</strong> Sem
           ela não há como saber qual reprodutor emprenha — e o bode que não emprenha continua comendo
           e cobrindo o ano inteiro sem ninguém perceber.
@@ -138,7 +138,7 @@ export default async function ServicosPage({
           </div>
 
           {serie.length > 1 && (
-            <section className="rounded-2xl border border-border bg-card p-4">
+            <section className="painel">
               <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <h2 className="text-base">Serviços por mês</h2>
                 <p className="text-xs text-muted-foreground">
@@ -232,7 +232,7 @@ function Desfechos({ desfechos, resumo }: { desfechos: ContagemDesfecho[]; resum
   const maior = Math.max(...desfechos.map((d) => d.servicos), 1);
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-base">O que aconteceu depois de cada serviço</h2>
         <p className="text-xs text-muted-foreground">
@@ -302,7 +302,7 @@ function Reprodutores({
   if (reprodutores.length === 0) return null;
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-base">Qual reprodutor emprenha</h2>
         <p className="text-xs text-muted-foreground">
@@ -372,7 +372,7 @@ function Reprodutores({
 
 function TabelaTaxa({ titulo, nota, grupos }: { titulo: string; nota: string; grupos: GrupoTaxa[] }) {
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <h2 className="text-base">{titulo}</h2>
       <p className="mt-0.5 text-xs text-muted-foreground">{nota}</p>
 
@@ -400,7 +400,7 @@ function TabelaTaxa({ titulo, nota, grupos }: { titulo: string; nota: string; gr
 
 function Abortos({ abortos, resumo }: { abortos: Aborto[]; resumo: ResumoServicos }) {
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-base">Abortos</h2>
         <p className="text-xs text-muted-foreground">
@@ -481,7 +481,7 @@ function Tabela({
   sufixo: string;
 }) {
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-base">Serviços</h2>
         <p className="text-xs text-muted-foreground">

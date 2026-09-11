@@ -96,9 +96,9 @@ export default async function CrescimentoPage({
   const sufixo = selecao == null ? '' : `?prop=${selecao}`;
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-6">
       {excedeConsolidado && (
-        <p className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
+        <p className="painel text-sm text-muted-foreground">
           Este usuário alcança {formatarInteiro(escopo.propriedades.length)} propriedades — acima do
           teto de {TETO_CONSOLIDADO} para somar cards e gráficos numa tela só. Escolha uma fazenda no
           seletor acima. A tabela abaixo continua cobrindo o escopo inteiro.
@@ -106,7 +106,7 @@ export default async function CrescimentoPage({
       )}
 
       {alvos.length === 0 && (
-        <p className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
+        <p className="painel text-sm text-muted-foreground">
           Sem propriedade no escopo — não há pesagem para mostrar.
         </p>
       )}
@@ -127,7 +127,7 @@ export default async function CrescimentoPage({
         lá a pergunta é o EVENTO — quando a fazenda pesa, quanto do plantel
         passa pela balança e como o ganho se distribui.
       */}
-      <section className="rounded-2xl border border-border bg-card p-4">
+      <section className="painel">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <div>
             <h2 className="text-base">Pesagens em detalhe</h2>
@@ -228,7 +228,7 @@ function Nuvem({
   const temBanda = temBandaDeMeta(cres);
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-base">Peso por idade</h2>
         <p className="text-xs text-muted-foreground">
@@ -289,7 +289,7 @@ function PioresGmd({
   const sufixo = selecao == null ? '' : `?prop=${selecao}`;
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-base">Menores ganhos de peso</h2>
         <p className="text-xs text-muted-foreground">

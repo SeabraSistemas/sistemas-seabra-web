@@ -69,7 +69,7 @@ export default async function PesagensPage({
     return (
       <div className="flex flex-col gap-4">
         <VoltarParaCrescimento usuarioId={usuarioId} sufixo={sufixo} />
-        <p className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
+        <p className="painel text-sm text-muted-foreground">
           {escopo.propriedades.length === 0
             ? 'Sem propriedade no escopo — não há pesagem para mostrar.'
             : `Este usuário alcança ${formatarInteiro(escopo.propriedades.length)} propriedades. Cobertura da balança e ganho por categoria são de UM rebanho — escolha uma fazenda no seletor acima.`}
@@ -93,7 +93,7 @@ export default async function PesagensPage({
   const cobertura = alvo.animais_ativos > 0 ? resumo.animais / alvo.animais_ativos : null;
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-6">
       <div>
         <VoltarParaCrescimento usuarioId={usuarioId} sufixo={sufixo} />
         <h1 className="mt-1 text-lg">Pesagens</h1>
@@ -107,7 +107,7 @@ export default async function PesagensPage({
       </div>
 
       {pesagens.length === 0 ? (
-        <p className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
+        <p className="painel text-sm text-muted-foreground">
           <strong className="font-medium text-foreground">Nenhuma pesagem registrada.</strong> Sem
           balança não há ganho de peso medido — e sem ganho medido, discutir nutrição é discutir
           impressão.
@@ -117,7 +117,7 @@ export default async function PesagensPage({
           <Cards resumo={resumo} cobertura={cobertura} plantel={alvo.animais_ativos} />
 
           {serie.length > 1 && (
-            <section className="rounded-2xl border border-border bg-card p-4">
+            <section className="painel">
               <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <h2 className="text-base">Pesagens por mês</h2>
                 <p className="text-xs text-muted-foreground">
@@ -227,7 +227,7 @@ function Ganhos({ faixas, resumo }: { faixas: FaixaGmd[]; resumo: ResumoPesagens
   const maior = Math.max(...faixas.map((f) => f.intervalos), 1);
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-base">Distribuição do ganho</h2>
         <p className="text-xs text-muted-foreground">
@@ -278,7 +278,7 @@ function Categorias({ categorias }: { categorias: CategoriaPeso[] }) {
   if (categorias.length === 0) return null;
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-base">Peso e ganho por categoria</h2>
         <p className="text-xs text-muted-foreground">
@@ -333,7 +333,7 @@ function Ranking({
   pesagens: LinhaPesagem[];
 }) {
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <h2 className="text-base">{titulo}</h2>
       <p className="mt-0.5 text-xs text-muted-foreground">{nota}</p>
 
@@ -385,7 +385,7 @@ function Sessoes({
   if (sessoes.length === 0) return null;
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-base">Dias de curral</h2>
         <p className="text-xs text-muted-foreground">

@@ -66,7 +66,7 @@ export default async function SecagensPage({
     return (
       <div className="flex flex-col gap-4">
         <VoltarParaProducao usuarioId={usuarioId} sufixo={sufixo} />
-        <p className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
+        <p className="painel text-sm text-muted-foreground">
           {escopo.propriedades.length === 0
             ? 'Sem propriedade no escopo — não há secagem para mostrar.'
             : `Este usuário alcança ${formatarInteiro(escopo.propriedades.length)} propriedades. O período seco é decisão de manejo de UMA fazenda — escolha uma no seletor acima.`}
@@ -86,7 +86,7 @@ export default async function SecagensPage({
   const serie = serieSecagens(secagens);
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-6">
       <div>
         <VoltarParaProducao usuarioId={usuarioId} sufixo={sufixo} />
         <h1 className="mt-1 text-lg">Secagens</h1>
@@ -99,7 +99,7 @@ export default async function SecagensPage({
       </div>
 
       {secagens.length === 0 ? (
-        <p className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
+        <p className="painel text-sm text-muted-foreground">
           <strong className="font-medium text-foreground">Nenhuma secagem registrada.</strong> Sem
           ela não há período seco medido — e o prejuízo de secar tarde só aparece meses depois, na
           lactação seguinte, quando ninguém mais liga uma coisa à outra.
@@ -123,7 +123,7 @@ export default async function SecagensPage({
           <Periodo faixas={faixas} resumo={resumo} />
 
           {serie.length > 1 && (
-            <section className="rounded-2xl border border-border bg-card p-4">
+            <section className="painel">
               <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <h2 className="text-base">Secagens por mês</h2>
                 <p className="text-xs text-muted-foreground">
@@ -213,7 +213,7 @@ function Periodo({ faixas, resumo }: { faixas: FaixaPeriodo[]; resumo: ResumoSec
   const maior = Math.max(...faixas.map((f) => f.secagens), 1);
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-base">Período seco</h2>
         <p className="text-xs text-muted-foreground">
@@ -259,7 +259,7 @@ function Tipos({ tipos }: { tipos: TipoSecagem[] }) {
   if (tipos.length === 0) return null;
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-base">Como a fazenda seca</h2>
         <p className="text-xs text-muted-foreground">
@@ -286,7 +286,7 @@ function Tipos({ tipos }: { tipos: TipoSecagem[] }) {
 
 function Curtas({ secagens }: { secagens: LinhaSecagem[] }) {
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-base">Descansos mais curtos</h2>
         <p className="text-xs text-muted-foreground">
@@ -346,7 +346,7 @@ function Tabela({
   sufixo: string;
 }) {
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-base">Secagens</h2>
         <p className="text-xs text-muted-foreground">

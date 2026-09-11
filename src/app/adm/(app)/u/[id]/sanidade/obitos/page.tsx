@@ -73,7 +73,7 @@ export default async function ObitosPage({
     return (
       <div className="flex flex-col gap-4">
         <VoltarParaSanidade usuarioId={usuarioId} sufixo={sufixo} />
-        <p className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
+        <p className="painel text-sm text-muted-foreground">
           {escopo.propriedades.length === 0
             ? 'Sem propriedade no escopo — não há óbito para mostrar.'
             : `Este usuário alcança ${formatarInteiro(escopo.propriedades.length)} propriedades. Escolha uma no seletor acima: faixa etária e causa são do animal, e somar rebanhos diferentes não responde pergunta nenhuma.`}
@@ -94,7 +94,7 @@ export default async function ObitosPage({
   const serie = serieMensalObitos(obitos);
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <VoltarParaSanidade usuarioId={usuarioId} sufixo={sufixo} />
@@ -108,13 +108,13 @@ export default async function ObitosPage({
       </div>
 
       {todos.length === 0 ? (
-        <p className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
+        <p className="painel text-sm text-muted-foreground">
           <strong className="font-medium text-foreground">Nenhum óbito lançado.</strong> Isso pode ser
           um rebanho saudável ou um módulo que ninguém usa — a diferença aparece cruzando com o
           tamanho do rebanho e o tempo de casa do cliente.
         </p>
       ) : obitos.length === 0 ? (
-        <p className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
+        <p className="painel text-sm text-muted-foreground">
           Nenhum óbito em {ROTULO_PERIODO[periodo]} — mas há {formatarInteiro(todos.length)} no
           histórico. Amplie o período acima.
         </p>
@@ -123,7 +123,7 @@ export default async function ObitosPage({
           <Cards resumo={resumo} periodo={periodo} />
 
           {serie.length > 0 && (
-            <section className="rounded-2xl border border-border bg-card p-4">
+            <section className="painel">
               <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <h2 className="text-base">Óbitos mês a mês</h2>
                 <p className="text-xs text-muted-foreground">
@@ -259,7 +259,7 @@ function FaixasEtarias({ faixas, total }: { faixas: FaixaEtaria[]; total: number
   const maior = Math.max(...faixas.map((f) => f.obitos), 1);
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-base">Mortalidade por faixa etária</h2>
         <p className="text-xs text-muted-foreground">
@@ -303,7 +303,7 @@ function FaixasEtarias({ faixas, total }: { faixas: FaixaEtaria[]; total: number
 
 function Causas({ causas, resumo }: { causas: CausaObito[]; resumo: ResumoObitos }) {
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-base">Suspeitas registradas</h2>
         <p className="text-xs text-muted-foreground">
@@ -350,7 +350,7 @@ function Tabela({
   sufixo: string;
 }) {
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-base">Óbitos do período</h2>
         <p className="text-xs text-muted-foreground">

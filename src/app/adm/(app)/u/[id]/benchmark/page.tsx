@@ -213,7 +213,7 @@ function Cabecalho({
  */
 function ComoLemos() {
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <h2 className="text-base">Como esta comparação é feita</h2>
       <ul className="mt-2 flex list-disc flex-col gap-1.5 pl-5 text-sm text-muted-foreground">
         <li>
@@ -326,7 +326,7 @@ async function Placar({
 
   return (
     <div className="flex flex-col gap-6">
-      <p className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
+      <p className="painel text-sm text-muted-foreground">
         Este usuário alcança {formatarInteiro(propriedades.length)} propriedades, e benchmark não
         consolida: cada fazenda tem o segmento dela, e mediana não se soma nem se tira média. Abaixo,
         o placar de cada uma — clique no nome para ver as réguas daquela fazenda.
@@ -394,7 +394,7 @@ function resumoDaFazenda(b: Benchmark): string {
 
 function Aviso({ children }: { children: React.ReactNode }) {
   return (
-    <p className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
+    <p className="painel text-sm text-muted-foreground">
       {children}
     </p>
   );

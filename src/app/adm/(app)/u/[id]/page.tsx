@@ -83,11 +83,11 @@ export default async function VisaoGeralPage({
   const visao = visoes.length > 0 ? consolidarVisoes(visoes) : null;
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-6">
       <Identificacao escopo={escopo} />
 
       {excedeConsolidado && (
-        <p className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
+        <p className="painel text-sm text-muted-foreground">
           Este usuário alcança {formatarInteiro(escopo.propriedades.length)} propriedades — acima do
           teto de {TETO_CONSOLIDADO} para consolidar numa tela só. Escolha uma fazenda no seletor
           acima; o retrato do negócio inteiro é a carteira.
@@ -95,7 +95,7 @@ export default async function VisaoGeralPage({
       )}
 
       {alvos.length === 0 ? (
-        <p className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
+        <p className="painel text-sm text-muted-foreground">
           Sem propriedade no escopo — não há rebanho nem produção para mostrar. A aba Assinatura
           continua valendo: ela é por conta, não por fazenda.
         </p>
@@ -123,7 +123,7 @@ export default async function VisaoGeralPage({
                   Dia sem lançamento fica como buraco, não como zero: não medir não é produzir nada.
                 </p>
               </div>
-              <div className="rounded-2xl border border-border bg-card p-4">
+              <div className="painel">
                 <SerieTemporal
                   series={[{ chave: 'producao', nome: 'Litros do tanque', pontos: visao.producaoDiaria90d }]}
                   granularidade="dia"
@@ -228,7 +228,7 @@ function Cards({
 
 function Painel({ titulo, nota, children }: { titulo: string; nota?: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <h2 className="text-base">{titulo}</h2>
       {nota && <p className="mt-0.5 text-xs text-muted-foreground">{nota}</p>}
       <div className="mt-3">{children}</div>
@@ -353,7 +353,7 @@ function Saude({ usuario }: { usuario: UsuarioLista }) {
   const linhas = componentesHealth(usuario);
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-lg">Health score</h2>
         {usuario.health_score !== null ? (

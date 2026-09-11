@@ -102,11 +102,11 @@ export default async function FinanceiroPage({
   const sufixo = selecao == null ? '' : `?prop=${selecao}`;
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-6">
       <AvisoDeIdentidade hrefAssinatura={`/adm/u/${usuarioId}/assinatura${sufixo}`} />
 
       {excedeConsolidado && (
-        <p className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
+        <p className="painel text-sm text-muted-foreground">
           Este usuário alcança {formatarInteiro(escopo.propriedades.length)} propriedades — acima do
           teto de {TETO_CONSOLIDADO} para somar cards e gráficos numa tela só. Escolha uma fazenda no
           seletor acima. A tabela abaixo continua cobrindo o escopo inteiro.
@@ -114,7 +114,7 @@ export default async function FinanceiroPage({
       )}
 
       {alvos.length === 0 && (
-        <p className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
+        <p className="painel text-sm text-muted-foreground">
           Sem propriedade no escopo — não há livro-caixa para mostrar. O financeiro é por fazenda,
           não por conta.
         </p>
@@ -130,7 +130,7 @@ export default async function FinanceiroPage({
       {fin && <Cards fin={fin} agora={agora} />}
 
       {fin && (
-        <section className="rounded-2xl border border-border bg-card p-4">
+        <section className="painel">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
             <h2 className="text-base">Custo por litro no tempo</h2>
             <p className="text-xs text-muted-foreground">
@@ -144,7 +144,7 @@ export default async function FinanceiroPage({
       )}
 
       {fin && (
-        <section className="rounded-2xl border border-border bg-card p-4">
+        <section className="painel">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
             <h2 className="text-base">Despesa por setor · 12 meses</h2>
             <p className="text-xs text-muted-foreground">
@@ -361,7 +361,7 @@ function OutrasTabelas({ usuarioId, selecao }: { usuarioId: number; selecao: Sel
   const registros = listarRegistros().filter((r) => r.area === 'Financeiro' && r.nome !== TABELA);
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <h2 className="text-base">Outras tabelas do financeiro</h2>
       <p className="mt-0.5 text-xs text-muted-foreground">
         Mesma grade, outro registro do catálogo — setores, custos fixos, insumos e os snapshots de

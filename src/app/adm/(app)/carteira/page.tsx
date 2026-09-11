@@ -58,7 +58,7 @@ function rotularSegmento(fatia: FatiaDistribuicao): FatiaDistribuicao {
 /** Moldura dos gráficos. O <h2> herda a serifa do site por regra de elemento. */
 function Painel({ titulo, descricao, children }: { titulo: string; descricao: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-lg border border-border bg-card p-4">
+    <section className="painel">
       <div className="flex items-baseline justify-between gap-3">
         <h2 className="text-base leading-tight">{titulo}</h2>
         <span className="shrink-0 text-xs text-muted-foreground">{descricao}</span>

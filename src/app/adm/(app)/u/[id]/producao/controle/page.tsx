@@ -98,7 +98,7 @@ export default async function ControleLeiteiroPage({
     return (
       <div className="flex flex-col gap-4">
         <VoltarParaProducao usuarioId={usuarioId} sufixo={sufixo} />
-        <p className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
+        <p className="painel text-sm text-muted-foreground">
           {escopo.propriedades.length === 0
             ? 'Sem propriedade no escopo — não há controle leiteiro para mostrar.'
             : `Este usuário alcança ${formatarInteiro(escopo.propriedades.length)} propriedades. A média por baia e o ranking por animal são de UMA fazenda — baia com o mesmo nome em duas propriedades é curral diferente. Escolha uma no seletor acima.`}
@@ -117,7 +117,7 @@ export default async function ControleLeiteiroPage({
     return (
       <div className="flex flex-col gap-4">
         <VoltarParaProducao usuarioId={usuarioId} sufixo={sufixo} />
-        <p className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
+        <p className="painel text-sm text-muted-foreground">
           <strong className="font-medium text-foreground">{alvo.nome} nunca lançou controle leiteiro.</strong>{' '}
           O controle é a pesagem individual de cada fêmea num dia — é o que sustenta ranking por animal,
           média por baia e seleção. Sem ele, a fazenda só tem o volume do tanque.
@@ -154,7 +154,7 @@ export default async function ControleLeiteiroPage({
   }));
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <VoltarParaProducao usuarioId={usuarioId} sufixo={sufixo} />
@@ -178,7 +178,7 @@ export default async function ControleLeiteiroPage({
       <Cards resumo={resumo} />
 
       {serie.length > 1 && (
-        <section className="rounded-2xl border border-border bg-card p-4">
+        <section className="painel">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
             <h2 className="text-base">Média por cabeça a cada controle</h2>
             <p className="text-xs text-muted-foreground">
@@ -330,7 +330,7 @@ function PorLocal({ baias, setores }: { baias: BaiaControle[]; setores: BaiaCont
 
   if (!temBaia && !temSetor) {
     return (
-      <p className="rounded-xl border border-border bg-card p-4 text-xs text-muted-foreground">
+      <p className="painel text-xs text-muted-foreground">
         <strong className="font-medium text-foreground">Sem localização.</strong> Nenhum animal deste
         controle tem baia cadastrada no app, então não há produção por baia para mostrar. Quando o
         cliente preencher a baia no rebanho, o recorte aparece aqui sozinho.
@@ -360,7 +360,7 @@ function PorLocal({ baias, setores }: { baias: BaiaControle[]; setores: BaiaCont
 
 function GrupoLocal({ titulo, nota, locais }: { titulo: string; nota: string; locais: BaiaControle[] }) {
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-base">{titulo}</h2>
         <p className="text-xs text-muted-foreground">{nota}</p>
@@ -418,7 +418,7 @@ function Reproducao({
 
   if (!resumo.comAlgumEvento) {
     return (
-      <p className="rounded-xl border border-border bg-card p-4 text-xs text-muted-foreground">
+      <p className="painel text-xs text-muted-foreground">
         <strong className="font-medium text-foreground">Sem cobertura nem DG lançados</strong> para
         estas fêmeas desde o parto. Por isso a coluna Reprodução da lista abaixo sai toda como
         &quot;não coberta&quot; — é falta de lançamento, não de bode. Sem esse registro não há como
@@ -428,7 +428,7 @@ function Reproducao({
   }
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-base">Situação reprodutiva das lactantes</h2>
         <p className="text-xs text-muted-foreground">
@@ -511,7 +511,7 @@ function Histograma({ faixas, total }: { faixas: FaixaProducao[]; total: number 
   const maior = Math.max(...faixas.map((f) => f.animais), 1);
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-base">Distribuição por faixa de produção</h2>
         <p className="text-xs text-muted-foreground">
@@ -558,7 +558,7 @@ function Ranking({
   acao?: React.ReactNode;
 }) {
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-base">{titulo}</h2>
         {acao}
@@ -616,7 +616,7 @@ function Lancamentos({
   const temSetor = animais.some((a) => a.contexto?.setor);
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <div>
           <h2 className="text-base">Lançamentos do controle</h2>

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { Check, Copy } from 'lucide-react';
+import { ABAIXO_DA_BARRA } from '@/components/adm/AdmNav';
 import { PapelBadge } from '@/components/adm/PapelBadge';
 import { ABAS_CLIENTE } from '@/lib/adm/areas/contrato';
 import { SeletorPropriedade } from '@/components/adm/SeletorPropriedade';
@@ -73,9 +74,14 @@ export function CabecalhoUsuario({ escopo }: { escopo: Escopo }) {
   const sufixoUrl = prop ? `?prop=${encodeURIComponent(prop)}` : '';
 
   return (
-    <header className="sticky top-0 z-30 -mx-4 border-b border-border bg-background/95 px-4 pb-0 pt-3 backdrop-blur sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-        <h1 className="text-xl leading-tight">{usuario.nome}</h1>
+    <header
+      className={cn(
+        'sticky z-30 -mx-4 -mt-5 border-b border-border/70 bg-background/90 px-4 pb-0 pt-2.5 backdrop-blur-md sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8',
+        ABAIXO_DA_BARRA,
+      )}
+    >
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+        <h1 className="text-lg leading-tight">{usuario.nome}</h1>
 
         <PapelBadge papel={usuario.papel} />
         <NumeroCopiavel id={usuario.id} />
@@ -91,11 +97,11 @@ export function CabecalhoUsuario({ escopo }: { escopo: Escopo }) {
         </div>
       </div>
 
-      <div className="mt-2.5">
+      <div className="mt-1.5">
         <SeletorPropriedade escopo={escopo} />
       </div>
 
-      <nav className="-mb-px mt-3 flex gap-1 overflow-x-auto" aria-label="Seções do cliente">
+      <nav className="-mb-px mt-2 flex gap-0.5 overflow-x-auto" aria-label="Seções do cliente">
         {ABAS.map((aba) => {
           const href = `${base}${aba.sufixo}`;
           // Prefixo e não igualdade em `/tabelas`: a página genérica do escape
@@ -107,10 +113,10 @@ export function CabecalhoUsuario({ escopo }: { escopo: Escopo }) {
               href={`${href}${sufixoUrl}`}
               aria-current={ativa ? 'page' : undefined}
               className={cn(
-                'whitespace-nowrap border-b-2 px-3 py-2 text-sm transition-colors',
+                'whitespace-nowrap border-b-2 px-2.5 py-1.5 text-[13px] transition-colors',
                 ativa
                   ? 'border-primary text-foreground'
-                  : 'border-transparent text-muted-foreground hover:text-foreground',
+                  : 'border-transparent text-muted-foreground hover:border-border hover:text-foreground',
               )}
             >
               {aba.rotulo}

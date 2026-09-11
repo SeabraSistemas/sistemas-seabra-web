@@ -119,7 +119,7 @@ export default async function RiscoPage() {
   const animaisSemPagamento = semPagamento.reduce((acc, u) => acc + u.animais_ativos, 0);
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-6">
       <header className="flex flex-wrap items-baseline justify-between gap-2">
         <div>
           <h1 className="text-2xl">Risco</h1>

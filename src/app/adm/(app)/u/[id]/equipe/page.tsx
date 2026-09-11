@@ -92,9 +92,9 @@ export default async function EquipePage({
   const consolidado = alvos.length > 1;
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-6">
       {excedeConsolidado && (
-        <p className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
+        <p className="painel text-sm text-muted-foreground">
           Este usuário alcança {formatarInteiro(escopo.propriedades.length)} propriedades — acima do
           teto de {TETO_CONSOLIDADO} para somar a equipe numa tela só. Escolha uma fazenda no seletor
           acima. A tabela de vínculos abaixo continua cobrindo o escopo inteiro.
@@ -102,7 +102,7 @@ export default async function EquipePage({
       )}
 
       {alvos.length === 0 && (
-        <p className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
+        <p className="painel text-sm text-muted-foreground">
           Sem propriedade no escopo — não há equipe para mostrar. Equipe é sempre de uma fazenda:
           colaborador pertence a uma, e consultor se liga a uma.
         </p>
@@ -263,7 +263,7 @@ function Pessoa({
   agora: Date;
 }) {
   return (
-    <li className="rounded-2xl border border-border bg-card p-4">
+    <li className="painel">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
         <Link
           href={`/adm/u/${pessoa.usuarioId}`}
@@ -401,7 +401,7 @@ function OutrasTabelas({ usuarioId, selecao }: { usuarioId: number; selecao: Sel
   const registros = listarRegistros().filter((r) => r.area === 'Conta' && r.nome !== TABELA);
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <h2 className="text-base">Outras tabelas da conta</h2>
       <p className="mt-0.5 text-xs text-muted-foreground">
         Mesma grade, outro registro do catálogo. Em <strong className="font-medium">Usuários</strong> o

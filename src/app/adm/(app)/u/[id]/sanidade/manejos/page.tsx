@@ -72,7 +72,7 @@ export default async function ManejosPage({
     return (
       <div className="flex flex-col gap-4">
         <VoltarParaSanidade usuarioId={usuarioId} sufixo={sufixo} />
-        <p className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
+        <p className="painel text-sm text-muted-foreground">
           {escopo.propriedades.length === 0
             ? 'Sem propriedade no escopo — não há manejo para mostrar.'
             : `Este usuário alcança ${formatarInteiro(escopo.propriedades.length)} propriedades. Escolha uma no seletor acima.`}
@@ -102,7 +102,7 @@ export default async function ManejosPage({
   const cascos = valoresDeCasco(manejos);
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-6">
       <div>
         <VoltarParaSanidade usuarioId={usuarioId} sufixo={sufixo} />
         <h1 className="mt-1 text-lg">
@@ -117,7 +117,7 @@ export default async function ManejosPage({
       <Tipos tipos={tipos} atual={tipo} usuarioId={usuarioId} selecao={selecao} />
 
       {manejos.length === 0 ? (
-        <p className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
+        <p className="painel text-sm text-muted-foreground">
           {todos.length === 0
             ? 'Nenhum manejo registrado nesta fazenda.'
             : 'Nenhum manejo deste tipo. Escolha outro acima.'}
@@ -127,7 +127,7 @@ export default async function ManejosPage({
           <Cards resumo={resumo} />
 
           {serie.length > 1 && (
-            <section className="rounded-2xl border border-border bg-card p-4">
+            <section className="painel">
               <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <h2 className="text-base">Manejos por mês</h2>
                 <p className="text-xs text-muted-foreground">
@@ -192,7 +192,7 @@ function Tipos({
   const conhecidos = new Set(TIPOS_MANEJO.map((t) => t.chave));
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-base">Tipo de lançamento</h2>
         <p className="text-xs text-muted-foreground">
@@ -278,7 +278,7 @@ function Famacha({ escala, criticas }: { escala: GrauFamacha[]; criticas: number
   const maior = Math.max(...escala.map((g) => g.medicoes), 1);
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-base">FAMACHA</h2>
         <p className="text-xs text-muted-foreground">
@@ -323,7 +323,7 @@ function Escore({ faixas }: { faixas: FaixaEscore[] }) {
   const maior = Math.max(...faixas.map((f) => f.medicoes), 1);
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-base">Escore de condição corporal</h2>
         <p className="text-xs text-muted-foreground">{formatarInteiro(total)} medições.</p>
@@ -361,7 +361,7 @@ function Casco({ valores }: { valores: ValorCasco[] }) {
   const suspeitos = valores.filter((v) => v.suspeito);
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-base">Casco</h2>
         <p className="text-xs text-muted-foreground">Os valores como estão no banco.</p>
@@ -407,7 +407,7 @@ function Tabela({
   sufixo: string;
 }) {
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-base">Lançamentos</h2>
         <p className="text-xs text-muted-foreground">

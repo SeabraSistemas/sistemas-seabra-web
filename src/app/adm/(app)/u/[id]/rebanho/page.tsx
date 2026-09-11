@@ -81,9 +81,9 @@ export default async function RebanhoPage({
   const visao = visoes.length > 0 ? consolidarVisoes(visoes) : null;
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-6">
       {excedeConsolidado && (
-        <p className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
+        <p className="painel text-sm text-muted-foreground">
           Este usuário alcança {formatarInteiro(escopo.propriedades.length)} propriedades — acima do
           teto de {TETO_CONSOLIDADO} para somar cards e gráficos numa tela só. Escolha uma fazenda no
           seletor acima. A tabela abaixo continua cobrindo o escopo inteiro.
@@ -118,7 +118,7 @@ export default async function RebanhoPage({
         segunda expõe que 79% dos inativos da base saíram sem motivo registrado,
         o que torna mortalidade e descarte incalculáveis onde o número é alto.
       */}
-      <section className="rounded-2xl border border-border bg-card p-4">
+      <section className="painel">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <div>
             <h2 className="text-base">Inventário e fluxo</h2>
@@ -136,7 +136,7 @@ export default async function RebanhoPage({
         </div>
       </section>
 
-      <section className="rounded-2xl border border-border bg-card p-4">
+      <section className="painel">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <div>
             <h2 className="text-base">Nascimentos</h2>
@@ -154,7 +154,7 @@ export default async function RebanhoPage({
         </div>
       </section>
 
-      <section className="rounded-2xl border border-border bg-card p-4">
+      <section className="painel">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <div>
             <h2 className="text-base">Vendas</h2>
@@ -285,7 +285,7 @@ function TabelasDaArea({
 
 function Painel({ titulo, nota, children }: { titulo: string; nota?: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <h2 className="text-base">{titulo}</h2>
       {nota && <p className="mt-0.5 text-xs text-muted-foreground">{nota}</p>}
       <div className="mt-3">{children}</div>

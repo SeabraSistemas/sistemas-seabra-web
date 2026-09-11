@@ -65,7 +65,7 @@ export default async function ClinicaPage({
     return (
       <div className="flex flex-col gap-4">
         <VoltarParaSanidade usuarioId={usuarioId} sufixo={sufixo} />
-        <p className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
+        <p className="painel text-sm text-muted-foreground">
           {escopo.propriedades.length === 0
             ? 'Sem propriedade no escopo — não há caso clínico para mostrar.'
             : `Este usuário alcança ${formatarInteiro(escopo.propriedades.length)} propriedades. A letalidade de cada suspeita é do rebanho daquela fazenda — escolha uma no seletor acima.`}
@@ -84,7 +84,7 @@ export default async function ClinicaPage({
   const serie = serieCasos(casos);
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-6">
       <div>
         <VoltarParaSanidade usuarioId={usuarioId} sufixo={sufixo} />
         <h1 className="mt-1 text-lg">Casos clínicos</h1>
@@ -97,7 +97,7 @@ export default async function ClinicaPage({
       </div>
 
       {casos.length === 0 ? (
-        <p className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
+        <p className="painel text-sm text-muted-foreground">
           <strong className="font-medium text-foreground">Nenhum caso clínico registrado.</strong>{' '}
           Pode ser rebanho saudável ou módulo que ninguém usa — e a diferença aparece cruzando com a
           mortalidade: fazenda que perde animal e não registra caso nenhum não está sem doença, está
@@ -110,7 +110,7 @@ export default async function ClinicaPage({
           <Suspeitas suspeitas={suspeitas} resumo={resumo} />
 
           {serie.length > 1 && (
-            <section className="rounded-2xl border border-border bg-card p-4">
+            <section className="painel">
               <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <h2 className="text-base">Casos por mês</h2>
                 <p className="text-xs text-muted-foreground">
@@ -211,7 +211,7 @@ function Suspeitas({ suspeitas, resumo }: { suspeitas: SuspeitaClinica[]; resumo
   const maior = Math.max(...suspeitas.map((s) => s.casos), 1);
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-base">Suspeitas e o que aconteceu depois</h2>
         <p className="text-xs text-muted-foreground">
@@ -270,7 +270,7 @@ function Suspeitas({ suspeitas, resumo }: { suspeitas: SuspeitaClinica[]; resumo
 
 function Reincidentes({ animais }: { animais: AnimalReincidente[] }) {
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-base">Animais que voltaram à enfermaria</h2>
         <p className="text-xs text-muted-foreground">
@@ -317,7 +317,7 @@ function Tabela({
   sufixo: string;
 }) {
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-base">Casos</h2>
         <p className="text-xs text-muted-foreground">

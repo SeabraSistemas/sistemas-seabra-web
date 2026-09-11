@@ -63,20 +63,25 @@ export function KpiCard({
   const corpo = (
     <Card
       className={cn(
-        'h-full gap-0 py-4 transition-colors',
-        destaque && 'border-primary/40 bg-primary/5',
-        href && 'group-hover:border-primary/60',
+        // Mais baixo que o Card padrão (py-6): um painel com seis destes por
+        // linha não pode gastar 90px por card para mostrar um número.
+        'h-full gap-0 rounded-[0.875rem] border-border/75 bg-card/90 py-3 shadow-none transition-colors',
+        destaque && 'border-primary/50 bg-primary/[0.06] shadow-[inset_2px_0_0_0_var(--primary)]',
+        href && 'group-hover:border-primary/60 group-hover:bg-secondary/40',
         className,
       )}
     >
-      <CardContent className="flex flex-col gap-1 px-4">
-        <p className="truncate text-[13px] text-muted-foreground" title={rotulo}>
+      <CardContent className="flex flex-col gap-0.5 px-3.5">
+        <p
+          className="truncate text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground"
+          title={rotulo}
+        >
           {rotulo}
         </p>
         <p
           className={cn(
-            'truncate font-medium tabular-nums text-foreground',
-            destaque ? 'text-3xl' : 'text-2xl',
+            'truncate font-medium leading-tight tabular-nums text-foreground',
+            destaque ? 'text-[1.75rem]' : 'text-[1.4rem]',
           )}
           title={valor}
         >

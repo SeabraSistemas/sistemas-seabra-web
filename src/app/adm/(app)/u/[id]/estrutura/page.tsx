@@ -92,9 +92,9 @@ export default async function EstruturaPage({
   const separador = selecao == null ? '?' : '&';
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-6">
       {excedeConsolidado && (
-        <p className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
+        <p className="painel text-sm text-muted-foreground">
           Este usuário alcança {formatarInteiro(escopo.propriedades.length)} propriedades — acima do
           teto de {TETO_CONSOLIDADO} para somar cards e gráficos numa tela só. Escolha uma fazenda no
           seletor acima. A tabela abaixo continua cobrindo o escopo inteiro.
@@ -102,7 +102,7 @@ export default async function EstruturaPage({
       )}
 
       {alvos.length === 0 && (
-        <p className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
+        <p className="painel text-sm text-muted-foreground">
           Sem propriedade no escopo — lote, setor e baia são cadastro de fazenda, não de conta.
         </p>
       )}
@@ -167,7 +167,7 @@ export default async function EstruturaPage({
         PARADA (quantas baias, quantos lotes) e lá é o movimento entre elas —
         de onde para onde o rebanho anda, e quem vive trocando de lugar.
       */}
-      <section className="rounded-2xl border border-border bg-card p-4">
+      <section className="painel">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <div>
             <h2 className="text-base">Movimentações</h2>
@@ -290,7 +290,7 @@ function AcaoSemLocalizacao({
 
   if (semLocalizacao <= 0) {
     return (
-      <p className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
+      <p className="painel text-sm text-muted-foreground">
         {animaisAtivos > 0
           ? 'Todo o rebanho ativo tem localização. Nada a cobrar aqui.'
           : 'Sem rebanho ativo para localizar.'}
@@ -354,7 +354,7 @@ function OutrasTabelas({ usuarioId, selecao }: { usuarioId: number; selecao: Sel
   const registros = listarRegistros().filter((r) => r.area === 'Estrutura' && r.nome !== TABELA);
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <h2 className="text-base">Outras tabelas de estrutura</h2>
       <p className="mt-0.5 text-xs text-muted-foreground">
         Mesma grade, outro registro do catálogo — o cadastro de lotes, setores e baias que sustenta
@@ -379,7 +379,7 @@ function OutrasTabelas({ usuarioId, selecao }: { usuarioId: number; selecao: Sel
 
 function Painel({ titulo, nota, children }: { titulo: string; nota?: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <h2 className="text-base">{titulo}</h2>
       {nota && <p className="mt-0.5 text-xs text-muted-foreground">{nota}</p>}
       <div className="mt-3">{children}</div>

@@ -91,7 +91,7 @@ export default async function BalancoPage({
     return (
       <div className="flex flex-col gap-4">
         <VoltarParaReproducao usuarioId={usuarioId} sufixo={sufixo} />
-        <p className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
+        <p className="painel text-sm text-muted-foreground">
           {escopo.propriedades.length === 0
             ? 'Sem propriedade no escopo — não há fêmea para avaliar.'
             : `Este usuário alcança ${formatarInteiro(escopo.propriedades.length)} propriedades. O balanço é o plantel de UMA fazenda — escolha uma no seletor acima.`}
@@ -121,7 +121,7 @@ export default async function BalancoPage({
   const parametros = { usuarioId, selecao, grupo, filtro, ocultarSemBaia };
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-6">
       <div>
         <VoltarParaReproducao usuarioId={usuarioId} sufixo={sufixo} />
         <h1 className="mt-1 text-lg">Balanço reprodutivo</h1>
@@ -132,7 +132,7 @@ export default async function BalancoPage({
       </div>
 
       {avaliadas.length === 0 ? (
-        <p className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
+        <p className="painel text-sm text-muted-foreground">
           Nenhuma fêmea ativa nesta fazenda.
         </p>
       ) : (
@@ -140,7 +140,7 @@ export default async function BalancoPage({
           <Cards resumo={resumo} />
 
           {!resumo.comAlgumEvento && (
-            <p className="rounded-xl border border-border bg-card p-4 text-xs text-muted-foreground">
+            <p className="painel text-xs text-muted-foreground">
               <strong className="font-medium text-foreground">
                 Nenhuma cobertura, DG ou aborto lançados
               </strong>{' '}
@@ -268,7 +268,7 @@ function Grupos({ resumo, parametros }: { resumo: ResumoBalanco; parametros: Par
   const p = parametros;
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-base">Grupos de manejo</h2>
         <p className="text-xs text-muted-foreground">
@@ -338,7 +338,7 @@ function AlertaDel({ alertas }: { alertas: FemeaAvaliada[] }) {
   const mostradas = alertas.slice(0, LIMITE_DESTAQUE);
 
   return (
-    <section className="rounded-2xl border border-destructive/40 bg-card p-4">
+    <section className="painel border-destructive/40">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <div>
           <h2 className="text-base text-destructive">DEL acima de {DEL_ALERTA_DIAS} dias sem gestação</h2>
@@ -400,7 +400,7 @@ function Auditoria({ lista, resumo }: { lista: FemeaAvaliada[]; resumo: ResumoBa
   const mostradas = lista.slice(0, LIMITE_DESTAQUE);
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <div>
           <h2 className="text-base">Auditoria de coberturas</h2>
@@ -493,7 +493,7 @@ function PorBaia({
   const temBaia = baias.some((b) => b.baia !== SEM_BAIA);
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-base">Por baia</h2>
         <p className="text-xs text-muted-foreground">
@@ -613,7 +613,7 @@ function ProximosPartos({ partos, resumo }: { partos: FemeaAvaliada[]; resumo: R
   const mostrados = partos.slice(0, LIMITE_DESTAQUE);
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <div>
           <h2 className="text-base">Próximos partos</h2>
@@ -690,7 +690,7 @@ function Prontas({ prontas, resumo }: { prontas: FemeaAvaliada[]; resumo: Resumo
   const mostradas = prontas.slice(0, LIMITE_DESTAQUE);
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <div>
           <h2 className="text-base">Prontas para cobrir</h2>
@@ -773,7 +773,7 @@ function Tabela({
           : ROTULO_GRUPO[grupo];
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-base">{titulo}</h2>
         <p className="text-xs text-muted-foreground">

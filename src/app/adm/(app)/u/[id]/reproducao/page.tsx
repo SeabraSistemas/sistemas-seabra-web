@@ -116,9 +116,9 @@ export default async function ReproducaoPage({
   const invertido = funil.length > 0 && funilInvertido(funil);
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-6">
       {excedeConsolidado && (
-        <p className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
+        <p className="painel text-sm text-muted-foreground">
           Este usuário alcança {formatarInteiro(escopo.propriedades.length)} propriedades — acima do
           teto de {TETO_CONSOLIDADO} para somar cards e gráficos numa tela só. Escolha uma fazenda no
           seletor acima. A tabela abaixo continua cobrindo o escopo inteiro.
@@ -182,7 +182,7 @@ export default async function ReproducaoPage({
             </p>
           </Painel>
 
-          <section className="rounded-2xl border border-border bg-card p-4 lg:col-span-2">
+          <section className="painel lg:col-span-2">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <h2 className="text-base">Coberturas e partos · mês a mês</h2>
               <p className="text-xs text-muted-foreground">
@@ -229,7 +229,7 @@ export default async function ReproducaoPage({
         fêmea, pelos eventos e não pelo cadastro. O funil acima é a história dos
         12 meses; o balanço é o estado de agora.
       */}
-      <section className="rounded-2xl border border-border bg-card p-4">
+      <section className="painel">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <div>
             <h2 className="text-base">Balanço reprodutivo de hoje</h2>
@@ -252,7 +252,7 @@ export default async function ReproducaoPage({
         cobriu e o que aconteceu depois — é lá que se responde qual reprodutor
         emprenha, que nenhum funil agregado responde.
       */}
-      <section className="rounded-2xl border border-border bg-card p-4">
+      <section className="painel">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <div>
             <h2 className="text-base">Qual reprodutor emprenha</h2>
@@ -270,7 +270,7 @@ export default async function ReproducaoPage({
         </div>
       </section>
 
-      <section className="rounded-2xl border border-border bg-card p-4">
+      <section className="painel">
         <h2 className="text-base">Outras tabelas de reprodução</h2>
         <p className="mt-0.5 text-xs text-muted-foreground">
           Mesma grade, outro registro do catálogo — as quatro formas de cobertura, abortos e o plano
@@ -398,7 +398,7 @@ function DiagnosticoGestacaoPendente({
   const linkLimiar = (dias: number) => `?${sufixoProp}dg=${dias}`;
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <div>
           <h2 className="text-base">Diagnóstico de gestação pendente</h2>
@@ -583,7 +583,7 @@ function TabelasDaArea({
 
 function Painel({ titulo, nota, children }: { titulo: string; nota?: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <h2 className="text-base">{titulo}</h2>
       {nota && <p className="mt-0.5 text-xs text-muted-foreground">{nota}</p>}
       <div className="mt-3">{children}</div>

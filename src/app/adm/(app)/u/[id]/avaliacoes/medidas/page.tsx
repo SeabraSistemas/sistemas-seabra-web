@@ -58,7 +58,7 @@ export default async function MedidasPage({
     return (
       <div className="flex flex-col gap-4">
         <VoltarParaAvaliacoes usuarioId={usuarioId} sufixo={sufixo} />
-        <p className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
+        <p className="painel text-sm text-muted-foreground">
           {escopo.propriedades.length === 0
             ? 'Sem propriedade no escopo — não há medição para mostrar.'
             : `Este usuário alcança ${formatarInteiro(escopo.propriedades.length)} propriedades. Medida média de rebanhos diferentes não é medida de ninguém — escolha uma fazenda no seletor acima.`}
@@ -77,7 +77,7 @@ export default async function MedidasPage({
   const problemas = diasComProblema(implausiveis);
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-6">
       <div>
         <VoltarParaAvaliacoes usuarioId={usuarioId} sufixo={sufixo} />
         <h1 className="mt-1 text-lg">Medidas corporais</h1>
@@ -90,7 +90,7 @@ export default async function MedidasPage({
       </div>
 
       {implausiveis.length > 0 && (
-        <section className="rounded-2xl border border-destructive/40 bg-card p-4">
+        <section className="painel border-destructive/40">
           <h2 className="text-base text-destructive">
             {formatarInteiro(implausiveis.length)} medições com perímetro impossível
           </h2>
@@ -131,7 +131,7 @@ export default async function MedidasPage({
       )}
 
       {validas.length === 0 ? (
-        <p className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
+        <p className="painel text-sm text-muted-foreground">
           <strong className="font-medium text-foreground">Nenhuma medição válida.</strong> A fita
           métrica é o registro mais barato de porte e crescimento — e o único comparável entre anos
           sem depender de balança.
@@ -141,7 +141,7 @@ export default async function MedidasPage({
           <Cards resumo={resumo} />
 
           {serie.length > 1 && (
-            <section className="rounded-2xl border border-border bg-card p-4">
+            <section className="painel">
               <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <h2 className="text-base">Medições por mês</h2>
                 <p className="text-xs text-muted-foreground">
@@ -219,7 +219,7 @@ function Cards({ resumo }: { resumo: ResumoMedidas }) {
 
 function Perfil({ perfil }: { perfil: PerfilMedida[] }) {
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-base">Perfil das medidas</h2>
         <p className="text-xs text-muted-foreground">
@@ -281,7 +281,7 @@ function Tabela({
   sufixo: string;
 }) {
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-base">Medições</h2>
         <p className="text-xs text-muted-foreground">

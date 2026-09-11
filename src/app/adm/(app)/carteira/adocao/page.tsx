@@ -112,7 +112,7 @@ export default async function AdocaoPage() {
         <>
           <Cards resumo={resumo} matriz={matriz} />
 
-          <section className="rounded-2xl border border-border bg-card p-4">
+          <section className="painel">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <h2 className="text-base leading-tight">Retenção por coorte</h2>
               <span className="shrink-0 text-xs text-muted-foreground">
@@ -276,7 +276,7 @@ function SemCoortes({ matriz }: { matriz: MatrizRetencao }) {
 
 function ComoLer({ matriz }: { matriz: MatrizRetencao }) {
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <h2 className="text-base leading-tight">Como ler esta matriz</h2>
       <ul className="mt-3 flex list-disc flex-col gap-2 pl-5 text-sm text-muted-foreground">
         <li>

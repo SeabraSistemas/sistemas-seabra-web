@@ -63,7 +63,7 @@ export default async function InventarioPage({
     return (
       <div className="flex flex-col gap-4">
         <VoltarParaRebanho usuarioId={usuarioId} sufixo={sufixo} />
-        <p className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
+        <p className="painel text-sm text-muted-foreground">
           {escopo.propriedades.length === 0
             ? 'Sem propriedade no escopo — não há rebanho para inventariar.'
             : `Este usuário alcança ${formatarInteiro(escopo.propriedades.length)} propriedades. A qualidade do registro de saída varia de 0% a 100% entre fazendas — somá-las esconderia exatamente quem não registra. Escolha uma no seletor acima.`}
@@ -90,7 +90,7 @@ export default async function InventarioPage({
   const saldo = saldoDoFluxo(inv);
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-6">
       <div>
         <VoltarParaRebanho usuarioId={usuarioId} sufixo={sufixo} />
         <h1 className="mt-1 text-lg">Inventário e fluxo do rebanho</h1>
@@ -117,7 +117,7 @@ export default async function InventarioPage({
       <Saidas saidas={saidas} inv={inv} />
 
       {inv.fluxo_mensal && inv.fluxo_mensal.length > 0 && (
-        <section className="rounded-2xl border border-border bg-card p-4">
+        <section className="painel">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
             <h2 className="text-base">Entradas e saídas · 24 meses</h2>
             <p className="text-xs text-muted-foreground">
@@ -155,7 +155,7 @@ export default async function InventarioPage({
       <Composicao composicao={composicao} total={inv.ativos} />
 
       {porBaia.length > 0 && (
-        <section className="rounded-2xl border border-border bg-card p-4">
+        <section className="painel">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
             <h2 className="text-base">Efetivo por baia</h2>
             <p className="text-xs text-muted-foreground">
@@ -246,7 +246,7 @@ function Cards({
 function Saidas({ saidas, inv }: { saidas: Saida[]; inv: LinhaInventario }) {
   if (inv.inativos === 0) {
     return (
-      <section className="rounded-2xl border border-border bg-card p-4">
+      <section className="painel">
         <h2 className="text-base">Por onde saíram</h2>
         <p className="mt-3 text-sm text-muted-foreground">
           Nenhum animal saiu do rebanho ainda. É rebanho novo, não falha de registro — e a diferença
@@ -259,7 +259,7 @@ function Saidas({ saidas, inv }: { saidas: Saida[]; inv: LinhaInventario }) {
   const maior = Math.max(...saidas.map((s) => s.animais), 1);
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-base">Por onde saíram</h2>
         <p className="text-xs text-muted-foreground">
@@ -299,7 +299,7 @@ function Composicao({ composicao, total }: { composicao: CelulaComposicao[]; tot
   if (composicao.length === 0) return null;
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-base">Efetivo por categoria e sexo</h2>
         <p className="text-xs text-muted-foreground">
@@ -357,7 +357,7 @@ function Buracos({
   const contradicoes = inv.ativos_com_obito + inv.ativos_com_venda;
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-base">Buracos no cadastro do efetivo</h2>
         <p className="text-xs text-muted-foreground">

@@ -83,7 +83,7 @@ export default async function ProducaoDiariaPage({
     return (
       <div className="flex flex-col gap-4">
         <VoltarParaProducao usuarioId={usuarioId} sufixo={sufixo} />
-        <p className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
+        <p className="painel text-sm text-muted-foreground">
           {escopo.propriedades.length === 0
             ? 'Sem propriedade no escopo — não há produção para mostrar.'
             : `Este usuário alcança ${formatarInteiro(escopo.propriedades.length)} propriedades. Dia sem lançamento é de UMA fazenda — somar tanques diferentes esconderia justamente quem parou de lançar. Escolha uma no seletor acima.`}
@@ -108,7 +108,7 @@ export default async function ProducaoDiariaPage({
   const faltantes = diasSemLancamento(validos, inicio ?? hoje, hoje);
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <VoltarParaProducao usuarioId={usuarioId} sufixo={sufixo} />
@@ -133,7 +133,7 @@ export default async function ProducaoDiariaPage({
       )}
 
       {validos.length === 0 ? (
-        <p className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
+        <p className="painel text-sm text-muted-foreground">
           Nenhum lançamento de produção em {ROTULO_PERIODO[periodo]}. Amplie o período acima — ou
           este cliente parou de lançar, que é a informação em si.
         </p>
@@ -143,7 +143,7 @@ export default async function ProducaoDiariaPage({
 
           <Faltantes faltantes={faltantes} periodo={periodo} resumo={resumo} />
 
-          <section className="rounded-2xl border border-border bg-card p-4">
+          <section className="painel">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <h2 className="text-base">Litros por dia</h2>
               <p className="text-xs text-muted-foreground">
@@ -162,7 +162,7 @@ export default async function ProducaoDiariaPage({
             </div>
           </section>
 
-          <section className="rounded-2xl border border-border bg-card p-4">
+          <section className="painel">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <h2 className="text-base">Litros por lactante</h2>
               <p className="text-xs text-muted-foreground">
@@ -306,7 +306,7 @@ function Faltantes({
   const cobertura = resumo.diasLancados + faltantes.length;
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <div>
           <h2 className="text-base">Dias sem lançamento</h2>
@@ -369,7 +369,7 @@ function Ordenhas({ resumo }: { resumo: ResumoProducao }) {
   const fracao2 = resumo.litros2Ordenha / total;
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-base">1ª e 2ª ordenha</h2>
         <p className="text-xs text-muted-foreground">
@@ -406,7 +406,7 @@ function Mensal({ meses }: { meses: MesProducao[] }) {
   if (meses.length === 0) return null;
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-base">Mês a mês</h2>
         <p className="text-xs text-muted-foreground">
@@ -485,7 +485,7 @@ function SaidaLeite({
 
   if (validas.length === 0) {
     return (
-      <p className="rounded-xl border border-border bg-card p-4 text-xs text-muted-foreground">
+      <p className="painel text-xs text-muted-foreground">
         <strong className="font-medium text-foreground">Saída de leite:</strong> nenhuma lançada em{' '}
         {ROTULO_PERIODO[periodo]}
         {futuras.length > 0 && (
@@ -504,7 +504,7 @@ function SaidaLeite({
   const maior = Math.max(...destinos.map((d) => d.litros), 1);
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-base">Para onde foi o leite</h2>
         <p className="text-xs text-muted-foreground">

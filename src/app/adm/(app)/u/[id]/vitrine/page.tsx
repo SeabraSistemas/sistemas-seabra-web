@@ -64,7 +64,7 @@ export default async function VitrinePage({ params }: { params: Promise<{ id: st
   const info = ESTADO_VITRINE[estado];
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-6">
       <Status info={info} vitrine={vitrine} />
 
       {vitrine === null ? (
@@ -114,7 +114,7 @@ function ForaDaVitrine({ escopo }: { escopo: Escopo | null }) {
   const temConsultoria = escopo?.propriedades.some((p) => p.vinculo === 'consultoria') ?? false;
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <h2 className="text-base">Por que não há nada aqui</h2>
       <ul className="mt-2 flex list-disc flex-col gap-2 pl-5 text-sm text-muted-foreground">
         <li>
@@ -215,7 +215,7 @@ function Consentimento({ vitrine }: { vitrine: Vitrine }) {
 
       <dl className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {linhas.map((linha) => (
-          <div key={linha.rotulo} className="rounded-2xl border border-border bg-card p-4">
+          <div key={linha.rotulo} className="painel">
             <dt className="text-[13px] text-muted-foreground">{linha.rotulo}</dt>
             <dd className="mt-1 truncate text-lg tabular-nums text-foreground" title={linha.valor}>
               {linha.valor}
@@ -287,7 +287,7 @@ function Animais({ vitrine }: { vitrine: Vitrine }) {
       </div>
 
       {total > 0 && (
-        <div className="rounded-2xl border border-border bg-card p-4">
+        <div className="painel">
           <div className="flex h-2.5 overflow-hidden rounded-full bg-secondary" aria-hidden>
             <span className="block h-full bg-primary" style={{ width: `${proporcao}%` }} />
           </div>

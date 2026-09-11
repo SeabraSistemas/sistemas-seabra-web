@@ -71,7 +71,7 @@ export default async function MovimentacoesPage({
     return (
       <div className="flex flex-col gap-4">
         <VoltarParaEstrutura usuarioId={usuarioId} sufixo={sufixo} />
-        <p className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
+        <p className="painel text-sm text-muted-foreground">
           {escopo.propriedades.length === 0
             ? 'Sem propriedade no escopo — não há movimentação para mostrar.'
             : `Este usuário alcança ${formatarInteiro(escopo.propriedades.length)} propriedades. Lote e baia com o mesmo nome em fazendas diferentes são lugares diferentes — escolha uma no seletor acima.`}
@@ -98,7 +98,7 @@ export default async function MovimentacoesPage({
   const serie = serieMovimentacoes(movs);
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-6">
       <div>
         <VoltarParaEstrutura usuarioId={usuarioId} sufixo={sufixo} />
         <h1 className="mt-1 text-lg">
@@ -117,7 +117,7 @@ export default async function MovimentacoesPage({
       />
 
       {movs.length === 0 ? (
-        <p className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
+        <p className="painel text-sm text-muted-foreground">
           {todos.length === 0
             ? 'Nenhuma movimentação registrada. Sem ela não há histórico de onde o animal esteve — e o lote de hoje vira a única informação de localização que existe.'
             : 'Nenhuma movimentação deste tipo. Escolha outro acima.'}
@@ -127,7 +127,7 @@ export default async function MovimentacoesPage({
           <Cards resumo={resumo} />
 
           {serie.length > 1 && (
-            <section className="rounded-2xl border border-border bg-card p-4">
+            <section className="painel">
               <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <h2 className="text-base">Movimentações por mês</h2>
                 <p className="text-xs text-muted-foreground">
@@ -191,7 +191,7 @@ function Tipos({
   ].filter((o) => o.quantidade > 0 || o.chave === null);
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-base">Tipo de movimentação</h2>
         <p className="text-xs text-muted-foreground">
@@ -261,7 +261,7 @@ function Caminhos({ caminhos, resumo }: { caminhos: Fluxo[]; resumo: ResumoMovim
   const maior = Math.max(...caminhos.map((c) => c.movimentacoes), 1);
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-base">Caminhos mais percorridos</h2>
         <p className="text-xs text-muted-foreground">
@@ -306,7 +306,7 @@ function Caminhos({ caminhos, resumo }: { caminhos: Fluxo[]; resumo: ResumoMovim
 
 function Destinos({ destinos }: { destinos: Destino[] }) {
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-base">Destinos que mais recebem</h2>
         <p className="text-xs text-muted-foreground">
@@ -334,7 +334,7 @@ function Destinos({ destinos }: { destinos: Destino[] }) {
 
 function Rotativos({ animais }: { animais: AnimalMovimentado[] }) {
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-base">Animais que mais mudaram de lugar</h2>
         <p className="text-xs text-muted-foreground">
@@ -392,7 +392,7 @@ function Tabela({
   sufixo: string;
 }) {
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-base">Movimentações</h2>
         <p className="text-xs text-muted-foreground">

@@ -74,7 +74,7 @@ export default async function PanoramaPage({
   const semUf = semLocalizacao(linhas);
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-lg">Panorama da base</h1>
@@ -193,7 +193,7 @@ function Barra({ fracao, forte = true }: { fracao: number | null; forte?: boolea
 
 function PorEstado({ ufs, resumo }: { ufs: LugarPanorama[]; resumo: ResumoPanorama }) {
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-base">Por estado</h2>
         <p className="text-xs text-muted-foreground">
@@ -274,7 +274,7 @@ function ConcentracaoPainel({
   formatar: (v: number) => string;
 }) {
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-base">{titulo}</h2>
         <p className="text-xs text-muted-foreground">
@@ -323,7 +323,7 @@ function ConcentracaoPainel({
 
 function Cidades({ cidades }: { cidades: ReturnType<typeof porCidade> }) {
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-base">Cidades com mais animais</h2>
         <p className="text-xs text-muted-foreground">Só fazendas com cidade cadastrada.</p>
@@ -359,7 +359,7 @@ function Cidades({ cidades }: { cidades: ReturnType<typeof porCidade> }) {
 function Tamanho({ faixas, total }: { faixas: FaixaTamanho[]; total: number }) {
   const maior = Math.max(...faixas.map((f) => f.propriedades), 1);
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-base">Tamanho das propriedades</h2>
         <p className="text-xs text-muted-foreground">
@@ -392,7 +392,7 @@ function rotuloSegmento(chave: string): string {
 
 function Segmentos({ segmentos, resumo }: { segmentos: SegmentoPanorama[]; resumo: ResumoPanorama }) {
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="painel">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-base">Por segmento principal</h2>
         <p className="text-xs text-muted-foreground">
@@ -436,7 +436,7 @@ function Segmentos({ segmentos, resumo }: { segmentos: SegmentoPanorama[]; resum
 
 function SemLocalizacao({ lista }: { lista: LinhaPanorama[] }) {
   return (
-    <section className="rounded-2xl border border-destructive/40 bg-card p-4">
+    <section className="painel border-destructive/40">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-base">Sem localização — cadastro a corrigir</h2>
         <p className="text-xs text-muted-foreground">
