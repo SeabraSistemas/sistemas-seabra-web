@@ -6,9 +6,17 @@ import { MetricCard } from './MetricCard';
 import { DataTable, type DataTableColumn } from './DataTable';
 import { FilterSelect } from './FilterSelect';
 import { CsvExport, type CsvColumn } from './CsvExport';
-import { filtrarPor, opcoesExcluindo, type Condicao } from '@/lib/katmandu/filters';
+import {
+  casaComVazio,
+  filtrarPor,
+  opcoesComVazio,
+  opcoesExcluindo,
+  rotuloLocal,
+  rotuloLote,
+  type Condicao,
+} from '@/lib/katmandu/filters';
 import { parseDateBR } from '@/lib/katmandu/format';
-import type { Baixa } from '@/lib/katmandu/types';
+import { SEM_LOCAL, SEM_LOTE, type Baixa } from '@/lib/katmandu/types';
 
 /** Valor de <input type="date"> ("aaaa-mm-dd") => timestamp local, mesma base de parseDateBR. */
 function parseDataInput(v: string): number | null {
@@ -33,8 +41,8 @@ export function BaixaView({ baixas }: { baixas: Baixa[] }) {
     const fim = parseDataInput(dataFim);
     return [
       { key: 'busca', test: (b) => !busca || b.idAnimal.toLowerCase().includes(busca.toLowerCase()) },
-      { key: 'lote', test: (b) => !lote || b.lote === lote },
-      { key: 'local', test: (b) => !local || b.local === local },
+      { key: 'lote', test: (b) => casaComVazio(b.lote, lote, SEM_LOTE) },
+      { key: 'local', test: (b) => casaComVazio(b.local, local, SEM_LOCAL) },
       { key: 'categoria', test: (b) => !categoria || b.categoria === categoria },
       { key: 'causa', test: (b) => !causa || b.causa === causa },
       {
@@ -51,8 +59,14 @@ export function BaixaView({ baixas }: { baixas: Baixa[] }) {
     ];
   }, [busca, lote, local, categoria, causa, dataInicio, dataFim]);
 
-  const lotes = useMemo(() => opcoesExcluindo(baixas, condicoes, 'lote', (b) => b.lote), [baixas, condicoes]);
-  const locais = useMemo(() => opcoesExcluindo(baixas, condicoes, 'local', (b) => b.local), [baixas, condicoes]);
+  const lotes = useMemo(
+    () => opcoesComVazio(baixas, condicoes, 'lote', (b) => b.lote, SEM_LOTE),
+    [baixas, condicoes],
+  );
+  const locais = useMemo(
+    () => opcoesComVazio(baixas, condicoes, 'local', (b) => b.local, SEM_LOCAL),
+    [baixas, condicoes],
+  );
   const categorias = useMemo(
     () => opcoesExcluindo(baixas, condicoes, 'categoria', (b) => b.categoria),
     [baixas, condicoes],
@@ -93,8 +107,8 @@ export function BaixaView({ baixas }: { baixas: Baixa[] }) {
             className="h-9 w-full sm:w-40"
           />
         </div>
-        <FilterSelect label="Lote" value={lote} onChange={setLote} options={lotes} />
-        <FilterSelect label="Local" value={local} onChange={setLocal} options={locais} />
+        <FilterSelect label="Lote" value={lote} onChange={setLote} options={lotes} labelDe={rotuloLote} />
+        <FilterSelect label="Local" value={local} onChange={setLocal} options={locais} labelDe={rotuloLocal} />
         <FilterSelect label="Categoria" value={categoria} onChange={setCategoria} options={categorias} />
         <FilterSelect label="Causa" value={causa} onChange={setCausa} options={causas} />
         <div className="flex min-w-0 flex-col gap-1">

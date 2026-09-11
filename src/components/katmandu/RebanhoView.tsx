@@ -13,13 +13,17 @@ import { contagemPorCategoria, getRebanhoMetrics } from '@/lib/katmandu/metrics'
 import { formatNumber, numberBounds } from '@/lib/katmandu/format';
 import {
   DESTINO_LABEL,
+  casaComVazio,
   destinoOrdinal,
   destinosPresentes,
   filtrarPor,
+  opcoesComVazio,
   opcoesExcluindo,
+  rotuloLocal,
+  rotuloLote,
   type Condicao,
 } from '@/lib/katmandu/filters';
-import type { AnimalRebanho } from '@/lib/katmandu/types';
+import { SEM_LOCAL, SEM_LOTE, type AnimalRebanho } from '@/lib/katmandu/types';
 
 function sexoLabel(a: AnimalRebanho): string {
   return a.sexo === 'macho' ? 'Macho' : a.sexo === 'femea' ? 'Fêmea' : '—';
@@ -65,8 +69,8 @@ export function RebanhoView({ animais: todos }: { animais: AnimalRebanho[] }) {
       { key: 'sexo', test: (a) => !sexo || sexoLabel(a) === sexo },
       { key: 'status', test: (a) => !status || a.status === status },
       { key: 'destino', test: (a) => !destino || destinoLabel(a) === destino },
-      { key: 'lote', test: (a) => !lote || a.lote === lote },
-      { key: 'local', test: (a) => !local || a.local === local },
+      { key: 'lote', test: (a) => casaComVazio(a.lote, lote, SEM_LOTE) },
+      { key: 'local', test: (a) => casaComVazio(a.local, local, SEM_LOCAL) },
       { key: 'entrada', test: (a) => !entrada || a.entradaEngorda === entrada },
       { key: 'ultimoManejo', test: (a) => !ultimoManejo || a.ultimoManejo === ultimoManejo },
       {
@@ -102,8 +106,14 @@ export function RebanhoView({ animais: todos }: { animais: AnimalRebanho[] }) {
     [animais, condicoes],
   );
   const statuses = useMemo(() => opcoesExcluindo(animais, condicoes, 'status', (a) => a.status), [animais, condicoes]);
-  const lotes = useMemo(() => opcoesExcluindo(animais, condicoes, 'lote', (a) => a.lote), [animais, condicoes]);
-  const locais = useMemo(() => opcoesExcluindo(animais, condicoes, 'local', (a) => a.local), [animais, condicoes]);
+  const lotes = useMemo(
+    () => opcoesComVazio(animais, condicoes, 'lote', (a) => a.lote, SEM_LOTE),
+    [animais, condicoes],
+  );
+  const locais = useMemo(
+    () => opcoesComVazio(animais, condicoes, 'local', (a) => a.local, SEM_LOCAL),
+    [animais, condicoes],
+  );
   const entradas = useMemo(
     () => opcoesExcluindo(animais, condicoes, 'entrada', (a) => a.entradaEngorda),
     [animais, condicoes],
@@ -179,8 +189,8 @@ export function RebanhoView({ animais: todos }: { animais: AnimalRebanho[] }) {
         <FilterSelect label="Categoria" value={categoria} onChange={setCategoria} options={categorias} />
         <FilterSelect label="Sexo" value={sexo} onChange={setSexo} options={['Macho', 'Fêmea']} />
         <FilterSelect label="Status" value={status} onChange={setStatus} options={statuses} />
-        <FilterSelect label="Lote" value={lote} onChange={setLote} options={lotes} />
-        <FilterSelect label="Local" value={local} onChange={setLocal} options={locais} />
+        <FilterSelect label="Lote" value={lote} onChange={setLote} options={lotes} labelDe={rotuloLote} />
+        <FilterSelect label="Local" value={local} onChange={setLocal} options={locais} labelDe={rotuloLocal} />
         <FilterSelect label="Entrada GMD" value={entrada} onChange={setEntrada} options={entradas} />
         <FilterSelect label="Último manejo" value={ultimoManejo} onChange={setUltimoManejo} options={manejos} />
         <FilterSelect

@@ -15,13 +15,17 @@ import { getPesagemMetrics } from '@/lib/katmandu/metrics';
 import { formatKg, formatNumber, numberBounds } from '@/lib/katmandu/format';
 import {
   DESTINO_LABEL,
+  casaComVazio,
   destinoOrdinal,
   destinosPresentes,
   filtrarPor,
+  opcoesComVazio,
   opcoesExcluindo,
+  rotuloLocal,
+  rotuloLote,
   type Condicao,
 } from '@/lib/katmandu/filters';
-import type { PesagemRegistro } from '@/lib/katmandu/types';
+import { SEM_LOCAL, SEM_LOTE, type PesagemRegistro } from '@/lib/katmandu/types';
 
 export function PesagemView({ registros }: { registros: PesagemRegistro[] }) {
   const [lote, setLote] = useState('');
@@ -41,8 +45,8 @@ export function PesagemView({ registros }: { registros: PesagemRegistro[] }) {
   const condicoes = useMemo((): Condicao<PesagemRegistro>[] => {
     const [lo, hi] = pesoRange ?? pesoBounds ?? [0, 0];
     return [
-      { key: 'lote', test: (r) => !lote || r.lote === lote },
-      { key: 'local', test: (r) => !local || r.local === local },
+      { key: 'lote', test: (r) => casaComVazio(r.lote, lote, SEM_LOTE) },
+      { key: 'local', test: (r) => casaComVazio(r.local, local, SEM_LOCAL) },
       {
         key: 'destino',
         test: (r) => !destino || (r.destino ? DESTINO_LABEL[r.destino] : null) === destino,
@@ -55,8 +59,14 @@ export function PesagemView({ registros }: { registros: PesagemRegistro[] }) {
     ];
   }, [lote, local, destino, dataPesagem, venda, manejos, soPerdaPeso, pesoRange, pesoBounds]);
 
-  const lotes = useMemo(() => opcoesExcluindo(registros, condicoes, 'lote', (r) => r.lote), [registros, condicoes]);
-  const locais = useMemo(() => opcoesExcluindo(registros, condicoes, 'local', (r) => r.local), [registros, condicoes]);
+  const lotes = useMemo(
+    () => opcoesComVazio(registros, condicoes, 'lote', (r) => r.lote, SEM_LOTE),
+    [registros, condicoes],
+  );
+  const locais = useMemo(
+    () => opcoesComVazio(registros, condicoes, 'local', (r) => r.local, SEM_LOCAL),
+    [registros, condicoes],
+  );
   const datas = useMemo(
     () => opcoesExcluindo(registros, condicoes, 'dataPesagem', (r) => r.dataPesagem),
     [registros, condicoes],
@@ -139,8 +149,8 @@ export function PesagemView({ registros }: { registros: PesagemRegistro[] }) {
   return (
     <div className="flex flex-col gap-6">
       <div className="grid grid-cols-2 gap-3 rounded-xl border border-border bg-card p-4 sm:flex sm:flex-wrap sm:items-end sm:gap-4">
-        <FilterSelect label="Lote" value={lote} onChange={setLote} options={lotes} />
-        <FilterSelect label="Local" value={local} onChange={setLocal} options={locais} />
+        <FilterSelect label="Lote" value={lote} onChange={setLote} options={lotes} labelDe={rotuloLote} />
+        <FilterSelect label="Local" value={local} onChange={setLocal} options={locais} labelDe={rotuloLocal} />
         <FilterSelect
           label="Destino"
           value={destino}

@@ -9,7 +9,7 @@ import { FilterSelect } from './FilterSelect';
 import { FilterMultiSelect } from './FilterMultiSelect';
 import { MetricCard } from './MetricCard';
 import { DataTable, type DataTableColumn } from './DataTable';
-import { DESTINO_LABEL, DESTINO_ORDEM, destinoOrdinal } from '@/lib/katmandu/filters';
+import { DESTINO_LABEL, DESTINO_ORDEM, destinoOrdinal, opcoesDeOrigem } from '@/lib/katmandu/filters';
 import { SEM_LOCAL, SEM_LOCAL_LABEL, SEM_LOTE, SEM_LOTE_LABEL, type AnimalRebanho } from '@/lib/katmandu/types';
 
 type Estado = 'ideia' | 'confirmando' | 'enviando' | 'feito' | 'erro';
@@ -103,10 +103,10 @@ export function MovimentarView({
     [ativos, cfg],
   );
 
-  const opcoesOrigem = useMemo(() => {
-    const comAnimais = opcoesPrincipais.filter((l) => (contagemPrincipal[l] ?? 0) > 0);
-    return (contagemPrincipal[cfg.sentinelaPrincipal] ?? 0) > 0 ? [...comAnimais, cfg.sentinelaPrincipal] : comAnimais;
-  }, [opcoesPrincipais, contagemPrincipal, cfg]);
+  const opcoesOrigem = useMemo(
+    () => opcoesDeOrigem(opcoesPrincipais, contagemPrincipal, cfg.sentinelaPrincipal),
+    [opcoesPrincipais, contagemPrincipal, cfg],
+  );
   const opcoesPara = useMemo(() => opcoesPrincipais.filter((l) => l !== origem), [opcoesPrincipais, origem]);
 
   // Cascata: cada nível parte do conjunto já estreitado pelo nível acima.

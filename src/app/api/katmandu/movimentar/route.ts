@@ -2,7 +2,6 @@ import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { KATMANDU_COOKIE, verifySession } from '@/lib/katmandu/auth';
 import { getLocais, getLotes, moverAnimais, moverAnimaisPorLote } from '@/lib/katmandu/mutations';
-import { SEM_LOCAL, SEM_LOTE } from '@/lib/katmandu/types';
 
 export const runtime = 'nodejs';
 
@@ -33,10 +32,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, erro: 'parametros-invalidos' }, { status: 400 });
   }
 
+  // Só o DESTINO precisa estar no cadastro: gravar um nome fora da aba
+  // Lotes/local quebra a referência no AppSheet. A origem pode ser um lote que
+  // já saiu do cadastro mas ainda tem animal — e ela não é fronteira de
+  // segurança: a mutation relê a planilha e só move quem de fato está nela.
   if (campo === 'lote') {
     const lotes = await getLotes();
-    const origemValida = origem === SEM_LOTE || lotes.includes(origem);
-    if (!origemValida || !lotes.includes(destino)) {
+    if (!lotes.includes(destino)) {
       return NextResponse.json({ ok: false, erro: 'lote-desconhecido' }, { status: 400 });
     }
     const { movidos, ignorados, logFalhou } = await moverAnimaisPorLote(origem, destino, ids);
@@ -44,8 +46,7 @@ export async function POST(request: Request) {
   }
 
   const locais = await getLocais();
-  const origemValida = origem === SEM_LOCAL || locais.includes(origem);
-  if (!origemValida || !locais.includes(destino)) {
+  if (!locais.includes(destino)) {
     return NextResponse.json({ ok: false, erro: 'local-desconhecido' }, { status: 400 });
   }
 

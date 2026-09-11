@@ -8,9 +8,17 @@ import { FilterSelect } from './FilterSelect';
 import { MetricCard } from './MetricCard';
 import { DataTable, type DataTableColumn } from './DataTable';
 import { formatNumber } from '@/lib/katmandu/format';
-import { filtrarPor, opcoesExcluindo, type Condicao } from '@/lib/katmandu/filters';
+import {
+  casaComVazio,
+  filtrarPor,
+  opcoesComVazio,
+  opcoesExcluindo,
+  rotuloLocal,
+  rotuloLote,
+  type Condicao,
+} from '@/lib/katmandu/filters';
 import { FAIXAS_CATEGORIA, categoriaLabel, type FaixaCategoria } from '@/lib/katmandu/categoria';
-import type { AnimalRebanho } from '@/lib/katmandu/types';
+import { SEM_LOCAL, SEM_LOTE, type AnimalRebanho } from '@/lib/katmandu/types';
 
 type Estado = 'ideia' | 'confirmando' | 'enviando' | 'feito' | 'erro';
 
@@ -43,14 +51,20 @@ export function AlterarCategoriaView({ animais: todos }: { animais: AnimalRebanh
   // Sexo, faixa alvo, preview, ação) só aparece depois de escolhido algum dos
   // dois, pra nunca deixar alterar categoria do rebanho inteiro sem recorte.
   const condicoes = useMemo((): Condicao<AnimalRebanho>[] => [
-    { key: 'local', test: (a) => !local || a.local === local },
-    { key: 'lote', test: (a) => !lote || a.lote === lote },
+    { key: 'local', test: (a) => casaComVazio(a.local, local, SEM_LOCAL) },
+    { key: 'lote', test: (a) => casaComVazio(a.lote, lote, SEM_LOTE) },
     { key: 'categoria', test: (a) => !categoria || a.categoria === categoria },
     { key: 'sexo', test: (a) => !sexo || sexoLabel(a) === sexo },
   ], [local, lote, categoria, sexo]);
 
-  const locais = useMemo(() => opcoesExcluindo(animais, condicoes, 'local', (a) => a.local), [animais, condicoes]);
-  const lotes = useMemo(() => opcoesExcluindo(animais, condicoes, 'lote', (a) => a.lote), [animais, condicoes]);
+  const locais = useMemo(
+    () => opcoesComVazio(animais, condicoes, 'local', (a) => a.local, SEM_LOCAL),
+    [animais, condicoes],
+  );
+  const lotes = useMemo(
+    () => opcoesComVazio(animais, condicoes, 'lote', (a) => a.lote, SEM_LOTE),
+    [animais, condicoes],
+  );
   const categorias = useMemo(() => opcoesExcluindo(animais, condicoes, 'categoria', (a) => a.categoria), [animais, condicoes]);
 
   const filtrados = useMemo(() => filtrarPor(animais, condicoes), [animais, condicoes]);
@@ -118,8 +132,8 @@ export function AlterarCategoriaView({ animais: todos }: { animais: AnimalRebanh
     <div className="flex flex-col gap-6">
       <div className="rounded-xl border border-border bg-card p-4 sm:p-6">
         <div className="flex flex-wrap items-end gap-4">
-          <FilterSelect label="Local" value={local} onChange={trocarFiltro(setLocal)} options={locais} />
-          <FilterSelect label="Lote" value={lote} onChange={trocarFiltro(setLote)} options={lotes} />
+          <FilterSelect label="Local" value={local} onChange={trocarFiltro(setLocal)} options={locais} labelDe={rotuloLocal} />
+          <FilterSelect label="Lote" value={lote} onChange={trocarFiltro(setLote)} options={lotes} labelDe={rotuloLote} />
         </div>
 
         {!escopoDefinido && (
