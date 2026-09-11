@@ -13,16 +13,28 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
+  COBERTURA_VALIDA_ATE,
+  DEL_DIVERGENCIA,
+  DG_ATRASADO_APOS,
+  SECAR_AOS_DIAS_DE_GESTACAO,
   acharSessao,
   costurarSessoes,
   histogramaProducao,
+  juntarContexto,
   melhoresDoControle,
   pioresDoControle,
   producaoPorBaia,
+  producaoPorSetor,
   resumoDoControle,
+  resumoReprodutivo,
   serieDasSessoes,
+  situacaoReprodutiva,
 } from '@/lib/adm/areas/controle-leiteiro';
-import type { LinhaControleAnimal, LinhaSessaoControle } from '@/lib/adm/areas/contrato';
+import type {
+  LinhaContextoControle,
+  LinhaControleAnimal,
+  LinhaSessaoControle,
+} from '@/lib/adm/areas/contrato';
 
 function dia(parcial: Partial<LinhaSessaoControle> & { data_controle: string }): LinhaSessaoControle {
   const animais = parcial.animais ?? 10;
@@ -48,9 +60,36 @@ function animal(parcial: Partial<LinhaControleAnimal> & { animal_id: number }): 
     litros: 2,
     ordenhas: 2,
     del: 100,
+    del_lancado: 100,
+    del_origem: 'calculado',
+    lactacao_inicio: '2025-11-29',
+    lactacao_fim: null,
     ...parcial,
   };
 }
+
+function contexto(parcial: Partial<LinhaContextoControle> & { animal_id: number }): LinhaContextoControle {
+  return {
+    propriedade_id: 1,
+    data_controle: '2026-03-09',
+    setor: null,
+    lactacao_numero: 2,
+    lactacao_anterior_fim: null,
+    lactacao_total_app: null,
+    lactacao_media_app: null,
+    controles_na_lactacao: 3,
+    litros_nos_controles: 6,
+    servico_data: null,
+    servico_metodo: null,
+    servico_reprodutor: null,
+    dg_data: null,
+    dg_resultado: null,
+    aborto_data: null,
+    ...parcial,
+  };
+}
+
+const CONTROLE = '2026-03-09';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // costurarSessoes — o rabicho do dia seguinte
@@ -330,4 +369,148 @@ test('producaoPorBaia: DEL da baia ignora quem não teve DEL medido', () => {
   ]);
 
   assert.equal(baias[0].delMedio, 60);
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DEL — de onde veio, e quando o lançado não presta
+// ─────────────────────────────────────────────────────────────────────────────
+
+test('resumoDoControle: separa DEL calculado pela lactação do lançado, e conta a divergência', () => {
+  // Regressão: na propriedade 234 o app trazia DEL 517 para cabra parida há 167
+  // dias — o valor de uma lactação anterior. A view usa o calculado; a tela
+  // precisa saber quantos lançados discordam.
+  const resumo = resumoDoControle([
+    animal({ animal_id: 1, del: 167, del_lancado: 517, del_origem: 'calculado' }),
+    animal({ animal_id: 2, del: 100, del_lancado: 103, del_origem: 'calculado' }),
+    animal({ animal_id: 3, del: 80, del_lancado: 80, del_origem: 'lancado', lactacao_inicio: null }),
+    animal({ animal_id: 4, del: null, del_lancado: null, del_origem: null, lactacao_inicio: null }),
+  ]);
+
+  assert.equal(resumo.animaisComDel, 3);
+  assert.equal(resumo.delCalculados, 2);
+  assert.equal(resumo.delLancados, 1);
+  assert.equal(resumo.delDivergentes, 1, `só o que passa de ${DEL_DIVERGENCIA} dias — 3 dias é arredondamento`);
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Contexto — setor e reprodução na data do controle
+// ─────────────────────────────────────────────────────────────────────────────
+
+test('juntarContexto: casa por (data, animal) e não perde quem ficou sem contexto', () => {
+  const lista = juntarContexto(
+    [animal({ animal_id: 1 }), animal({ animal_id: 2 })],
+    [contexto({ animal_id: 1, setor: 'G1' })],
+  );
+  assert.equal(lista[0].contexto?.setor, 'G1');
+  assert.equal(lista[1].contexto, null);
+});
+
+test('producaoPorSetor: agrupa pelo setor do contexto; quem não tem vai para "Sem setor", por último', () => {
+  const setores = producaoPorSetor(
+    juntarContexto(
+      [animal({ animal_id: 1, litros: 9 }), animal({ animal_id: 2, litros: 1 }), animal({ animal_id: 3, litros: 3 })],
+      [contexto({ animal_id: 2, setor: 'G2' }), contexto({ animal_id: 3, setor: 'G1' })],
+    ),
+  );
+  assert.deepEqual(
+    setores.map((s) => s.baia),
+    ['G1', 'G2', 'Sem setor'],
+  );
+});
+
+test('situacaoReprodutiva: sem contexto é "sem informação", não "não coberta"', () => {
+  assert.equal(situacaoReprodutiva(null, CONTROLE).estado, 'sem_informacao');
+});
+
+test('situacaoReprodutiva: sem evento desde o parto é "não coberta"', () => {
+  assert.equal(situacaoReprodutiva(contexto({ animal_id: 1 }), CONTROLE).estado, 'nao_coberta');
+});
+
+test('situacaoReprodutiva: cobertura recente sem DG é coberta — e DG atrasado depois de 45 dias', () => {
+  const recente = situacaoReprodutiva(contexto({ animal_id: 1, servico_data: '2026-02-20', servico_metodo: 'Monta controlada' }), CONTROLE);
+  assert.equal(recente.estado, 'coberta');
+  assert.equal(recente.diasDesdeCobertura, 17);
+  assert.equal(recente.dgAtrasado, false);
+
+  const atrasada = situacaoReprodutiva(contexto({ animal_id: 1, servico_data: '2026-01-10' }), CONTROLE);
+  assert.equal(atrasada.estado, 'coberta');
+  assert.equal(atrasada.diasDesdeCobertura, 58);
+  assert.equal(atrasada.dgAtrasado, true, `passou de ${DG_ATRASADO_APOS} dias sem DG`);
+});
+
+test('situacaoReprodutiva: cobertura mais velha que a janela de gestação, sem desfecho, NÃO é coberta', () => {
+  const antiga = situacaoReprodutiva(contexto({ animal_id: 1, servico_data: '2025-06-01' }), CONTROLE);
+  assert.equal(antiga.estado, 'nao_coberta');
+  assert.ok((antiga.diasDesdeCobertura ?? 0) > COBERTURA_VALIDA_ATE);
+});
+
+test('situacaoReprodutiva: DG positivo depois da cobertura é gestante, com parto previsto e aviso de secar', () => {
+  const cedo = situacaoReprodutiva(
+    contexto({ animal_id: 1, servico_data: '2026-01-20', dg_data: '2026-03-01', dg_resultado: 'gestante' }),
+    CONTROLE,
+  );
+  assert.equal(cedo.estado, 'gestante');
+  assert.equal(cedo.partoPrevisto, '2026-06-19', 'cobertura + 150 dias');
+  assert.equal(cedo.aSecar, false);
+
+  const tardia = situacaoReprodutiva(
+    contexto({ animal_id: 1, servico_data: '2025-11-15', dg_data: '2026-01-05', dg_resultado: 'gestante' }),
+    CONTROLE,
+  );
+  assert.equal(tardia.diasDesdeCobertura, 114);
+  assert.equal(tardia.aSecar, true, `com ${SECAR_AOS_DIAS_DE_GESTACAO}+ dias de gestação devia estar seca`);
+});
+
+test('situacaoReprodutiva: gestante por DG sem cobertura lançada é marcada — é o funil invertido por animal', () => {
+  const s = situacaoReprodutiva(contexto({ animal_id: 1, dg_data: '2026-03-01', dg_resultado: 'gestante' }), CONTROLE);
+  assert.equal(s.estado, 'gestante');
+  assert.equal(s.semCoberturaLancada, true);
+  assert.equal(s.partoPrevisto, null, 'sem data de cobertura não há como projetar o parto');
+  assert.equal(s.aSecar, false);
+});
+
+test('situacaoReprodutiva: DG anterior à última cobertura é de outro cio e não vale', () => {
+  const s = situacaoReprodutiva(
+    contexto({ animal_id: 1, dg_data: '2026-01-05', dg_resultado: 'vazia', servico_data: '2026-02-20' }),
+    CONTROLE,
+  );
+  assert.equal(s.estado, 'coberta', 'a cobertura nova reabre a pergunta');
+});
+
+test('situacaoReprodutiva: DG negativo e aborto contam como vazia no resumo', () => {
+  assert.equal(
+    situacaoReprodutiva(contexto({ animal_id: 1, servico_data: '2026-01-10', dg_data: '2026-02-25', dg_resultado: 'vazia' }), CONTROLE).estado,
+    'vazia',
+  );
+  assert.equal(
+    situacaoReprodutiva(contexto({ animal_id: 1, servico_data: '2026-01-10', aborto_data: '2026-03-01' }), CONTROLE).estado,
+    'abortou',
+  );
+});
+
+test('resumoReprodutivo: conta os estados, as prontas para cobrir e se houve algum evento', () => {
+  const lista = juntarContexto(
+    [
+      animal({ animal_id: 1, del: 30 }),
+      animal({ animal_id: 2, del: 90 }),
+      animal({ animal_id: 3, del: 120 }),
+      animal({ animal_id: 4, del: 200 }),
+    ],
+    [
+      contexto({ animal_id: 1 }),
+      contexto({ animal_id: 2 }),
+      contexto({ animal_id: 3, servico_data: '2026-01-01', dg_data: '2026-02-15', dg_resultado: 'gestante' }),
+      contexto({ animal_id: 4, servico_data: '2026-02-01', dg_data: '2026-03-05', dg_resultado: 'vazia' }),
+    ],
+  );
+  const resumo = resumoReprodutivo(lista);
+
+  assert.equal(resumo.naoCobertas, 2);
+  assert.equal(resumo.prontasParaCobrir, 1, 'só a com 60+ dias de lactação');
+  assert.equal(resumo.gestantes, 1);
+  assert.equal(resumo.vazias, 1);
+  assert.equal(resumo.comAlgumEvento, true);
+
+  const semNada = resumoReprodutivo(juntarContexto([animal({ animal_id: 1 })], [contexto({ animal_id: 1 })]));
+  assert.equal(semNada.comAlgumEvento, false);
 });

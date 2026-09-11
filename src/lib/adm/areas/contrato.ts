@@ -284,6 +284,8 @@ export interface LinhaCarteiraConsultor {
 export const VIEWS_LEITE = {
   animais: 'controle_leiteiro_animal',
   sessoes: 'controle_leiteiro_sessoes',
+  /** adm_28_controle_contexto.sql — setor, lactação e reprodução NA DATA do controle. */
+  contexto: 'controle_leiteiro_contexto',
 } as const;
 
 export type ViewLeite = (typeof VIEWS_LEITE)[keyof typeof VIEWS_LEITE];
@@ -302,8 +304,52 @@ export interface LinhaControleAnimal {
   litros: number;
   /** Quantas ordenhas do dia entraram na soma (1 ou 2 no uso normal). */
   ordenhas: number;
-  /** null = DEL não medido naquele controle (metade das linhas do banco). */
+  /** Dias desde o início da lactação que cobre a data (a regra do app); na
+   *  falta dela, o valor lançado. null = nem lactação nem lançamento. */
   del: number | null;
+  /** O que veio na coluna `del` do app — nulo em 60% das linhas e, onde há,
+   *  às vezes de uma lactação anterior (517 dias para cabra parida há 167). */
+  del_lancado: number | null;
+  /** 'calculado' | 'lancado' | null */
+  del_origem: string | null;
+  /** 'YYYY-MM-DD' da lactação que cobre a data do controle. */
+  lactacao_inicio: string | null;
+  lactacao_fim: string | null;
+}
+
+/**
+ * O contexto de um animal NO DIA do controle — adm_28_controle_contexto.sql.
+ *
+ * ⚠️ Tudo avaliado na data do controle, nunca pelos caches de `rebanho`
+ * (`reproducao`, `ultima_cobertura`, `data_dg` são o estado de HOJE). Os
+ * eventos são os que vieram depois do início da lactação: cobertura anterior
+ * ao parto é a que gerou a lactação — já deu no que deu.
+ */
+export interface LinhaContextoControle {
+  propriedade_id: number;
+  data_controle: string;
+  animal_id: number;
+  /** Setor do animal (ou da baia dele). Só a propriedade 244 usa. */
+  setor: string | null;
+  /** Lactações iniciadas até o controle — a ordem que valia NAQUELA data. */
+  lactacao_numero: number | null;
+  /** Preenchido só quando NENHUMA lactação cobre a data: a última tinha
+   *  terminado aqui — a cabra está sendo ordenhada depois de seca. */
+  lactacao_anterior_fim: string | null;
+  /** Estimativas do próprio app para a lactação. Raras. */
+  lactacao_total_app: number | null;
+  lactacao_media_app: number | null;
+  /** Controles desta lactação até este dia, inclusive. */
+  controles_na_lactacao: number;
+  /** O que esses controles somam — a medida real, ainda que amostral. */
+  litros_nos_controles: number;
+  servico_data: string | null;
+  servico_metodo: string | null;
+  servico_reprodutor: string | null;
+  dg_data: string | null;
+  /** 'gestante' | 'vazia' | 'aguardando' */
+  dg_resultado: string | null;
+  aborto_data: string | null;
 }
 
 /** Resumo de um dia de controle — alimenta o seletor de data e a série histórica. */

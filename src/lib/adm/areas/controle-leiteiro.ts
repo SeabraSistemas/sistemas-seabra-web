@@ -2,6 +2,7 @@ import 'server-only';
 
 import {
   VIEWS_LEITE,
+  type LinhaContextoControle,
   type LinhaControleAnimal,
   type LinhaSessaoControle,
 } from '@/lib/adm/areas/contrato';
@@ -32,9 +33,16 @@ import { ok, type PontoSerie, type Resultado } from '@/lib/adm/types';
  * filtráveis por (propriedade_id, data_controle), a escolha fica na tela e o
  * volume lido é o de UM controle — dezenas de animais, não os 7 mil lançamentos
  * da fazenda inteira.
+ *
+ * A TERCEIRA VIEW (adm_28) é o CONTEXTO de cada animal naquele dia — setor,
+ * lactação, cobertura e diagnóstico — e é ela que responde o que o consultor
+ * pergunta ao abrir a lista: "essa cabra está coberta? tem DG? desde quando?".
+ * ⚠️ Avaliado NA DATA DO CONTROLE, nunca pelos caches de `rebanho`: o estado de
+ * hoje não vale para o controle de março. Ver `situacaoReprodutiva`.
  */
 
 const SQL_LEITE = 'supabase/adm/adm_12_leite.sql';
+const SQL_CONTEXTO = 'supabase/adm/adm_28_controle_contexto.sql';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Projeções — conferidas contra o contrato em tempo de compilação
@@ -61,10 +69,34 @@ const PROJECAO_ANIMAL = {
   litros: true,
   ordenhas: true,
   del: true,
+  del_lancado: true,
+  del_origem: true,
+  lactacao_inicio: true,
+  lactacao_fim: true,
 } satisfies Record<keyof LinhaControleAnimal, true>;
+
+const PROJECAO_CONTEXTO = {
+  propriedade_id: true,
+  data_controle: true,
+  animal_id: true,
+  setor: true,
+  lactacao_numero: true,
+  lactacao_anterior_fim: true,
+  lactacao_total_app: true,
+  lactacao_media_app: true,
+  controles_na_lactacao: true,
+  litros_nos_controles: true,
+  servico_data: true,
+  servico_metodo: true,
+  servico_reprodutor: true,
+  dg_data: true,
+  dg_resultado: true,
+  aborto_data: true,
+} satisfies Record<keyof LinhaContextoControle, true>;
 
 const SELECT_SESSAO = Object.keys(PROJECAO_SESSAO).join(',');
 const SELECT_ANIMAL = Object.keys(PROJECAO_ANIMAL).join(',');
+const SELECT_CONTEXTO = Object.keys(PROJECAO_CONTEXTO).join(',');
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Leitura
@@ -123,6 +155,59 @@ export async function listarAnimaisDoControle(
   return ok(res.dados.map(paraAnimal));
 }
 
+/**
+ * O contexto (setor, lactação, reprodução) dos animais de UM controle. Mesma
+ * chave da lista de animais — (propriedade, datas) —, juntada em memória por
+ * `juntarContexto`. Leitura separada de propósito: a view de animal alimenta
+ * a de sessões, e os laterais de reprodução só cabem no recorte de um dia.
+ */
+export async function listarContextoDoControle(
+  propriedadeId: number,
+  datas: string[],
+): Promise<Resultado<LinhaContextoControle[]>> {
+  if (datas.length === 0) return ok([]);
+
+  const supa = admClient();
+  if (!supa) return semConfigSupabase();
+
+  const view = VIEWS_LEITE.contexto;
+  const res = await paginarView(view, SQL_CONTEXTO, (de, ate) =>
+    (
+      supa
+        .from(view)
+        .select(SELECT_CONTEXTO)
+        .eq('propriedade_id', propriedadeId)
+        .in('data_controle', datas) as unknown as Consulta
+    )
+      .order('data_controle', { ascending: true })
+      .order('animal_id', { ascending: true })
+      .range(de, ate),
+  );
+  if (!res.ok) return res;
+  return ok(res.dados.map(paraContexto));
+}
+
+function paraContexto(l: Linha): LinhaContextoControle {
+  return {
+    propriedade_id: Math.round(numeroDe(l.propriedade_id) ?? 0),
+    data_controle: textoDe(l.data_controle) ?? '',
+    animal_id: Math.round(numeroDe(l.animal_id) ?? 0),
+    setor: textoDe(l.setor),
+    lactacao_numero: numeroDe(l.lactacao_numero),
+    lactacao_anterior_fim: textoDe(l.lactacao_anterior_fim),
+    lactacao_total_app: numeroDe(l.lactacao_total_app),
+    lactacao_media_app: numeroDe(l.lactacao_media_app),
+    controles_na_lactacao: Math.round(numeroDe(l.controles_na_lactacao) ?? 0),
+    litros_nos_controles: numeroDe(l.litros_nos_controles) ?? 0,
+    servico_data: textoDe(l.servico_data),
+    servico_metodo: textoDe(l.servico_metodo),
+    servico_reprodutor: textoDe(l.servico_reprodutor),
+    dg_data: textoDe(l.dg_data),
+    dg_resultado: textoDe(l.dg_resultado),
+    aborto_data: textoDe(l.aborto_data),
+  };
+}
+
 /** Uma propriedade sem nenhum controle nunca chega aqui como erro — é lista vazia. */
 export async function contarControles(propriedadeId: number): Promise<Resultado<number>> {
   const supa = admClient();
@@ -164,6 +249,10 @@ function paraAnimal(l: Linha): LinhaControleAnimal {
     // null de propósito: DEL não medido não é DEL zero. Zero puxaria a média
     // para baixo e faria a fazenda parecer cheia de cabra recém-parida.
     del: numeroDe(l.del),
+    del_lancado: numeroDe(l.del_lancado),
+    del_origem: textoDe(l.del_origem),
+    lactacao_inicio: textoDe(l.lactacao_inicio),
+    lactacao_fim: textoDe(l.lactacao_fim),
   };
 }
 
@@ -292,10 +381,20 @@ export interface ResumoControle {
   melhor: number | null;
   delMedio: number | null;
   animaisComDel: number;
+  /** Dos com DEL, quantos vieram da lactação (a regra do app) e quantos do lançamento. */
+  delCalculados: number;
+  delLancados: number;
+  /** DEL lançado no app que difere do calculado em mais de `DEL_DIVERGENCIA` dias
+   *  — a tela usa o calculado e aponta. */
+  delDivergentes: number;
   ordenhas: number;
   /** Quantos animais foram pesados nas DUAS ordenhas do dia. */
   duasOrdenhas: number;
 }
+
+/** Acima disso o DEL lançado e o calculado não são o mesmo número com
+ *  arredondamento — são duas lactações diferentes. */
+export const DEL_DIVERGENCIA = 7;
 
 export function resumoDoControle(animais: LinhaControleAnimal[]): ResumoControle {
   const comLeite = animais.filter((a) => a.litros > 0);
@@ -315,6 +414,14 @@ export function resumoDoControle(animais: LinhaControleAnimal[]): ResumoControle
     // seria uma afirmação sobre o rebanho em vez de sobre o preenchimento.
     delMedio: comDel.length > 0 ? somaDel / comDel.length : null,
     animaisComDel: comDel.length,
+    delCalculados: comDel.filter((a) => a.del_origem === 'calculado').length,
+    delLancados: comDel.filter((a) => a.del_origem === 'lancado').length,
+    delDivergentes: comDel.filter(
+      (a) =>
+        a.del_origem === 'calculado' &&
+        a.del_lancado !== null &&
+        Math.abs((a.del ?? 0) - a.del_lancado) > DEL_DIVERGENCIA,
+    ).length,
     ordenhas: animais.reduce((acc, a) => acc + a.ordenhas, 0),
     duasOrdenhas: animais.filter((a) => a.ordenhas >= 2).length,
   };
@@ -404,6 +511,7 @@ export function pioresDoControle(
 }
 
 export interface BaiaControle {
+  /** O rótulo do local — nome da baia em `producaoPorBaia`, do setor em `producaoPorSetor`. */
   baia: string;
   animais: number;
   litrosTotal: number;
@@ -411,20 +519,39 @@ export interface BaiaControle {
   delMedio: number | null;
 }
 
+export const SEM_BAIA = 'Sem baia';
+export const SEM_SETOR = 'Sem setor';
+
 /**
  * O controle repartido por baia — o recorte que transforma "a média caiu" em
  * "a média caiu NA G1-7", que é onde o consultor vai olhar o cocho.
  */
 export function producaoPorBaia(animais: LinhaControleAnimal[]): BaiaControle[] {
-  const porBaia = new Map<string, LinhaControleAnimal[]>();
+  return agruparPorLocal(animais, (a) => a.baia, SEM_BAIA);
+}
+
+/**
+ * O mesmo recorte um nível acima — o SETOR (G1, G2, G3, maternidade), que só a
+ * propriedade 244 usa hoje. A tela mostra quando algum animal tem setor.
+ */
+export function producaoPorSetor(animais: AnimalDoControle[]): BaiaControle[] {
+  return agruparPorLocal(animais, (a) => a.contexto?.setor ?? null, SEM_SETOR);
+}
+
+function agruparPorLocal<T extends LinhaControleAnimal>(
+  animais: T[],
+  local: (a: T) => string | null,
+  semLocal: string,
+): BaiaControle[] {
+  const grupos = new Map<string, T[]>();
   for (const animal of animais) {
-    const chave = animal.baia?.trim() || 'Sem baia';
-    const lista = porBaia.get(chave);
+    const chave = local(animal)?.trim() || semLocal;
+    const lista = grupos.get(chave);
     if (lista) lista.push(animal);
-    else porBaia.set(chave, [animal]);
+    else grupos.set(chave, [animal]);
   }
 
-  return [...porBaia.entries()]
+  return [...grupos.entries()]
     .map(([baia, doGrupo]) => {
       const litrosTotal = doGrupo.reduce((acc, a) => acc + a.litros, 0);
       const comDel = doGrupo.filter((a) => a.del !== null && a.del > 0);
@@ -438,10 +565,205 @@ export function producaoPorBaia(animais: LinhaControleAnimal[]): BaiaControle[] 
       };
     })
     .sort((a, b) => {
-      // "Sem baia" por último: é falha de cadastro, não um lugar do curral —
-      // mesmo critério da lista de DG pendente em areas/reproducao.ts.
-      if (a.baia === 'Sem baia') return b.baia === 'Sem baia' ? 0 : 1;
-      if (b.baia === 'Sem baia') return -1;
+      // "Sem baia"/"Sem setor" por último: é falha de cadastro, não um lugar do
+      // curral — mesmo critério da lista de DG pendente em areas/reproducao.ts.
+      if (a.baia === semLocal) return b.baia === semLocal ? 0 : 1;
+      if (b.baia === semLocal) return -1;
       return (b.mediaPorCabeca ?? 0) - (a.mediaPorCabeca ?? 0);
     });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Contexto — o animal com o seu dia: setor, lactação e reprodução
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface AnimalDoControle extends LinhaControleAnimal {
+  /** null quando a view de contexto não trouxe a linha — a tela mostra "—". */
+  contexto: LinhaContextoControle | null;
+}
+
+/** Junta as duas leituras por (data, animal). Não perde animal: quem não tem
+ *  contexto continua na lista, com `contexto: null`. */
+export function juntarContexto(
+  animais: LinhaControleAnimal[],
+  contextos: LinhaContextoControle[],
+): AnimalDoControle[] {
+  const porChave = new Map(contextos.map((c) => [`${c.data_controle}|${c.animal_id}`, c]));
+  return animais.map((a) => ({
+    ...a,
+    contexto: porChave.get(`${a.data_controle}|${a.animal_id}`) ?? null,
+  }));
+}
+
+export type EstadoReprodutivo =
+  | 'gestante'
+  | 'coberta'
+  | 'vazia'
+  | 'abortou'
+  | 'nao_coberta'
+  | 'sem_informacao';
+
+/** Gestação caprina: ~150 dias. É o que projeta o parto a partir da cobertura. */
+export const GESTACAO_DIAS = 150;
+/** A cabra gestante deveria estar SECA daqui em diante — 60 dias antes do parto. */
+export const SECAR_AOS_DIAS_DE_GESTACAO = GESTACAO_DIAS - 60;
+/** Cobertura sem DG depois disso é DG atrasado: com 45 dias o ultrassom já vê. */
+export const DG_ATRASADO_APOS = 45;
+/** Cobertura mais velha que isso sem DG nem parto não é "coberta" — é evento
+ *  perdido. Mesma janela de gestação de areas/servicos.ts. */
+export const COBERTURA_VALIDA_ATE = 170;
+/** Não coberta com mais de 60 dias de lactação já pode voltar ao bode. */
+export const PRONTA_PARA_COBRIR_APOS = 60;
+
+export interface SituacaoReprodutiva {
+  estado: EstadoReprodutivo;
+  /** O texto da célula — curto, sem data (as datas vão nos campos). */
+  rotulo: string;
+  dataCobertura: string | null;
+  metodo: string | null;
+  reprodutor: string | null;
+  dataDg: string | null;
+  /** Dias entre a cobertura e o controle, quando há cobertura válida. */
+  diasDesdeCobertura: number | null;
+  /** Só para gestante COM cobertura conhecida: cobertura + 150 dias. */
+  partoPrevisto: string | null;
+  /** Gestante com mais de 90 dias de gestação e ainda no controle — devia estar seca. */
+  aSecar: boolean;
+  /** Coberta há mais de 45 dias e sem DG. */
+  dgAtrasado: boolean;
+  /** Gestante por DG sem nenhuma cobertura lançada — o funil invertido, por animal. */
+  semCoberturaLancada: boolean;
+}
+
+const UM_DIA = 86_400_000;
+
+function diasEntre(de: string, ate: string): number {
+  return Math.round((diaEmUtc(ate) - diaEmUtc(de)) / UM_DIA);
+}
+
+function somarDias(iso: string, dias: number): string {
+  return new Date(diaEmUtc(iso) + dias * UM_DIA).toISOString().slice(0, 10);
+}
+
+/**
+ * O estado reprodutivo do animal NO DIA do controle, a partir dos eventos desde
+ * o início da lactação — nunca dos caches de `rebanho`.
+ *
+ * A ordem é a do evento mais conclusivo, como em areas/servicos.ts: aborto >
+ * diagnóstico > cobertura. Um DG anterior à última cobertura é de outro cio e
+ * não vale; uma cobertura mais velha que `COBERTURA_VALIDA_ATE` sem DG nem
+ * parto é evento perdido, não "coberta".
+ */
+export function situacaoReprodutiva(
+  contexto: LinhaContextoControle | null,
+  dataControle: string,
+): SituacaoReprodutiva {
+  const base: SituacaoReprodutiva = {
+    estado: 'sem_informacao',
+    rotulo: 'Sem informação',
+    dataCobertura: null,
+    metodo: null,
+    reprodutor: null,
+    dataDg: null,
+    diasDesdeCobertura: null,
+    partoPrevisto: null,
+    aSecar: false,
+    dgAtrasado: false,
+    semCoberturaLancada: false,
+  };
+  if (!contexto || dataControle === '') return base;
+
+  const servico = contexto.servico_data;
+  const dg = contexto.dg_data;
+  const aborto = contexto.aborto_data;
+  const comServico = {
+    dataCobertura: servico,
+    metodo: contexto.servico_metodo,
+    reprodutor: contexto.servico_reprodutor,
+    diasDesdeCobertura: servico ? diasEntre(servico, dataControle) : null,
+  };
+
+  if (aborto && (!servico || aborto >= servico)) {
+    return { ...base, ...comServico, estado: 'abortou', rotulo: 'Abortou', dataDg: dg };
+  }
+
+  if (dg && (!servico || dg >= servico)) {
+    if (contexto.dg_resultado === 'gestante') {
+      const dias = comServico.diasDesdeCobertura;
+      return {
+        ...base,
+        ...comServico,
+        estado: 'gestante',
+        rotulo: 'Gestante',
+        dataDg: dg,
+        partoPrevisto: servico ? somarDias(servico, GESTACAO_DIAS) : null,
+        aSecar: dias !== null && dias >= SECAR_AOS_DIAS_DE_GESTACAO,
+        semCoberturaLancada: !servico,
+      };
+    }
+    if (contexto.dg_resultado === 'vazia') {
+      return { ...base, ...comServico, estado: 'vazia', rotulo: 'Vazia (DG negativo)', dataDg: dg };
+    }
+    // 'aguardando': o DG foi feito e não concluiu — continua coberta, sem resposta.
+    if (servico) {
+      return { ...base, ...comServico, estado: 'coberta', rotulo: 'Coberta, DG inconclusivo', dataDg: dg };
+    }
+  }
+
+  if (servico) {
+    const dias = comServico.diasDesdeCobertura ?? 0;
+    if (dias <= COBERTURA_VALIDA_ATE) {
+      return {
+        ...base,
+        ...comServico,
+        estado: 'coberta',
+        rotulo: 'Coberta, sem DG',
+        dgAtrasado: dias > DG_ATRASADO_APOS,
+      };
+    }
+    // Cobertura velha demais sem desfecho: não dá para chamar de coberta.
+    return { ...base, ...comServico, estado: 'nao_coberta', rotulo: 'Cobertura antiga, sem desfecho' };
+  }
+
+  return { ...base, estado: 'nao_coberta', rotulo: 'Não coberta desde o parto' };
+}
+
+export interface ResumoReprodutivo {
+  animais: number;
+  gestantes: number;
+  /** Gestantes que deviam estar secas — ainda no controle com 90+ dias de gestação. */
+  aSecar: number;
+  cobertas: number;
+  dgAtrasado: number;
+  /** DG negativo ou aborto — precisam voltar ao bode. */
+  vazias: number;
+  naoCobertas: number;
+  /** Não cobertas com mais de 60 dias de lactação. */
+  prontasParaCobrir: number;
+  semInformacao: number;
+  /** Alguma cobertura ou DG lançados para estas fêmeas desde o parto. Sem isso
+   *  a seção inteira é "não coberta" — que é falta de lançamento, não de bode. */
+  comAlgumEvento: boolean;
+}
+
+export function resumoReprodutivo(animais: AnimalDoControle[]): ResumoReprodutivo {
+  const situacoes = animais.map((a) => ({ a, s: situacaoReprodutiva(a.contexto, a.data_controle) }));
+  const conta = (estado: EstadoReprodutivo) => situacoes.filter(({ s }) => s.estado === estado).length;
+
+  return {
+    animais: animais.length,
+    gestantes: conta('gestante'),
+    aSecar: situacoes.filter(({ s }) => s.aSecar).length,
+    cobertas: conta('coberta'),
+    dgAtrasado: situacoes.filter(({ s }) => s.dgAtrasado).length,
+    vazias: conta('vazia') + conta('abortou'),
+    naoCobertas: conta('nao_coberta'),
+    prontasParaCobrir: situacoes.filter(
+      ({ a, s }) => s.estado === 'nao_coberta' && a.del !== null && a.del >= PRONTA_PARA_COBRIR_APOS,
+    ).length,
+    semInformacao: conta('sem_informacao'),
+    comAlgumEvento: animais.some(
+      (a) => a.contexto?.servico_data || a.contexto?.dg_data || a.contexto?.aborto_data,
+    ),
+  };
 }

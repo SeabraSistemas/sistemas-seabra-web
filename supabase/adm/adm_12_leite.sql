@@ -28,6 +28,17 @@
 -- rabicho de dias consecutivos (o lancamento atrasado do dia seguinte) e
 -- costurado em TypeScript, com teste, em areas/controle-leiteiro.ts.
 --
+-- ⚠️ O DEL LANCADO NAO E CONFIAVEL, E A VIEW CALCULA O SEU. `controle_leiteiro.del`
+-- esta nulo em 10.282 das 16.978 linhas (60%) -- e, onde esta preenchido, nem
+-- sempre presta: na propriedade 234 o ultimo controle traz DEL de 517 a 687
+-- dias para cabras que pariram 167 a 272 dias antes (o valor veio de uma
+-- lactacao anterior e nunca foi recalculado). O app tem um trigger
+-- (`calculate_del_on_controle_leiteiro`) cuja regra e "dias desde o inicio da
+-- lactacao que COBRE a data do controle" -- a view aplica exatamente essa regra
+-- e so cai no valor lancado quando nenhuma lactacao cobre a data. `del_origem`
+-- diz qual dos dois saiu, e `del_lancado` fica exposto para a tela apontar a
+-- divergencia. Com isso o DEL passa de 6.696 para 15.620 linhas preenchidas.
+--
 -- ORDEM IMPORTA: `sessoes` le `animal`. Para reescrever `animal` sozinha use
 -- `create or replace` (nunca `drop`), senao o Postgres exige CASCADE e derruba
 -- `sessoes` junto -- foi exatamente essa armadilha que adm_07 escondeu ate as
@@ -49,32 +60,61 @@
 -- ─────────────────────────────────────────────────────────────────────────────
 
 create or replace view adm.controle_leiteiro_animal as
+with dia as (
+  select
+    cl.propriedade_id,
+    cl.data_simples                              as data_controle,
+    cl.animal_id,
+    -- A soma das ordenhas do dia. Ver a nota do cabecalho sobre total_produzido.
+    round(sum(cl.litros_produzidos), 3)          as litros,
+    count(*)::int                                as ordenhas,
+    -- max() ignora nulo: o animal que trouxe DEL em UMA das duas ordenhas
+    -- mantem o valor.
+    max(cl.del)                                  as del_lancado
+  from public.controle_leiteiro cl
+  group by 1, 2, 3
+)
 select
-  cl.propriedade_id,
-  cl.data_simples                                as data_controle,
-  cl.animal_id,
+  d.propriedade_id,
+  d.data_controle,
+  d.animal_id,
   r.numero_animal,
   r.nome_animal,
   b.nome_baia                                    as baia,
+  d.litros,
+  d.ordenhas,
 
-  -- A soma das ordenhas do dia. Ver a nota do cabecalho sobre total_produzido.
-  round(sum(cl.litros_produzidos), 3)            as litros,
-  count(*)::int                                  as ordenhas,
+  -- O DEL da tela: calculado pela lactacao que cobre a data (a regra do proprio
+  -- app), e so na falta dela o valor lancado. Ver a nota do cabecalho. null =
+  -- nem lactacao nem lancamento -- "nao medido", que a tela mostra como "—".
+  coalesce((d.data_controle - l.data_inicio)::int, d.del_lancado) as del,
 
-  -- DEL esta NULO em 11.437 das 21.623 linhas (53%). max() ignora nulo, entao
-  -- o animal que trouxe DEL em UMA das duas ordenhas mantem o valor; quem nao
-  -- trouxe em nenhuma fica null -- e null aqui significa "nao medido", que a
-  -- tela mostra como "—" em vez de inventar um zero que puxaria a media.
-  max(cl.del)                                    as del
+  -- Colunas acrescentadas DEPOIS (create or replace exige que venham no fim).
+  d.del_lancado,
+  case when l.data_inicio is not null then 'calculado'
+       when d.del_lancado is not null then 'lancado' end          as del_origem,
+  l.data_inicio                                  as lactacao_inicio,
+  l.data_fim                                     as lactacao_fim
 
-from public.controle_leiteiro cl
-join public.rebanho r on r.id = cl.animal_id
+from dia d
+join public.rebanho r on r.id = d.animal_id
 left join public.baias b on b.id = r.baia_id
-group by 1, 2, 3, 4, 5, 6;
+-- A lactacao que COBRE a data do controle -- mesma janela do trigger do app:
+-- comecou antes e, se ja terminou, terminou depois. Indice idx_lactacao_animal.
+left join lateral (
+  select l.data_inicio, l.data_fim
+    from public.lactacao l
+   where l.animal_id = d.animal_id
+     and l.data_inicio <= d.data_controle
+     and (l.data_fim is null or l.data_fim >= d.data_controle)
+   order by l.data_inicio desc
+   limit 1
+) l on true;
 
 comment on view adm.controle_leiteiro_animal is
   'Controle leiteiro por animal e por dia: ordenhas somadas. Filtrar SEMPRE por propriedade_id '
-  '(e por data_controle na tela do controle). litros = sum(litros_produzidos), nunca total_produzido.';
+  '(e por data_controle na tela do controle). litros = sum(litros_produzidos), nunca total_produzido. '
+  'del = dias desde o inicio da lactacao que cobre a data (regra do app); del_lancado so na falta dela.';
 
 revoke all on adm.controle_leiteiro_animal from public;
 revoke all on adm.controle_leiteiro_animal from anon, authenticated;

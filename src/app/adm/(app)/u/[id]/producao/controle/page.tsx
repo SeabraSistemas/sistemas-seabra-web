@@ -5,20 +5,33 @@ import { KpiCard } from '@/components/adm/KpiCard';
 import { SeletorControle, type OpcaoControle } from '@/components/adm/SeletorControle';
 import { SerieTemporal } from '@/components/adm/charts/SerieTemporal';
 import {
+  DEL_DIVERGENCIA,
+  DG_ATRASADO_APOS,
+  PRONTA_PARA_COBRIR_APOS,
   RANKING_LIMITE,
+  SECAR_AOS_DIAS_DE_GESTACAO,
+  SEM_BAIA,
+  SEM_SETOR,
   acharSessao,
   costurarSessoes,
   histogramaProducao,
+  juntarContexto,
   listarAnimaisDoControle,
+  listarContextoDoControle,
   listarSessoes,
   melhoresDoControle,
   pioresDoControle,
   producaoPorBaia,
+  producaoPorSetor,
   resumoDoControle,
+  resumoReprodutivo,
   serieDasSessoes,
+  situacaoReprodutiva,
+  type AnimalDoControle,
   type BaiaControle,
   type FaixaProducao,
   type ResumoControle,
+  type ResumoReprodutivo,
   type SessaoControle,
 } from '@/lib/adm/areas/controle-leiteiro';
 import type { LinhaControleAnimal } from '@/lib/adm/areas/contrato';
@@ -32,6 +45,7 @@ import {
   formatarPercentual,
 } from '@/lib/adm/format';
 import { getEscopo } from '@/lib/adm/queries';
+import type { Resultado } from '@/lib/adm/types';
 
 /**
  * CONTROLE LEITEIRO — a pesagem individual de um dia, com cards, série, baias,
@@ -49,6 +63,12 @@ import { getEscopo } from '@/lib/adm/queries';
  * entre fazendas: baia "G1-5" existe em duas propriedades e são currais
  * diferentes. Sem fazenda escolhida, a tela pede a escolha em vez de inventar um
  * consolidado.
+ *
+ * A LISTA DE ANIMAIS TRAZ O CONTEXTO DO DIA (adm_28): setor, lactação, e se a
+ * cabra está coberta, com DG, desde quando — avaliado NA DATA DO CONTROLE, a
+ * partir dos eventos, nunca dos caches de `rebanho` (que são o estado de hoje e
+ * não valem para o controle de março). É o que o consultor pergunta ao abrir a
+ * lista, e é o que a planilha antiga não tinha.
  */
 export const dynamic = 'force-dynamic';
 
@@ -106,12 +126,20 @@ export default async function ControleLeiteiroPage({
     );
   }
 
-  const animaisRes = await listarAnimaisDoControle(alvo.id, sessao.datas);
+  const [animaisRes, contextoRes] = await Promise.all([
+    listarAnimaisDoControle(alvo.id, sessao.datas),
+    listarContextoDoControle(alvo.id, sessao.datas),
+  ]);
   if (!animaisRes.ok) return <EstadoVazio resultado={animaisRes} />;
-  const animais = animaisRes.dados;
+  // O contexto é complemento: se a view de adm_28 faltar, o controle continua
+  // inteiro e a seção de reprodução diz o que faltou, em vez de derrubar a tela.
+  const animais = juntarContexto(animaisRes.dados, contextoRes.ok ? contextoRes.dados : []);
+  const falhaContexto = contextoRes.ok ? null : contextoRes;
 
   const resumo = resumoDoControle(animais);
   const baias = producaoPorBaia(animais);
+  const setores = producaoPorSetor(animais);
+  const reproducao = resumoReprodutivo(animais);
   const faixas = histogramaProducao(animais);
   const melhores = melhoresDoControle(animais);
   const piores = pioresDoControle(animais, RANKING_LIMITE, incluirZerados);
@@ -170,7 +198,9 @@ export default async function ControleLeiteiroPage({
         </section>
       )}
 
-      <PorBaia baias={baias} />
+      <PorLocal baias={baias} setores={setores} />
+
+      <Reproducao resumo={reproducao} falha={falhaContexto} sessao={sessao} />
 
       <Histograma faixas={faixas} total={resumo.animais} />
 
@@ -276,8 +306,8 @@ function Cards({ resumo }: { resumo: ResumoControle }) {
         // afirmação; sobre 3 de 61 é ruído com cara de número.
         detalhe={
           resumo.delMedio === null
-            ? 'DEL não medido neste controle'
-            : `medido em ${formatarInteiro(resumo.animaisComDel)} de ${formatarInteiro(resumo.animais)}`
+            ? 'sem lactação nem DEL lançado'
+            : `${formatarInteiro(resumo.animaisComDel)} de ${formatarInteiro(resumo.animais)} · ${formatarInteiro(resumo.delCalculados)} pela data do parto${resumo.delLancados > 0 ? `, ${formatarInteiro(resumo.delLancados)} lançados` : ''}`
         }
       />
       <KpiCard
@@ -289,20 +319,55 @@ function Cards({ resumo }: { resumo: ResumoControle }) {
   );
 }
 
-function PorBaia({ baias }: { baias: BaiaControle[] }) {
-  if (baias.length === 0) return null;
+/**
+ * O controle por LOCAL — setor (quando a fazenda usa) e baia. Quando nenhum
+ * animal tem baia nem setor, a seção vira um aviso: o recorte não existe por
+ * falta de cadastro, e a tela diz isso em vez de mostrar um card "Sem baia".
+ */
+function PorLocal({ baias, setores }: { baias: BaiaControle[]; setores: BaiaControle[] }) {
+  const temBaia = baias.some((b) => b.baia !== SEM_BAIA);
+  const temSetor = setores.some((s) => s.baia !== SEM_SETOR);
 
+  if (!temBaia && !temSetor) {
+    return (
+      <p className="rounded-xl border border-border bg-card p-4 text-xs text-muted-foreground">
+        <strong className="font-medium text-foreground">Sem localização.</strong> Nenhum animal deste
+        controle tem baia cadastrada no app, então não há produção por baia para mostrar. Quando o
+        cliente preencher a baia no rebanho, o recorte aparece aqui sozinho.
+      </p>
+    );
+  }
+
+  return (
+    <>
+      {temSetor && (
+        <GrupoLocal
+          titulo="Produção por setor"
+          nota="O nível acima da baia — G1, G2, G3, maternidade. Da melhor média para a pior."
+          locais={setores}
+        />
+      )}
+      {temBaia && (
+        <GrupoLocal
+          titulo="Produção por baia"
+          nota="Da melhor média para a pior — é o recorte que diz onde olhar o cocho. A baia é a atual do cadastro, não a do dia do controle."
+          locais={baias}
+        />
+      )}
+    </>
+  );
+}
+
+function GrupoLocal({ titulo, nota, locais }: { titulo: string; nota: string; locais: BaiaControle[] }) {
   return (
     <section className="rounded-2xl border border-border bg-card p-4">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="text-base">Produção por baia</h2>
-        <p className="text-xs text-muted-foreground">
-          Da melhor média para a pior — é o recorte que diz onde olhar o cocho.
-        </p>
+        <h2 className="text-base">{titulo}</h2>
+        <p className="text-xs text-muted-foreground">{nota}</p>
       </div>
 
       <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {baias.map((baia) => (
+        {locais.map((baia) => (
           <div key={baia.baia} className="rounded-xl border border-border bg-secondary/30 p-3">
             <div className="flex items-baseline justify-between gap-2">
               <span className="truncate text-sm font-medium text-foreground">{baia.baia}</span>
@@ -321,6 +386,102 @@ function PorBaia({ baias }: { baias: BaiaControle[] }) {
           </div>
         ))}
       </div>
+    </section>
+  );
+}
+
+/**
+ * A situação reprodutiva das lactantes NO DIA do controle — a pergunta que o
+ * consultor faz ao olhar a lista, respondida antes de ele abrir a lista.
+ *
+ * As regras (em areas/controle-leiteiro.ts): gestante com 90+ dias de gestação
+ * devia estar seca; coberta há mais de 45 dias sem DG é DG atrasado; não coberta
+ * com 60+ dias de lactação já pode voltar ao bode.
+ */
+function Reproducao({
+  resumo,
+  falha,
+  sessao,
+}: {
+  resumo: ResumoReprodutivo;
+  falha: Resultado<never> | null;
+  sessao: SessaoControle;
+}) {
+  if (falha && !falha.ok) {
+    return (
+      <p className="rounded-xl border border-destructive/40 bg-card p-4 text-sm text-muted-foreground">
+        A situação reprodutiva das lactantes não pôde ser lida — o controle acima não depende dela.
+        <span className="mt-1 block text-xs">{falha.detalhe}</span>
+      </p>
+    );
+  }
+
+  if (!resumo.comAlgumEvento) {
+    return (
+      <p className="rounded-xl border border-border bg-card p-4 text-xs text-muted-foreground">
+        <strong className="font-medium text-foreground">Sem cobertura nem DG lançados</strong> para
+        estas fêmeas desde o parto. Por isso a coluna Reprodução da lista abaixo sai toda como
+        &quot;não coberta&quot; — é falta de lançamento, não de bode. Sem esse registro não há como
+        saber quem já pode ser coberta nem quem devia estar seca.
+      </p>
+    );
+  }
+
+  return (
+    <section className="rounded-2xl border border-border bg-card p-4">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h2 className="text-base">Situação reprodutiva das lactantes</h2>
+        <p className="text-xs text-muted-foreground">
+          Em {formatarData(sessao.chave)}, pelos eventos desde o parto de cada uma — não pelo cadastro
+          de hoje.
+        </p>
+      </div>
+
+      <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-4">
+        <KpiCard
+          rotulo="Gestantes"
+          valor={formatarInteiro(resumo.gestantes)}
+          detalhe={
+            resumo.aSecar > 0
+              ? `${formatarInteiro(resumo.aSecar)} com ${SECAR_AOS_DIAS_DE_GESTACAO}+ dias de gestação — deviam estar secas`
+              : 'nenhuma passou do ponto de secar'
+          }
+          destaque={resumo.aSecar > 0}
+        />
+        <KpiCard
+          rotulo="Cobertas, aguardando DG"
+          valor={formatarInteiro(resumo.cobertas)}
+          detalhe={
+            resumo.dgAtrasado > 0
+              ? `${formatarInteiro(resumo.dgAtrasado)} há mais de ${DG_ATRASADO_APOS} dias — DG atrasado`
+              : 'todas dentro do prazo do DG'
+          }
+        />
+        <KpiCard
+          rotulo="Vazias"
+          valor={formatarInteiro(resumo.vazias)}
+          detalhe="DG negativo ou aborto — precisam voltar ao bode"
+        />
+        <KpiCard
+          rotulo="Não cobertas desde o parto"
+          valor={formatarInteiro(resumo.naoCobertas)}
+          detalhe={
+            resumo.prontasParaCobrir > 0
+              ? `${formatarInteiro(resumo.prontasParaCobrir)} com ${PRONTA_PARA_COBRIR_APOS}+ dias de lactação — prontas para cobrir`
+              : 'nenhuma passou dos 60 dias de lactação'
+          }
+        />
+      </div>
+
+      <p className="mt-3 border-t border-border pt-3 text-xs text-muted-foreground">
+        A cabra em lactação com {SECAR_AOS_DIAS_DE_GESTACAO}+ dias de gestação ainda no controle está
+        sendo ordenhada quando devia estar seca — custa colostro e peso da cria. Quem está no controle
+        e não foi coberta com {PRONTA_PARA_COBRIR_APOS}+ dias de lactação é a lista para a próxima
+        estação de monta.
+        {resumo.semInformacao > 0 && (
+          <> {formatarInteiro(resumo.semInformacao)} animais ficaram sem contexto e não entram na conta.</>
+        )}
+      </p>
     </section>
   );
 }
@@ -446,19 +607,22 @@ function Lancamentos({
   usuarioId,
   sufixo,
 }: {
-  animais: LinhaControleAnimal[];
+  animais: AnimalDoControle[];
   resumo: ResumoControle;
   sessao: SessaoControle;
   usuarioId: number;
   sufixo: string;
 }) {
+  const temSetor = animais.some((a) => a.contexto?.setor);
+
   return (
     <section className="rounded-2xl border border-border bg-card p-4">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <div>
           <h2 className="text-base">Lançamentos do controle</h2>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            {formatarInteiro(animais.length)} animais pesados em {formatarData(sessao.chave)}.
+            {formatarInteiro(animais.length)} animais pesados em {formatarData(sessao.chave)}, com a
+            lactação e a situação reprodutiva de cada um naquele dia.
           </p>
         </div>
         <BotaoCopiar
@@ -468,47 +632,41 @@ function Lancamentos({
       </div>
 
       <div className="mt-3 overflow-x-auto">
-        <table className="w-full min-w-[34rem] text-sm">
+        <table className="w-full min-w-[64rem] text-sm">
           <thead>
             <tr className="border-b border-border text-left text-xs text-muted-foreground">
               <th className="py-1.5 pe-3 font-normal">Animal</th>
-              <th className="py-1.5 pe-3 font-normal">Baia</th>
+              <th className="py-1.5 pe-3 font-normal">{temSetor ? 'Setor · baia' : 'Baia'}</th>
               <th className="py-1.5 pe-3 text-right font-normal">Litros</th>
-              <th className="py-1.5 pe-3 text-right font-normal">Ordenhas</th>
-              <th className="py-1.5 text-right font-normal">DEL</th>
+              <th className="py-1.5 pe-3 text-right font-normal">Ord.</th>
+              <th className="py-1.5 pe-3 text-right font-normal">DEL</th>
+              <th className="py-1.5 pe-3 font-normal">Lactação</th>
+              <th className="py-1.5 font-normal">Reprodução no dia</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
             {animais.map((animal) => (
-              <tr key={animal.animal_id}>
-                <td className="py-1.5 pe-3">
-                  <span className="text-foreground">
-                    {animal.nome_animal?.trim() || animal.numero_animal}
-                  </span>
-                  {animal.nome_animal?.trim() && (
-                    <span className="ms-2 text-xs tabular-nums text-muted-foreground">
-                      {animal.numero_animal}
-                    </span>
-                  )}
-                </td>
-                <td className="py-1.5 pe-3 text-muted-foreground">{animal.baia ?? VAZIO}</td>
-                <td className="py-1.5 pe-3 text-right tabular-nums text-foreground">
-                  {formatarLitros(animal.litros, 1)}
-                </td>
-                <td className="py-1.5 pe-3 text-right tabular-nums text-muted-foreground">
-                  {formatarInteiro(animal.ordenhas)}
-                </td>
-                <td className="py-1.5 text-right tabular-nums text-muted-foreground">
-                  {animal.del === null ? VAZIO : `${animal.del} d`}
-                </td>
-              </tr>
+              <LinhaLancamento key={animal.animal_id} animal={animal} temSetor={temSetor} />
             ))}
           </tbody>
         </table>
       </div>
 
       <p className="mt-3 border-t border-border pt-3 text-xs text-muted-foreground">
-        Para o histórico bruto de todos os controles, abra a{' '}
+        O DEL é contado da data do parto (o início da lactação que cobre o dia — a mesma regra do
+        app); o valor digitado no app só entra quando não há lactação.
+        {resumo.delDivergentes > 0 && (
+          <>
+            {' '}
+            <strong className="text-foreground">
+              Em {formatarInteiro(resumo.delDivergentes)} animais o DEL digitado difere do calculado em
+              mais de {DEL_DIVERGENCIA} dias
+            </strong>{' '}
+            (marcados com &quot;app:&quot;) — é valor de uma lactação anterior que nunca foi recalculado.
+          </>
+        )}{' '}
+        A situação reprodutiva é a do DIA do controle, pelos eventos desde o parto. Para o histórico
+        bruto de todos os controles, abra a{' '}
         <Link
           href={`/adm/u/${usuarioId}/tabelas/controle_leiteiro${sufixo}`}
           className="text-foreground underline underline-offset-4"
@@ -518,6 +676,92 @@ function Lancamentos({
         .
       </p>
     </section>
+  );
+}
+
+function LinhaLancamento({ animal, temSetor }: { animal: AnimalDoControle; temSetor: boolean }) {
+  const ctx = animal.contexto;
+  const situacao = situacaoReprodutiva(ctx, animal.data_controle);
+  const delDivergente =
+    animal.del_origem === 'calculado' &&
+    animal.del_lancado !== null &&
+    Math.abs((animal.del ?? 0) - animal.del_lancado) > DEL_DIVERGENCIA;
+
+  const local = [temSetor ? ctx?.setor : null, animal.baia].filter(Boolean).join(' · ');
+
+  const detalhesReproducao = [
+    situacao.dataCobertura
+      ? `cob. ${formatarData(situacao.dataCobertura)}${situacao.reprodutor ? ` · ${situacao.reprodutor}` : situacao.metodo ? ` · ${situacao.metodo}` : ''}`
+      : null,
+    situacao.dataDg ? `DG ${formatarData(situacao.dataDg)}` : null,
+    situacao.partoPrevisto ? `parto ~${formatarData(situacao.partoPrevisto)}` : null,
+  ].filter(Boolean);
+
+  return (
+    <tr>
+      <td className="py-1.5 pe-3">
+        <span className="text-foreground">{animal.nome_animal?.trim() || animal.numero_animal}</span>
+        {animal.nome_animal?.trim() && (
+          <span className="ms-2 text-xs tabular-nums text-muted-foreground">{animal.numero_animal}</span>
+        )}
+      </td>
+      <td className="py-1.5 pe-3 text-muted-foreground">{local || VAZIO}</td>
+      <td className="py-1.5 pe-3 text-right tabular-nums text-foreground">
+        {formatarLitros(animal.litros, 1)}
+      </td>
+      <td className="py-1.5 pe-3 text-right tabular-nums text-muted-foreground">
+        {formatarInteiro(animal.ordenhas)}
+      </td>
+      <td className="py-1.5 pe-3 text-right tabular-nums text-muted-foreground">
+        {animal.del === null ? VAZIO : `${animal.del} d`}
+        {delDivergente && (
+          <span className="ms-1 text-xs text-destructive">app: {animal.del_lancado}</span>
+        )}
+        {ctx?.lactacao_anterior_fim && (
+          <span className="block text-xs text-destructive">
+            seca em {formatarData(ctx.lactacao_anterior_fim)}
+          </span>
+        )}
+      </td>
+      <td className="py-1.5 pe-3 text-muted-foreground">
+        {ctx ? (
+          <>
+            {ctx.lactacao_numero ? `${formatarInteiro(ctx.lactacao_numero)}ª` : VAZIO}
+            <span className="ms-2 text-xs tabular-nums">
+              {formatarInteiro(ctx.controles_na_lactacao)} ctl · {formatarLitros(ctx.litros_nos_controles, 1)}
+            </span>
+            {ctx.lactacao_total_app !== null && (
+              <span className="block text-xs tabular-nums">
+                app: {formatarLitros(ctx.lactacao_total_app, 0)} na lactação
+              </span>
+            )}
+          </>
+        ) : (
+          VAZIO
+        )}
+      </td>
+      <td className="py-1.5">
+        <span
+          className={
+            situacao.aSecar || situacao.dgAtrasado
+              ? 'text-destructive'
+              : situacao.estado === 'gestante'
+                ? 'text-foreground'
+                : 'text-muted-foreground'
+          }
+        >
+          {situacao.rotulo}
+          {situacao.aSecar && ' — secar'}
+          {situacao.dgAtrasado && ' — DG atrasado'}
+        </span>
+        {(detalhesReproducao.length > 0 || situacao.semCoberturaLancada) && (
+          <span className="block text-xs text-muted-foreground">
+            {detalhesReproducao.join(' · ')}
+            {situacao.semCoberturaLancada && ' · sem cobertura lançada'}
+          </span>
+        )}
+      </td>
+    </tr>
   );
 }
 
