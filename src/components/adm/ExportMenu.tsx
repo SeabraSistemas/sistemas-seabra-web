@@ -32,6 +32,7 @@ import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle } from '@/com
 import { formatarInteiro } from '@/lib/adm/format';
 import { cn } from '@/lib/utils';
 import { useParamsAdm } from '@/components/adm/AdmFilters';
+import { useContextoGrade } from '@/components/adm/ContextoGrade';
 
 /** O route handler importa daqui. Ver o cabeçalho: é o que faz o Excel pt-BR abrir certo. */
 export const SEPARADOR_CSV = ';';
@@ -94,6 +95,20 @@ export function ExportMenu({
   const [aberto, setAberto] = useState(false);
 
   /**
+   * O estado REAL da grade — o que os filtros deixaram e quais linhas estão na
+   * página — vem por contexto da AdmTable. As props `totalFiltrado`/`totalPagina`
+   * são o fallback de quem renderiza o menu fora de uma grade. Sem o contexto o
+   * menu dizia "4.820 linhas" com 37 na tela, e "só a página atual" baixava as
+   * 50 primeiras na ordem do banco em vez das 50 que estavam na frente do Felipe.
+   */
+  const grade = useContextoGrade();
+  const filtradas = grade?.totalFiltrado ?? totalFiltrado;
+  const naPagina = grade?.chavesDaPagina.length ?? totalPagina;
+  // No modo cliente a grade só carrega um teto de linhas; com filtro ativo a
+  // contagem é sobre esse teto, e o arquivo cobre o conjunto INTEIRO.
+  const contagemParcial = grade !== null && grade.filtrando && totalFiltrado > grade.totalCarregado;
+
+  /**
    * O link do dossiê é DERIVADO, não passado de cima.
    *
    * A alternativa era cada página que renderiza uma tabela lembrar de mandar
@@ -126,8 +141,8 @@ export function ExportMenu({
   }
 
   const escolhidas = colunas.filter((c) => selecionadas.has(c.chave)).map((c) => c.chave);
-  const linhas = escopo === 'pagina' ? totalPagina : totalFiltrado;
-  const estouraXlsx = escopo === 'filtrado' && totalFiltrado > tetoLinhasXlsx;
+  const linhas = escopo === 'pagina' ? naPagina : filtradas;
+  const estouraXlsx = escopo === 'filtrado' && filtradas > tetoLinhasXlsx;
 
   /**
    * A URL do arquivo é a URL DA TELA mais o formato. Copiar a query inteira em
@@ -150,6 +165,12 @@ export function ExportMenu({
       p.delete('page');
       p.delete('cursor');
       p.delete('size');
+      p.delete('ids');
+    } else if (grade) {
+      // As CHAVES das linhas visíveis, na ordem da tela: é o único jeito de o
+      // servidor devolver exatamente esta página — ele não conhece a
+      // paginação em memória da grade.
+      p.set('ids', grade.chavesDaPagina.join(','));
     }
     return `${rota}?${p.toString()}`;
   }
@@ -191,10 +212,17 @@ export function ExportMenu({
                   />
                   <span className="flex-1">{opcao.rotulo}</span>
                   <span className="tabular-nums text-muted-foreground">
-                    {formatarInteiro(opcao.chave === 'pagina' ? totalPagina : totalFiltrado)}
+                    {formatarInteiro(opcao.chave === 'pagina' ? naPagina : filtradas)}
                   </span>
                 </label>
               ))}
+              {contagemParcial && (
+                <p className="text-xs text-muted-foreground">
+                  A contagem é sobre as {formatarInteiro(grade.totalCarregado)} linhas carregadas na
+                  tela; o arquivo aplica os mesmos filtros ao conjunto inteiro (
+                  {formatarInteiro(totalFiltrado)} linhas antes do filtro).
+                </p>
+              )}
             </section>
 
             {/* ── Colunas ── */}
@@ -254,7 +282,7 @@ export function ExportMenu({
               </Button>
               {estouraXlsx ? (
                 <p className="text-xs text-destructive">
-                  São {formatarInteiro(totalFiltrado)} linhas e o teto do Excel aqui é {formatarInteiro(tetoLinhasXlsx)}
+                  São {formatarInteiro(filtradas)} linhas e o teto do Excel aqui é {formatarInteiro(tetoLinhasXlsx)}
                   : o arquivo vai chegar cortado. Para o conjunto inteiro, use o CSV.
                 </p>
               ) : (

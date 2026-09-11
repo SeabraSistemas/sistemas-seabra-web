@@ -54,9 +54,19 @@ import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { formatarInteiro, formatarValorCru, VAZIO } from '@/lib/adm/format';
+import {
+  MAX_ORDENS,
+  chaveDeOrdem,
+  comparar,
+  escreverOrdens,
+  lerOrdens,
+  type Ordem,
+} from '@/lib/adm/ordenacao';
+import { ContextoGrade } from '@/components/adm/ContextoGrade';
 import type { TipoColuna } from '@/lib/adm/types';
 import {
   AdmFilters,
+  contarFiltrosAtivos,
   filtrarLinhas,
   lerFiltros,
   useParamsAdm,
@@ -153,14 +163,6 @@ function tituloPadrao<T>(coluna: AdmColuna<T>, linha: T): string | undefined {
   return undefined;
 }
 
-function chaveDeOrdem<T>(coluna: AdmColuna<T>, linha: T): number | string | boolean | null {
-  if (coluna.ordenar) return coluna.ordenar(linha);
-  const bruto = valorCru(coluna, linha);
-  if (bruto === null || bruto === undefined) return null;
-  if (typeof bruto === 'number' || typeof bruto === 'boolean' || typeof bruto === 'string') return bruto;
-  return String(bruto);
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
 // Densidade
 // ─────────────────────────────────────────────────────────────────────────────
@@ -239,51 +241,12 @@ function densidadeValida(bruto: string | null): Densidade | null {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Ordenação múltipla
+// Ordenação múltipla — a regra mora em '@/lib/adm/ordenacao' (módulo puro), para
+// a exportação ordenar o arquivo do jeito que a grade ordena. Reexportada aqui
+// para quem já importava daqui.
 // ─────────────────────────────────────────────────────────────────────────────
 
-export interface Ordem {
-  coluna: string;
-  ascendente: boolean;
-}
-
-/** Até 3 níveis. Além disso ninguém consegue prever o resultado olhando a tela. */
-const MAX_ORDENS = 3;
-
-/** '-peso_atual,numero_animal' → [{peso_atual desc}, {numero_animal asc}]. Mesma
- *  grafia que `validarOrdenacao()` aceita no servidor. */
-export function lerOrdens(bruto: string | null, chavesValidas: ReadonlySet<string>): Ordem[] {
-  if (!bruto) return [];
-  const ordens: Ordem[] = [];
-  for (const parte of bruto.split(',')) {
-    const texto = parte.trim();
-    if (texto === '') continue;
-    const ascendente = !texto.startsWith('-');
-    const coluna = ascendente ? texto.replace(/^\+/, '') : texto.slice(1);
-    if (!chavesValidas.has(coluna) || ordens.some((o) => o.coluna === coluna)) continue;
-    ordens.push({ coluna, ascendente });
-    if (ordens.length === MAX_ORDENS) break;
-  }
-  return ordens;
-}
-
-export function escreverOrdens(ordens: Ordem[]): string | null {
-  if (ordens.length === 0) return null;
-  return ordens.map((o) => (o.ascendente ? o.coluna : `-${o.coluna}`)).join(',');
-}
-
-/** Comparador estável de valores mistos. NULO SEMPRE POR ÚLTIMO, nos dois
- *  sentidos — herdado do DataTable do katmandu: inverter a direção não pode
- *  encher a primeira página de linhas vazias. */
-function comparar(a: number | string | boolean | null, b: number | string | boolean | null, sinal: number): number {
-  if (a == null && b == null) return 0;
-  if (a == null) return 1;
-  if (b == null) return -1;
-  if (typeof a === 'string' && typeof b === 'string') return a.localeCompare(b, 'pt-BR') * sinal;
-  if (a < b) return -1 * sinal;
-  if (a > b) return 1 * sinal;
-  return 0;
-}
+export { escreverOrdens, lerOrdens, type Ordem } from '@/lib/adm/ordenacao';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Paginação
@@ -648,7 +611,19 @@ export function AdmTable<T>({
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {acoes}
+          {/* A exportação precisa saber EXATAMENTE o que está na grade: as chaves
+              da página visível e quantas linhas os filtros deixaram. Vai por
+              contexto para a página que monta o menu não ter que saber disso. */}
+          <ContextoGrade.Provider
+            value={{
+              chavesDaPagina: daPagina.map((linha) => chave(linha)),
+              totalFiltrado: modo === 'servidor' ? total : totalCliente,
+              totalCarregado: linhas.length,
+              filtrando: contarFiltrosAtivos(filtros) > 0,
+            }}
+          >
+            {acoes}
+          </ContextoGrade.Provider>
         </div>
       </div>
 

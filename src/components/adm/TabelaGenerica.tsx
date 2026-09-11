@@ -4,17 +4,11 @@ import Link from 'next/link';
 import { AlertTriangle, ExternalLink } from 'lucide-react';
 import { AdmTable, type AdmColuna } from '@/components/adm/AdmTable';
 import { EstadoVazio } from '@/components/adm/EstadoVazio';
-import type { FacetaDef, ValorFaceta } from '@/components/adm/AdmFilters';
+import type { FacetaDef } from '@/components/adm/AdmFilters';
 import { ExportMenu, type ColunaExport } from '@/components/adm/ExportMenu';
+import { chaveDaLinha, facetasDoRegistro } from '@/lib/adm/facetas-catalogo';
 import { formatarInteiro } from '@/lib/adm/format';
-import {
-  chaveRota,
-  colunasComFaceta,
-  colunasPermitidas,
-  getRegistro,
-  type TabelaCatalogo,
-} from '@/lib/adm/tabelas';
-import { SEGMENTO_ROTULO, type ColunaRegistro } from '@/lib/adm/types';
+import { chaveRota, colunasPermitidas, getRegistro, type TabelaCatalogo } from '@/lib/adm/tabelas';
 
 /**
  * O motor de tela do escape hatch: registro do catálogo + linhas do servidor →
@@ -50,13 +44,6 @@ import { SEGMENTO_ROTULO, type ColunaRegistro } from '@/lib/adm/types';
  */
 
 type Linha = Record<string, unknown>;
-
-/** Sufixo da coluna sintética com o rótulo de uma FK resolvida (`categoria` →
- *  `categoria__rotulo`). Duplicado de `SUFIXO_ROTULO` em queries.ts pelo mesmo
- *  motivo que a AdmTable duplica: aquele arquivo abre com `import 'server-only'`
- *  e importá-lo daqui quebraria o build deste Client Component. Duplicar uma
- *  string custa menos que o acoplamento inverso. */
-const SUFIXO_ROTULO = '__rotulo';
 
 export interface TabelaGenericaProps {
   /** Chave de rota do catálogo — `chaveRota(registro)`, não o nome físico. */
@@ -120,16 +107,9 @@ export function TabelaGenerica({
     fixa: indice === 0 || undefined,
   }));
 
-  const facetas: FacetaDef<Linha>[] = colunasComFaceta(registro).map((coluna) => ({
-    chave: coluna.chave,
-    rotulo: coluna.rotulo,
-    tipo: coluna.faceta ?? 'texto',
-    // O valor da faceta é o RÓTULO da FK quando ele existe. Sem isto, o chip de
-    // "Categoria" listaria UUIDs de 36 caracteres — a mesma armadilha do
-    // `rebanho.categoria`, agora na barra de filtros.
-    valor: (linha) => valorDeFaceta(linha, coluna),
-    rotuloValor: rotuloDeValor,
-  }));
+  // As MESMAS facetas que a rota de exportação usa — é o que faz o arquivo
+  // trazer o que a grade mostra. Ver facetas-catalogo.ts.
+  const facetas: FacetaDef<Linha>[] = facetasDoRegistro(registro);
 
   const colunasExport: ColunaExport[] = permitidas.map((coluna, indice) => ({
     chave: coluna.chave,
@@ -204,36 +184,6 @@ export function TabelaGenerica({
       />
     </section>
   );
-}
-
-/**
- * A chave estável de cada linha. Espelha `chaveDaTabela()` de queries.ts — `id`
- * em quase todo o schema, `animal_id` nas 1:1 com `rebanho` (que não têm `id`).
- * Duplicado pelo mesmo motivo do SUFIXO_ROTULO: queries.ts é server-only.
- */
-function chaveDaLinha(registro: TabelaCatalogo): string {
-  const tem = (c: string) => registro.colunas.some((k) => k.chave === c);
-  if (!tem('id') && tem('animal_id')) return 'animal_id';
-  return 'id';
-}
-
-function valorDeFaceta(linha: Linha, coluna: ColunaRegistro): ValorFaceta {
-  const rotulo = linha[`${coluna.chave}${SUFIXO_ROTULO}`];
-  if (typeof rotulo === 'string' && rotulo.trim() !== '') return rotulo;
-  const bruto = linha[coluna.chave];
-  if (bruto === null || bruto === undefined) return bruto;
-  if (typeof bruto === 'string' || typeof bruto === 'number' || typeof bruto === 'boolean') return bruto;
-  // `text[]` do Postgres (propriedades.segmentos): a linha pertence a vários
-  // valores da mesma faceta, e a AdmFilters já sabe lidar com o array.
-  if (Array.isArray(bruto)) return bruto.map((v) => (v === null ? null : String(v)));
-  return String(bruto);
-}
-
-/** Rótulos fechados que o painel inteiro já traduz. O resto sai como está — o
- *  catálogo guarda o valor cru do banco, e inventar tradução por heurística
- *  ('nao_lactante' → 'Não lactante') criaria rótulos que não batem com o app. */
-function rotuloDeValor(valor: string): string {
-  return SEGMENTO_ROTULO[valor as keyof typeof SEGMENTO_ROTULO] ?? valor;
 }
 
 /**

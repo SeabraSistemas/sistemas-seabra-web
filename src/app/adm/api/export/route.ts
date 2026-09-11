@@ -2,12 +2,16 @@ import { NextResponse } from 'next/server';
 
 import { extrairIp, extrairUserAgent, registrarAcesso } from '@/lib/adm/audit';
 import { contentDisposition } from '@/lib/adm/export-tabular';
+import { lerIds, naOrdemDosIds, preFiltroServidor, projecaoParaExport } from '@/lib/adm/export-grade';
+import { filtrarLinhas, lerFiltros, type FacetaDef, type Filtros } from '@/lib/adm/facetas';
+import { chaveDaLinha, facetasDoRegistro, type LinhaGrade } from '@/lib/adm/facetas-catalogo';
 import { formatarValorCru } from '@/lib/adm/format';
 import { getAdmSession } from '@/lib/adm/guard';
 import { lerSelecaoParam } from '@/lib/adm/escopo';
+import { lerOrdens, ordenarLinhas, type Ordem } from '@/lib/adm/ordenacao';
 import { lerOpcoesTabela } from '@/lib/adm/params';
 import { SUFIXO_ROTULO, cursorDaLinha, getEscopo, listarTabela } from '@/lib/adm/queries';
-import { getColuna, getRegistro } from '@/lib/adm/tabelas';
+import { colunasPermitidas, getColuna, getRegistro } from '@/lib/adm/tabelas';
 import type { TabelaCatalogo } from '@/lib/adm/tabelas';
 import type { ColunaRegistro, Escopo } from '@/lib/adm/types';
 import {
@@ -30,6 +34,16 @@ export const dynamic = 'force-dynamic';
  * A URL desta rota é a URL DA TELA mais `formato` — é o que garante que o
  * arquivo baixado seja exatamente o conjunto que está na grade, incluindo cada
  * faceta que alguém adicionar no futuro sem lembrar de mexer aqui.
+ *
+ * O FILTRO É O DA GRADE, RODADO AQUI. A grade filtra em memória — rótulo da FK
+ * ('Lactante', não o uuid), texto sem acento, "(vazio)" como valor — e esta
+ * rota refazia o filtro no banco com outra gramática: `eq categoria 'Lactante'`
+ * numa coluna uuid estourava, `ilike` não ignorava acento, e "só a página atual"
+ * mandava um cursor que a paginação em memória não tem. O arquivo não trazia o
+ * que a tela mostrava. Agora as facetas e o `filtrarLinhas` são os MESMOS
+ * módulos puros que a grade usa (facetas.ts, facetas-catalogo.ts); o banco só
+ * recebe um pré-filtro de data que é superconjunto, e a página atual vem pelas
+ * CHAVES das linhas visíveis (`?ids=`), na ordem da tela.
  *
  * OS DOIS FORMATOS SÃO COISAS DIFERENTES, e não duas opções do mesmo botão:
  *
@@ -103,14 +117,22 @@ function escaparCsv(valor: string): string {
 
 interface Contexto {
   registro: TabelaCatalogo;
+  /** As colunas que saem no arquivo. */
   colunas: ColunaRegistro[];
   escopo: Escopo;
+  /** O que vai ao banco: projeção ampliada, ordem de nível 1 e o pré-filtro de data. */
   opcoes: ReturnType<typeof lerOpcoesTabela>['opcoes'];
+  /** O filtro da GRADE, aplicado em memória a cada página — a mesma função da tela. */
+  facetas: FacetaDef<LinhaGrade>[];
+  filtros: Filtros;
+  /** A ordenação multi-nível da tela, aplicada ao XLSX (que é montado inteiro). */
+  ordens: Ordem[];
 }
 
 /**
- * Percorre a tabela inteira em páginas keyset. Generator para que o CSV possa
- * emitir cada página assim que ela chega, em vez de esperar a última.
+ * Percorre a tabela inteira em páginas keyset e devolve de cada página só o
+ * que passa no filtro da grade. Generator para que o CSV possa emitir cada
+ * página assim que ela chega, em vez de esperar a última.
  */
 async function* paginas(ctx: Contexto, maxPaginas: number) {
   let cursor: string | null = null;
@@ -127,7 +149,10 @@ async function* paginas(ctx: Contexto, maxPaginas: number) {
 
     const { linhas } = res.dados;
     if (linhas.length === 0) return;
-    yield linhas;
+    // O filtro exato, em memória, sobre a página bruta — página que ficou vazia
+    // depois dele não encerra a varredura: a próxima pode ter o que se procura.
+    const aprovadas = filtrarLinhas(linhas, ctx.facetas, ctx.filtros);
+    if (aprovadas.length > 0) yield aprovadas;
     if (linhas.length < PAGINA) return;
 
     cursor = cursorDaLinha(ctx.registro, ctx.opcoes.ordem, linhas[linhas.length - 1]);
@@ -137,12 +162,35 @@ async function* paginas(ctx: Contexto, maxPaginas: number) {
 }
 
 /**
+ * "Só a página atual": as linhas cujas chaves a grade mandou, na ordem em que
+ * a grade as mostra. O banco não conhece a paginação em memória da tela; as
+ * chaves são o único endereço fiel.
+ */
+async function linhasDaPagina(ctx: Contexto, chave: string, ids: string[]): Promise<LinhaGrade[]> {
+  const res = await listarTabela(ctx.registro, ctx.escopo, {
+    colunas: ctx.opcoes.colunas,
+    filtros: [{ coluna: chave, op: 'in', valores: ids }],
+    limite: ids.length,
+    contarTotal: false,
+  });
+  if (!res.ok) throw new Error(res.detalhe);
+  return naOrdemDosIds(res.dados.linhas, chave, ids);
+}
+
+/** Uma página só, como fonte assíncrona — para a página atual passar pelo mesmo
+ *  gerador de arquivo que a varredura. */
+async function* umaPagina(promessa: Promise<LinhaGrade[]>) {
+  const linhas = await promessa;
+  if (linhas.length > 0) yield linhas;
+}
+
+/**
  * CSV em fluxo. Delimitador ';' e BOM UTF-8 na frente: é o par que faz o Excel
  * em pt-BR abrir o arquivo com duplo clique, sem assistente de importação. Com
  * ',' o Excel brasileiro trata a vírgula como separador decimal e joga a linha
  * inteira numa célula só.
  */
-function gerarCsv(ctx: Contexto, nomeArquivo: string, maxPaginas = MAX_PAGINAS): Response {
+function gerarCsv(ctx: Contexto, nomeArquivo: string, fonte: AsyncIterable<LinhaGrade[]>): Response {
   const codificador = new TextEncoder();
 
   const fluxo = new ReadableStream<Uint8Array>({
@@ -151,7 +199,7 @@ function gerarCsv(ctx: Contexto, nomeArquivo: string, maxPaginas = MAX_PAGINAS):
         controle.enqueue(codificador.encode('﻿'));
         controle.enqueue(codificador.encode(ctx.colunas.map((c) => escaparCsv(c.rotulo)).join(';') + '\r\n'));
 
-        for await (const linhas of paginas(ctx, maxPaginas)) {
+        for await (const linhas of fonte) {
           // Uma string por página, não por linha: menos idas ao controle do
           // fluxo, e o pedaço continua pequeno o bastante para não pesar.
           const pedaco = linhas
@@ -182,21 +230,31 @@ function gerarCsv(ctx: Contexto, nomeArquivo: string, maxPaginas = MAX_PAGINAS):
 async function gerarPlanilha(
   ctx: Contexto,
   nomeArquivo: string,
-  maxPaginas = Math.ceil(TETO_XLSX / PAGINA),
+  fonte: AsyncIterable<LinhaGrade[]>,
+  /** Ordena como a tela quando a fonte é a varredura; a página atual já vem na ordem certa. */
+  ordenar: boolean,
 ): Promise<Response> {
-  const linhas: CelulaXlsx[][] = [];
+  const brutas: LinhaGrade[] = [];
   let truncado = false;
 
-  for await (const pagina of paginas(ctx, maxPaginas)) {
+  for await (const pagina of fonte) {
     for (const linha of pagina) {
-      if (linhas.length >= TETO_XLSX) {
+      if (brutas.length >= TETO_XLSX) {
         truncado = true;
         break;
       }
-      linhas.push(ctx.colunas.map((c) => valorCelula(linha, c)));
+      brutas.push(linha);
     }
     if (truncado) break;
   }
+
+  // O XLSX é montado inteiro em memória de qualquer jeito, então cabe ordená-lo
+  // como a grade — multi-nível, nulo por último. O CSV, que sai em fluxo, fica
+  // na ordem do banco (o nível 1 da tela), e o menu diz isso.
+  const ordenadas = ordenar
+    ? ordenarLinhas(brutas, ctx.ordens, colunasPermitidas(ctx.registro).map((c) => ({ chave: c.chave })))
+    : brutas;
+  const linhas: CelulaXlsx[][] = ordenadas.map((linha) => ctx.colunas.map((c) => valorCelula(linha, c)));
 
   const arquivo = gerarXlsx({
     cabecalho: ctx.colunas.map((c) => c.rotulo),
@@ -244,32 +302,53 @@ export async function GET(request: Request) {
     return erroJson(escopoRes.motivo === 'sem-config' ? 503 : 500, escopoRes.detalhe);
   }
 
+  // `cols` e `sort` passam pela allowlist de sempre; os `f.*` NÃO entram daqui
+  // — eles são lidos pela gramática da grade, abaixo.
   const { opcoes } = lerOpcoesTabela(registro, params, { limitePadrao: PAGINA });
-
-  // Duas intenções diferentes, e o rádio do ExportMenu manda qual é:
-  //  · 'pagina'   — exatamente as linhas carregadas na grade (uma página só);
-  //  · 'filtrado' — todo o conjunto que os filtros selecionam (varre em fluxo).
-  // Sem honrar isso, a opção "só a página atual" baixava a tabela inteira —
-  // e um botão que promete o que não cumpre é pior que um botão ausente.
-  const soPagina = params.get('escopo') === 'pagina';
-  const tamanhoTela = Number(params.get('size'));
-  const limitePagina =
-    Number.isFinite(tamanhoTela) && tamanhoTela > 0 ? Math.min(Math.floor(tamanhoTela), PAGINA) : PAGINA;
-
-  const opcoesExport = soPagina
-    ? { ...opcoes, cursor: params.get('cursor'), limite: limitePagina }
-    : { ...opcoes, cursor: null, limite: PAGINA };
+  const agora = new Date();
 
   const colunas = (opcoes.colunas ?? [])
     .map((chave) => getColuna(registro, chave))
     .filter((c): c is ColunaRegistro => c !== null);
   if (colunas.length === 0) return erroJson(400, 'Nenhuma coluna válida para exportar.');
 
+  // O MESMO filtro da tela: mesmas facetas, mesma leitura da URL, mesma função.
+  const facetas = facetasDoRegistro(registro);
+  const filtros = lerFiltros(facetas, params, agora);
+  const permitidas = new Set(colunasPermitidas(registro).map((c) => c.chave));
+  const ordens = lerOrdens(params.get('sort'), permitidas);
+  const chave = chaveDaLinha(registro);
+
+  // A projeção que vai ao banco é maior que a do arquivo: o filtro e a ordem
+  // precisam ler as colunas deles, mesmo que não saiam na planilha.
+  const projecao = projecaoParaExport(
+    chave,
+    colunas.map((c) => c.chave),
+    filtros,
+    ordens,
+  ).filter((c) => permitidas.has(c) || c === chave);
+
+  // Duas intenções diferentes, e o rádio do ExportMenu manda qual é:
+  //  · 'pagina'   — exatamente as linhas que estão na grade, pelas CHAVES delas;
+  //  · 'filtrado' — todo o conjunto que os filtros selecionam (varre em fluxo).
+  const soPagina = params.get('escopo') === 'pagina';
+  const ids = soPagina ? lerIds(params.get('ids')) : [];
+
   const ctx: Contexto = {
     registro,
     colunas,
     escopo: escopoRes.dados,
-    opcoes: opcoesExport,
+    opcoes: {
+      ...opcoes,
+      colunas: projecao,
+      cursor: null,
+      limite: PAGINA,
+      // Só o pré-filtro de data (superconjunto) vai ao banco; o resto é memória.
+      ...preFiltroServidor(registro, facetas, filtros),
+    },
+    facetas,
+    filtros,
+    ordens,
   };
 
   const base =
@@ -295,10 +374,17 @@ export async function GET(request: Request) {
   });
 
   try {
-    const maxPaginas = soPagina ? 1 : undefined;
+    if (soPagina) {
+      // Link antigo sem `ids` (menu de antes desta correção): cai no conjunto
+      // filtrado, que é o mais próximo honesto do que o botão prometia.
+      const fonte = ids.length > 0 ? umaPagina(linhasDaPagina(ctx, chave, ids)) : paginas(ctx, 1);
+      return formato === 'xlsx'
+        ? await gerarPlanilha(ctx, base, fonte, ids.length === 0)
+        : gerarCsv(ctx, base, fonte);
+    }
     return formato === 'xlsx'
-      ? await gerarPlanilha(ctx, base, maxPaginas)
-      : gerarCsv(ctx, base, maxPaginas);
+      ? await gerarPlanilha(ctx, base, paginas(ctx, Math.ceil(TETO_XLSX / PAGINA)), true)
+      : gerarCsv(ctx, base, paginas(ctx, MAX_PAGINAS));
   } catch (e) {
     console.error('[adm] falha ao exportar', registro.nome, e);
     return erroJson(500, 'Não foi possível gerar o arquivo.');
