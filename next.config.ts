@@ -24,6 +24,18 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
+        // /cursoidiomas: curso interno de idiomas (duas pessoas). Não é dado
+        // sensível, mas a área não deve aparecer em busca nem ser listada em
+        // lugar nenhum — noindex por header, e fora do robots.txt de propósito
+        // (listar lá publicaria o caminho). Mesma lógica do /adm abaixo.
+        source: '/cursoidiomas/:path*',
+        headers: [
+          { key: 'X-Robots-Tag', value: 'noindex, nofollow, noarchive, nosnippet' },
+          { key: 'X-Frame-Options', value: 'DENY' },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+        ],
+      },
+      {
         // O /adm lê a base inteira de clientes. Estes headers são a camada que
         // não depende de nenhum código nosso rodar certo: valem inclusive numa
         // rota que esqueça o gate.
