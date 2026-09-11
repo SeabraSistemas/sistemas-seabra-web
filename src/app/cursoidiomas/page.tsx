@@ -25,7 +25,7 @@ export default async function CursoLoginPage({ searchParams }: { searchParams: P
   return (
     <div className="flex min-h-screen items-center justify-center px-4">
       <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-8">
-        <p className="text-xs tracking-widest text-muted-foreground uppercase">Deutsch · Français</p>
+        <p className="text-xs tracking-widest text-muted-foreground uppercase">Deutsch · Français · English</p>
         <h1 className="mt-1 text-3xl">Curso de idiomas</h1>
 
         {!configOk && mostrarDetalhe && (

@@ -5,7 +5,7 @@
  * Convenção: explicações em pt-BR; `termo`, `texto`, `frase` etc. na língua
  * estudada. No alemão, substantivos sempre com artigo ("der Hund").
  */
-export type IdiomaId = 'alemao' | 'frances';
+export type IdiomaId = 'alemao' | 'frances' | 'ingles';
 export type NivelId = 'a1' | 'a2' | 'b1' | 'b2' | 'c1' | 'c2';
 
 export interface Idioma {
@@ -14,7 +14,7 @@ export interface Idioma {
   nomeNativo: string;
   sigla: string;
   /** Tag BCP-47 usada pelo sintetizador de voz do navegador. */
-  bcp47: 'de-DE' | 'fr-FR';
+  bcp47: 'de-DE' | 'fr-FR' | 'en-US';
 }
 
 export interface ItemVocabulario {

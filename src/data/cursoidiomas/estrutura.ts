@@ -3,6 +3,7 @@ import type { Idioma, IdiomaId, Licao, ModuloInfo, NivelId } from '@/data/cursoi
 export const IDIOMAS: Record<IdiomaId, Idioma> = {
   alemao: { id: 'alemao', nome: 'Alemão', nomeNativo: 'Deutsch', sigla: 'DE', bcp47: 'de-DE' },
   frances: { id: 'frances', nome: 'Francês', nomeNativo: 'Français', sigla: 'FR', bcp47: 'fr-FR' },
+  ingles: { id: 'ingles', nome: 'Inglês', nomeNativo: 'English', sigla: 'EN', bcp47: 'en-US' },
 };
 
 export const IDIOMA_IDS = Object.keys(IDIOMAS) as IdiomaId[];

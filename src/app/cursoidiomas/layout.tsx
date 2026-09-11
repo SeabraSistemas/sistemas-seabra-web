@@ -3,8 +3,8 @@ import { Archivo, Newsreader } from 'next/font/google';
 import '../globals.css';
 
 /**
- * Layout RAIZ do /cursoidiomas — curso interno de alemão e francês, para duas
- * pessoas. Vive fora do segmento [locale] (mesma decisão do /katmandu e do
+ * Layout RAIZ do /cursoidiomas — curso interno de alemão, francês e inglês,
+ * para duas pessoas. Vive fora do segmento [locale] (mesma decisão do /katmandu e do
  * /adm): sem Header/Footer/WhatsApp/GA do site, sem link de lugar nenhum,
  * noindex aqui e por header em next.config.ts. Não entra no robots.txt de
  * propósito, pra não publicar o caminho.

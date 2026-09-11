@@ -3,6 +3,7 @@ import type { ConteudoIdioma, ConteudoNivel, ModuloId } from '@/data/cursoidioma
 import type { Curso, IdiomaId, Licao, Modulo, Nivel, NivelId } from '@/data/cursoidiomas/types';
 import { alemao } from '@/data/cursoidiomas/alemao/index';
 import { frances } from '@/data/cursoidiomas/frances/index';
+import { ingles } from '@/data/cursoidiomas/ingles/index';
 
 export { ESTRUTURA, IDIOMAS, IDIOMA_IDS, NIVEL_IDS } from '@/data/cursoidiomas/estrutura';
 export type * from '@/data/cursoidiomas/types';
@@ -35,6 +36,7 @@ function montarCurso(idioma: IdiomaId, conteudo: ConteudoIdioma): Curso {
 export const CURSOS: Record<IdiomaId, Curso> = {
   alemao: montarCurso('alemao', alemao),
   frances: montarCurso('frances', frances),
+  ingles: montarCurso('ingles', ingles),
 };
 
 export function ehIdioma(valor: string): valor is IdiomaId {

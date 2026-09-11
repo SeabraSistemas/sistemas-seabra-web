@@ -11,11 +11,11 @@ export default function InicioPage() {
       <p className="text-xs tracking-widest text-muted-foreground uppercase">Trilha A1 → C2</p>
       <h1 className="mt-1 text-4xl">Por onde continuar?</h1>
       <p className="mt-2 max-w-2xl text-muted-foreground">
-        Dois idiomas, seis níveis do Quadro Europeu Comum de Referência, a mesma trilha em cada um.
+        Três idiomas, seis níveis do Quadro Europeu Comum de Referência, a mesma trilha em cada um.
         O progresso fica salvo neste navegador.
       </p>
 
-      <div className="mt-8 grid gap-4 sm:grid-cols-2">
+      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {IDIOMA_IDS.map((id) => {
           const curso = CURSOS[id];
           const itens = curso.niveis.flatMap((nivel) =>

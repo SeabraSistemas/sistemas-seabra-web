@@ -11,6 +11,7 @@ import { useSyncExternalStore } from 'react';
 const PREFERIDAS: Record<string, string[]> = {
   'de-DE': ['Anna', 'Petra', 'Helena', 'Markus', 'Google Deutsch'],
   'fr-FR': ['Amélie', 'Amelie', 'Thomas', 'Audrey', 'Aurélie', 'Google français'],
+  'en-US': ['Samantha', 'Ava', 'Allison', 'Alex', 'Google US English'],
 };
 
 const CHAVE_LENTO = 'cursoidiomas:voz-lenta';

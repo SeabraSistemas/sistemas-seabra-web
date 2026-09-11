@@ -96,7 +96,7 @@ export function Continuar({
     return <span className={cn('text-sm text-primary', className)}>Tudo concluído.</span>;
   }
   return (
-    <Button asChild size="sm" className={className}>
+    <Button asChild size="sm" className={cn('h-auto min-h-8 py-1.5 text-left whitespace-normal', className)}>
       <Link href={proxima.href}>
         {feitas === 0 ? rotuloInicio : 'Continuar'}: {proxima.titulo}
       </Link>
