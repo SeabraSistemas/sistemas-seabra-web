@@ -993,6 +993,50 @@ export interface LinhaFemea {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// PANORAMA — onde estão os clientes e quanto pesam, em adm_30_panorama.sql
+//
+// Uma propriedade por linha, com a UF RESOLVIDA (cadastro > CEP > dono > CEP
+// do dono), o MRR atribuído à fazenda principal do dono e a marca de teste.
+// Rebanho e atividade vêm de adm.propriedades_lista — nunca recalculados.
+
+export const VIEWS_PANORAMA = {
+  propriedades: 'propriedade_panorama',
+} as const;
+
+export type ViewPanorama = (typeof VIEWS_PANORAMA)[keyof typeof VIEWS_PANORAMA];
+export const NOMES_VIEWS_PANORAMA: ViewPanorama[] = Object.values(VIEWS_PANORAMA);
+
+export interface LinhaPanorama {
+  id: number;
+  nome: string;
+  cidade: string | null;
+  segmentos: string[];
+  segmento_principal: string | null;
+  produtor_id: number | null;
+  produtor_nome: string | null;
+  /** A UF resolvida. null = nem cadastro, nem CEP, nem dono dizem onde fica. */
+  uf: string | null;
+  /** 'cadastro' | 'cep' | 'dono' | 'cep_dono' | null */
+  uf_origem: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  animais_ativos: number;
+  femeas: number;
+  lactantes: number;
+  producao_30d: number | null;
+  lancamentos_30d: number;
+  dias_sem_lancar: number | null;
+  acesso_ativo: boolean;
+  plano_nome: string | null;
+  status_efetivo: string | null;
+  /** O valor da assinatura do dono, só na fazenda principal dele; zero nas outras. */
+  mrr_mensal: number;
+  mrr_atribuido: boolean;
+  /** Tester/demo, ou "teste"/"fixture" no nome — fora dos números por padrão. */
+  teste: boolean;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // ÓBITOS — o detalhe de cada morte, implementado em adm_13_obitos.sql
 //
 // A aba Sanidade responde "quantos morreram e a que taxa" (12 meses, série,

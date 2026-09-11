@@ -29,6 +29,8 @@ interface ItemNav {
 
 const ITENS: ItemNav[] = [
   { href: '/adm/carteira', rotulo: 'Carteira' },
+  // Onde estão os clientes e quanto pesam — geografia e concentração da base.
+  { href: '/adm/panorama', rotulo: 'Panorama' },
   // alcançam pela lista mestra, então as duas pertencem a "Usuários".
   // O diretório do TENANT REAL do banco (93 tabelas carregam propriedade_id).
   // Não tem prefixo próprio de propósito: a ficha de uma fazenda é a do dono,
