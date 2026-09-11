@@ -19,6 +19,16 @@ import {
   type Periodo,
   type ResumoProducao,
 } from '@/lib/adm/areas/producao-diaria';
+import {
+  FOLGA_BALANCO,
+  balanco,
+  balancoMensal,
+  listarSaidasLeite,
+  porDestino,
+  resumoSaidas,
+  separarSaidasFuturas,
+} from '@/lib/adm/areas/saida-leite';
+import type { LinhaProducaoDia, LinhaSaidaLeite } from '@/lib/adm/areas/contrato';
 import { lerSelecaoParam, type SelecaoPropriedade } from '@/lib/adm/escopo';
 import {
   VAZIO,
@@ -30,6 +40,7 @@ import {
   formatarPercentual,
 } from '@/lib/adm/format';
 import { getEscopo } from '@/lib/adm/queries';
+import type { Resultado } from '@/lib/adm/types';
 
 /**
  * PRODUÇÃO DIÁRIA EM DETALHE — os dias que faltam, as duas ordenhas e a
@@ -82,7 +93,12 @@ export default async function ProducaoDiariaPage({
   }
 
   const inicio = inicioDoPeriodo(periodo, agora);
-  const res = await listarProducaoDiaria(alvo.id, inicio);
+  // Duas leituras independentes, em paralelo. A falha da saída de leite NÃO
+  // derruba a tela: a produção é o assunto dela, a saída é a seção de baixo.
+  const [res, saidasRes] = await Promise.all([
+    listarProducaoDiaria(alvo.id, inicio),
+    listarSaidasLeite(alvo.id, inicio),
+  ]);
   if (!res.ok) return <EstadoVazio resultado={res} />;
 
   const { validos, futuros } = separarFuturos(res.dados, agora);
@@ -176,6 +192,8 @@ export default async function ProducaoDiariaPage({
           <Mensal meses={meses} />
         </>
       )}
+
+      <SaidaLeite resultado={saidasRes} dias={validos} periodo={periodo} agora={agora} />
     </div>
   );
 }
@@ -428,6 +446,184 @@ function Mensal({ meses }: { meses: MesProducao[] }) {
           </tbody>
         </table>
       </div>
+    </section>
+  );
+}
+
+/**
+ * PARA ONDE FOI O LEITE — a seção de `saida_leite`.
+ *
+ * Fica nesta tela, e não numa própria, porque o número que ela entrega só faz
+ * sentido ao lado da produção: "saíram 9 mil litros" não diz nada sem "de 10
+ * mil produzidos". E porque o módulo é pouco usado — uma tela inteira para ele
+ * seria uma tela vazia para quase todo cliente.
+ *
+ * ⚠️ O balanço é por MÊS (o laticínio coleta o tanque de dois dias) e só dos
+ * meses com alguma saída lançada — ver `balancoMensal`.
+ */
+function SaidaLeite({
+  resultado,
+  dias,
+  periodo,
+  agora,
+}: {
+  resultado: Resultado<LinhaSaidaLeite[]>;
+  dias: LinhaProducaoDia[];
+  periodo: Periodo;
+  agora: Date;
+}) {
+  if (!resultado.ok) {
+    return (
+      <p className="rounded-xl border border-destructive/40 bg-card p-4 text-sm text-muted-foreground">
+        A saída de leite não pôde ser lida — a produção acima não depende dela.
+        <span className="mt-1 block text-xs">{resultado.detalhe}</span>
+      </p>
+    );
+  }
+
+  const { validas, futuras } = separarSaidasFuturas(resultado.dados, agora);
+
+  if (validas.length === 0) {
+    return (
+      <p className="rounded-xl border border-border bg-card p-4 text-xs text-muted-foreground">
+        <strong className="font-medium text-foreground">Saída de leite:</strong> nenhuma lançada em{' '}
+        {ROTULO_PERIODO[periodo]}
+        {futuras.length > 0 && (
+          <> (fora {formatarInteiro(futuras.length)} com data no futuro, ignoradas)</>
+        )}
+        . O app registra para onde vai cada saída do tanque — laticínio, venda, cabrito, descarte —,
+        e sem isso não há como saber quanto do leite produzido virou dinheiro.
+      </p>
+    );
+  }
+
+  const resumo = resumoSaidas(validas);
+  const destinos = porDestino(validas);
+  const meses = balancoMensal(validas, dias);
+  const total = balanco(validas, dias);
+  const maior = Math.max(...destinos.map((d) => d.litros), 1);
+
+  return (
+    <section className="rounded-2xl border border-border bg-card p-4">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h2 className="text-base">Para onde foi o leite</h2>
+        <p className="text-xs text-muted-foreground">
+          {formatarInteiro(resumo.saidas)} saídas do tanque em {formatarInteiro(resumo.diasComSaida)}{' '}
+          dias
+          {resumo.primeira && resumo.ultima
+            ? `, de ${formatarData(resumo.primeira)} a ${formatarData(resumo.ultima)}.`
+            : '.'}
+        </p>
+      </div>
+
+      {futuras.length > 0 && (
+        <p className="mt-2 text-xs text-destructive">
+          {formatarInteiro(futuras.length)} saídas com data no futuro ficaram fora de todas as contas.
+        </p>
+      )}
+
+      <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-3">
+        <KpiCard
+          rotulo="Litros que saíram"
+          valor={formatarLitros(resumo.litros, 0)}
+          detalhe={
+            resumo.mediaPorSaida === null
+              ? undefined
+              : `${formatarLitros(resumo.mediaPorSaida, 0)} por saída, em média`
+          }
+        />
+        <KpiCard
+          rotulo="Saiu ÷ produzido"
+          valor={total.razao === null ? VAZIO : formatarPercentual(total.razao)}
+          // O recorte é a informação: só os meses com saída lançada entram.
+          detalhe={`${formatarLitros(total.saiu, 0)} de ${formatarLitros(total.produzido, 0)} lançados, nos ${formatarInteiro(total.meses)} meses com saída`}
+        />
+        <KpiCard
+          rotulo="Destino principal"
+          valor={destinos[0]?.destino ?? VAZIO}
+          detalhe={
+            destinos[0]?.fracao == null
+              ? undefined
+              : `${formatarPercentual(destinos[0].fracao)} dos litros · ${formatarInteiro(destinos.length)} destinos`
+          }
+        />
+      </div>
+
+      <ol className="mt-4 flex flex-col gap-1.5">
+        {destinos.map((d) => (
+          <li key={d.destino} className="grid grid-cols-[12rem_1fr_7rem] items-center gap-3 text-sm">
+            <span className="truncate text-foreground">{d.destino}</span>
+            <span className="h-3 rounded-full bg-secondary" aria-hidden>
+              <span
+                className="block h-full rounded-full bg-primary"
+                style={{ width: `${(d.litros / maior) * 100}%` }}
+              />
+            </span>
+            <span className="text-right tabular-nums text-foreground">
+              {formatarLitros(d.litros, 0)}
+              <span className="ms-1 text-xs text-muted-foreground">
+                {d.fracao === null ? VAZIO : formatarPercentual(d.fracao)}
+              </span>
+            </span>
+          </li>
+        ))}
+      </ol>
+
+      <div className="mt-4 overflow-x-auto">
+        <table className="w-full min-w-[34rem] text-sm">
+          <thead>
+            <tr className="border-b border-border text-left text-xs text-muted-foreground">
+              <th className="py-1.5 pe-3 font-normal">Mês</th>
+              <th className="py-1.5 pe-3 text-right font-normal">Produzido</th>
+              <th className="py-1.5 pe-3 text-right font-normal">Dias lançados</th>
+              <th className="py-1.5 pe-3 text-right font-normal">Saiu</th>
+              <th className="py-1.5 text-right font-normal">Saiu ÷ produzido</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border">
+            {meses.map((m) => {
+              const naoFecha = m.razao === null || m.razao > FOLGA_BALANCO;
+              return (
+                <tr key={m.mes}>
+                  <td className="py-1.5 pe-3 text-foreground">{formatarMes(m.mes)}</td>
+                  <td className="py-1.5 pe-3 text-right tabular-nums text-muted-foreground">
+                    {formatarLitros(m.produzido, 0)}
+                  </td>
+                  <td className="py-1.5 pe-3 text-right tabular-nums text-muted-foreground">
+                    {formatarInteiro(m.diasProducao)}
+                  </td>
+                  <td className="py-1.5 pe-3 text-right tabular-nums text-muted-foreground">
+                    {formatarLitros(m.saiu, 0)}
+                  </td>
+                  <td
+                    className={`py-1.5 text-right tabular-nums ${naoFecha ? 'text-destructive' : 'text-foreground'}`}
+                  >
+                    {m.razao === null ? 'sem produção' : formatarPercentual(m.razao)}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      <p className="mt-3 border-t border-border pt-3 text-xs text-muted-foreground">
+        O balanço é por mês, nunca por dia: o laticínio coleta o tanque de dois dias, e o dia da
+        coleta mostra o dobro do que foi produzido nele. Só entram os meses com alguma saída lançada
+        — mês sem saída é módulo sem uso, não leite parado no tanque.
+        {total.mesesSemFechar > 0 && (
+          <>
+            {' '}
+            <strong className="text-foreground">
+              Em {formatarInteiro(total.mesesSemFechar)}{' '}
+              {total.mesesSemFechar === 1 ? 'mês' : 'meses'} saiu mais do que{' '}
+              {formatarPercentual(FOLGA_BALANCO)} do produzido
+            </strong>{' '}
+            (em vermelho): ou a produção está sub-lançada — confira os dias lançados —, ou a saída
+            inclui leite de outra origem.
+          </>
+        )}
+      </p>
     </section>
   );
 }

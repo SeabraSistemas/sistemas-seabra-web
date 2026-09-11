@@ -860,6 +860,32 @@ export interface LinhaServico {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// SAÍDA DE LEITE — para onde vai o leite, em adm_27_saida_leite.sql
+//
+// O outro lado da produção diária: o que saiu do tanque, e para onde. ⚠️ A saída
+// NÃO é diária — o laticínio coleta o tanque de dois dias —, então a comparação
+// com a produção é por MÊS, nunca por dia.
+
+export const VIEWS_SAIDA_LEITE = {
+  detalhe: 'saida_leite_detalhe',
+} as const;
+
+export type ViewSaidaLeite = (typeof VIEWS_SAIDA_LEITE)[keyof typeof VIEWS_SAIDA_LEITE];
+export const NOMES_VIEWS_SAIDA_LEITE: ViewSaidaLeite[] = Object.values(VIEWS_SAIDA_LEITE);
+
+export interface LinhaSaidaLeite {
+  propriedade_id: number;
+  saida_id: number;
+  /** 'YYYY-MM-DD'. PODE ESTAR NO FUTURO — quem separa é `separarSaidasFuturas()`. */
+  data: string;
+  litros: number;
+  /** Vocabulário da fazenda ('Laticínio', 'Leite Rose'...). Destinos múltiplos
+   *  vêm juntos com ' + ' — nunca desaninhados, ou os litros contariam duas vezes. */
+  destino: string | null;
+  observacao: string | null;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // ÓBITOS — o detalhe de cada morte, implementado em adm_13_obitos.sql
 //
 // A aba Sanidade responde "quantos morreram e a que taxa" (12 meses, série,
