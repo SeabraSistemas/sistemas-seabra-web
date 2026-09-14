@@ -11,6 +11,8 @@
 interface Entrada<T> {
   valor: T;
   expiraEm: number;
+  /** Quando este valor foi efetivamente carregado — pro "Atualizado às HH:MM" da página, não confundir com `expiraEm`. */
+  carregadoEm: number;
 }
 
 export interface Cache<T> {
@@ -21,7 +23,7 @@ export interface Cache<T> {
    * devolve o valor antigo com `stale: true` em vez de propagar o erro — só
    * lança se nunca houve valor nenhum.
    */
-  obter(chave: string, carregar: () => Promise<T>): Promise<{ valor: T; stale: boolean }>;
+  obter(chave: string, carregar: () => Promise<T>): Promise<{ valor: T; stale: boolean; carregadoEm: number }>;
   /** Remove todas as chaves que começam com `prefixo` (ou tudo, se omitido). */
   invalidar(prefixo?: string): void;
 }
@@ -34,7 +36,7 @@ export function criarCache<T>(ttlMs: number): Cache<T> {
     const agora = Date.now();
     const existente = entradas.get(chave);
     if (existente && existente.expiraEm > agora) {
-      return { valor: existente.valor, stale: false };
+      return { valor: existente.valor, stale: false, carregadoEm: existente.carregadoEm };
     }
 
     let promise = emVoo.get(chave);
@@ -42,20 +44,21 @@ export function criarCache<T>(ttlMs: number): Cache<T> {
       promise = carregar();
       emVoo.set(chave, promise);
       // .finally() devolve uma promise DERIVADA que também rejeita se `promise`
-      // rejeitar — like ninguém mais espera essa derivada, sem o .catch() aqui
-      // o Node reporta unhandledRejection mesmo com o erro original tratado
-      // abaixo (no `catch` do await principal).
+      // rejeitar — já que ninguém mais espera essa derivada, sem o .catch()
+      // aqui o Node reporta unhandledRejection mesmo com o erro original
+      // tratado abaixo (no `catch` do await principal).
       promise.finally(() => emVoo.delete(chave)).catch(() => {});
     }
 
     try {
       const valor = await promise;
-      entradas.set(chave, { valor, expiraEm: Date.now() + ttlMs });
-      return { valor, stale: false };
+      const carregadoEm = Date.now();
+      entradas.set(chave, { valor, expiraEm: carregadoEm + ttlMs, carregadoEm });
+      return { valor, stale: false, carregadoEm };
     } catch (err) {
       if (existente) {
         console.error('[sheets/cache] releitura falhou, usando valor anterior', chave, err);
-        return { valor: existente.valor, stale: true };
+        return { valor: existente.valor, stale: true, carregadoEm: existente.carregadoEm };
       }
       throw err;
     }

@@ -10,11 +10,12 @@ import { EstadoCarga } from '@/components/painel/EstadoCarga';
 import { media } from '@/lib/painel/agregacao';
 import { dentroPeriodo, filtrarPor, opcoesExcluindo, type Condicao } from '@/lib/painel/filters';
 import { diaDeInput, formatDia, formatNumber } from '@/lib/painel/format';
-import type { Leitura } from '@/lib/fi-fcg/queries';
+import { desempacotar } from '@/lib/painel/pacote';
+import type { PacoteLeitura } from '@/lib/fi-fcg/pacotes';
 import type { RegBaixa } from '@/lib/fi-fcg/types';
 
-export function BaixasView({ dados }: { dados: Leitura<RegBaixa> }) {
-  const { itens } = dados;
+export function BaixasView({ dados }: { dados: PacoteLeitura<RegBaixa> }) {
+  const itens = useMemo(() => desempacotar<RegBaixa>(dados.pacote), [dados.pacote]);
 
   const [fazenda, setFazenda] = useState('');
   const [causaObito, setCausaObito] = useState('');

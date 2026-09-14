@@ -12,14 +12,14 @@ export interface Pacote<T> {
   linhas: unknown[][];
 }
 
-export function empacotar<T extends Record<string, unknown>>(itens: T[], campos: (keyof T & string)[]): Pacote<T> {
+export function empacotar<T extends object>(itens: T[], campos: (keyof T & string)[]): Pacote<T> {
   return {
     campos,
     linhas: itens.map((item) => campos.map((c) => item[c] ?? null)),
   };
 }
 
-export function desempacotar<T extends Record<string, unknown>>(pacote: Pacote<T>): T[] {
+export function desempacotar<T extends object>(pacote: Pacote<T>): T[] {
   const { campos, linhas } = pacote;
   return linhas.map((linha) => {
     const obj = {} as T;

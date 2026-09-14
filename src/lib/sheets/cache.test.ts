@@ -17,11 +17,13 @@ describe('criarCache', () => {
     assert.equal(r2.valor, 1);
     assert.equal(chamadas, 1);
     assert.equal(r1.stale, false);
+    assert.equal(r1.carregadoEm, r2.carregadoEm); // hit em cache não recarrega, então o timestamp não muda
 
     await new Promise((r) => setTimeout(r, 60));
     const r3 = await cache.obter('k', carregar);
     assert.equal(r3.valor, 1);
     assert.equal(chamadas, 2);
+    assert.ok(r3.carregadoEm > r1.carregadoEm); // expirou e recarregou, timestamp avança
   });
 
   test('carregas concorrentes pra mesma chave compartilham a mesma promise', async () => {
@@ -44,11 +46,13 @@ describe('criarCache', () => {
     await cache.obter('k', async () => 7);
     await new Promise((r) => setTimeout(r, 15));
 
+    const antes = Date.now();
     const r = await cache.obter('k', async () => {
       throw new Error('planilha fora do ar');
     });
     assert.equal(r.valor, 7);
     assert.equal(r.stale, true);
+    assert.ok(r.carregadoEm < antes); // stale: o timestamp É o da carga antiga, não "agora"
   });
 
   test('sem valor anterior, erro de carga propaga', async () => {
