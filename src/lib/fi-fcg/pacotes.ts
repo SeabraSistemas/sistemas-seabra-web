@@ -9,6 +9,7 @@
 import { empacotar, type Pacote } from '@/lib/painel/pacote';
 import type { Leitura } from './queries';
 import type { RegBaixa, RegIatf, RegParto, RegPesagem, RegRebanho, RegToque, RegVenda, LancamentoFinanceiro, RegAborto } from './types';
+import type { EventoFin } from './financeiro';
 
 export interface PacoteLeitura<T extends object> {
   pacote: Pacote<T>;
@@ -132,3 +133,36 @@ export const CAMPOS_FINANCEIRO: (keyof LancamentoFinanceiro & string)[] = [
   'valor',
   'data',
 ];
+
+export const CAMPOS_EVENTO: (keyof EventoFin & string)[] = [
+  'origem',
+  'tipo',
+  'id',
+  'idAnimal',
+  'data',
+  'fazenda',
+  'cliente',
+  'pesoKg',
+  'categoria',
+  'causa',
+  'valorEvento',
+  'valorLancado',
+  'conciliacao',
+  'statusValorVenda',
+  'valorMetrica',
+];
+
+/**
+ * Prop empacotada da página Financeiro — diferente das outras páginas
+ * (`PacoteLeitura<T>`, uma leitura só) porque aqui o servidor já combina 4
+ * abas (Venda, Baixa, Aborto, Financeiro) em `eventos` + `orfaos` via
+ * `montarEventos` (financeiro.ts) ANTES de empacotar, pra não mandar os 4
+ * datasets crus pro cliente só pra ele refazer a mesma conciliação lá.
+ */
+export interface PacoteFinanceiro {
+  eventos: Pacote<EventoFin>;
+  orfaos: Pacote<LancamentoFinanceiro>;
+  configurado: boolean;
+  stale: boolean;
+  carregadoEm: number | null;
+}

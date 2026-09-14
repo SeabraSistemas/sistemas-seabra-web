@@ -120,3 +120,14 @@ export function formatCompacto(n: number | null | undefined): string {
 export function formatPct(n: number | null | undefined, casas = 2): string {
   return n == null ? '—' : `${n.toFixed(casas).replace('.', ',')}%`;
 }
+
+/** Data de hoje em "aaaammdd", fuso America/Sao_Paulo — mesma base de diaDe/formatDia. */
+export function hojeCompacto(): number {
+  const partes = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Sao_Paulo',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date());
+  return Number(partes.replace(/-/g, ''));
+}

@@ -8,6 +8,7 @@ import {
   formatDia,
   formatMoeda,
   formatPct,
+  hojeCompacto,
   numberBounds,
   parseDateBR,
   parseMoeda,
@@ -93,5 +94,16 @@ describe('formatCompacto / formatMoeda / formatPct', () => {
   });
   test('percentual', () => {
     assert.equal(formatPct(72.85), '72,85%');
+  });
+});
+
+describe('hojeCompacto', () => {
+  test('formato aaaammdd plausivel (8 digitos, ano de 4 digitos corrente)', () => {
+    const v = hojeCompacto();
+    assert.equal(String(v).length, 8);
+    const ano = Math.floor(v / 10000);
+    assert.ok(ano >= 2024 && ano <= 2100);
+    const mes = Math.floor((v % 10000) / 100);
+    assert.ok(mes >= 1 && mes <= 12);
   });
 });
