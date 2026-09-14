@@ -1,0 +1,171 @@
+import assert from 'node:assert/strict';
+import { describe, test } from 'node:test';
+
+import {
+  mapAbortos,
+  mapBaixas,
+  mapFinanceiro,
+  mapIatf,
+  mapPartos,
+  mapPesagem,
+  mapRebanho,
+  mapToque,
+  mapVendas,
+  toObjects,
+} from '@/lib/fi-fcg/mapeadores';
+
+describe('toObjects', () => {
+  test('mapeia por nome de header, com trim', () => {
+    const rows = [
+      [' ID animal ', 'Fazenda'],
+      ['A1', 'Inhumas'],
+    ];
+    assert.deepEqual(toObjects(rows), [{ 'ID animal': 'A1', Fazenda: 'Inhumas' }]);
+  });
+  test('linha mais curta que o header vira string vazia', () => {
+    const rows = [['ID animal', 'Fazenda'], ['A1']];
+    assert.deepEqual(toObjects(rows), [{ 'ID animal': 'A1', Fazenda: '' }]);
+  });
+  test('null/[] vira lista vazia', () => {
+    assert.deepEqual(toObjects(null), []);
+    assert.deepEqual(toObjects([]), []);
+  });
+});
+
+describe('mapIatf', () => {
+  test('le o header real "Patida (sêmen)" (typo de origem) e separa ecc cru de eccNum', () => {
+    const rows = [
+      ['ID animal', 'Data IATF', 'Patida (sêmen)', 'ECC', 'Fazenda'],
+      ['23', '09/11/2023', 'B2887', '2,5', 'Inhumas'],
+    ];
+    const [r] = mapIatf(rows);
+    assert.equal(r.id, '23');
+    assert.equal(r.data, 20231109);
+    assert.equal(r.partida, 'B2887');
+    assert.equal(r.ecc, '2,5');
+    assert.equal(r.eccNum, 2.5);
+  });
+  test('aceita o alias "Partida (sêmen)" (grafia corrigida) tambem', () => {
+    const rows = [
+      ['ID animal', 'Partida (sêmen)'],
+      ['23', 'TNT'],
+    ];
+    assert.equal(mapIatf(rows)[0].partida, 'TNT');
+  });
+  test('linha sem ID animal e descartada', () => {
+    const rows = [
+      ['ID animal', 'Fazenda'],
+      ['', 'Inhumas'],
+    ];
+    assert.deepEqual(mapIatf(rows), []);
+  });
+});
+
+describe('mapToque', () => {
+  test('mapeia diagnostico/escore/idade', () => {
+    const rows = [
+      ['ID animal', 'Data', 'Diagnóstico', 'Escore', 'Idade atual', 'Status'],
+      ['507', '25/06/2024', 'Vazia', '3', '7', 'Solteira'],
+    ];
+    const [r] = mapToque(rows);
+    assert.equal(r.diagnostico, 'Vazia');
+    assert.equal(r.escoreNum, 3);
+    assert.equal(r.idadeAnos, 7);
+    assert.equal(r.status, 'Solteira');
+  });
+});
+
+describe('mapRebanho', () => {
+  test('le a coluna "lote" em MINUSCULA (nao "Lote")', () => {
+    const rows = [
+      ['ID animal', 'Categoria', 'lote', 'Lote'],
+      ['A1', 'Vaca', '7 - Campina grande', 'não é isto'],
+    ];
+    assert.equal(mapRebanho(rows)[0].lote, '7 - Campina grande');
+  });
+});
+
+describe('mapPartos', () => {
+  test('mesmo mapeador serve pra Parto e Parto CG (mesmas colunas)', () => {
+    const rows = [
+      ['ID animal', 'ID Mãe', 'ID Pai', 'Data de nascimento', 'Sexo', 'Fazenda'],
+      ['900215007821894', '1456', '', '30/08/2024', 'Macho', 'Inhumas'],
+    ];
+    const [r] = mapPartos(rows);
+    assert.equal(r.idMae, '1456');
+    assert.equal(r.idPai, null);
+    assert.equal(r.nascimento, 20240830);
+    assert.equal(r.fazenda, 'Inhumas');
+  });
+});
+
+describe('mapPesagem', () => {
+  test('le "destino" em MINUSCULO (na RebanhoProd e "Destino")', () => {
+    const rows = [
+      ['ID animal', 'Peso/kg', 'destino', 'Destino'],
+      ['A1', '420', 'Transferir', 'não é isto'],
+    ];
+    assert.equal(mapPesagem(rows)[0].destino, 'Transferir');
+    assert.equal(mapPesagem(rows)[0].pesoKg, 420);
+  });
+});
+
+describe('mapBaixas', () => {
+  test('Valor vem em R$ formatado, nunca numero puro', () => {
+    const rows = [
+      ['ID animal', 'Data da baixa', 'Causa da baixa', 'Valor', 'idade'],
+      ['b49', '21/09/2024', 'Matula', 'R$ 3.264,00', '1801'],
+    ];
+    const [r] = mapBaixas(rows);
+    assert.equal(r.valor, 3264);
+    assert.equal(r.idadeDias, 1801);
+  });
+});
+
+describe('mapVendas', () => {
+  test('Valor R$ e negativo', () => {
+    const rows = [
+      ['ID venda', 'ID animal', 'Valor'],
+      ['v1', '1505', '-R$ 0,01'],
+    ];
+    assert.equal(mapVendas(rows)[0].valor, -0.01);
+  });
+  test('sem valor fica null (5% das vendas tem valor, o resto precisa ficar null, nao 0)', () => {
+    const rows = [
+      ['ID venda', 'ID animal', 'Valor'],
+      ['v1', '1505', ''],
+    ];
+    assert.equal(mapVendas(rows)[0].valor, null);
+  });
+  test('sem ID venda, gera um id posicional (a linha ainda entra na lista)', () => {
+    const rows = [
+      ['ID venda', 'ID animal'],
+      ['', '1505'],
+    ];
+    assert.equal(mapVendas(rows)[0].id, 'venda-0');
+  });
+});
+
+describe('mapAbortos', () => {
+  test('mapeia suspeita e data', () => {
+    const rows = [
+      ['ID aborto', 'ID animal', 'Data do aborto', 'Suspeita', 'Fazenda'],
+      ['a1', 'C430', '02/09/2024', 'Erva', 'Campina grande'],
+    ];
+    const [r] = mapAbortos(rows);
+    assert.equal(r.suspeita, 'Erva');
+    assert.equal(r.fazenda, 'Campina grande');
+  });
+});
+
+describe('mapFinanceiro', () => {
+  test('Valor total em R$; Fazenda existe no tipo mas NUNCA deve ser usada como fonte de verdade (ver financeiro.ts)', () => {
+    const rows = [
+      ['ID financeiro', 'Identificação', 'Descrição', 'Categoria', 'Valor total', 'Data'],
+      ['f1', 'E82', 'Venda', 'Receita', 'R$ 5.120,00', '18/03/2025'],
+    ];
+    const [r] = mapFinanceiro(rows);
+    assert.equal(r.valor, 5120);
+    assert.equal(r.descricao, 'Venda');
+  });
+});
