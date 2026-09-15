@@ -94,6 +94,15 @@ export function diaDeInput(v: string): number | null {
   return y * 10000 + m * 100 + d;
 }
 
+/** Anos distintos presentes numa lista de "aaaammdd" (ignora null), do mais recente pro mais antigo — base do atalho "Ano" de FilterPeriodo. */
+export function anosPresentes(datas: (number | null)[]): number[] {
+  const anos = new Set<number>();
+  for (const d of datas) {
+    if (d != null) anos.add(Math.floor(d / 10000));
+  }
+  return Array.from(anos).sort((a, b) => b - a);
+}
+
 /** "aaaammdd" => Date local (meia-noite) — só uso interno de diasEntre, nunca exportar timestamp cru (mesma armadilha de fuso que diaDe evita). */
 function dataDeCompacto(v: number): Date {
   const ano = Math.floor(v / 10000);

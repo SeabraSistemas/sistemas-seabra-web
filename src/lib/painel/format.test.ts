@@ -2,6 +2,7 @@ import test, { describe } from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
+  anosPresentes,
   diaDe,
   diaDeInput,
   diasEntre,
@@ -77,6 +78,19 @@ describe('diasEntre', () => {
   test('falta qualquer uma das datas vira null', () => {
     assert.equal(diasEntre(null, 20250101), null);
     assert.equal(diasEntre(20250101, null), null);
+  });
+});
+
+describe('anosPresentes', () => {
+  test('anos distintos, mais recente primeiro', () => {
+    assert.deepEqual(anosPresentes([20250310, 20230101, 20250101, 20240815]), [2025, 2024, 2023]);
+  });
+  test('ignora null', () => {
+    assert.deepEqual(anosPresentes([20250101, null, null]), [2025]);
+  });
+  test('lista vazia ou so null da lista vazia', () => {
+    assert.deepEqual(anosPresentes([]), []);
+    assert.deepEqual(anosPresentes([null, null]), []);
   });
 });
 

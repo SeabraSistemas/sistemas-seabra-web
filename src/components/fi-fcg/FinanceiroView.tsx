@@ -12,7 +12,7 @@ import { CsvExport, type CsvColumn } from '@/components/painel/CsvExport';
 import { EstadoCarga } from '@/components/painel/EstadoCarga';
 import { dentroPeriodo, filtrarPor, opcoesExcluindo, type Condicao } from '@/lib/painel/filters';
 import { desempacotar } from '@/lib/painel/pacote';
-import { diaDeInput, formatDia, formatMoeda, formatNumber, formatPct, hojeCompacto } from '@/lib/painel/format';
+import { anosPresentes, diaDeInput, formatDia, formatMoeda, formatNumber, formatPct, hojeCompacto } from '@/lib/painel/format';
 import {
   aConferir,
   baixadasMensal,
@@ -72,6 +72,8 @@ export function FinanceiroView({ dados }: { dados: PacoteFinanceiro }) {
       { key: 'periodo', test: (e) => dentroPeriodo(e.data, inicio, fim) },
     ];
   }, [fazenda, cliente, tipo, dataInicio, dataFim]);
+
+  const anos = useMemo(() => anosPresentes(eventos.map((e) => e.data)), [eventos]);
 
   const fazendas = useMemo(() => opcoesExcluindo(eventos, condicoes, 'fazenda', (e) => e.fazenda), [eventos, condicoes]);
   const clientes = useMemo(() => opcoesExcluindo(eventos, condicoes, 'cliente', (e) => e.cliente), [eventos, condicoes]);
@@ -210,7 +212,7 @@ export function FinanceiroView({ dados }: { dados: PacoteFinanceiro }) {
       />
 
       <div className="flex flex-wrap items-end gap-3">
-        <FilterPeriodo inicio={dataInicio} fim={dataFim} onInicioChange={setDataInicio} onFimChange={setDataFim} />
+        <FilterPeriodo inicio={dataInicio} fim={dataFim} onInicioChange={setDataInicio} onFimChange={setDataFim} anos={anos} />
         <FilterSelect label="Fazenda" value={fazenda} onChange={setFazenda} options={fazendas} />
         <FilterSelect label="Cliente" value={cliente} onChange={setCliente} options={clientes} />
         <FilterSelect label="Tipo" value={tipo} onChange={setTipo} options={tipos} />

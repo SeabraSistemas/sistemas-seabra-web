@@ -9,7 +9,7 @@ import { CsvExport, type CsvColumn } from '@/components/painel/CsvExport';
 import { EstadoCarga } from '@/components/painel/EstadoCarga';
 import { media } from '@/lib/painel/agregacao';
 import { dentroPeriodo, filtrarPor, opcoesExcluindo, type Condicao } from '@/lib/painel/filters';
-import { diaDeInput, formatDia, formatNumber } from '@/lib/painel/format';
+import { anosPresentes, diaDeInput, formatDia, formatNumber } from '@/lib/painel/format';
 import { desempacotar } from '@/lib/painel/pacote';
 import type { PacoteLeitura } from '@/lib/fi-fcg/pacotes';
 import type { RegBaixa } from '@/lib/fi-fcg/types';
@@ -33,6 +33,8 @@ export function BaixasView({ dados }: { dados: PacoteLeitura<RegBaixa> }) {
       { key: 'periodo', test: (b) => dentroPeriodo(b.data, inicio, fim) },
     ];
   }, [fazenda, causaObito, tipo, dataInicio, dataFim]);
+
+  const anos = useMemo(() => anosPresentes(itens.map((b) => b.data)), [itens]);
 
   const fazendas = useMemo(() => opcoesExcluindo(itens, condicoes, 'fazenda', (b) => b.fazenda), [itens, condicoes]);
   const causas = useMemo(() => opcoesExcluindo(itens, condicoes, 'causaObito', (b) => b.causaObito), [itens, condicoes]);
@@ -75,7 +77,7 @@ export function BaixasView({ dados }: { dados: PacoteLeitura<RegBaixa> }) {
       />
 
       <div className="flex flex-wrap items-end gap-3">
-        <FilterPeriodo inicio={dataInicio} fim={dataFim} onInicioChange={setDataInicio} onFimChange={setDataFim} />
+        <FilterPeriodo inicio={dataInicio} fim={dataFim} onInicioChange={setDataInicio} onFimChange={setDataFim} anos={anos} />
         <FilterSelect label="Fazenda" value={fazenda} onChange={setFazenda} options={fazendas} />
         <FilterSelect label="Causa do óbito" value={causaObito} onChange={setCausaObito} options={causas} />
         <FilterSelect label="Tipo" value={tipo} onChange={setTipo} options={tipos} />

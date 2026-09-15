@@ -12,7 +12,7 @@ import { CsvExport, type CsvColumn } from '@/components/painel/CsvExport';
 import { EstadoCarga } from '@/components/painel/EstadoCarga';
 import { contagemPor } from '@/lib/painel/agregacao';
 import { dentroPeriodo, filtrarPor, opcoesExcluindo, type Condicao } from '@/lib/painel/filters';
-import { diaDeInput, formatDia, formatNumber } from '@/lib/painel/format';
+import { anosPresentes, diaDeInput, formatDia, formatNumber } from '@/lib/painel/format';
 import { desempacotar } from '@/lib/painel/pacote';
 import type { PacoteLeitura } from '@/lib/fi-fcg/pacotes';
 import type { RegParto } from '@/lib/fi-fcg/types';
@@ -42,6 +42,8 @@ export function PartosView({ dados }: { dados: PacoteLeitura<RegParto> }) {
       { key: 'periodo', test: (r) => dentroPeriodo(r.nascimento, inicio, fim) },
     ];
   }, [fazenda, marca, sexo, buscaEletronica, buscaMae, buscaPai, dataInicio, dataFim]);
+
+  const anos = useMemo(() => anosPresentes(itens.map((r) => r.nascimento)), [itens]);
 
   const fazendas = useMemo(() => opcoesExcluindo(itens, condicoes, 'fazenda', (r) => r.fazenda), [itens, condicoes]);
   const marcas = useMemo(() => opcoesExcluindo(itens, condicoes, 'marca', (r) => r.marca), [itens, condicoes]);
@@ -89,7 +91,7 @@ export function PartosView({ dados }: { dados: PacoteLeitura<RegParto> }) {
         <FilterBusca label="ID eletrônica" value={buscaEletronica} onChange={setBuscaEletronica} placeholder="Buscar..." />
         <FilterSelect label="Marca" value={marca} onChange={setMarca} options={marcas} />
         <FilterSelect label="Sexo" value={sexo} onChange={setSexo} options={sexos} />
-        <FilterPeriodo inicio={dataInicio} fim={dataFim} onInicioChange={setDataInicio} onFimChange={setDataFim} />
+        <FilterPeriodo inicio={dataInicio} fim={dataFim} onInicioChange={setDataInicio} onFimChange={setDataFim} anos={anos} />
         <FilterBusca label="Mãe" value={buscaMae} onChange={setBuscaMae} placeholder="Buscar ID mãe..." />
         <FilterBusca label="Pai" value={buscaPai} onChange={setBuscaPai} placeholder="Buscar ID pai..." />
         <FilterSelect label="Fazenda" value={fazenda} onChange={setFazenda} options={fazendas} />
