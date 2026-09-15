@@ -147,6 +147,38 @@ export async function escreverLinha(
   }
 }
 
+/**
+ * Sobrescreve UMA coluna inteira (ex: "Financeiro!K2:K2623") com um valor por
+ * linha, numa única requisição — usado pra correção em massa (ex: backfill
+ * da coluna Fazenda do livro-caixa, 15/09/2026), em vez de uma escrita por
+ * linha (lento e gasta muita cota da API pra milhares de linhas).
+ */
+export async function escreverColuna(
+  spreadsheetId: string,
+  range: string,
+  valores: string[],
+  valueInputOption: 'RAW' | 'USER_ENTERED' = 'RAW',
+): Promise<boolean> {
+  const t = await token();
+  if (!t) return false;
+  try {
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(range)}?valueInputOption=${valueInputOption}`;
+    const res = await fetch(url, {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${t}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ values: valores.map((v) => [v]) }),
+    });
+    if (!res.ok) {
+      console.error('[sheets] falha ao escrever coluna', range, res.status, await res.text());
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error('[sheets] falha ao escrever coluna', range, err);
+    return false;
+  }
+}
+
 /** Acrescenta uma linha no fim de `aba`. false se faltar config ou falhar. */
 export async function adicionarLinha(
   spreadsheetId: string,
