@@ -121,12 +121,14 @@ export function Donut({
           </PieChart>
         </ResponsiveContainer>
       </div>
-      <ul className="grid w-full grid-cols-2 gap-x-4 gap-y-1.5 text-sm sm:w-auto">
+      <ul className="flex w-full min-w-0 flex-col gap-1.5 text-sm sm:w-auto">
         {fatias.map((f) => (
-          <li key={f.name} className="flex items-center gap-2 text-muted-foreground">
+          <li key={f.name} className="flex min-w-0 items-center gap-2 text-muted-foreground">
             <span className="size-2.5 shrink-0 rounded-full" style={{ background: f.color }} aria-hidden />
-            <span className="text-foreground">{f.name}</span>
-            <span className="tabular-nums">{fmt(f.value)}</span>
+            <span className="min-w-0 flex-1 truncate text-foreground" title={f.name}>
+              {f.name}
+            </span>
+            <span className="shrink-0 tabular-nums">{fmt(f.value)}</span>
           </li>
         ))}
       </ul>

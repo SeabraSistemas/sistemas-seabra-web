@@ -27,3 +27,23 @@ export function percentual(numerador: number, denominador: number): number | nul
   if (denominador === 0) return null;
   return (numerador / denominador) * 100;
 }
+
+/**
+ * Contagem por categoria — a base de todo Donut/BarrasHorizontais do
+ * FI_FCG (partida, diagnóstico, sexo, método...). Único lugar que decide
+ * "sem valor não vira fatia": um item com `campo(item)` vazio/null é
+ * SEMPRE descartado da contagem, nunca aparece como categoria "" ou
+ * "null" no gráfico. Existia como função idêntica duplicada em 3 Views
+ * (Toque/Rebanho/Partos) — consolidado aqui pra a regra valer em todo
+ * gráfico novo por construção, não por cada View lembrar de repetir o
+ * `if (!v) continue`.
+ */
+export function contagemPor<T>(itens: T[], campo: (item: T) => string | null): { rotulo: string; valor: number }[] {
+  const mapa = new Map<string, number>();
+  for (const item of itens) {
+    const v = campo(item);
+    if (!v) continue;
+    mapa.set(v, (mapa.get(v) ?? 0) + 1);
+  }
+  return Array.from(mapa, ([rotulo, valor]) => ({ rotulo, valor }));
+}

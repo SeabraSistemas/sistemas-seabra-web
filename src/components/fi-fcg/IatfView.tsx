@@ -9,7 +9,7 @@ import { DataTable, type DataTableColumn } from '@/components/painel/DataTable';
 import { FilterSelect } from '@/components/painel/FilterSelect';
 import { CsvExport, type CsvColumn } from '@/components/painel/CsvExport';
 import { EstadoCarga } from '@/components/painel/EstadoCarga';
-import { media } from '@/lib/painel/agregacao';
+import { contagemPor, media } from '@/lib/painel/agregacao';
 import { comparadorDataDesc, filtrarPor, opcoesExcluindo, type Condicao } from '@/lib/painel/filters';
 import { formatDia, formatNumber } from '@/lib/painel/format';
 import { desempacotar } from '@/lib/painel/pacote';
@@ -57,14 +57,7 @@ export function IatfView({ dados }: { dados: PacoteLeitura<RegIatf> }) {
   const escoreMedio = useMemo(() => media(filtrados.map((r) => r.eccNum)), [filtrados]);
   const pesoMedio = useMemo(() => media(filtrados.map((r) => r.pesoKg)), [filtrados]);
 
-  const porPartida = useMemo(() => {
-    const mapa = new Map<string, number>();
-    for (const r of filtrados) {
-      if (!r.partida) continue;
-      mapa.set(r.partida, (mapa.get(r.partida) ?? 0) + 1);
-    }
-    return Array.from(mapa, ([rotulo, valor]) => ({ rotulo, valor }));
-  }, [filtrados]);
+  const porPartida = useMemo(() => contagemPor(filtrados, (r) => r.partida), [filtrados]);
 
   const colunas: DataTableColumn<RegIatf>[] = [
     { key: 'fazenda', header: 'Fazenda', cell: (r) => r.fazenda ?? '—', sortValue: (r) => r.fazenda },

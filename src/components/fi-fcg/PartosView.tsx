@@ -10,21 +10,12 @@ import { FilterPeriodo } from '@/components/painel/FilterPeriodo';
 import { FilterBusca } from '@/components/painel/FilterBusca';
 import { CsvExport, type CsvColumn } from '@/components/painel/CsvExport';
 import { EstadoCarga } from '@/components/painel/EstadoCarga';
+import { contagemPor } from '@/lib/painel/agregacao';
 import { dentroPeriodo, filtrarPor, opcoesExcluindo, type Condicao } from '@/lib/painel/filters';
 import { diaDeInput, formatDia, formatNumber } from '@/lib/painel/format';
 import { desempacotar } from '@/lib/painel/pacote';
 import type { PacoteLeitura } from '@/lib/fi-fcg/pacotes';
 import type { RegParto } from '@/lib/fi-fcg/types';
-
-function contagemPor(itens: RegParto[], campo: (r: RegParto) => string | null): { rotulo: string; valor: number }[] {
-  const mapa = new Map<string, number>();
-  for (const r of itens) {
-    const v = campo(r);
-    if (!v) continue;
-    mapa.set(v, (mapa.get(v) ?? 0) + 1);
-  }
-  return Array.from(mapa, ([rotulo, valor]) => ({ rotulo, valor }));
-}
 
 export function PartosView({ dados }: { dados: PacoteLeitura<RegParto> }) {
   const itens = useMemo(() => desempacotar<RegParto>(dados.pacote), [dados.pacote]);

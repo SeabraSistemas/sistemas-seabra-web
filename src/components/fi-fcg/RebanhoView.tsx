@@ -11,7 +11,7 @@ import { FilterRange } from '@/components/painel/FilterRange';
 import { FilterBusca } from '@/components/painel/FilterBusca';
 import { CsvExport, type CsvColumn } from '@/components/painel/CsvExport';
 import { EstadoCarga } from '@/components/painel/EstadoCarga';
-import { contar } from '@/lib/painel/agregacao';
+import { contagemPor, contar } from '@/lib/painel/agregacao';
 import { dentroFaixa, filtrarPor, opcoesExcluindo, type Condicao } from '@/lib/painel/filters';
 import { formatNumber, numberBounds } from '@/lib/painel/format';
 import { desempacotar } from '@/lib/painel/pacote';
@@ -21,16 +21,6 @@ import type { RegRebanho } from '@/lib/fi-fcg/types';
 /** Não está na venda/baixa da própria RebanhoProd — o "estoque" do rebanho (mesmo conceito de /katmandu, onde isto vinha de um campo `baixa` à parte). */
 function vivo(r: RegRebanho): boolean {
   return r.categoria !== 'Venda' && r.categoria !== 'Baixa';
-}
-
-function contagemPor(itens: RegRebanho[], campo: (r: RegRebanho) => string | null): { rotulo: string; valor: number }[] {
-  const mapa = new Map<string, number>();
-  for (const r of itens) {
-    const v = campo(r);
-    if (!v) continue;
-    mapa.set(v, (mapa.get(v) ?? 0) + 1);
-  }
-  return Array.from(mapa, ([rotulo, valor]) => ({ rotulo, valor }));
 }
 
 export function RebanhoView({ dados }: { dados: PacoteLeitura<RegRebanho> }) {

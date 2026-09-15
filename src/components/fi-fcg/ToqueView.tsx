@@ -9,22 +9,12 @@ import { DataTable, type DataTableColumn } from '@/components/painel/DataTable';
 import { FilterSelect } from '@/components/painel/FilterSelect';
 import { CsvExport, type CsvColumn } from '@/components/painel/CsvExport';
 import { EstadoCarga } from '@/components/painel/EstadoCarga';
-import { contar, media, percentual } from '@/lib/painel/agregacao';
+import { contagemPor, contar, media, percentual } from '@/lib/painel/agregacao';
 import { comparadorDataDesc, filtrarPor, opcoesExcluindo, type Condicao } from '@/lib/painel/filters';
 import { formatDia, formatNumber, formatPct } from '@/lib/painel/format';
 import { desempacotar } from '@/lib/painel/pacote';
 import type { PacoteLeitura } from '@/lib/fi-fcg/pacotes';
 import type { RegToque } from '@/lib/fi-fcg/types';
-
-function contagemPor(itens: RegToque[], campo: (r: RegToque) => string | null): { rotulo: string; valor: number }[] {
-  const mapa = new Map<string, number>();
-  for (const r of itens) {
-    const v = campo(r);
-    if (!v) continue;
-    mapa.set(v, (mapa.get(v) ?? 0) + 1);
-  }
-  return Array.from(mapa, ([rotulo, valor]) => ({ rotulo, valor }));
-}
 
 export function ToqueView({ dados }: { dados: PacoteLeitura<RegToque> }) {
   const itens = useMemo(() => desempacotar<RegToque>(dados.pacote), [dados.pacote]);
