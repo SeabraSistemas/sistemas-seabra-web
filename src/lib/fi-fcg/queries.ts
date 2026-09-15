@@ -116,6 +116,17 @@ export async function getPesagem(): Promise<Leitura<RegPesagem>> {
   return { itens: mapPesagem(linhas), configurado: spreadsheetId() != null, stale, carregadoEm };
 }
 
+/**
+ * Subconjunto de RebanhoProd pros "Lotes de engorda" (página Pesagem) — só
+ * quem tem `entradaEngorda` preenchida (~378 de 7.851, ao vivo em
+ * 15/09/2026). Mesmo cache de `getRebanho()` (reusa se /rebanho já rodou
+ * nos últimos 5 min); filtra ANTES de empacotar, ver CAMPOS_REBANHO_ENGORDA.
+ */
+export async function getAnimaisEmEngorda(): Promise<Leitura<RegRebanho>> {
+  const rebanho = await getRebanho();
+  return { ...rebanho, itens: rebanho.itens.filter((r) => r.entradaEngorda != null) };
+}
+
 export async function getBaixas(): Promise<Leitura<RegBaixa>> {
   const { linhas, stale, carregadoEm } = await lerAbaCache('Baixa');
   return { itens: mapBaixas(linhas), configurado: spreadsheetId() != null, stale, carregadoEm };

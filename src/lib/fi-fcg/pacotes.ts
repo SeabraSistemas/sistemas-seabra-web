@@ -119,6 +119,25 @@ export const CAMPOS_PESAGEM: (keyof RegPesagem & string)[] = [
   'lote',
   'sexo',
   'destino',
+  'diferencaKg',
+];
+
+/**
+ * Subconjunto de campos de RegRebanho pros "Lotes de engorda" (página
+ * Pesagem) — só os animais com `entradaEngorda` preenchida entram aqui (ver
+ * `getAnimaisEmEngorda`, queries.ts), então listar os ~96 campos de
+ * RebanhoProd sairia caro à toa; `CAMPOS_REBANHO` (o do /rebanho) fica
+ * intocado.
+ */
+export const CAMPOS_REBANHO_ENGORDA: (keyof RegRebanho & string)[] = [
+  'id',
+  'fazenda',
+  'categoria',
+  'status',
+  'entradaEngorda',
+  'diasEngordaAtual',
+  'pesoEntradaEngorda',
+  'gmdAtual',
 ];
 
 export const CAMPOS_BAIXA: (keyof RegBaixa & string)[] = [

@@ -35,7 +35,8 @@ function animal(p: Partial<RegRebanho> & { id: string }): RegRebanho {
   return {
     eletronica: null, marca: null, sexo: null, categoria: null, causaBaixa: null, idadeMeses: null, fazenda: null,
     lote: null, status: null, reproducao: null, escore: null, destino: null, ultimaPesagemKg: null,
-    dataUltimaPesagem: null, nascimento: null, ...p,
+    dataUltimaPesagem: null, nascimento: null, entradaEngorda: null, diasEngordaAtual: null,
+    pesoEntradaEngorda: null, gmdAtual: null, ...p,
   };
 }
 

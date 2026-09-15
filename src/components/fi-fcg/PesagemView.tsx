@@ -1,24 +1,37 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { TrendingDown } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MetricCard } from '@/components/painel/MetricCard';
 import { DataTable, type DataTableColumn } from '@/components/painel/DataTable';
 import { FilterSelect } from '@/components/painel/FilterSelect';
 import { FilterRange } from '@/components/painel/FilterRange';
 import { CsvExport, type CsvColumn } from '@/components/painel/CsvExport';
 import { EstadoCarga } from '@/components/painel/EstadoCarga';
+import { WeightLossBadge } from '@/components/painel/WeightLossBadge';
 import { media, soma } from '@/lib/painel/agregacao';
 import { comparadorDataDesc, dentroFaixa, filtrarPor, opcoesExcluindo, type Condicao } from '@/lib/painel/filters';
 import { desempacotar } from '@/lib/painel/pacote';
-import { formatCompacto, formatDia, formatNumber, numberBounds } from '@/lib/painel/format';
+import { formatCompacto, formatDia, formatNumber, hojeCompacto, numberBounds } from '@/lib/painel/format';
+import { montarLotesEngorda } from '@/lib/fi-fcg/engorda';
 import type { PacoteLeitura } from '@/lib/fi-fcg/pacotes';
-import type { RegPesagem } from '@/lib/fi-fcg/types';
+import type { RegPesagem, RegRebanho } from '@/lib/fi-fcg/types';
 
-export function PesagemView({ dados }: { dados: PacoteLeitura<RegPesagem> }) {
+export function PesagemView({
+  dados,
+  engorda,
+}: {
+  dados: PacoteLeitura<RegPesagem>;
+  engorda: PacoteLeitura<RegRebanho>;
+}) {
   const itens = useMemo(() => desempacotar<RegPesagem>(dados.pacote), [dados.pacote]);
+  const animaisEmEngorda = useMemo(() => desempacotar<RegRebanho>(engorda.pacote), [engorda.pacote]);
 
   const [data, setData] = useState('');
   const [fazenda, setFazenda] = useState('');
+  const [soPerdaPeso, setSoPerdaPeso] = useState(false);
 
   const pesoBounds = useMemo(() => numberBounds(itens.map((r) => r.pesoKg)), [itens]);
   const [pesoRange, setPesoRange] = useState<[number, number] | null>(null);
@@ -31,7 +44,8 @@ export function PesagemView({ dados }: { dados: PacoteLeitura<RegPesagem> }) {
     { key: 'fazenda', test: (r) => !fazenda || r.fazenda === fazenda },
     { key: 'peso', test: (r) => dentroFaixa(r.pesoKg, pesoBounds, pesoRange) },
     { key: 'dias', test: (r) => dentroFaixa(r.diasEngorda, diasBounds, diasRange) },
-  ], [data, fazenda, pesoBounds, pesoRange, diasBounds, diasRange]);
+    { key: 'soPerdaPeso', test: (r) => !soPerdaPeso || (r.diferencaKg != null && r.diferencaKg < 0) },
+  ], [data, fazenda, pesoBounds, pesoRange, diasBounds, diasRange, soPerdaPeso]);
 
   const datas = useMemo(
     () => opcoesExcluindo(itens, condicoes, 'data', (r) => (r.data != null ? String(r.data) : null), comparadorDataDesc),
@@ -48,9 +62,25 @@ export function PesagemView({ dados }: { dados: PacoteLeitura<RegPesagem> }) {
   const mediaPdi = useMemo(() => media(filtrados.map((r) => r.pdi)), [filtrados]);
   const mediaGpdi = useMemo(() => media(filtrados.map((r) => r.gpdi)), [filtrados]);
 
+  const hoje = useMemo(() => hojeCompacto(), []);
+  const lotesEngorda = useMemo(() => montarLotesEngorda(animaisEmEngorda, hoje), [animaisEmEngorda, hoje]);
+
   const colunas: DataTableColumn<RegPesagem>[] = [
     { key: 'id', header: 'Animal', cell: (r) => r.id, sortValue: (r) => r.id },
     { key: 'peso', header: 'Peso|Kg', cell: (r) => formatNumber(r.pesoKg), sortValue: (r) => r.pesoKg },
+    {
+      key: 'diferenca',
+      header: 'Diferença',
+      cell: (r) => (
+        <span className="inline-flex items-center gap-2">
+          <span className={r.diferencaKg != null && r.diferencaKg < 0 ? 'text-destructive' : undefined}>
+            {formatNumber(r.diferencaKg)}
+          </span>
+          <WeightLossBadge diferencaKg={r.diferencaKg} />
+        </span>
+      ),
+      sortValue: (r) => r.diferencaKg,
+    },
     { key: 'entrada', header: 'Entrada|Engorda', cell: (r) => formatNumber(r.entradaKg), sortValue: (r) => r.entradaKg },
     { key: 'gmd', header: 'GMD', cell: (r) => formatNumber(r.gmd), sortValue: (r) => r.gmd },
     { key: 'dias', header: 'Dias|Engorda', cell: (r) => formatNumber(r.diasEngorda), sortValue: (r) => r.diasEngorda },
@@ -73,6 +103,7 @@ export function PesagemView({ dados }: { dados: PacoteLeitura<RegPesagem> }) {
     { key: 'lote', header: 'Lote', value: (r) => r.lote ?? '' },
     { key: 'sexo', header: 'Sexo', value: (r) => r.sexo ?? '' },
     { key: 'peso', header: 'Peso/kg', value: (r) => formatNumber(r.pesoKg) },
+    { key: 'diferenca', header: 'Diferença (última pesagem)', value: (r) => formatNumber(r.diferencaKg) },
     { key: 'entrada', header: 'Peso entrada engorda', value: (r) => formatNumber(r.entradaKg) },
     { key: 'dias', header: 'Dias em engorda', value: (r) => formatNumber(r.diasEngorda) },
     { key: 'gmd', header: 'GMD', value: (r) => formatNumber(r.gmd) },
@@ -107,6 +138,17 @@ export function PesagemView({ dados }: { dados: PacoteLeitura<RegPesagem> }) {
         {diasBounds && (
           <FilterRange label="Dias em engorda" bounds={diasBounds} value={diasRange ?? diasBounds} onChange={setDiasRange} />
         )}
+        <Button
+          type="button"
+          variant={soPerdaPeso ? 'default' : 'outline'}
+          size="sm"
+          aria-pressed={soPerdaPeso}
+          onClick={() => setSoPerdaPeso((v) => !v)}
+          className="gap-1.5"
+        >
+          <TrendingDown className="size-3.5" />
+          Perdendo peso
+        </Button>
       </div>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
@@ -118,11 +160,61 @@ export function PesagemView({ dados }: { dados: PacoteLeitura<RegPesagem> }) {
         <MetricCard id="mediaGpdi" label="Média/GPDi" value={formatNumber(mediaGpdi)} />
       </div>
 
-      <div className="flex items-center justify-between gap-3">
-        <h2 className="text-sm font-medium text-muted-foreground">{formatNumber(filtrados.length)} registros</h2>
-        <CsvExport columns={csvColunas} rows={filtrados} requiredKeys={['id']} filename="fi_fcg_pesagem" />
-      </div>
-      <DataTable columns={colunas} rows={filtrados} rowKey={(r) => r.id} />
+      <Tabs defaultValue="tabela">
+        <TabsList>
+          <TabsTrigger value="tabela">Tabela</TabsTrigger>
+          <TabsTrigger value="lotes">Lotes de engorda</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="tabela" className="flex flex-col gap-3">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-sm font-medium text-muted-foreground">{formatNumber(filtrados.length)} registros</h2>
+            <CsvExport columns={csvColunas} rows={filtrados} requiredKeys={['id']} filename="fi_fcg_pesagem" />
+          </div>
+          <DataTable columns={colunas} rows={filtrados} rowKey={(r) => r.id} />
+        </TabsContent>
+
+        <TabsContent value="lotes" className="flex flex-col gap-3">
+          {lotesEngorda.length === 0 ? (
+            <p className="rounded-xl border border-border bg-card p-5 text-sm text-muted-foreground">
+              Nenhum animal com &quot;Entrada engorda&quot; preenchida no momento.
+            </p>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {lotesEngorda.map((lote) => (
+                <div key={`${lote.fazenda}|${lote.entrada}`} className="rounded-xl border border-border bg-card p-5">
+                  <div className="flex items-baseline justify-between gap-2">
+                    <h3 className="text-sm font-medium text-foreground">{lote.fazenda}</h3>
+                    <span className="text-xs text-muted-foreground">Entrada {formatDia(lote.entrada)}</span>
+                  </div>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    {lote.diasDesdeEntrada != null ? `${formatNumber(lote.diasDesdeEntrada)} dias desde a entrada` : '—'}
+                  </p>
+                  <div className="mt-4 grid grid-cols-2 gap-y-3">
+                    <div>
+                      <p className="text-xs text-muted-foreground">Animais</p>
+                      <p className="text-lg font-semibold tabular-nums">{formatNumber(lote.total)}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Ainda em engorda</p>
+                      <p className="text-lg font-semibold tabular-nums">{formatNumber(lote.ativos)}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">GMD médio</p>
+                      <p className="text-lg font-semibold tabular-nums">{formatNumber(lote.gmdMedio)}</p>
+                      <p className="text-xs text-muted-foreground">{lote.comGmd} de {lote.total} pesados</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Peso médio de entrada</p>
+                      <p className="text-lg font-semibold tabular-nums">{formatNumber(lote.pesoEntradaMedio)}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

@@ -112,6 +112,10 @@ export function mapRebanho(rows: string[][] | null): RegRebanho[] {
       ultimaPesagemKg: parseNumber(r['Última pesagem']),
       dataUltimaPesagem: diaDe(r['data_ultima_pesagem']),
       nascimento: diaDe(r['Data de nascimento']),
+      entradaEngorda: diaDe(r['Entrada engorda']),
+      diasEngordaAtual: parseNumber(r['Dias em engorda']),
+      pesoEntradaEngorda: parseNumber(r['Peso entrada engorda']),
+      gmdAtual: parseNumber(r['GMD']),
     }))
     .filter((x) => x.id !== '');
 }
@@ -152,6 +156,7 @@ export function mapPesagem(rows: string[][] | null): RegPesagem[] {
       lote: parseText(r['Lote']),
       sexo: parseText(r['Sexo']),
       destino: parseText(r['destino']),
+      diferencaKg: parseNumber(r['Diferença (última pesagem)']),
     }))
     .filter((x) => x.id !== '');
 }

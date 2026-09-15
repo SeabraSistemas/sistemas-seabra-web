@@ -59,6 +59,21 @@ export interface RegRebanho {
   dataUltimaPesagem: DiaCompacto | null;
   /** Nunca é sobrescrita (ao contrário de Categoria, que vira "Venda"/"Baixa" quando o animal sai) — é o que permite reconstruir a categoria que o animal TINHA num evento passado (ver financeiro.ts, estimativa de venda sem valor). */
   nascimento: DiaCompacto | null;
+  /**
+   * Data em que o animal entrou no programa de engorda — gravada uma vez só,
+   * pelo AppSheet. A partir dela, cada `Pesagem` desse animal calcula
+   * Dias/Peso/GMD relativo a essa entrada (conferido ao vivo, 15/09/2026).
+   * Fica vazia pra quem nunca entrou em engorda (a maioria do rebanho) —
+   * não é dado quebrado, é "não se aplica". Base de `engorda.ts` (Lotes de
+   * engorda, aba Pesagem).
+   */
+  entradaEngorda: DiaCompacto | null;
+  /** "Dias em engorda" do rebanho — dias entre `entradaEngorda` e a ÚLTIMA pesagem do animal (não recalculado aqui). */
+  diasEngordaAtual: number | null;
+  /** "Peso entrada engorda" do rebanho — peso do animal no dia de `entradaEngorda`. */
+  pesoEntradaEngorda: number | null;
+  /** "GMD" do rebanho — ganho médio diário na ÚLTIMA pesagem do animal (congelado até a próxima pesagem). */
+  gmdAtual: number | null;
 }
 
 export interface RegParto {
@@ -89,6 +104,8 @@ export interface RegPesagem {
   lote: string | null;
   sexo: string | null;
   destino: string | null;
+  /** "Diferença (última pesagem)" — negativo = perdeu peso desde a pesagem anterior (mesmo campo/sinalização do Katmandu, ver WeightLossBadge). */
+  diferencaKg: number | null;
 }
 
 export interface RegBaixa {
