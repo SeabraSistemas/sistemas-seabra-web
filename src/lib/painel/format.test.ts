@@ -5,6 +5,7 @@ import {
   anosPresentes,
   diaDe,
   diaDeInput,
+  diaParaInput,
   diasEntre,
   formatCompacto,
   formatDia,
@@ -78,6 +79,18 @@ describe('diasEntre', () => {
   test('falta qualquer uma das datas vira null', () => {
     assert.equal(diasEntre(null, 20250101), null);
     assert.equal(diasEntre(20250101, null), null);
+  });
+});
+
+describe('diaParaInput', () => {
+  test('inverso de diaDeInput', () => {
+    assert.equal(diaParaInput(20250305), '2025-03-05');
+  });
+  test('null vira string vazia', () => {
+    assert.equal(diaParaInput(null), '');
+  });
+  test('round-trip com diaDeInput', () => {
+    assert.equal(diaDeInput(diaParaInput(20250305)), 20250305);
   });
 });
 

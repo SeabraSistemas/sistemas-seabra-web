@@ -142,3 +142,37 @@ export interface CategoriaArroba {
   mediaArroba: number | null;
   valorCategoria: number | null;
 }
+
+/**
+ * Uma categoria de custo (aba nova "Categorias de Custo", criada em
+ * 15/09/2026 — não faz parte do AppSheet do cliente, é só do /FI_FCG).
+ * Nasce com 1 linha ("Geral"); o usuário adiciona/renomeia/remove pela
+ * tela de Custos, sem depender de deploy — é dado, não uma lista fixa no
+ * código.
+ */
+export interface CategoriaCusto {
+  id: string;
+  nome: string;
+}
+
+export type TipoCusto = 'Mensal' | 'Anual';
+
+/**
+ * Um lançamento de custo (aba nova "Custos", 15/09/2026). `tipo` decide
+ * como o valor se distribui pelos meses do intervalo [dataInicio, dataFim
+ * ou hoje] — ver `distribuirCusto` em financeiro.ts: Mensal entra o valor
+ * cheio em cada mês, Anual entra valor÷12 em cada mês.
+ */
+export interface Custo {
+  id: string;
+  descricao: string | null;
+  categoria: string | null;
+  /** null/"Geral" = custo da operação inteira, não de uma fazenda só. */
+  fazenda: string | null;
+  tipo: TipoCusto | null;
+  valor: number | null;
+  dataInicio: DiaCompacto | null;
+  /** null = custo em aberto (ainda vigente) — distribui até o mês de hoje. */
+  dataFim: DiaCompacto | null;
+  observacao: string | null;
+}

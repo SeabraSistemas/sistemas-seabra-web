@@ -8,7 +8,19 @@
  */
 import { empacotar, type Pacote } from '@/lib/painel/pacote';
 import type { Leitura } from './queries';
-import type { RegBaixa, RegIatf, RegParto, RegPesagem, RegRebanho, RegToque, RegVenda, LancamentoFinanceiro, RegAborto } from './types';
+import type {
+  CategoriaCusto,
+  Custo,
+  RegBaixa,
+  RegIatf,
+  RegParto,
+  RegPesagem,
+  RegRebanho,
+  RegToque,
+  RegVenda,
+  LancamentoFinanceiro,
+  RegAborto,
+} from './types';
 import type { EventoFin } from './financeiro';
 
 export interface PacoteLeitura<T extends object> {
@@ -134,6 +146,20 @@ export const CAMPOS_FINANCEIRO: (keyof LancamentoFinanceiro & string)[] = [
   'data',
 ];
 
+export const CAMPOS_CATEGORIA_CUSTO: (keyof CategoriaCusto & string)[] = ['id', 'nome'];
+
+export const CAMPOS_CUSTO: (keyof Custo & string)[] = [
+  'id',
+  'descricao',
+  'categoria',
+  'fazenda',
+  'tipo',
+  'valor',
+  'dataInicio',
+  'dataFim',
+  'observacao',
+];
+
 export const CAMPOS_EVENTO: (keyof EventoFin & string)[] = [
   'origem',
   'tipo',
@@ -157,16 +183,19 @@ export const CAMPOS_EVENTO: (keyof EventoFin & string)[] = [
 
 /**
  * Prop empacotada da página Financeiro — diferente das outras páginas
- * (`PacoteLeitura<T>`, uma leitura só) porque aqui o servidor já combina 6
- * abas (Venda, Baixa, Aborto, Financeiro, RebanhoProd, Categoria@) em
- * `eventos` + `orfaos` via `montarEventos` (financeiro.ts) ANTES de
- * empacotar — RebanhoProd/Categoria@ só entram pra CALCULAR
- * categoriaEstimada/valorEstimado no servidor; o cliente nunca vê essas
- * duas abas, só o resultado já pronto em cada evento.
+ * (`PacoteLeitura<T>`, uma leitura só) porque aqui o servidor já combina 8
+ * abas (Venda, Baixa, Aborto, Financeiro, RebanhoProd, Categoria@, Custos,
+ * Categorias de Custo) em `eventos` + `orfaos` via `montarEventos`
+ * (financeiro.ts) ANTES de empacotar — RebanhoProd/Categoria@ só entram pra
+ * CALCULAR categoriaEstimada/valorEstimado no servidor; o cliente nunca vê
+ * essas duas abas, só o resultado já pronto em cada evento. `custos` e
+ * `categoriasCusto` já vêm prontos (não precisam de conciliação nenhuma).
  */
 export interface PacoteFinanceiro {
   eventos: Pacote<EventoFin>;
   orfaos: Pacote<LancamentoFinanceiro>;
+  custos: Pacote<Custo>;
+  categoriasCusto: Pacote<CategoriaCusto>;
   configurado: boolean;
   stale: boolean;
   carregadoEm: number | null;

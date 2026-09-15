@@ -5,6 +5,8 @@ import {
   mapAbortos,
   mapBaixas,
   mapCategoriaArroba,
+  mapCategoriasCusto,
+  mapCustos,
   mapFinanceiro,
   mapIatf,
   mapPartos,
@@ -196,5 +198,51 @@ describe('mapFinanceiro', () => {
     const [r] = mapFinanceiro(rows);
     assert.equal(r.valor, 5120);
     assert.equal(r.descricao, 'Venda');
+  });
+});
+
+describe('mapCategoriasCusto', () => {
+  test('mapeia id e nome', () => {
+    const rows = [
+      ['ID', 'Nome'],
+      ['w7eymne6', 'Geral'],
+    ];
+    assert.deepEqual(mapCategoriasCusto(rows), [{ id: 'w7eymne6', nome: 'Geral' }]);
+  });
+  test('linha sem ID e descartada', () => {
+    const rows = [
+      ['ID', 'Nome'],
+      ['', 'Sem id'],
+    ];
+    assert.deepEqual(mapCategoriasCusto(rows), []);
+  });
+});
+
+describe('mapCustos', () => {
+  test('mapeia um custo mensal completo, Valor em R$', () => {
+    const rows = [
+      ['ID', 'Descrição', 'Categoria', 'Fazenda', 'Tipo', 'Valor', 'Data início', 'Data fim', 'Observação'],
+      ['c1', 'Ração', 'Geral', 'Inhumas', 'Mensal', 'R$ 15.000,00', '01/01/2025', '', 'confinamento'],
+    ];
+    const [c] = mapCustos(rows);
+    assert.equal(c.descricao, 'Ração');
+    assert.equal(c.tipo, 'Mensal');
+    assert.equal(c.valor, 15000);
+    assert.equal(c.dataInicio, 20250101);
+    assert.equal(c.dataFim, null); // custo em aberto
+  });
+  test('Tipo fora de "Mensal"/"Anual" vira null, nao quebra', () => {
+    const rows = [
+      ['ID', 'Tipo'],
+      ['c1', 'Trimestral'],
+    ];
+    assert.equal(mapCustos(rows)[0].tipo, null);
+  });
+  test('linha sem ID e descartada', () => {
+    const rows = [
+      ['ID', 'Descrição'],
+      ['', 'sem id'],
+    ];
+    assert.deepEqual(mapCustos(rows), []);
   });
 });

@@ -94,6 +94,15 @@ export function diaDeInput(v: string): number | null {
   return y * 10000 + m * 100 + d;
 }
 
+/** "aaaammdd" => "aaaa-mm-dd" (<input type=date>) — inverso de `diaDeInput`, pra pré-preencher o campo ao editar um registro existente. '' se null. */
+export function diaParaInput(v: number | null): string {
+  if (v == null) return '';
+  const ano = Math.floor(v / 10000);
+  const mes = Math.floor((v % 10000) / 100);
+  const dia = v % 100;
+  return `${ano}-${String(mes).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
+}
+
 /** Anos distintos presentes numa lista de "aaaammdd" (ignora null), do mais recente pro mais antigo — base do atalho "Ano" de FilterPeriodo. */
 export function anosPresentes(datas: (number | null)[]): number[] {
   const anos = new Set<number>();

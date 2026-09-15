@@ -2,10 +2,16 @@ import { JWT } from 'google-auth-library';
 
 /**
  * Cliente Google Sheets genérico, para qualquer cliente AppSheet que o site
- * precise ler (hoje só /FI_FCG). Mesma técnica de src/lib/katmandu/sheets-server.ts
- * (que fica intocado — escreve na planilha de produção de outro cliente e não
- * vale o risco de regressão), mas recebe o `spreadsheetId` por parâmetro em vez
- * de fixar um só — assim um terceiro cliente Sheets não pede um terceiro arquivo.
+ * precise ler/escrever (hoje só /FI_FCG). Mesma técnica de
+ * src/lib/katmandu/sheets-server.ts (que fica intocado — escreve na planilha
+ * de produção de outro cliente e não vale o risco de regressão), mas recebe
+ * o `spreadsheetId` por parâmetro em vez de fixar um só — assim um terceiro
+ * cliente Sheets não pede um terceiro arquivo.
+ *
+ * Escopo FULL (não só `.readonly`) desde os Custos (15/09/2026) — a service
+ * account precisou virar Editor na planilha "Produção - Benoni" (antes só
+ * lia). Confirmado ao vivo com um `batchUpdate` no-op (reescrever o mesmo
+ * título) antes de criar qualquer aba de verdade.
  *
  * NUNCA importar em client component — a chave privada da service account não
  * pode vazar pro bundle.
@@ -21,7 +27,7 @@ function sheetsClient(): JWT | null {
     email,
     // No .env a chave vem com "\n" literal (escapado) em vez de quebra de linha real.
     key: rawKey.replace(/\\n/g, '\n'),
-    scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
+    scopes: ['https://www.googleapis.com/auth/spreadsheets'],
   });
   return cached;
 }
@@ -81,5 +87,114 @@ export async function lerAbas(spreadsheetId: string, abas: string[]): Promise<Re
   } catch (err) {
     console.error('[sheets] falha ao ler planilha (batchGet)', abas, err);
     return vazio;
+  }
+}
+
+/**
+ * Acha o número da linha (1-based, já contando o cabeçalho) de um ID numa
+ * aba, lendo a coluna de ID FRESCA (não confia em cache/posição antiga) —
+ * mesmo cuidado do Katmandu (Movimentar) pra não escrever na linha errada
+ * se a planilha mudou entre a leitura anterior e agora. null se a aba, o
+ * header da coluna ou o ID não existirem.
+ */
+export async function encontrarLinhaPorId(
+  spreadsheetId: string,
+  aba: string,
+  colunaId: string,
+  id: string,
+): Promise<number | null> {
+  const linhas = await lerAba(spreadsheetId, aba);
+  if (!linhas || linhas.length === 0) return null;
+  const idx = linhas[0].map((h) => h.trim()).indexOf(colunaId);
+  if (idx === -1) return null;
+  for (let i = 1; i < linhas.length; i++) {
+    if ((linhas[i][idx] ?? '').trim() === id) return i + 1;
+  }
+  return null;
+}
+
+/**
+ * Sobrescreve UMA linha inteira num range tipo "Custos!A5:I5". Sempre
+ * `USER_ENTERED` por padrão — RAW não reconhece texto de data como data e
+ * quebra a formatação da célula (achado real no incidente do Katmandu,
+ * 09/09/2026: serial numérico gravado como texto vira "45908" na tela em
+ * vez de "08/09/2025"). Passar 'RAW' só quando a linha não tem NENHUMA
+ * coluna de data.
+ */
+export async function escreverLinha(
+  spreadsheetId: string,
+  range: string,
+  valores: string[],
+  valueInputOption: 'RAW' | 'USER_ENTERED' = 'USER_ENTERED',
+): Promise<boolean> {
+  const t = await token();
+  if (!t) return false;
+  try {
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(range)}?valueInputOption=${valueInputOption}`;
+    const res = await fetch(url, {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${t}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ values: [valores] }),
+    });
+    if (!res.ok) {
+      console.error('[sheets] falha ao escrever linha', range, res.status, await res.text());
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error('[sheets] falha ao escrever linha', range, err);
+    return false;
+  }
+}
+
+/** Acrescenta uma linha no fim de `aba`. false se faltar config ou falhar. */
+export async function adicionarLinha(
+  spreadsheetId: string,
+  aba: string,
+  valores: string[],
+  valueInputOption: 'RAW' | 'USER_ENTERED' = 'USER_ENTERED',
+): Promise<boolean> {
+  const t = await token();
+  if (!t) return false;
+  try {
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(aba)}:append?valueInputOption=${valueInputOption}`;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${t}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ values: [valores] }),
+    });
+    if (!res.ok) {
+      console.error('[sheets] falha ao acrescentar linha', aba, res.status, await res.text());
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error('[sheets] falha ao acrescentar linha', aba, err);
+    return false;
+  }
+}
+
+/**
+ * "Apaga" uma linha limpando o conteúdo do range (`values:clear`) — nunca
+ * remove a linha de verdade (evitaria precisar do sheetId numérico e do
+ * risco de outra escrita mirar a linha errada se duas exclusões acontecerem
+ * quase juntas). Uma linha com ID vazio já é ignorada por TODO mapeador do
+ * projeto (`.filter(x => x.id !== '')`), então ela some das leituras sem
+ * precisar de nenhum caso especial.
+ */
+export async function limparLinha(spreadsheetId: string, range: string): Promise<boolean> {
+  const t = await token();
+  if (!t) return false;
+  try {
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(range)}:clear`;
+    const res = await fetch(url, { method: 'POST', headers: { Authorization: `Bearer ${t}` } });
+    if (!res.ok) {
+      console.error('[sheets] falha ao limpar linha', range, res.status, await res.text());
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error('[sheets] falha ao limpar linha', range, err);
+    return false;
   }
 }

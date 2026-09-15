@@ -8,6 +8,8 @@
 import { diaDe, parseMoeda, parseNumber, parseText } from '@/lib/painel/format';
 import type {
   CategoriaArroba,
+  CategoriaCusto,
+  Custo,
   LancamentoFinanceiro,
   RegAborto,
   RegBaixa,
@@ -17,6 +19,7 @@ import type {
   RegRebanho,
   RegToque,
   RegVenda,
+  TipoCusto,
 } from './types';
 
 export function toObjects(rows: string[][] | null): Record<string, string>[] {
@@ -221,4 +224,34 @@ export function mapCategoriaArroba(rows: string[][] | null): CategoriaArroba[] {
       valorCategoria: parseMoeda(r['Valor categoria']),
     }))
     .filter((x) => x.categoria !== '');
+}
+
+function tipoCustoDe(raw: string | undefined): TipoCusto | null {
+  const v = parseText(raw);
+  if (v === 'Mensal' || v === 'Anual') return v;
+  return null;
+}
+
+/** Aba "Categorias de Custo" (nova, 15/09/2026 — não é do AppSheet). */
+export function mapCategoriasCusto(rows: string[][] | null): CategoriaCusto[] {
+  return toObjects(rows)
+    .map((r) => ({ id: parseText(r['ID']) ?? '', nome: parseText(r['Nome']) ?? '' }))
+    .filter((x) => x.id !== '');
+}
+
+/** Aba "Custos" (nova, 15/09/2026). Valor sempre em R$ formatado (mesmo padrão de Venda/Baixa) — `parseMoeda`, não `parseNumber`. */
+export function mapCustos(rows: string[][] | null): Custo[] {
+  return toObjects(rows)
+    .map((r) => ({
+      id: parseText(r['ID']) ?? '',
+      descricao: parseText(r['Descrição']),
+      categoria: parseText(r['Categoria']),
+      fazenda: parseText(r['Fazenda']),
+      tipo: tipoCustoDe(r['Tipo']),
+      valor: parseMoeda(r['Valor']),
+      dataInicio: diaDe(r['Data início']),
+      dataFim: diaDe(r['Data fim']),
+      observacao: parseText(r['Observação']),
+    }))
+    .filter((x) => x.id !== '');
 }

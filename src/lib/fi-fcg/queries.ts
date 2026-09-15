@@ -6,6 +6,8 @@ import {
   mapAbortos,
   mapBaixas,
   mapCategoriaArroba,
+  mapCategoriasCusto,
+  mapCustos,
   mapFinanceiro,
   mapIatf,
   mapPartos,
@@ -16,6 +18,8 @@ import {
 } from './mapeadores';
 import type {
   CategoriaArroba,
+  CategoriaCusto,
+  Custo,
   LancamentoFinanceiro,
   RegAborto,
   RegBaixa,
@@ -53,6 +57,26 @@ async function lerAbaCache(aba: string): Promise<{ linhas: string[][] | null; st
   if (!id) return { linhas: null, stale: false, carregadoEm: null };
   const { valor, stale, carregadoEm } = await cache.obter(`fi-fcg:${aba}`, () => lerAba(id, aba));
   return { linhas: valor, stale, carregadoEm };
+}
+
+/**
+ * Igual a `lerAbaCache`, mas SEM cache — achado ao vivo (15/09/2026) testando
+ * os Custos: `invalidarCache()` chamado por uma API route nunca tem efeito
+ * sobre o cache visto pela renderização da PÁGINA, porque o Next compila
+ * cada rota (cada `page.tsx`, cada `route.ts`) como um módulo separado — o
+ * `cache` (const de módulo, `queries.ts`) não é o mesmo objeto nos dois
+ * lados, mesmo no mesmo processo do `next dev`. Pra "Custos" e "Categorias
+ * de Custo" (as únicas abas que o usuário ESCREVE por aqui) isso significa
+ * o usuário salvar um custo e não ver o resultado por até 5 min — inaceitável
+ * numa tela de cadastro. As duas são pequenas (dezenas de linhas, não
+ * milhares como Pesagem), então ler direto da planilha a cada request sai
+ * barato; as abas do AppSheet (só leitura) continuam cacheadas.
+ */
+async function lerAbaFresca(aba: string): Promise<{ linhas: string[][] | null; stale: boolean; carregadoEm: number | null }> {
+  const id = spreadsheetId();
+  if (!id) return { linhas: null, stale: false, carregadoEm: null };
+  const linhas = await lerAba(id, aba);
+  return { linhas, stale: false, carregadoEm: Date.now() };
 }
 
 function maisAntigo(a: number | null, b: number | null): number | null {
@@ -118,6 +142,18 @@ export async function getCategoriaArroba(): Promise<Leitura<CategoriaArroba>> {
   return { itens: mapCategoriaArroba(linhas), configurado: spreadsheetId() != null, stale, carregadoEm };
 }
 
+/** Aba "Categorias de Custo" (nova, 15/09/2026 — não é do AppSheet, é só do /FI_FCG). Sem cache — ver `lerAbaFresca`. */
+export async function getCategoriasCusto(): Promise<Leitura<CategoriaCusto>> {
+  const { linhas, stale, carregadoEm } = await lerAbaFresca('Categorias de Custo');
+  return { itens: mapCategoriasCusto(linhas), configurado: spreadsheetId() != null, stale, carregadoEm };
+}
+
+/** Aba "Custos" (nova, 15/09/2026). Sem cache — ver `lerAbaFresca`. */
+export async function getCustos(): Promise<Leitura<Custo>> {
+  const { linhas, stale, carregadoEm } = await lerAbaFresca('Custos');
+  return { itens: mapCustos(linhas), configurado: spreadsheetId() != null, stale, carregadoEm };
+}
+
 /**
  * Tudo que a página Financeiro precisa, numa só leva. RebanhoProd e
  * Categoria@ entram aqui (mesmo cache por aba do Rebanho — se a página
@@ -129,15 +165,17 @@ export async function getCategoriaArroba(): Promise<Leitura<CategoriaArroba>> {
  * só recebe o valor já calculado (ver montarEventos em financeiro.ts).
  */
 export async function getDadosFinanceiro() {
-  const [vendas, baixas, abortos, lancamentos, rebanho, categoriaArroba] = await Promise.all([
+  const [vendas, baixas, abortos, lancamentos, rebanho, categoriaArroba, custos, categoriasCusto] = await Promise.all([
     getVendas(),
     getBaixas(),
     getAbortos(),
     getLancamentosFinanceiros(),
     getRebanho(),
     getCategoriaArroba(),
+    getCustos(),
+    getCategoriasCusto(),
   ]);
-  return { vendas, baixas, abortos, lancamentos, rebanho, categoriaArroba };
+  return { vendas, baixas, abortos, lancamentos, rebanho, categoriaArroba, custos, categoriasCusto };
 }
 
 /** Usado por POST /FI_FCG/api/atualizar — limpa tudo do FI_FCG pro botão "Atualizar" forçar releitura. */

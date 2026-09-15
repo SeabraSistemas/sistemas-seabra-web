@@ -10,9 +10,11 @@ import { FilterSelect } from '@/components/painel/FilterSelect';
 import { FilterPeriodo } from '@/components/painel/FilterPeriodo';
 import { CsvExport, type CsvColumn } from '@/components/painel/CsvExport';
 import { EstadoCarga } from '@/components/painel/EstadoCarga';
+import { CustosPainel } from '@/components/fi-fcg/CustosPainel';
 import { dentroPeriodo, filtrarPor, opcoesExcluindo, type Condicao } from '@/lib/painel/filters';
 import { desempacotar } from '@/lib/painel/pacote';
 import { anosPresentes, diaDeInput, formatDia, formatMoeda, formatNumber, formatPct, hojeCompacto } from '@/lib/painel/format';
+import { custosMensais, custosNoPeriodo } from '@/lib/fi-fcg/custos';
 import {
   aConferir,
   baixadasMensal,
@@ -26,7 +28,7 @@ import {
   type ProblemaFin,
 } from '@/lib/fi-fcg/financeiro';
 import type { PacoteFinanceiro } from '@/lib/fi-fcg/pacotes';
-import type { LancamentoFinanceiro } from '@/lib/fi-fcg/types';
+import type { CategoriaCusto, Custo, LancamentoFinanceiro } from '@/lib/fi-fcg/types';
 
 const PROBLEMA_LABEL: Record<ProblemaFin, string> = {
   'venda-valor-substituido': 'Venda: valor registrado trocado pelo estimado',
@@ -54,6 +56,8 @@ const ORIGEM_CLASSE: Record<EventoFin['origemValor'], string> = {
 export function FinanceiroView({ dados }: { dados: PacoteFinanceiro }) {
   const eventos = useMemo(() => desempacotar<EventoFin>(dados.eventos), [dados.eventos]);
   const orfaos = useMemo(() => desempacotar<LancamentoFinanceiro>(dados.orfaos), [dados.orfaos]);
+  const custos = useMemo(() => desempacotar<Custo>(dados.custos), [dados.custos]);
+  const categoriasCusto = useMemo(() => desempacotar<CategoriaCusto>(dados.categoriasCusto), [dados.categoriasCusto]);
   const hoje = useMemo(() => hojeCompacto(), []);
 
   const [fazenda, setFazenda] = useState('');
@@ -96,6 +100,32 @@ export function FinanceiroView({ dados }: { dados: PacoteFinanceiro }) {
   const serieBaixadas = useMemo(() => baixadasMensal(filtrados), [filtrados]);
   const porCliente = useMemo(() => receitaPor(filtrados, (e) => e.cliente, 'Sem cliente'), [filtrados]);
   const porFazenda = useMemo(() => receitaPor(filtrados, (e) => e.fazenda, 'Sem fazenda'), [filtrados]);
+
+  // Custos: mesma janela de Período/Ano da tela, mês inteiro por mês inteiro
+  // (sem prorateio por dia — ver custos.ts). Independem de Fazenda/Cliente/Tipo,
+  // que são facetas só dos eventos financeiros.
+  const custosPeriodo = useMemo(() => {
+    const inicio = diaDeInput(dataInicio);
+    const fim = diaDeInput(dataFim);
+    return custosNoPeriodo(custos, hoje, inicio, fim);
+  }, [custos, hoje, dataInicio, dataFim]);
+  const serieCustos = useMemo(() => {
+    const todas = custosMensais(custos, hoje);
+    const inicio = diaDeInput(dataInicio);
+    const fim = diaDeInput(dataFim);
+    const mesInicio = inicio != null ? String(Math.floor(inicio / 100)) : null;
+    const mesFim = fim != null ? String(Math.floor(fim / 100)) : null;
+    return todas.filter((p) => (mesInicio == null || p.mes >= mesInicio) && (mesFim == null || p.mes <= mesFim));
+  }, [custos, hoje, dataInicio, dataFim]);
+  const resultadoComCustos = resumo.resultadoTotal - custosPeriodo;
+
+  // Fazendas presentes nos eventos, sem depender dos filtros da tela — é a
+  // lista que o formulário de Custos oferece (Geral + cada fazenda real).
+  const todasFazendas = useMemo(() => {
+    const set = new Set<string>();
+    for (const e of eventos) if (e.fazenda) set.add(e.fazenda);
+    return Array.from(set).sort();
+  }, [eventos]);
 
   const [problema, setProblema] = useState('');
   const conferir = useMemo(() => aConferir(filtrados, orfaosFiltrados, hoje), [filtrados, orfaosFiltrados, hoje]);
@@ -249,10 +279,17 @@ export function FinanceiroView({ dados }: { dados: PacoteFinanceiro }) {
         <MetricCard id="baixadas" label="Cabeças baixadas" value={formatNumber(resumo.cabecasBaixadas)} />
         <MetricCard id="abortos" label="Abortos" value={formatNumber(resumo.abortos)} />
         <MetricCard
+          id="custosPeriodo"
+          label="Custos do período"
+          value={formatMoeda(custosPeriodo)}
+          detalhe="mensal cheio + anual ÷ 12, mês a mês"
+          tom={custosPeriodo > 0 ? 'aviso' : 'neutro'}
+        />
+        <MetricCard
           id="resultado"
-          label="Resultado (registrado + estimado)"
-          value={formatMoeda(resumo.resultadoTotal)}
-          tom={resumo.resultadoTotal >= 0 ? 'bom' : 'ruim'}
+          label="Resultado (receita − perdas − custos)"
+          value={formatMoeda(resultadoComCustos)}
+          tom={resultadoComCustos >= 0 ? 'bom' : 'ruim'}
         />
         <MetricCard
           id="percentual"
@@ -269,16 +306,18 @@ export function FinanceiroView({ dados }: { dados: PacoteFinanceiro }) {
           <TabsTrigger value="vendas">Vendas</TabsTrigger>
           <TabsTrigger value="perdas">Perdas</TabsTrigger>
           <TabsTrigger value="conferir">A conferir{conferir.length > 0 ? ` (${conferir.length})` : ''}</TabsTrigger>
+          <TabsTrigger value="custos">Custos</TabsTrigger>
         </TabsList>
 
         <TabsContent value="resumo" className="flex flex-col gap-6">
           <div className="grid gap-6 lg:grid-cols-2">
             <div className="rounded-xl border border-border bg-card p-5">
-              <h3 className="mb-4 text-sm font-medium text-muted-foreground">Receita × Perdas (R$), por mês</h3>
+              <h3 className="mb-4 text-sm font-medium text-muted-foreground">Receita × Perdas × Custos (R$), por mês</h3>
               <SerieMensal
                 series={[
                   { chave: 'receita', nome: 'Receita', cor: '#199e70', pontos: serieReceita },
                   { chave: 'perdas', nome: 'Perdas', cor: '#d95926', pontos: seriePerdas },
+                  { chave: 'custos', nome: 'Custos', cor: '#c98500', pontos: serieCustos },
                 ]}
                 formatoValor={formatMoeda}
               />
@@ -362,6 +401,10 @@ export function FinanceiroView({ dados }: { dados: PacoteFinanceiro }) {
             rows={conferirFiltrado}
             rowKey={(i) => `${i.problema}-${i.evento?.id ?? i.lancamentoOrfao?.id ?? ''}`}
           />
+        </TabsContent>
+
+        <TabsContent value="custos">
+          <CustosPainel custos={custos} categorias={categoriasCusto} hoje={hoje} fazendas={todasFazendas} />
         </TabsContent>
       </Tabs>
     </div>
