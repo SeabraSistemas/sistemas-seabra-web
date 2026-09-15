@@ -52,6 +52,7 @@ function ListaGerenciavel({
   onChanged: () => void;
 }) {
   const [novoNome, setNovoNome] = useState('');
+  const [adicionando, setAdicionando] = useState(false);
   const [editandoId, setEditandoId] = useState<string | null>(null);
   const [nomeEdicao, setNomeEdicao] = useState('');
 
@@ -65,6 +66,7 @@ function ListaGerenciavel({
     });
     if (res.ok) {
       setNovoNome('');
+      setAdicionando(false);
       onChanged();
     }
   }
@@ -96,12 +98,12 @@ function ListaGerenciavel({
   return (
     <div className="rounded-xl border border-border bg-card p-5">
       <h3 className="mb-4 text-sm font-medium text-muted-foreground">{titulo}</h3>
-      <ul className="mb-3 flex flex-col gap-1.5">
+      <ul className="flex flex-col divide-y divide-border/60">
         {itens.map((it) => (
-          <li key={it.id} className="flex items-center gap-2 text-sm">
+          <li key={it.id} className="flex items-center gap-2 py-2 text-sm first:pt-0">
             {editandoId === it.id ? (
               <>
-                <Input value={nomeEdicao} onChange={(e) => setNomeEdicao(e.target.value)} className="h-8 w-48" autoFocus />
+                <Input value={nomeEdicao} onChange={(e) => setNomeEdicao(e.target.value)} className="h-8 flex-1" autoFocus />
                 <Button type="button" size="sm" onClick={() => salvarRenomeio(it.id)}>
                   Salvar
                 </Button>
@@ -111,7 +113,7 @@ function ListaGerenciavel({
               </>
             ) : (
               <>
-                <span className="text-foreground">{it.nome}</span>
+                <span className="flex-1 text-foreground">{it.nome}</span>
                 <Button
                   type="button"
                   variant="ghost"
@@ -139,14 +141,44 @@ function ListaGerenciavel({
             )}
           </li>
         ))}
+        <li className="flex items-center gap-2 py-2 text-sm first:pt-0">
+          {adicionando ? (
+            <>
+              <Input
+                value={novoNome}
+                onChange={(e) => setNovoNome(e.target.value)}
+                placeholder={placeholder}
+                className="h-8 flex-1"
+                autoFocus
+                onKeyDown={(e) => e.key === 'Enter' && adicionar()}
+              />
+              <Button type="button" size="sm" onClick={adicionar}>
+                Salvar
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                onClick={() => {
+                  setAdicionando(false);
+                  setNovoNome('');
+                }}
+              >
+                <X className="size-3.5" />
+              </Button>
+            </>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setAdicionando(true)}
+              className="flex w-full items-center gap-1.5 rounded-md py-1 text-sm text-primary transition-colors hover:bg-accent"
+            >
+              <Plus className="size-3.5" />
+              Novo
+            </button>
+          )}
+        </li>
       </ul>
-      <div className="flex gap-2">
-        <Input value={novoNome} onChange={(e) => setNovoNome(e.target.value)} placeholder={placeholder} className="h-8 w-48" />
-        <Button type="button" size="sm" variant="outline" onClick={adicionar} className="gap-1.5">
-          <Plus className="size-3.5" />
-          Adicionar
-        </Button>
-      </div>
     </div>
   );
 }

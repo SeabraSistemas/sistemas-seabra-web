@@ -334,8 +334,8 @@ export function FinanceiroView({ dados }: { dados: PacoteFinanceiro }) {
               <h3 className="mb-4 text-sm font-medium text-muted-foreground">Vendas e Baixas (cabeças), por mês</h3>
               <SerieMensal
                 series={[
-                  { chave: 'vendidas', nome: 'Vendidas', cor: '#3987e5', pontos: serieVendidas },
-                  { chave: 'baixadas', nome: 'Baixadas', cor: '#d55181', pontos: serieBaixadas },
+                  { chave: 'vendidas', nome: 'Vendas', cor: '#3987e5', pontos: serieVendidas },
+                  { chave: 'baixadas', nome: 'Baixas', cor: '#d55181', pontos: serieBaixadas },
                 ]}
                 formatoValor={formatNumber}
               />
