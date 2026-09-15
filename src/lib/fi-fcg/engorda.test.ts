@@ -39,16 +39,29 @@ describe('montarLotesEngorda', () => {
   test('mesma fazenda e mesma data viram 1 cohort só; fazendas diferentes na mesma data viram cohorts separados', () => {
     const lotes = montarLotesEngorda(
       [
-        animal({ id: 'a1', entradaEngorda: 20250801, fazenda: 'Inhumas', status: 'Engorda' }),
-        animal({ id: 'a2', entradaEngorda: 20250801, fazenda: 'Inhumas', status: 'Desmamada' }),
-        animal({ id: 'a3', entradaEngorda: 20250801, fazenda: 'Campina grande', status: 'Engorda' }),
+        animal({ id: 'a1', entradaEngorda: 20250801, fazenda: 'Inhumas', categoria: 'Bezerra' }),
+        animal({ id: 'a2', entradaEngorda: 20250801, fazenda: 'Inhumas', categoria: 'Venda' }),
+        animal({ id: 'a3', entradaEngorda: 20250801, fazenda: 'Campina grande', categoria: 'Bezerra' }),
       ],
       20260101,
     );
     assert.equal(lotes.length, 2);
     const inhumas = lotes.find((l) => l.fazenda === 'Inhumas')!;
     assert.equal(inhumas.total, 2);
-    assert.equal(inhumas.ativos, 1); // só a1 continua com Status "Engorda"
+    assert.equal(inhumas.ativos, 1); // só a1 continua no rebanho (a2 já foi vendido)
+  });
+
+  test('ativos usa Categoria, nao Status: Status "Engorda" desatualizado nao conta como saida, e Status != "Engorda" nao conta como saida', () => {
+    const lotes = montarLotesEngorda(
+      [
+        // ja foi vendido de verdade (Categoria manda), mesmo com Status ainda "Engorda" (congelado)
+        animal({ id: 'a1', entradaEngorda: 20250801, fazenda: 'Inhumas', categoria: 'Venda', status: 'Engorda' }),
+        // continua no rebanho (Categoria normal), so o Status mudou de estagio de vida
+        animal({ id: 'a2', entradaEngorda: 20250801, fazenda: 'Inhumas', categoria: 'Bezerra', status: 'Desmamada' }),
+      ],
+      20260101,
+    );
+    assert.equal(lotes[0].ativos, 1); // so a2
   });
 
   test('gmdMedio/comGmd ignoram null e <=0 (repesagem desatualizada nao conta como "com GMD")', () => {

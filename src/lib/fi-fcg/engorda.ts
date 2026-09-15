@@ -15,10 +15,23 @@
  * Fazenda + Entrada engorda; o NOME de cada lote usa o `lote` real quando
  * todo mundo do grupo concorda, senão vira "Lote GMD d.m.aa" gerado da
  * data de entrada (pedido do Felipe, 15/09/2026).
+ *
+ * "Ativos" usa `Categoria` (∉ {Venda, Baixa}), NUNCA `Status` — achado ao
+ * vivo (15/09/2026): `Status` é um estágio de vida (Engorda/Desmamada/
+ * Solteira/Parida/...) que muda mesmo com o animal ainda no rebanho, e
+ * pode ficar "Engorda" congelado depois que o animal já foi vendido/morreu
+ * (41 dos 44 animais que pareciam "nunca repesados" já tinham Categoria
+ * "Venda", 1 "Baixa" — só o Status é que não foi atualizado). Mesmo
+ * critério de "vivo" do RebanhoView (ver `vivo()` lá).
  */
 import { media } from '@/lib/painel/agregacao';
 import { diasEntre } from '@/lib/painel/format';
 import type { DiaCompacto, RegRebanho } from './types';
+
+/** Não está na venda/baixa — mesmo conceito de `vivo()` em RebanhoView.tsx (duplicado aqui porque este arquivo é lib pura, sem depender de um Client Component). */
+function vivo(a: RegRebanho): boolean {
+  return a.categoria !== 'Venda' && a.categoria !== 'Baixa';
+}
 
 export interface LoteEngorda {
   /** Nome do `lote` real (RebanhoProd) quando todo mundo do cohort concorda; senão "Lote GMD d.m.aa" (dia/mês sem zero à esquerda, ano com 2 dígitos), gerado a partir da data de entrada. */
@@ -28,7 +41,7 @@ export interface LoteEngorda {
   /** Dias corridos entre a entrada e `hoje` (o parâmetro de montarLotesEngorda). */
   diasDesdeEntrada: number | null;
   total: number;
-  /** Quantos do cohort ainda estão com Status "Engorda" (os demais já saíram: venda, baixa, ou mudaram de status). */
+  /** Quantos do cohort ainda não saíram do rebanho (Categoria ∉ {Venda, Baixa}) — não usa `Status`, ver comentário no topo do arquivo. */
   ativos: number;
   /** Quantos do cohort têm GMD atual > 0 — a base de `gmdMedio` (repesagens desatualizadas ficam de fora). */
   comGmd: number;
@@ -74,7 +87,7 @@ export function montarLotesEngorda(animais: RegRebanho[], hoje: DiaCompacto): Lo
       entrada,
       diasDesdeEntrada: diasEntre(entrada, hoje),
       total: lista.length,
-      ativos: lista.filter((a) => a.status === 'Engorda').length,
+      ativos: lista.filter(vivo).length,
       comGmd: gmdValores.length,
       gmdMedio: media(gmdValores),
       pesoEntradaMedio: media(lista.map((a) => a.pesoEntradaEngorda)),
