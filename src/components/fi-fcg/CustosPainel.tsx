@@ -14,8 +14,6 @@ import { diaParaInput, formatDia, formatMoeda } from '@/lib/painel/format';
 import { custosMensais } from '@/lib/fi-fcg/custos';
 import type { CategoriaCusto, Custo, DiaCompacto, TipoCusto } from '@/lib/fi-fcg/types';
 
-const FAZENDA_GERAL = 'Geral';
-
 const FORM_VAZIO = {
   descricao: '',
   categoria: '',
@@ -239,9 +237,16 @@ function SelectGerenciavel({
  * — não existe card/tela separado pra gerenciar a lista (removido em
  * 16/09, pedido do Felipe): adicionar/renomear/remover acontece dentro do
  * próprio popover do campo, estilo AppSheet. Descrição é texto livre.
- * Quando Tipo é "Mensal", Data início/fim viram `<input type=month>` (não
- * precisa escolher um dia, já que a distribuição é sempre por mês inteiro
- * — ver distribuirCusto em custos.ts).
+ *
+ * Fazenda é OBRIGATÓRIA (16/09/2026, reverte a decisão anterior de
+ * "Geral" opcional) — todo custo é de uma fazenda específica, nunca da
+ * operação inteira.
+ *
+ * Quando Tipo é "Mensal", só existe UM campo de data ("Mês do custo") —
+ * vira `dataInicio`, e `dataFim` fica sempre em aberto (o custo mensal é
+ * recorrente por natureza; se um dia precisar encerrar, edita o
+ * lançamento). Anual continua com Data início/fim completas, porque um
+ * custo anual normalmente TEM um intervalo definido (ex: um contrato).
  */
 export function CustosPainel({
   custos,
@@ -260,7 +265,6 @@ export function CustosPainel({
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
-  const opcoesFazenda = useMemo(() => [FAZENDA_GERAL, ...fazendas.filter((f) => f !== FAZENDA_GERAL)], [fazendas]);
   const serieCustos = useMemo(() => custosMensais(custos, hoje), [custos, hoje]);
 
   function iniciarEdicao(c: Custo) {
@@ -286,8 +290,8 @@ export function CustosPainel({
 
   async function salvar() {
     const valorNum = Number(form.valor.replace(',', '.'));
-    if (!form.descricao.trim() || !form.dataInicio || !Number.isFinite(valorNum) || valorNum <= 0) {
-      setErro('Preencha descrição, valor (maior que zero) e data início.');
+    if (!form.descricao.trim() || !form.fazenda || !form.dataInicio || !Number.isFinite(valorNum) || valorNum <= 0) {
+      setErro('Preencha descrição, fazenda, valor (maior que zero) e data.');
       return;
     }
     setErro(null);
@@ -296,7 +300,7 @@ export function CustosPainel({
       const corpo = {
         descricao: form.descricao,
         categoria: form.categoria || null,
-        fazenda: form.fazenda || null,
+        fazenda: form.fazenda,
         tipo: form.tipo,
         valor: valorNum,
         dataInicio: form.dataInicio,
@@ -332,7 +336,7 @@ export function CustosPainel({
   const colunas: DataTableColumn<Custo>[] = [
     { key: 'descricao', header: 'Descrição', cell: (c) => c.descricao ?? '—', sortValue: (c) => c.descricao },
     { key: 'categoria', header: 'Categoria', cell: (c) => nomeCategoria(c.categoria, categorias), sortValue: (c) => nomeCategoria(c.categoria, categorias) },
-    { key: 'fazenda', header: 'Fazenda', cell: (c) => c.fazenda ?? FAZENDA_GERAL, sortValue: (c) => c.fazenda },
+    { key: 'fazenda', header: 'Fazenda', cell: (c) => c.fazenda ?? '—', sortValue: (c) => c.fazenda },
     { key: 'tipo', header: 'Tipo', cell: (c) => c.tipo ?? '—', sortValue: (c) => c.tipo },
     { key: 'valor', header: 'Valor', cell: (c) => formatMoeda(c.valor), sortValue: (c) => c.valor },
     { key: 'inicio', header: 'Data início', cell: (c) => formatDia(c.dataInicio), sortValue: (c) => c.dataInicio },
@@ -356,7 +360,7 @@ export function CustosPainel({
   const csvColunas: CsvColumn<Custo>[] = [
     { key: 'descricao', header: 'Descrição', value: (c) => c.descricao ?? '' },
     { key: 'categoria', header: 'Categoria', value: (c) => nomeCategoria(c.categoria, categorias) },
-    { key: 'fazenda', header: 'Fazenda', value: (c) => c.fazenda ?? FAZENDA_GERAL },
+    { key: 'fazenda', header: 'Fazenda', value: (c) => c.fazenda ?? '' },
     { key: 'tipo', header: 'Tipo', value: (c) => c.tipo ?? '' },
     { key: 'valor', header: 'Valor', value: (c) => formatMoeda(c.valor) },
     { key: 'inicio', header: 'Data início', value: (c) => formatDia(c.dataInicio) },
@@ -399,12 +403,12 @@ export function CustosPainel({
           </div>
           <div className="flex flex-col gap-1">
             <span className="text-xs text-muted-foreground">Fazenda</span>
-            <Select value={form.fazenda || FAZENDA_GERAL} onValueChange={(v) => setForm({ ...form, fazenda: v === FAZENDA_GERAL ? '' : v })}>
+            <Select value={form.fazenda || undefined} onValueChange={(v) => setForm({ ...form, fazenda: v })}>
               <SelectTrigger size="sm" className="w-full">
-                <SelectValue />
+                <SelectValue placeholder="Selecione..." />
               </SelectTrigger>
               <SelectContent>
-                {opcoesFazenda.map((f) => (
+                {fazendas.map((f) => (
                   <SelectItem key={f} value={f}>
                     {f}
                   </SelectItem>
@@ -414,7 +418,10 @@ export function CustosPainel({
           </div>
           <div className="flex flex-col gap-1">
             <span className="text-xs text-muted-foreground">Tipo</span>
-            <Select value={form.tipo} onValueChange={(v) => setForm({ ...form, tipo: v as TipoCusto })}>
+            <Select
+              value={form.tipo}
+              onValueChange={(v) => setForm({ ...form, tipo: v as TipoCusto, dataFim: v === 'Mensal' ? '' : form.dataFim })}
+            >
               <SelectTrigger size="sm" className="w-full">
                 <SelectValue />
               </SelectTrigger>
@@ -428,30 +435,27 @@ export function CustosPainel({
             <span className="text-xs text-muted-foreground">Valor (R$)</span>
             <Input inputMode="decimal" value={form.valor} onChange={(e) => setForm({ ...form, valor: e.target.value })} placeholder="15000" />
           </div>
-          <div className="flex flex-col gap-1">
-            <span className="text-xs text-muted-foreground">Data início</span>
-            {form.tipo === 'Mensal' ? (
+          {form.tipo === 'Mensal' ? (
+            <div className="flex flex-col gap-1">
+              <span className="text-xs text-muted-foreground">Mês do custo</span>
               <Input
                 type="month"
                 value={form.dataInicio.slice(0, 7)}
-                onChange={(e) => setForm({ ...form, dataInicio: e.target.value ? `${e.target.value}-01` : '' })}
+                onChange={(e) => setForm({ ...form, dataInicio: e.target.value ? `${e.target.value}-01` : '', dataFim: '' })}
               />
-            ) : (
-              <Input type="date" value={form.dataInicio} onChange={(e) => setForm({ ...form, dataInicio: e.target.value })} />
-            )}
-          </div>
-          <div className="flex flex-col gap-1">
-            <span className="text-xs text-muted-foreground">Data fim (opcional — em aberto se vazio)</span>
-            {form.tipo === 'Mensal' ? (
-              <Input
-                type="month"
-                value={form.dataFim.slice(0, 7)}
-                onChange={(e) => setForm({ ...form, dataFim: e.target.value ? `${e.target.value}-01` : '' })}
-              />
-            ) : (
-              <Input type="date" value={form.dataFim} onChange={(e) => setForm({ ...form, dataFim: e.target.value })} />
-            )}
-          </div>
+            </div>
+          ) : (
+            <>
+              <div className="flex flex-col gap-1">
+                <span className="text-xs text-muted-foreground">Data início</span>
+                <Input type="date" value={form.dataInicio} onChange={(e) => setForm({ ...form, dataInicio: e.target.value })} />
+              </div>
+              <div className="flex flex-col gap-1">
+                <span className="text-xs text-muted-foreground">Data fim (opcional — em aberto se vazio)</span>
+                <Input type="date" value={form.dataFim} onChange={(e) => setForm({ ...form, dataFim: e.target.value })} />
+              </div>
+            </>
+          )}
           <div className="flex flex-col gap-1 sm:col-span-2 lg:col-span-4">
             <span className="text-xs text-muted-foreground">Observação</span>
             <Input value={form.observacao} onChange={(e) => setForm({ ...form, observacao: e.target.value })} />

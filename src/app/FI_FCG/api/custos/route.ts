@@ -19,18 +19,31 @@ interface CorpoCusto {
   observacao?: string | null;
 }
 
-/** Valida e converte o corpo bruto (datas em "aaaa-mm-dd") pro formato que `mutations.ts` espera. null se faltar campo obrigatório. */
+/**
+ * Valida e converte o corpo bruto (datas em "aaaa-mm-dd") pro formato que
+ * `mutations.ts` espera. null se faltar campo obrigatório. Fazenda é
+ * obrigatória (decisão do Felipe, 16/09 — reverte a anterior "Geral
+ * opcional"): todo custo é de uma fazenda específica, nunca "geral".
+ */
 function dadosDe(corpo: CorpoCusto): DadosCusto | null {
   const descricao = corpo.descricao?.trim();
+  const fazenda = corpo.fazenda?.trim();
   const tipo = corpo.tipo;
   const dataInicio = corpo.dataInicio ? diaDeInput(corpo.dataInicio) : null;
-  if (!descricao || (tipo !== 'Mensal' && tipo !== 'Anual') || typeof corpo.valor !== 'number' || !Number.isFinite(corpo.valor) || dataInicio == null) {
+  if (
+    !descricao ||
+    !fazenda ||
+    (tipo !== 'Mensal' && tipo !== 'Anual') ||
+    typeof corpo.valor !== 'number' ||
+    !Number.isFinite(corpo.valor) ||
+    dataInicio == null
+  ) {
     return null;
   }
   return {
     descricao,
     categoria: corpo.categoria ?? null,
-    fazenda: corpo.fazenda ?? null,
+    fazenda,
     tipo: tipo as TipoCusto,
     valor: corpo.valor,
     dataInicio,

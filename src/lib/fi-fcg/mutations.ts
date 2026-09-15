@@ -58,7 +58,8 @@ export async function excluirCategoriaCusto(id: string): Promise<boolean> {
 export interface DadosCusto {
   descricao: string;
   categoria: string | null;
-  fazenda: string | null;
+  /** Obrigatória (16/09/2026) — todo custo é de uma fazenda específica, nunca "Geral"/toda a operação. */
+  fazenda: string;
   tipo: TipoCusto;
   valor: number;
   dataInicio: DiaCompacto;
