@@ -28,9 +28,21 @@ import { media } from '@/lib/painel/agregacao';
 import { diasEntre } from '@/lib/painel/format';
 import type { DiaCompacto, RegRebanho } from './types';
 
-/** Não está na venda/baixa — mesmo conceito de `vivo()` em RebanhoView.tsx (duplicado aqui porque este arquivo é lib pura, sem depender de um Client Component). */
-function vivo(a: RegRebanho): boolean {
-  return a.categoria !== 'Venda' && a.categoria !== 'Baixa';
+/** "Categoria" manda — nunca `Status` (ver comentário no topo do arquivo). Mesmo conceito de `vivo()` em RebanhoView.tsx (duplicado aqui porque este arquivo é lib pura, sem depender de um Client Component). */
+function situacaoDoAnimal(a: RegRebanho): 'ativo' | 'vendido' | 'baixado' {
+  if (a.categoria === 'Venda') return 'vendido';
+  if (a.categoria === 'Baixa') return 'baixado';
+  return 'ativo';
+}
+
+export interface AnimalDoLote {
+  id: string;
+  categoria: string | null;
+  situacao: 'ativo' | 'vendido' | 'baixado';
+  /** Só costuma vir preenchida quando `situacao === 'baixado'` (Morte/Matula/...). */
+  causaBaixa: string | null;
+  gmdAtual: number | null;
+  pesoEntradaEngorda: number | null;
 }
 
 export interface LoteEngorda {
@@ -43,10 +55,14 @@ export interface LoteEngorda {
   total: number;
   /** Quantos do cohort ainda não saíram do rebanho (Categoria ∉ {Venda, Baixa}) — não usa `Status`, ver comentário no topo do arquivo. */
   ativos: number;
+  vendidos: number;
+  baixados: number;
   /** Quantos do cohort têm GMD atual > 0 — a base de `gmdMedio` (repesagens desatualizadas ficam de fora). */
   comGmd: number;
   gmdMedio: number | null;
   pesoEntradaMedio: number | null;
+  /** Pra "abrir" o lote e ver animal por animal — quem vendeu, quem baixou, quem continua. */
+  animais: AnimalDoLote[];
 }
 
 /** "aaaammdd" => "d.m.aa" (dia/mês sem zero à esquerda, ano com 2 dígitos) — ex.: 20260423 => "23.4.26". */
@@ -81,16 +97,27 @@ export function montarLotesEngorda(animais: RegRebanho[], hoje: DiaCompacto): Lo
     const fazenda = lista[0].fazenda as string;
     const entrada = lista[0].entradaEngorda as DiaCompacto;
     const gmdValores = lista.map((a) => a.gmdAtual).filter((v): v is number => v != null && v > 0);
+    const animais: AnimalDoLote[] = lista.map((a) => ({
+      id: a.id,
+      categoria: a.categoria,
+      situacao: situacaoDoAnimal(a),
+      causaBaixa: a.causaBaixa,
+      gmdAtual: a.gmdAtual,
+      pesoEntradaEngorda: a.pesoEntradaEngorda,
+    }));
     return {
       nome: nomeDoLote(lista, entrada),
       fazenda,
       entrada,
       diasDesdeEntrada: diasEntre(entrada, hoje),
       total: lista.length,
-      ativos: lista.filter(vivo).length,
+      ativos: animais.filter((a) => a.situacao === 'ativo').length,
+      vendidos: animais.filter((a) => a.situacao === 'vendido').length,
+      baixados: animais.filter((a) => a.situacao === 'baixado').length,
       comGmd: gmdValores.length,
       gmdMedio: media(gmdValores),
       pesoEntradaMedio: media(lista.map((a) => a.pesoEntradaEngorda)),
+      animais,
     };
   });
 

@@ -1,7 +1,8 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { TrendingDown } from 'lucide-react';
+import { ChevronDown, ChevronUp, TrendingDown } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MetricCard } from '@/components/painel/MetricCard';
@@ -15,9 +16,20 @@ import { media, soma } from '@/lib/painel/agregacao';
 import { comparadorDataDesc, dentroFaixa, filtrarPor, opcoesExcluindo, type Condicao } from '@/lib/painel/filters';
 import { desempacotar } from '@/lib/painel/pacote';
 import { formatCompacto, formatDia, formatNumber, hojeCompacto, numberBounds } from '@/lib/painel/format';
-import { montarLotesEngorda } from '@/lib/fi-fcg/engorda';
+import { montarLotesEngorda, type AnimalDoLote } from '@/lib/fi-fcg/engorda';
 import type { PacoteLeitura } from '@/lib/fi-fcg/pacotes';
 import type { RegPesagem, RegRebanho } from '@/lib/fi-fcg/types';
+
+const SITUACAO_LABEL: Record<AnimalDoLote['situacao'], string> = {
+  ativo: 'Ativo',
+  vendido: 'Vendido',
+  baixado: 'Baixado',
+};
+const SITUACAO_VARIANTE: Record<AnimalDoLote['situacao'], 'outline' | 'secondary' | 'destructive'> = {
+  ativo: 'outline',
+  vendido: 'secondary',
+  baixado: 'destructive',
+};
 
 export function PesagemView({
   dados,
@@ -64,6 +76,38 @@ export function PesagemView({
 
   const hoje = useMemo(() => hojeCompacto(), []);
   const lotesEngorda = useMemo(() => montarLotesEngorda(animaisEmEngorda, hoje), [animaisEmEngorda, hoje]);
+  const [lotesAbertos, setLotesAbertos] = useState<Set<string>>(new Set());
+  const alternarLote = (chave: string) =>
+    setLotesAbertos((atual) => {
+      const proximo = new Set(atual);
+      if (proximo.has(chave)) proximo.delete(chave);
+      else proximo.add(chave);
+      return proximo;
+    });
+
+  const colunasAnimalLote: DataTableColumn<AnimalDoLote>[] = [
+    { key: 'id', header: 'Animal', cell: (a) => a.id, sortValue: (a) => a.id },
+    {
+      key: 'situacao',
+      header: 'Situação',
+      cell: (a) => (
+        <span className="inline-flex items-center gap-2">
+          <Badge variant={SITUACAO_VARIANTE[a.situacao]}>{SITUACAO_LABEL[a.situacao]}</Badge>
+          {a.situacao === 'baixado' && a.causaBaixa && (
+            <span className="text-xs text-muted-foreground">{a.causaBaixa}</span>
+          )}
+        </span>
+      ),
+      sortValue: (a) => a.situacao,
+    },
+    { key: 'gmd', header: 'GMD atual', cell: (a) => formatNumber(a.gmdAtual), sortValue: (a) => a.gmdAtual },
+    {
+      key: 'pesoEntrada',
+      header: 'Peso entrada',
+      cell: (a) => formatNumber(a.pesoEntradaEngorda),
+      sortValue: (a) => a.pesoEntradaEngorda,
+    },
+  ];
 
   const colunas: DataTableColumn<RegPesagem>[] = [
     { key: 'id', header: 'Animal', cell: (r) => r.id, sortValue: (r) => r.id },
@@ -181,37 +225,69 @@ export function PesagemView({
             </p>
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {lotesEngorda.map((lote) => (
-                <div key={`${lote.fazenda}|${lote.entrada}`} className="rounded-xl border border-border bg-card p-5">
-                  <div className="flex items-baseline justify-between gap-2">
-                    <h3 className="text-sm font-medium text-foreground">{lote.nome}</h3>
-                    <span className="text-xs text-muted-foreground">{lote.fazenda}</span>
+              {lotesEngorda.map((lote) => {
+                const chave = `${lote.fazenda}|${lote.entrada}`;
+                const aberto = lotesAbertos.has(chave);
+                return (
+                  <div
+                    key={chave}
+                    className={`rounded-xl border border-border bg-card p-5 ${aberto ? 'sm:col-span-2 lg:col-span-3' : ''}`}
+                  >
+                    <div className="flex items-baseline justify-between gap-2">
+                      <h3 className="text-sm font-medium text-foreground">{lote.nome}</h3>
+                      <span className="text-xs text-muted-foreground">{lote.fazenda}</span>
+                    </div>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      Entrada {formatDia(lote.entrada)}
+                      {lote.diasDesdeEntrada != null && ` · ${formatNumber(lote.diasDesdeEntrada)} dias atrás`}
+                    </p>
+                    <div className="mt-4 grid grid-cols-2 gap-y-3">
+                      <div>
+                        <p className="text-xs text-muted-foreground">Animais</p>
+                        <p className="text-lg font-semibold tabular-nums">{formatNumber(lote.total)}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">Ainda em engorda</p>
+                        <p className="text-lg font-semibold tabular-nums">{formatNumber(lote.ativos)}</p>
+                        {(lote.vendidos > 0 || lote.baixados > 0) && (
+                          <p className="mt-0.5 flex flex-wrap gap-1">
+                            {lote.vendidos > 0 && (
+                              <Badge variant="secondary">{formatNumber(lote.vendidos)} vendidos</Badge>
+                            )}
+                            {lote.baixados > 0 && (
+                              <Badge variant="destructive">{formatNumber(lote.baixados)} baixados</Badge>
+                            )}
+                          </p>
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">GMD médio</p>
+                        <p className="text-lg font-semibold tabular-nums">{formatNumber(lote.gmdMedio)}</p>
+                        <p className="text-xs text-muted-foreground">{lote.comGmd} de {lote.total} pesados</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">Peso médio de entrada</p>
+                        <p className="text-lg font-semibold tabular-nums">{formatNumber(lote.pesoEntradaMedio)}</p>
+                      </div>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="mt-3 gap-1.5 text-muted-foreground"
+                      onClick={() => alternarLote(chave)}
+                    >
+                      {aberto ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
+                      {aberto ? 'Fechar acompanhamento' : `Ver os ${lote.total} animais`}
+                    </Button>
+                    {aberto && (
+                      <div className="mt-3">
+                        <DataTable columns={colunasAnimalLote} rows={lote.animais} rowKey={(a) => a.id} />
+                      </div>
+                    )}
                   </div>
-                  <p className="mt-0.5 text-xs text-muted-foreground">
-                    Entrada {formatDia(lote.entrada)}
-                    {lote.diasDesdeEntrada != null && ` · ${formatNumber(lote.diasDesdeEntrada)} dias atrás`}
-                  </p>
-                  <div className="mt-4 grid grid-cols-2 gap-y-3">
-                    <div>
-                      <p className="text-xs text-muted-foreground">Animais</p>
-                      <p className="text-lg font-semibold tabular-nums">{formatNumber(lote.total)}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Ainda em engorda</p>
-                      <p className="text-lg font-semibold tabular-nums">{formatNumber(lote.ativos)}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">GMD médio</p>
-                      <p className="text-lg font-semibold tabular-nums">{formatNumber(lote.gmdMedio)}</p>
-                      <p className="text-xs text-muted-foreground">{lote.comGmd} de {lote.total} pesados</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Peso médio de entrada</p>
-                      <p className="text-lg font-semibold tabular-nums">{formatNumber(lote.pesoEntradaMedio)}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </TabsContent>

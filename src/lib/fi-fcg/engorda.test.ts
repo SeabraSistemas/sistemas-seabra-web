@@ -64,6 +64,30 @@ describe('montarLotesEngorda', () => {
     assert.equal(lotes[0].ativos, 1); // so a2
   });
 
+  test('vendidos/baixados/animais: separa por situacao e carrega causaBaixa so pra quem baixou', () => {
+    const lotes = montarLotesEngorda(
+      [
+        animal({ id: 'a1', entradaEngorda: 20250801, fazenda: 'Inhumas', categoria: 'Bezerra' }),
+        animal({ id: 'a2', entradaEngorda: 20250801, fazenda: 'Inhumas', categoria: 'Venda' }),
+        animal({ id: 'a3', entradaEngorda: 20250801, fazenda: 'Inhumas', categoria: 'Baixa', causaBaixa: 'Morte' }),
+      ],
+      20260101,
+    );
+    const lote = lotes[0];
+    assert.equal(lote.ativos, 1);
+    assert.equal(lote.vendidos, 1);
+    assert.equal(lote.baixados, 1);
+    assert.equal(lote.animais.length, 3);
+    assert.deepEqual(
+      lote.animais.map((a) => [a.id, a.situacao, a.causaBaixa]).sort(),
+      [
+        ['a1', 'ativo', null],
+        ['a2', 'vendido', null],
+        ['a3', 'baixado', 'Morte'],
+      ].sort(),
+    );
+  });
+
   test('gmdMedio/comGmd ignoram null e <=0 (repesagem desatualizada nao conta como "com GMD")', () => {
     const lotes = montarLotesEngorda(
       [

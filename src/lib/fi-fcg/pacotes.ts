@@ -133,6 +133,7 @@ export const CAMPOS_REBANHO_ENGORDA: (keyof RegRebanho & string)[] = [
   'id',
   'fazenda',
   'categoria',
+  'causaBaixa',
   'status',
   'lote',
   'entradaEngorda',
