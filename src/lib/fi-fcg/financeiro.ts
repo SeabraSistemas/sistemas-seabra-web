@@ -30,6 +30,12 @@
  *   sem valor também estão sem Categoria — é por isso que o AppSheet não
  *   calculou sozinho). Baixa com categoria própria já é valorada pelo
  *   AppSheet, nunca é reestimada aqui.
+ * - 16/09: 63 vendas cujo "ID animal" não bate com NADA (nem RebanhoProd,
+ *   nem Baixa/Aborto/Parto) — brinco de sistema antigo, sem Sexo/
+ *   Nascimento em lugar nenhum pra reconstruir. Decisão do Felipe: não
+ *   trazer pro Financeiro (nem contado, nem em "A conferir") — a linha
+ *   continua intacta na planilha, só não entra no painel (ver
+ *   `removerVendasSemRastro`).
  */
 import { diasEntre } from '@/lib/painel/format';
 import type { CategoriaArroba, DiaCompacto, LancamentoFinanceiro, RegAborto, RegBaixa, RegRebanho, RegVenda } from './types';
@@ -217,6 +223,29 @@ export function removerVendasDuplicadas(vendas: RegVenda[]): RegVenda[] {
   return resultado;
 }
 
+/**
+ * Remove Venda sem valor bom E sem QUALQUER rastro no rebanho — investigado
+ * ao vivo (16/09/2026): 63 vendas com "ID animal" que não bate com nenhum
+ * animal em RebanhoProd (nem por ID, eletrônica ou marca), nem aparece em
+ * Baixa/Aborto/Parto. São código curto de brinco antigo (2 a 5 dígitos),
+ * de antes do sistema atual — sem Sexo/Nascimento em lugar nenhum, não tem
+ * como estimar nada, e o Felipe decidiu (16/09) não trazer isso pro
+ * Financeiro nem contado nem em "A conferir" (a linha continua intacta na
+ * planilha). Só filtra quando REALMENTE não achou o animal — uma venda com
+ * valor bom, ou cujo animal existe mas só não tem preço de categoria (não
+ * é mais o caso hoje, ver preço derivado da Recria), continua entrando.
+ */
+export function removerVendasSemRastro(
+  vendas: RegVenda[],
+  rebanhoPorId: Map<string, { sexo: string | null; nascimento: DiaCompacto | null }>,
+): RegVenda[] {
+  return vendas.filter((v) => {
+    if (classificarValorVenda(v.valor) === 'ok') return true;
+    const animal = v.idAnimal ? rebanhoPorId.get(v.idAnimal.trim().toLowerCase()) : undefined;
+    return animal != null;
+  });
+}
+
 /** Monta os eventos SEM conciliação ainda. `rebanhoPorId`/`precosPorCategoria` só valem pra Venda (ver `estimarValorVenda`). */
 function montarBase(
   vendasBrutas: RegVenda[],
@@ -225,7 +254,7 @@ function montarBase(
   rebanhoPorId: Map<string, { sexo: string | null; nascimento: DiaCompacto | null }>,
   precosPorCategoria: Map<string, number>,
 ): EventoBase[] {
-  const vendas = removerVendasDuplicadas(vendasBrutas);
+  const vendas = removerVendasSemRastro(removerVendasDuplicadas(vendasBrutas), rebanhoPorId);
   const deVendas = vendas.map((v) => {
     const statusValorVenda = classificarValorVenda(v.valor);
     const animal = v.idAnimal ? rebanhoPorId.get(v.idAnimal.trim().toLowerCase()) : undefined;
@@ -414,7 +443,12 @@ export interface ResumoFinanceiro {
   vendasRegistradas: number;
   /** Venda sem valor bom, mas com categoria+preço estimável (idade × sexo na data da venda). */
   vendasEstimadas: number;
-  /** Venda sem valor bom E sem como estimar — só resta o animal não achado no rebanho (sem ele não dá nem pra saber sexo/idade). */
+  /**
+   * Venda sem valor bom E sem como estimar apesar de o animal ter sido
+   * achado no rebanho (ex: Sexo inválido) — as vendas de animal NÃO achado
+   * no rebanho nem chegam a virar evento (ver `removerVendasSemRastro`),
+   * então normalmente este número é 0.
+   */
   vendasSemValor: number;
   vendasComPeso: number;
   kgVendidos: number;

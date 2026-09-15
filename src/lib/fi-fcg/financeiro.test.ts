@@ -12,6 +12,7 @@ import {
   receitaMensal,
   receitaPor,
   removerVendasDuplicadas,
+  removerVendasSemRastro,
   resumoFinanceiro,
   VALOR_ABORTO_PADRAO,
   type EventoBase,
@@ -241,14 +242,12 @@ describe('valorMetrica por tipo (via montarEventos)', () => {
     assert.equal(eventos[0].origemValor, 'estimado');
   });
 
-  test('Venda sem valor e animal nao encontrado no rebanho: sem estimativa possivel', () => {
+  test('Venda sem valor e animal nao encontrado no rebanho: nem vira evento (removerVendasSemRastro)', () => {
     const { eventos } = montarEventos(
       [venda({ id: 'v1', idAnimal: 'nao-existe', data: 20250411, valor: null })],
       [], [], [], [], PRECOS,
     );
-    assert.equal(eventos[0].categoriaEstimada, null);
-    assert.equal(eventos[0].valorMetrica, null);
-    assert.equal(eventos[0].origemValor, 'sem-valor');
+    assert.equal(eventos.length, 0);
   });
 
   test('Venda de fêmea na faixa "Recria": montarEventos (fim a fim) usa o preço DERIVADO (média Bezerra/Novilha), diferente de estimarValorVenda isolado', () => {
@@ -335,7 +334,9 @@ describe('resumoFinanceiro', () => {
       [
         venda({ id: 'v1', idAnimal: '1', data: 20241001, valor: 3264 }), // ok -> registrada
         venda({ id: 'v2', idAnimal: '2', data: 20250411, valor: 290, pesoKg: 470 }), // vira estimada
-        venda({ id: 'v3', idAnimal: 'sumido', data: 20241002, valor: null }), // sem estimativa
+        // v3 (idAnimal 'sumido', sem valor, animal não existe no rebanho) nem
+        // vira evento — ver describe('removerVendasSemRastro').
+        venda({ id: 'v3', idAnimal: 'sumido', data: 20241002, valor: null }),
       ],
       [baixa({ id: 'b1', tipo: 'Morte', data: 20241003, valor: 1000 })],
       [aborto({ id: 'a1', idAnimal: 'x', data: 20241004 })],
@@ -344,10 +345,10 @@ describe('resumoFinanceiro', () => {
       PRECOS,
     );
     const r = resumoFinanceiro(eventos);
-    assert.equal(r.cabecasVendidas, 3);
+    assert.equal(r.cabecasVendidas, 2);
     assert.equal(r.vendasRegistradas, 1);
     assert.equal(r.vendasEstimadas, 1);
-    assert.equal(r.vendasSemValor, 1);
+    assert.equal(r.vendasSemValor, 0);
     assert.equal(r.vendasComPeso, 1);
     assert.equal(r.receitaRegistrada, 3264);
     assert.equal(r.receitaEstimada, 3840);
@@ -432,27 +433,51 @@ describe('removerVendasDuplicadas', () => {
   });
 });
 
+describe('removerVendasSemRastro', () => {
+  const rebanhoPorId = new Map([['1', { sexo: 'Macho', nascimento: 20200101 }]]);
+
+  test('mantém venda com valor bom mesmo se o animal não existir no rebanho', () => {
+    const vendas = [venda({ id: 'v1', idAnimal: 'nao-existe', valor: 3264 })];
+    assert.deepEqual(removerVendasSemRastro(vendas, rebanhoPorId).map((v) => v.id), ['v1']);
+  });
+
+  test('mantém venda sem valor bom quando o animal EXISTE no rebanho (dá pra estimar)', () => {
+    const vendas = [venda({ id: 'v1', idAnimal: '1', valor: null })];
+    assert.deepEqual(removerVendasSemRastro(vendas, rebanhoPorId).map((v) => v.id), ['v1']);
+  });
+
+  test('remove venda sem valor bom E sem o animal no rebanho', () => {
+    const vendas = [venda({ id: 'v1', idAnimal: 'nao-existe', valor: null })];
+    assert.deepEqual(removerVendasSemRastro(vendas, rebanhoPorId), []);
+  });
+
+  test('venda sem idAnimal nenhum e sem valor bom também é removida', () => {
+    const vendas = [venda({ id: 'v1', idAnimal: null, valor: null })];
+    assert.deepEqual(removerVendasSemRastro(vendas, rebanhoPorId), []);
+  });
+});
+
 describe('aConferir', () => {
-  test('venda substituida por estimativa, venda sem estimativa, venda sem peso, data futura, baixa sem valor, sem-lancamento, orfao', () => {
+  test('venda sem rastro nem vira evento (nao entra em A conferir); baixa sem valor, data futura, sem-lancamento, orfao continuam', () => {
     const { eventos, orfaos } = montarEventos(
       [
-        venda({ id: 'v1', idAnimal: '1', data: 20241001, valor: null, pesoKg: null }), // sem estimativa (animal nao cadastrado)
+        // idAnimal '1' não existe em rebanho ([] abaixo) => removerVendasSemRastro
+        // já filtra, nem chega a virar evento — não aparece em A conferir.
+        venda({ id: 'v1', idAnimal: '1', data: 20241001, valor: null, pesoKg: null }),
       ],
       [baixa({ id: 'b1', idAnimal: '2', tipo: 'Morte', data: 20990101, valor: null })],
       [],
       [lanc({ id: 'f1', identificacao: '999', descricao: 'Venda', valor: 100, data: 20241001 })],
       [], PRECOS,
     );
+    assert.equal(eventos.length, 1); // só a baixa b1 — v1 foi filtrada
     const itens = aConferir(eventos, orfaos, 20260101);
     const problemas = itens.map((i) => i.problema).sort();
     assert.deepEqual(problemas, [
       'baixa-sem-valor',
       'data-invalida-ou-futura',
-      'lancamento-orfao',
-      'sem-lancamento', // a venda v1
+      'lancamento-orfao', // f1, que nunca bateria com v1 mesmo (identificacao diferente)
       'sem-lancamento', // a baixa b1
-      'venda-sem-estimativa',
-      'venda-sem-peso',
     ].sort());
   });
 
