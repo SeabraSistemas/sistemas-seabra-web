@@ -13,7 +13,7 @@ export default async function FiFcgAppLayout({ children }: { children: React.Rea
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
-      <PainelNav titulo="FI_FCG" links={LINKS} usuario={usuario} logoutHref="/FI_FCG/api/logout" />
+      <PainelNav titulo="FI · FCG" links={LINKS} usuario={usuario} logoutHref="/FI_FCG/api/logout" />
       <main className="mt-6">{children}</main>
     </div>
   );
