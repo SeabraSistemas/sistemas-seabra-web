@@ -256,19 +256,12 @@ export function FinanceiroView({ dados }: { dados: PacoteFinanceiro }) {
           detalhe={`registrado ${formatNumber(resumo.vendasRegistradas)} · estimado ${formatNumber(resumo.vendasEstimadas)} · sem valor ${formatNumber(resumo.vendasSemValor)}`}
         />
         <MetricCard
-          id="kgVendidos"
-          label="Kg vendidos"
-          value={formatNumber(resumo.kgVendidos)}
-          detalhe={`com peso ${formatNumber(resumo.vendasComPeso)} de ${formatNumber(resumo.cabecasVendidas)}`}
-        />
-        <MetricCard
           id="receita"
           label="Receita (registrado + estimado)"
           value={formatMoeda(resumo.receitaTotal)}
           detalhe={`registrada ${formatMoeda(resumo.receitaRegistrada)} + estimada ${formatMoeda(resumo.receitaEstimada)}`}
           tom="bom"
         />
-        <MetricCard id="ticket" label="Ticket médio" value={formatMoeda(resumo.ticketMedio)} />
         <MetricCard
           id="perdas"
           label="Perdas registradas"
@@ -276,7 +269,7 @@ export function FinanceiroView({ dados }: { dados: PacoteFinanceiro }) {
           detalhe={`Morte/Matula ${formatMoeda(resumo.perdasMorteMatula)} + Aborto ${formatMoeda(resumo.perdasAborto)}`}
           tom="ruim"
         />
-        <MetricCard id="baixadas" label="Cabeças baixadas" value={formatNumber(resumo.cabecasBaixadas)} />
+        <MetricCard id="baixadas" label="Baixas" value={formatNumber(resumo.cabecasBaixadas)} />
         <MetricCard id="abortos" label="Abortos" value={formatNumber(resumo.abortos)} />
         <MetricCard
           id="custosPeriodo"
@@ -323,7 +316,7 @@ export function FinanceiroView({ dados }: { dados: PacoteFinanceiro }) {
               />
             </div>
             <div className="rounded-xl border border-border bg-card p-5">
-              <h3 className="mb-4 text-sm font-medium text-muted-foreground">Vendidas × Baixadas (cabeças), por mês</h3>
+              <h3 className="mb-4 text-sm font-medium text-muted-foreground">Vendas e Baixas (cabeças), por mês</h3>
               <SerieMensal
                 series={[
                   { chave: 'vendidas', nome: 'Vendidas', cor: '#3987e5', pontos: serieVendidas },
