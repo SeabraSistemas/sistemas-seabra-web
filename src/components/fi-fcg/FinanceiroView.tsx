@@ -11,6 +11,7 @@ import { FilterPeriodo } from '@/components/painel/FilterPeriodo';
 import { CsvExport, type CsvColumn } from '@/components/painel/CsvExport';
 import { EstadoCarga } from '@/components/painel/EstadoCarga';
 import { CustosPainel } from '@/components/fi-fcg/CustosPainel';
+import { CustoFormacaoPainel } from '@/components/fi-fcg/CustoFormacaoPainel';
 import { dentroPeriodo, filtrarPor, opcoesExcluindo, type Condicao } from '@/lib/painel/filters';
 import { desempacotar } from '@/lib/painel/pacote';
 import { anosPresentes, diaDeInput, formatDia, formatMoeda, formatNumber, formatPct, hojeCompacto } from '@/lib/painel/format';
@@ -28,7 +29,7 @@ import {
   type ProblemaFin,
 } from '@/lib/fi-fcg/financeiro';
 import type { PacoteFinanceiro } from '@/lib/fi-fcg/pacotes';
-import type { CategoriaCusto, Custo, LancamentoFinanceiro } from '@/lib/fi-fcg/types';
+import type { CategoriaCusto, Custo, GmdCategoria, Insumo, ItemDieta, LancamentoFinanceiro } from '@/lib/fi-fcg/types';
 
 const PROBLEMA_LABEL: Record<ProblemaFin, string> = {
   'venda-sem-estimativa': 'Venda sem valor e sem estimativa possível',
@@ -56,6 +57,9 @@ export function FinanceiroView({ dados }: { dados: PacoteFinanceiro }) {
   const orfaos = useMemo(() => desempacotar<LancamentoFinanceiro>(dados.orfaos), [dados.orfaos]);
   const custos = useMemo(() => desempacotar<Custo>(dados.custos), [dados.custos]);
   const categoriasCusto = useMemo(() => desempacotar<CategoriaCusto>(dados.categoriasCusto), [dados.categoriasCusto]);
+  const insumos = useMemo(() => desempacotar<Insumo>(dados.insumos), [dados.insumos]);
+  const itensDieta = useMemo(() => desempacotar<ItemDieta>(dados.dieta), [dados.dieta]);
+  const gmdCategoria = useMemo(() => desempacotar<GmdCategoria>(dados.gmdCategoria), [dados.gmdCategoria]);
   const hoje = useMemo(() => hojeCompacto(), []);
 
   const [fazenda, setFazenda] = useState('');
@@ -311,6 +315,7 @@ export function FinanceiroView({ dados }: { dados: PacoteFinanceiro }) {
           <TabsTrigger value="perdas">Perdas</TabsTrigger>
           <TabsTrigger value="conferir">A conferir{conferir.length > 0 ? ` (${conferir.length})` : ''}</TabsTrigger>
           <TabsTrigger value="custos">Custos</TabsTrigger>
+          <TabsTrigger value="formacao">Custo de formação</TabsTrigger>
         </TabsList>
 
         <TabsContent value="resumo" className="flex flex-col gap-6">
@@ -414,6 +419,17 @@ export function FinanceiroView({ dados }: { dados: PacoteFinanceiro }) {
             categorias={categoriasCusto}
             hoje={hoje}
             fazendas={todasFazendas}
+          />
+        </TabsContent>
+
+        <TabsContent value="formacao">
+          <CustoFormacaoPainel
+            fazendas={todasFazendas}
+            funisPorFazenda={dados.funisPorFazenda}
+            gmdCategoria={gmdCategoria}
+            gmdSugerido={dados.gmdSugerido}
+            insumos={insumos}
+            dieta={itensDieta}
           />
         </TabsContent>
       </Tabs>

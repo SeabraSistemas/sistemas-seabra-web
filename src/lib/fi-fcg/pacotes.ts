@@ -11,6 +11,9 @@ import type { Leitura } from './queries';
 import type {
   CategoriaCusto,
   Custo,
+  GmdCategoria,
+  Insumo,
+  ItemDieta,
   RegBaixa,
   RegIatf,
   RegParto,
@@ -22,6 +25,7 @@ import type {
   RegAborto,
 } from './types';
 import type { EventoFin } from './financeiro';
+import type { FunilCalculado } from './custoFormacao';
 
 export interface PacoteLeitura<T extends object> {
   pacote: Pacote<T>;
@@ -181,6 +185,12 @@ export const CAMPOS_CUSTO: (keyof Custo & string)[] = [
   'observacao',
 ];
 
+export const CAMPOS_INSUMO: (keyof Insumo & string)[] = ['id', 'nome', 'tipo', 'valorKg'];
+
+export const CAMPOS_ITEM_DIETA: (keyof ItemDieta & string)[] = ['id', 'categoria', 'insumo', 'kgDia'];
+
+export const CAMPOS_GMD_CATEGORIA: (keyof GmdCategoria & string)[] = ['id', 'categoria', 'gmdKgDia'];
+
 export const CAMPOS_EVENTO: (keyof EventoFin & string)[] = [
   'origem',
   'tipo',
@@ -204,19 +214,33 @@ export const CAMPOS_EVENTO: (keyof EventoFin & string)[] = [
 
 /**
  * Prop empacotada da página Financeiro — diferente das outras páginas
- * (`PacoteLeitura<T>`, uma leitura só) porque aqui o servidor já combina 8
+ * (`PacoteLeitura<T>`, uma leitura só) porque aqui o servidor já combina 11
  * abas (Venda, Baixa, Aborto, Financeiro, RebanhoProd, Categoria@, Custos,
- * Categorias de Custo) em `eventos` + `orfaos` via `montarEventos`
- * (financeiro.ts) ANTES de empacotar — RebanhoProd/Categoria@ só entram pra
- * CALCULAR categoriaEstimada/valorEstimado no servidor; o cliente nunca vê
- * essas duas abas, só o resultado já pronto em cada evento. `custos` e
+ * Categorias de Custo, Insumos, Dieta por Categoria, GMD por Categoria) em
+ * `eventos` + `orfaos` via `montarEventos` (financeiro.ts) ANTES de
+ * empacotar — RebanhoProd/Categoria@ só entram pra CALCULAR
+ * categoriaEstimada/valorEstimado no servidor; o cliente nunca vê essas
+ * duas abas, só o resultado já pronto em cada evento. `custos` e
  * `categoriasCusto` já vêm prontos (não precisam de conciliação nenhuma).
+ *
+ * `funisPorFazenda` (Custo de formação, 16/09/2026) é a mesma lógica:
+ * `calcularFunis` já roda no servidor (precisa de RebanhoProd inteiro pro
+ * efetivo/rateio de custo fixo — não vale a pena mandar pro cliente), um
+ * item por Fazenda (`null` = consolidado, todas) pra trocar sem re-buscar.
+ * `gmdSugerido` é a sugestão de GMD por categoria (Pesagem/Lotes de
+ * engorda) pra pré-preencher "GMD por Categoria" — pequeno, não precisa de
+ * `Pacote<T>`.
  */
 export interface PacoteFinanceiro {
   eventos: Pacote<EventoFin>;
   orfaos: Pacote<LancamentoFinanceiro>;
   custos: Pacote<Custo>;
   categoriasCusto: Pacote<CategoriaCusto>;
+  insumos: Pacote<Insumo>;
+  dieta: Pacote<ItemDieta>;
+  gmdCategoria: Pacote<GmdCategoria>;
+  gmdSugerido: [string, number][];
+  funisPorFazenda: { fazenda: string | null; funis: FunilCalculado[] }[];
   configurado: boolean;
   stale: boolean;
   carregadoEm: number | null;

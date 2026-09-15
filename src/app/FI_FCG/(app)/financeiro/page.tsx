@@ -1,13 +1,36 @@
 import { FinanceiroView } from '@/components/fi-fcg/FinanceiroView';
 import { montarEventos } from '@/lib/fi-fcg/financeiro';
-import { CAMPOS_CATEGORIA_CUSTO, CAMPOS_CUSTO, CAMPOS_EVENTO, CAMPOS_FINANCEIRO, type PacoteFinanceiro } from '@/lib/fi-fcg/pacotes';
+import { FUNIS_BOVINO, calcularFunis, gmdSugeridoPorCategoria } from '@/lib/fi-fcg/custoFormacao';
+import {
+  CAMPOS_CATEGORIA_CUSTO,
+  CAMPOS_CUSTO,
+  CAMPOS_EVENTO,
+  CAMPOS_FINANCEIRO,
+  CAMPOS_GMD_CATEGORIA,
+  CAMPOS_ITEM_DIETA,
+  CAMPOS_INSUMO,
+  type PacoteFinanceiro,
+} from '@/lib/fi-fcg/pacotes';
 import { getDadosFinanceiro } from '@/lib/fi-fcg/queries';
 import { exigirSessao } from '@/lib/fi-fcg/sessao';
 import { empacotar } from '@/lib/painel/pacote';
+import { hojeCompacto } from '@/lib/painel/format';
 
 export default async function FinanceiroPage() {
   await exigirSessao();
-  const { vendas, baixas, abortos, lancamentos, rebanho, categoriaArroba, custos, categoriasCusto } = await getDadosFinanceiro();
+  const {
+    vendas,
+    baixas,
+    abortos,
+    lancamentos,
+    rebanho,
+    categoriaArroba,
+    custos,
+    categoriasCusto,
+    insumos,
+    dieta,
+    gmdCategoria,
+  } = await getDadosFinanceiro();
   const { eventos, orfaos } = montarEventos(
     vendas.itens,
     baixas.itens,
@@ -17,7 +40,37 @@ export default async function FinanceiroPage() {
     categoriaArroba.itens,
   );
 
-  const todas = [vendas, baixas, abortos, lancamentos, rebanho, categoriaArroba, custos, categoriasCusto];
+  const hoje = hojeCompacto();
+  const fazendas = Array.from(new Set(rebanho.itens.map((r) => r.fazenda).filter((f): f is string => !!f))).sort();
+  const funisPorFazenda = [null, ...fazendas].map((fazenda) => ({
+    fazenda,
+    funis: calcularFunis(
+      FUNIS_BOVINO,
+      custos.itens,
+      rebanho.itens,
+      fazenda,
+      categoriaArroba.itens,
+      insumos.itens,
+      dieta.itens,
+      gmdCategoria.itens,
+      hoje,
+    ),
+  }));
+  const gmdSugerido = Array.from(gmdSugeridoPorCategoria(rebanho.itens).entries());
+
+  const todas = [
+    vendas,
+    baixas,
+    abortos,
+    lancamentos,
+    rebanho,
+    categoriaArroba,
+    custos,
+    categoriasCusto,
+    insumos,
+    dieta,
+    gmdCategoria,
+  ];
   const carregadoEm = todas
     .map((l) => l.carregadoEm)
     .filter((v): v is number => v != null)
@@ -28,6 +81,11 @@ export default async function FinanceiroPage() {
     orfaos: empacotar(orfaos, CAMPOS_FINANCEIRO),
     custos: empacotar(custos.itens, CAMPOS_CUSTO),
     categoriasCusto: empacotar(categoriasCusto.itens, CAMPOS_CATEGORIA_CUSTO),
+    insumos: empacotar(insumos.itens, CAMPOS_INSUMO),
+    dieta: empacotar(dieta.itens, CAMPOS_ITEM_DIETA),
+    gmdCategoria: empacotar(gmdCategoria.itens, CAMPOS_GMD_CATEGORIA),
+    gmdSugerido,
+    funisPorFazenda,
     configurado: vendas.configurado,
     stale: todas.some((l) => l.stale),
     carregadoEm,

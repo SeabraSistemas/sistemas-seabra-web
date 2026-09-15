@@ -194,3 +194,38 @@ export interface Custo {
   dataFim: DiaCompacto | null;
   observacao: string | null;
 }
+
+/**
+ * As 3 abas do "Custo de formação" (nova, 16/09/2026 — réplica adaptada do
+ * motor de custo de formação do seabra-app-main, que existe lá só pra
+ * caprino/ovino de corte e produz R$/kg vivo, não R$/@; aqui é pra bovino
+ * de corte e produz R$/@, usando `Categoria@` como peso-alvo de cada
+ * categoria do funil). Nenhuma das 3 é do AppSheet do cliente.
+ */
+export interface Insumo {
+  id: string;
+  nome: string;
+  /** Livre — só organiza a lista (ex.: "Concentrado", "Volumoso", "Sal mineral"), não entra na conta. */
+  tipo: string | null;
+  valorKg: number | null;
+}
+
+/** Uma linha "esta Categoria consome X kg/dia deste Insumo" — a dieta de uma categoria é a soma de todas as suas linhas. */
+export interface ItemDieta {
+  id: string;
+  categoria: string | null;
+  insumo: string | null;
+  kgDia: number | null;
+}
+
+/**
+ * GMD (kg/dia) editável por categoria do funil — 7 linhas fixas, semeadas
+ * uma vez (Bezerro/Bezerra/Garrote/Novilha/Boi/Vaca/Touro). `gmdKgDia` null
+ * = sem valor editado ainda; a tela sugere a média real (Pesagem/Lotes de
+ * engorda) quando existir, mas só GRAVA aqui quando o usuário confirma.
+ */
+export interface GmdCategoria {
+  id: string;
+  categoria: string | null;
+  gmdKgDia: number | null;
+}

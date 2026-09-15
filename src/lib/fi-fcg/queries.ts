@@ -8,8 +8,11 @@ import {
   mapCategoriaArroba,
   mapCategoriasCusto,
   mapCustos,
+  mapDieta,
   mapFinanceiro,
+  mapGmdCategoria,
   mapIatf,
+  mapInsumos,
   mapPartos,
   mapPesagem,
   mapRebanho,
@@ -20,6 +23,9 @@ import type {
   CategoriaArroba,
   CategoriaCusto,
   Custo,
+  GmdCategoria,
+  Insumo,
+  ItemDieta,
   LancamentoFinanceiro,
   RegAborto,
   RegBaixa,
@@ -165,6 +171,24 @@ export async function getCustos(): Promise<Leitura<Custo>> {
   return { itens: mapCustos(linhas), configurado: spreadsheetId() != null, stale, carregadoEm };
 }
 
+/** Aba "Insumos" (nova, 16/09/2026 — Custo de formação). Sem cache — ver `lerAbaFresca`. */
+export async function getInsumos(): Promise<Leitura<Insumo>> {
+  const { linhas, stale, carregadoEm } = await lerAbaFresca('Insumos');
+  return { itens: mapInsumos(linhas), configurado: spreadsheetId() != null, stale, carregadoEm };
+}
+
+/** Aba "Dieta por Categoria" (nova, 16/09/2026 — Custo de formação). Sem cache — ver `lerAbaFresca`. */
+export async function getDieta(): Promise<Leitura<ItemDieta>> {
+  const { linhas, stale, carregadoEm } = await lerAbaFresca('Dieta por Categoria');
+  return { itens: mapDieta(linhas), configurado: spreadsheetId() != null, stale, carregadoEm };
+}
+
+/** Aba "GMD por Categoria" (nova, 16/09/2026 — Custo de formação). Sem cache — ver `lerAbaFresca`. */
+export async function getGmdCategoria(): Promise<Leitura<GmdCategoria>> {
+  const { linhas, stale, carregadoEm } = await lerAbaFresca('GMD por Categoria');
+  return { itens: mapGmdCategoria(linhas), configurado: spreadsheetId() != null, stale, carregadoEm };
+}
+
 /**
  * Tudo que a página Financeiro precisa, numa só leva. RebanhoProd e
  * Categoria@ entram aqui (mesmo cache por aba do Rebanho — se a página
@@ -176,7 +200,19 @@ export async function getCustos(): Promise<Leitura<Custo>> {
  * só recebe o valor já calculado (ver montarEventos em financeiro.ts).
  */
 export async function getDadosFinanceiro() {
-  const [vendas, baixas, abortos, lancamentos, rebanho, categoriaArroba, custos, categoriasCusto] = await Promise.all([
+  const [
+    vendas,
+    baixas,
+    abortos,
+    lancamentos,
+    rebanho,
+    categoriaArroba,
+    custos,
+    categoriasCusto,
+    insumos,
+    dieta,
+    gmdCategoria,
+  ] = await Promise.all([
     getVendas(),
     getBaixas(),
     getAbortos(),
@@ -185,8 +221,11 @@ export async function getDadosFinanceiro() {
     getCategoriaArroba(),
     getCustos(),
     getCategoriasCusto(),
+    getInsumos(),
+    getDieta(),
+    getGmdCategoria(),
   ]);
-  return { vendas, baixas, abortos, lancamentos, rebanho, categoriaArroba, custos, categoriasCusto };
+  return { vendas, baixas, abortos, lancamentos, rebanho, categoriaArroba, custos, categoriasCusto, insumos, dieta, gmdCategoria };
 }
 
 /** Usado por POST /FI_FCG/api/atualizar — limpa tudo do FI_FCG pro botão "Atualizar" forçar releitura. */

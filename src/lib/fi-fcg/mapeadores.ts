@@ -10,6 +10,9 @@ import type {
   CategoriaArroba,
   CategoriaCusto,
   Custo,
+  GmdCategoria,
+  Insumo,
+  ItemDieta,
   LancamentoFinanceiro,
   RegAborto,
   RegBaixa,
@@ -257,6 +260,41 @@ export function mapCustos(rows: string[][] | null): Custo[] {
       dataInicio: diaDe(r['Data início']),
       dataFim: diaDe(r['Data fim']),
       observacao: parseText(r['Observação']),
+    }))
+    .filter((x) => x.id !== '');
+}
+
+/** Aba "Insumos" (nova, 16/09/2026 — Custo de formação). Valor sempre em R$ formatado, mesmo padrão de Custos. */
+export function mapInsumos(rows: string[][] | null): Insumo[] {
+  return toObjects(rows)
+    .map((r) => ({
+      id: parseText(r['ID']) ?? '',
+      nome: parseText(r['Nome']) ?? '',
+      tipo: parseText(r['Tipo']),
+      valorKg: parseMoeda(r['Valor por kg']),
+    }))
+    .filter((x) => x.id !== '' && x.nome !== '');
+}
+
+/** Aba "Dieta por Categoria" (nova, 16/09/2026 — Custo de formação). Uma linha = 1 insumo na dieta de 1 categoria. */
+export function mapDieta(rows: string[][] | null): ItemDieta[] {
+  return toObjects(rows)
+    .map((r) => ({
+      id: parseText(r['ID']) ?? '',
+      categoria: parseText(r['Categoria']),
+      insumo: parseText(r['Insumo']),
+      kgDia: parseNumber(r['Kg por dia']),
+    }))
+    .filter((x) => x.id !== '');
+}
+
+/** Aba "GMD por Categoria" (nova, 16/09/2026 — Custo de formação). 7 linhas fixas, semeadas uma vez; `gmdKgDia` null até o usuário editar. */
+export function mapGmdCategoria(rows: string[][] | null): GmdCategoria[] {
+  return toObjects(rows)
+    .map((r) => ({
+      id: parseText(r['ID']) ?? '',
+      categoria: parseText(r['Categoria']),
+      gmdKgDia: parseNumber(r['GMD kg/dia']),
     }))
     .filter((x) => x.id !== '');
 }

@@ -1,6 +1,6 @@
 import 'server-only';
 import { adicionarLinha, encontrarLinhaPorId, escreverLinha, limparLinha } from '@/lib/sheets/server';
-import { formatDia, formatMoeda } from '@/lib/painel/format';
+import { formatDia, formatMoeda, formatNumber } from '@/lib/painel/format';
 import { spreadsheetId } from './config';
 import type { DiaCompacto, TipoCusto } from './types';
 
@@ -103,4 +103,92 @@ export async function excluirCusto(id: string): Promise<boolean> {
   const linha = await encontrarLinhaPorId(sid, ABA_CUSTOS, 'ID', id);
   if (linha == null) return false;
   return limparLinha(sid, `${citar(ABA_CUSTOS)}!A${linha}:I${linha}`);
+}
+
+/**
+ * Escrita do "Custo de formação" (16/09/2026) — 3 abas novas, mesmo padrão
+ * de cuidado acima (data/número sempre `USER_ENTERED`, "excluir" limpa a
+ * linha). "GMD por Categoria" não tem criarGmdCategoria/excluirGmdCategoria
+ * — as 7 linhas (uma por categoria do funil) são fixas, semeadas uma vez na
+ * criação da aba; só se edita o valor.
+ */
+const ABA_INSUMOS = 'Insumos';
+const ABA_DIETA = 'Dieta por Categoria';
+const ABA_GMD_CATEGORIA = 'GMD por Categoria';
+
+export interface DadosInsumo {
+  nome: string;
+  tipo: string | null;
+  valorKg: number;
+}
+
+function linhaInsumo(id: string, d: DadosInsumo): string[] {
+  return [id, d.nome.trim(), d.tipo ?? '', formatMoeda(d.valorKg)];
+}
+
+export async function criarInsumo(dados: DadosInsumo): Promise<{ ok: boolean; id: string | null }> {
+  const sid = spreadsheetId();
+  if (!sid || !dados.nome.trim()) return { ok: false, id: null };
+  const id = gerarId();
+  const ok = await adicionarLinha(sid, ABA_INSUMOS, linhaInsumo(id, dados), 'USER_ENTERED');
+  return { ok, id: ok ? id : null };
+}
+
+export async function atualizarInsumo(id: string, dados: DadosInsumo): Promise<boolean> {
+  const sid = spreadsheetId();
+  if (!sid || !dados.nome.trim()) return false;
+  const linha = await encontrarLinhaPorId(sid, ABA_INSUMOS, 'ID', id);
+  if (linha == null) return false;
+  return escreverLinha(sid, `${citar(ABA_INSUMOS)}!A${linha}:D${linha}`, linhaInsumo(id, dados), 'USER_ENTERED');
+}
+
+export async function excluirInsumo(id: string): Promise<boolean> {
+  const sid = spreadsheetId();
+  if (!sid) return false;
+  const linha = await encontrarLinhaPorId(sid, ABA_INSUMOS, 'ID', id);
+  if (linha == null) return false;
+  return limparLinha(sid, `${citar(ABA_INSUMOS)}!A${linha}:D${linha}`);
+}
+
+export interface DadosItemDieta {
+  categoria: string;
+  insumo: string;
+  kgDia: number;
+}
+
+function linhaItemDieta(id: string, d: DadosItemDieta): string[] {
+  return [id, d.categoria.trim(), d.insumo.trim(), formatNumber(d.kgDia)];
+}
+
+export async function criarItemDieta(dados: DadosItemDieta): Promise<{ ok: boolean; id: string | null }> {
+  const sid = spreadsheetId();
+  if (!sid || !dados.categoria.trim() || !dados.insumo.trim()) return { ok: false, id: null };
+  const id = gerarId();
+  const ok = await adicionarLinha(sid, ABA_DIETA, linhaItemDieta(id, dados), 'USER_ENTERED');
+  return { ok, id: ok ? id : null };
+}
+
+export async function atualizarItemDieta(id: string, dados: DadosItemDieta): Promise<boolean> {
+  const sid = spreadsheetId();
+  if (!sid || !dados.categoria.trim() || !dados.insumo.trim()) return false;
+  const linha = await encontrarLinhaPorId(sid, ABA_DIETA, 'ID', id);
+  if (linha == null) return false;
+  return escreverLinha(sid, `${citar(ABA_DIETA)}!A${linha}:D${linha}`, linhaItemDieta(id, dados), 'USER_ENTERED');
+}
+
+export async function excluirItemDieta(id: string): Promise<boolean> {
+  const sid = spreadsheetId();
+  if (!sid) return false;
+  const linha = await encontrarLinhaPorId(sid, ABA_DIETA, 'ID', id);
+  if (linha == null) return false;
+  return limparLinha(sid, `${citar(ABA_DIETA)}!A${linha}:D${linha}`);
+}
+
+/** Só edita o GMD (kg/dia) de uma categoria já existente — não cria nem apaga linha. */
+export async function atualizarGmdCategoria(id: string, gmdKgDia: number): Promise<boolean> {
+  const sid = spreadsheetId();
+  if (!sid || !Number.isFinite(gmdKgDia)) return false;
+  const linha = await encontrarLinhaPorId(sid, ABA_GMD_CATEGORIA, 'ID', id);
+  if (linha == null) return false;
+  return escreverLinha(sid, `${citar(ABA_GMD_CATEGORIA)}!C${linha}`, [formatNumber(gmdKgDia)], 'USER_ENTERED');
 }
