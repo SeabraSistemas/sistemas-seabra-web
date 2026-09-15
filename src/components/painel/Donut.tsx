@@ -1,6 +1,6 @@
 'use client';
 
-import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
+import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip, type PieLabelRenderProps } from 'recharts';
 
 /**
  * Donut categórico genérico — generaliza
@@ -21,6 +21,44 @@ const SERIES_DARK = [
   '#a3542e',
 ];
 const OUTROS_COLOR = 'var(--ink-2)';
+const LIMIAR_ROTULO = 0.08;
+const RADIAN = Math.PI / 180;
+
+/**
+ * Rótulo de % DENTRO do anel (raio médio entre innerRadius/outerRadius) —
+ * nunca fora dele. A posição padrão do recharts pro `label` de uma Pie é
+ * FORA do outerRadius (mesmo com `labelLine={false}`, só a linha some, o
+ * texto continua deslocado pra fora); pra fatias perto do topo/base do
+ * círculo esse deslocamento passa da borda do <svg>, que clipa por padrão
+ * (comportamento do próprio elemento, não CSS) — o número saía cortado e a
+ * fatia parecia "não fechar" onde o texto flutuava por cima do traço entre
+ * fatias. Calculando a posição manualmente a partir de cx/cy/midAngle, o
+ * texto nunca sai do raio do próprio anel, então nunca é cortado nem
+ * sobrepõe o contorno. Contraste do texto (branco + contorno escuro via
+ * paint-order) garante leitura em qualquer cor da paleta, sem depender de
+ * qual fatia é mais clara ou mais escura.
+ */
+function rotuloFatia({ cx, cy, midAngle, innerRadius, outerRadius, percent }: PieLabelRenderProps) {
+  if ((percent ?? 0) < LIMIAR_ROTULO) return null;
+  if (cx == null || cy == null || midAngle == null || innerRadius == null || outerRadius == null) return null;
+  const raio = Number(innerRadius) + (Number(outerRadius) - Number(innerRadius)) * 0.5;
+  const x = Number(cx) + raio * Math.cos(-midAngle * RADIAN);
+  const y = Number(cy) + raio * Math.sin(-midAngle * RADIAN);
+  return (
+    <text
+      x={x}
+      y={y}
+      textAnchor="middle"
+      dominantBaseline="central"
+      fontSize={11}
+      fontWeight={600}
+      fill="#fff"
+      style={{ paintOrder: 'stroke', stroke: 'rgba(0,0,0,0.55)', strokeWidth: 3, strokeLinejoin: 'round' }}
+    >
+      {`${((percent ?? 0) * 100).toFixed(1).replace('.', ',')}%`}
+    </text>
+  );
+}
 
 export function Donut({
   dados,
@@ -63,7 +101,7 @@ export function Donut({
               cornerRadius={3}
               stroke="var(--card)"
               strokeWidth={2}
-              label={({ percent }) => ((percent ?? 0) >= 0.08 ? `${((percent ?? 0) * 100).toFixed(1).replace('.', ',')}%` : '')}
+              label={rotuloFatia}
               labelLine={false}
             >
               {fatias.map((f) => (
