@@ -10,15 +10,19 @@
  * carrega o valor da ÚLTIMA pesagem de cada animal — não é recalculado
  * aqui, só agregado por cohort.
  *
- * O campo `lote` do rebanho NÃO serve de agrupador aqui: só 6 dos 378
- * animais que já entraram em engorda têm ele preenchido. O agrupamento
- * natural é Fazenda + Entrada engorda (hoje formam só 4 cohorts).
+ * O campo `lote` do rebanho NÃO serve de agrupador: só 6 dos 378 animais
+ * que já entraram em engorda têm ele preenchido. O agrupamento é sempre
+ * Fazenda + Entrada engorda; o NOME de cada lote usa o `lote` real quando
+ * todo mundo do grupo concorda, senão vira "Lote GMD d.m.aa" gerado da
+ * data de entrada (pedido do Felipe, 15/09/2026).
  */
 import { media } from '@/lib/painel/agregacao';
 import { diasEntre } from '@/lib/painel/format';
 import type { DiaCompacto, RegRebanho } from './types';
 
 export interface LoteEngorda {
+  /** Nome do `lote` real (RebanhoProd) quando todo mundo do cohort concorda; senão "Lote GMD d.m.aa" (dia/mês sem zero à esquerda, ano com 2 dígitos), gerado a partir da data de entrada. */
+  nome: string;
   fazenda: string;
   entrada: DiaCompacto;
   /** Dias corridos entre a entrada e `hoje` (o parâmetro de montarLotesEngorda). */
@@ -30,6 +34,21 @@ export interface LoteEngorda {
   comGmd: number;
   gmdMedio: number | null;
   pesoEntradaMedio: number | null;
+}
+
+/** "aaaammdd" => "d.m.aa" (dia/mês sem zero à esquerda, ano com 2 dígitos) — ex.: 20260423 => "23.4.26". */
+function dataCurta(dia: DiaCompacto): string {
+  const ano = Math.floor(dia / 10000);
+  const mes = Math.floor((dia % 10000) / 100);
+  const diaDoMes = dia % 100;
+  return `${diaDoMes}.${mes}.${ano % 100}`;
+}
+
+/** Usa o `lote` real do rebanho só se TODOS os que o têm preenchido concordam; senão gera "Lote GMD d.m.aa" pela data de entrada — a maioria (372 de 378, ao vivo em 15/09/2026) não tem `lote` nenhum. */
+function nomeDoLote(lista: RegRebanho[], entrada: DiaCompacto): string {
+  const lotesReais = new Set(lista.map((a) => a.lote).filter((v): v is string => !!v));
+  if (lotesReais.size === 1) return [...lotesReais][0];
+  return `Lote GMD ${dataCurta(entrada)}`;
 }
 
 export function montarLotesEngorda(animais: RegRebanho[], hoje: DiaCompacto): LoteEngorda[] {
@@ -50,6 +69,7 @@ export function montarLotesEngorda(animais: RegRebanho[], hoje: DiaCompacto): Lo
     const entrada = lista[0].entradaEngorda as DiaCompacto;
     const gmdValores = lista.map((a) => a.gmdAtual).filter((v): v is number => v != null && v > 0);
     return {
+      nome: nomeDoLote(lista, entrada),
       fazenda,
       entrada,
       diasDesdeEntrada: diasEntre(entrada, hoje),

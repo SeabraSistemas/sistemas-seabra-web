@@ -184,11 +184,12 @@ export function PesagemView({
               {lotesEngorda.map((lote) => (
                 <div key={`${lote.fazenda}|${lote.entrada}`} className="rounded-xl border border-border bg-card p-5">
                   <div className="flex items-baseline justify-between gap-2">
-                    <h3 className="text-sm font-medium text-foreground">{lote.fazenda}</h3>
-                    <span className="text-xs text-muted-foreground">Entrada {formatDia(lote.entrada)}</span>
+                    <h3 className="text-sm font-medium text-foreground">{lote.nome}</h3>
+                    <span className="text-xs text-muted-foreground">{lote.fazenda}</span>
                   </div>
                   <p className="mt-0.5 text-xs text-muted-foreground">
-                    {lote.diasDesdeEntrada != null ? `${formatNumber(lote.diasDesdeEntrada)} dias desde a entrada` : '—'}
+                    Entrada {formatDia(lote.entrada)}
+                    {lote.diasDesdeEntrada != null && ` · ${formatNumber(lote.diasDesdeEntrada)} dias atrás`}
                   </p>
                   <div className="mt-4 grid grid-cols-2 gap-y-3">
                     <div>

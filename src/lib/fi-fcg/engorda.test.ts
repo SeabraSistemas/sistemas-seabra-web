@@ -83,4 +83,38 @@ describe('montarLotesEngorda', () => {
     const lotes = montarLotesEngorda([animal({ id: 'a1', entradaEngorda: 20260101, fazenda: 'Inhumas' })], 20260111);
     assert.equal(lotes[0].diasDesdeEntrada, 10);
   });
+
+  test('nome: sem "lote" preenchido em ninguem do grupo, gera "Lote GMD d.m.aa" pela data de entrada', () => {
+    const lotes = montarLotesEngorda(
+      [
+        animal({ id: 'a1', entradaEngorda: 20260423, fazenda: 'Inhumas', lote: null }),
+        animal({ id: 'a2', entradaEngorda: 20260423, fazenda: 'Inhumas', lote: null }),
+      ],
+      20260101,
+    );
+    assert.equal(lotes[0].nome, 'Lote GMD 23.4.26');
+  });
+
+  test('nome: todo mundo do grupo concorda no "lote" real, usa ele', () => {
+    const lotes = montarLotesEngorda(
+      [
+        animal({ id: 'a1', entradaEngorda: 20260423, fazenda: 'Inhumas', lote: 'Curral 3' }),
+        animal({ id: 'a2', entradaEngorda: 20260423, fazenda: 'Inhumas', lote: 'Curral 3' }),
+      ],
+      20260101,
+    );
+    assert.equal(lotes[0].nome, 'Curral 3');
+  });
+
+  test('nome: "lote" real divergente entre os animais do grupo (ou só parte preenchido) cai no nome gerado', () => {
+    const lotes = montarLotesEngorda(
+      [
+        animal({ id: 'a1', entradaEngorda: 20260423, fazenda: 'Inhumas', lote: 'Curral 3' }),
+        animal({ id: 'a2', entradaEngorda: 20260423, fazenda: 'Inhumas', lote: 'Curral 4' }),
+        animal({ id: 'a3', entradaEngorda: 20260423, fazenda: 'Inhumas', lote: null }),
+      ],
+      20260101,
+    );
+    assert.equal(lotes[0].nome, 'Lote GMD 23.4.26');
+  });
 });
