@@ -146,25 +146,12 @@ export interface CategoriaArroba {
 /**
  * Uma categoria de custo (aba nova "Categorias de Custo", criada em
  * 15/09/2026 — não faz parte do AppSheet do cliente, é só do /FI_FCG).
- * Nasce com 1 linha ("Geral"); o usuário adiciona/renomeia/remove pela
- * tela de Custos, sem depender de deploy — é dado, não uma lista fixa no
- * código.
+ * Nasce com "Geral" + uma lista inicial de categorias de gasto (Assistência
+ * veterinária, Combustível etc., pedida pelo Felipe em 16/09); o usuário
+ * adiciona/renomeia/remove pelo próprio seletor de Categoria na tela de
+ * Custos, sem depender de deploy — é dado, não uma lista fixa no código.
  */
 export interface CategoriaCusto {
-  id: string;
-  nome: string;
-}
-
-/**
- * Uma descrição de custo (aba nova "Descrições de Custo", 16/09/2026) —
- * mesmo espírito da CategoriaCusto (lista editável, não fixa no código),
- * mas só serve de VOCABULÁRIO pro campo "Descrição" do formulário: o
- * `Custo.descricao` guarda o TEXTO escolhido, não o id daqui (diferente de
- * `Custo.categoria`) — renomear um item da lista não reescreve custos já
- * lançados com o nome antigo, porque descrição é rótulo do lançamento, não
- * agrupamento.
- */
-export interface DescricaoCusto {
   id: string;
   nome: string;
 }

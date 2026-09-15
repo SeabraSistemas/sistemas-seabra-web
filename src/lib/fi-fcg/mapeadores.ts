@@ -10,7 +10,6 @@ import type {
   CategoriaArroba,
   CategoriaCusto,
   Custo,
-  DescricaoCusto,
   LancamentoFinanceiro,
   RegAborto,
   RegBaixa,
@@ -235,13 +234,6 @@ function tipoCustoDe(raw: string | undefined): TipoCusto | null {
 
 /** Aba "Categorias de Custo" (nova, 15/09/2026 — não é do AppSheet). */
 export function mapCategoriasCusto(rows: string[][] | null): CategoriaCusto[] {
-  return toObjects(rows)
-    .map((r) => ({ id: parseText(r['ID']) ?? '', nome: parseText(r['Nome']) ?? '' }))
-    .filter((x) => x.id !== '');
-}
-
-/** Aba "Descrições de Custo" (nova, 16/09/2026 — mesmo formato de Categorias de Custo). */
-export function mapDescricoesCusto(rows: string[][] | null): DescricaoCusto[] {
   return toObjects(rows)
     .map((r) => ({ id: parseText(r['ID']) ?? '', nome: parseText(r['Nome']) ?? '' }))
     .filter((x) => x.id !== '');

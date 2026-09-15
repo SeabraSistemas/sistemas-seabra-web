@@ -12,7 +12,7 @@ import { CsvExport, type CsvColumn } from '@/components/painel/CsvExport';
 import { SerieMensal } from '@/components/painel/SerieMensal';
 import { diaParaInput, formatDia, formatMoeda } from '@/lib/painel/format';
 import { custosMensais } from '@/lib/fi-fcg/custos';
-import type { CategoriaCusto, Custo, DescricaoCusto, DiaCompacto, TipoCusto } from '@/lib/fi-fcg/types';
+import type { CategoriaCusto, Custo, DiaCompacto, TipoCusto } from '@/lib/fi-fcg/types';
 
 const FAZENDA_GERAL = 'Geral';
 
@@ -35,12 +35,12 @@ function nomeCategoria(id: string | null, categorias: CategoriaCusto[]): string 
 /**
  * Um campo de seleção que é AO MESMO TEMPO a lista gerenciável (adicionar/
  * renomear/remover) — estilo AppSheet: não existe tela/card separado só
- * pra gerenciar Categoria ou Descrição, tudo acontece dentro do próprio
- * popover do campo (16/09/2026, pedido do Felipe). Cada lista é uma aba
- * própria na planilha ({ID, Nome}), gerenciada por `apiPath`. `valorDoItem`
- * decide se o valor selecionado é o `id` (Categoria — renomear não altera
- * custos já lançados) ou o `nome` (Descrição — o texto é o próprio dado,
- * ver DescricaoCusto em types.ts).
+ * pra gerenciar a lista, tudo acontece dentro do próprio popover do campo
+ * (16/09/2026, pedido do Felipe). Hoje só a Categoria usa isto (Descrição
+ * voltou a ser texto livre no mesmo dia — os 11 itens que tinham ido pra
+ * Descrição eram na verdade categorias de gasto, foram remigrados pra cá).
+ * `valorDoItem` decide se o valor selecionado é o `id` ou o `nome` — deixado
+ * genérico porque é o mesmo componente que já serviu pra Descrição.
  */
 function SelectGerenciavel({
   value,
@@ -235,24 +235,22 @@ function SelectGerenciavel({
 /**
  * Cadastro de custos (mensal/anual, com distribuição pelos meses) — aba
  * "Custos" do Financeiro, 15/09/2026. Formulário + tabela + gráfico mensal
- * (o mesmo total que entra no Resumo). Categoria e Descrição são campos
- * `SelectGerenciavel` — não existe card/tela separado pra gerenciar essas
- * listas (removido em 16/09, pedido do Felipe): adicionar/renomear/remover
- * acontece dentro do próprio popover do campo, estilo AppSheet. Quando
- * Tipo é "Mensal", Data início/fim viram `<input type=month>` (não precisa
- * escolher um dia, já que a distribuição é sempre por mês inteiro — ver
- * distribuirCusto em custos.ts).
+ * (o mesmo total que entra no Resumo). Categoria é um `SelectGerenciavel`
+ * — não existe card/tela separado pra gerenciar a lista (removido em
+ * 16/09, pedido do Felipe): adicionar/renomear/remover acontece dentro do
+ * próprio popover do campo, estilo AppSheet. Descrição é texto livre.
+ * Quando Tipo é "Mensal", Data início/fim viram `<input type=month>` (não
+ * precisa escolher um dia, já que a distribuição é sempre por mês inteiro
+ * — ver distribuirCusto em custos.ts).
  */
 export function CustosPainel({
   custos,
   categorias,
-  descricoes,
   hoje,
   fazendas,
 }: {
   custos: Custo[];
   categorias: CategoriaCusto[];
-  descricoes: DescricaoCusto[];
   hoje: DiaCompacto;
   fazendas: string[];
 }) {
@@ -289,7 +287,7 @@ export function CustosPainel({
   async function salvar() {
     const valorNum = Number(form.valor.replace(',', '.'));
     if (!form.descricao.trim() || !form.dataInicio || !Number.isFinite(valorNum) || valorNum <= 0) {
-      setErro('Selecione a descrição, e preencha valor (maior que zero) e data início.');
+      setErro('Preencha descrição, valor (maior que zero) e data início.');
       return;
     }
     setErro(null);
@@ -378,16 +376,10 @@ export function CustosPainel({
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <div className="flex flex-col gap-1 sm:col-span-2">
             <span className="text-xs text-muted-foreground">Descrição</span>
-            <SelectGerenciavel
+            <Input
               value={form.descricao}
-              onValueChange={(v) => setForm({ ...form, descricao: v })}
-              itens={descricoes}
-              valorDoItem={(it) => it.nome}
-              placeholder="Selecione..."
-              novoPlaceholder="Nova descrição..."
-              apiPath="/FI_FCG/api/descricoes-custo"
-              avisoRemover="Remover esta descrição da lista? Custos já lançados com ela mantêm o texto — só some das opções pra escolher em novos custos."
-              onChanged={() => router.refresh()}
+              onChange={(e) => setForm({ ...form, descricao: e.target.value })}
+              placeholder="Ração, mão de obra..."
             />
           </div>
           <div className="flex flex-col gap-1">

@@ -5,18 +5,16 @@ import { spreadsheetId } from './config';
 import type { DiaCompacto, TipoCusto } from './types';
 
 /**
- * Escrita do /FI_FCG — Custos, Categorias de Custo (15/09/2026) e
- * Descrições de Custo (16/09/2026), as abas criadas pra guardar o que o
- * usuário digita no site (não vêm do AppSheet do cliente). Primeira
- * escrita do FI_FCG; segue o mesmo padrão de cuidado descoberto no
- * incidente do Katmandu (09/09/2026): data SEMPRE `USER_ENTERED`, nunca
- * RAW (RAW não reconhece "dd/mm/aaaa" como data e quebra a formatação da
- * célula). "Excluir" nunca remove a linha de verdade — limpa o conteúdo
- * (ver `limparLinha`), e a linha com ID vazio já é ignorada por
- * `mapCustos`/`mapCategoriasCusto`/`mapDescricoesCusto`.
+ * Escrita do /FI_FCG — Custos e Categorias de Custo (15/09/2026), as duas
+ * abas criadas pra guardar o que o usuário digita no site (não vêm do
+ * AppSheet do cliente). Primeira escrita do FI_FCG; segue o mesmo padrão
+ * de cuidado descoberto no incidente do Katmandu (09/09/2026): data SEMPRE
+ * `USER_ENTERED`, nunca RAW (RAW não reconhece "dd/mm/aaaa" como data e
+ * quebra a formatação da célula). "Excluir" nunca remove a linha de
+ * verdade — limpa o conteúdo (ver `limparLinha`), e a linha com ID vazio
+ * já é ignorada por `mapCustos`/`mapCategoriasCusto`.
  */
 const ABA_CATEGORIAS = 'Categorias de Custo';
-const ABA_DESCRICOES = 'Descrições de Custo';
 const ABA_CUSTOS = 'Custos';
 
 function citar(aba: string): string {
@@ -55,36 +53,6 @@ export async function excluirCategoriaCusto(id: string): Promise<boolean> {
   const linha = await encontrarLinhaPorId(sid, ABA_CATEGORIAS, 'ID', id);
   if (linha == null) return false;
   return limparLinha(sid, `${citar(ABA_CATEGORIAS)}!A${linha}:B${linha}`);
-}
-
-export interface DadosDescricaoCusto {
-  nome: string;
-}
-
-export async function criarDescricaoCusto(dados: DadosDescricaoCusto): Promise<{ ok: boolean; id: string | null }> {
-  const sid = spreadsheetId();
-  const nome = dados.nome.trim();
-  if (!sid || !nome) return { ok: false, id: null };
-  const id = gerarId();
-  const ok = await adicionarLinha(sid, ABA_DESCRICOES, [id, nome], 'RAW');
-  return { ok, id: ok ? id : null };
-}
-
-export async function renomearDescricaoCusto(id: string, dados: DadosDescricaoCusto): Promise<boolean> {
-  const sid = spreadsheetId();
-  const nome = dados.nome.trim();
-  if (!sid || !nome) return false;
-  const linha = await encontrarLinhaPorId(sid, ABA_DESCRICOES, 'ID', id);
-  if (linha == null) return false;
-  return escreverLinha(sid, `${citar(ABA_DESCRICOES)}!A${linha}:B${linha}`, [id, nome], 'RAW');
-}
-
-export async function excluirDescricaoCusto(id: string): Promise<boolean> {
-  const sid = spreadsheetId();
-  if (!sid) return false;
-  const linha = await encontrarLinhaPorId(sid, ABA_DESCRICOES, 'ID', id);
-  if (linha == null) return false;
-  return limparLinha(sid, `${citar(ABA_DESCRICOES)}!A${linha}:B${linha}`);
 }
 
 export interface DadosCusto {

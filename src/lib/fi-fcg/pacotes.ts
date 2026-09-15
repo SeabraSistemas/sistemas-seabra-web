@@ -11,7 +11,6 @@ import type { Leitura } from './queries';
 import type {
   CategoriaCusto,
   Custo,
-  DescricaoCusto,
   RegBaixa,
   RegIatf,
   RegParto,
@@ -149,8 +148,6 @@ export const CAMPOS_FINANCEIRO: (keyof LancamentoFinanceiro & string)[] = [
 
 export const CAMPOS_CATEGORIA_CUSTO: (keyof CategoriaCusto & string)[] = ['id', 'nome'];
 
-export const CAMPOS_DESCRICAO_CUSTO: (keyof DescricaoCusto & string)[] = ['id', 'nome'];
-
 export const CAMPOS_CUSTO: (keyof Custo & string)[] = [
   'id',
   'descricao',
@@ -186,21 +183,19 @@ export const CAMPOS_EVENTO: (keyof EventoFin & string)[] = [
 
 /**
  * Prop empacotada da página Financeiro — diferente das outras páginas
- * (`PacoteLeitura<T>`, uma leitura só) porque aqui o servidor já combina 9
+ * (`PacoteLeitura<T>`, uma leitura só) porque aqui o servidor já combina 8
  * abas (Venda, Baixa, Aborto, Financeiro, RebanhoProd, Categoria@, Custos,
- * Categorias de Custo, Descrições de Custo) em `eventos` + `orfaos` via
- * `montarEventos` (financeiro.ts) ANTES de empacotar — RebanhoProd/
- * Categoria@ só entram pra CALCULAR categoriaEstimada/valorEstimado no
- * servidor; o cliente nunca vê essas duas abas, só o resultado já pronto em
- * cada evento. `custos`, `categoriasCusto` e `descricoesCusto` já vêm
- * prontos (não precisam de conciliação nenhuma).
+ * Categorias de Custo) em `eventos` + `orfaos` via `montarEventos`
+ * (financeiro.ts) ANTES de empacotar — RebanhoProd/Categoria@ só entram pra
+ * CALCULAR categoriaEstimada/valorEstimado no servidor; o cliente nunca vê
+ * essas duas abas, só o resultado já pronto em cada evento. `custos` e
+ * `categoriasCusto` já vêm prontos (não precisam de conciliação nenhuma).
  */
 export interface PacoteFinanceiro {
   eventos: Pacote<EventoFin>;
   orfaos: Pacote<LancamentoFinanceiro>;
   custos: Pacote<Custo>;
   categoriasCusto: Pacote<CategoriaCusto>;
-  descricoesCusto: Pacote<DescricaoCusto>;
   configurado: boolean;
   stale: boolean;
   carregadoEm: number | null;

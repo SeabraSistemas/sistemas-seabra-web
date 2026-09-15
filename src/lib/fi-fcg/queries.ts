@@ -8,7 +8,6 @@ import {
   mapCategoriaArroba,
   mapCategoriasCusto,
   mapCustos,
-  mapDescricoesCusto,
   mapFinanceiro,
   mapIatf,
   mapPartos,
@@ -21,7 +20,6 @@ import type {
   CategoriaArroba,
   CategoriaCusto,
   Custo,
-  DescricaoCusto,
   LancamentoFinanceiro,
   RegAborto,
   RegBaixa,
@@ -150,12 +148,6 @@ export async function getCategoriasCusto(): Promise<Leitura<CategoriaCusto>> {
   return { itens: mapCategoriasCusto(linhas), configurado: spreadsheetId() != null, stale, carregadoEm };
 }
 
-/** Aba "Descrições de Custo" (nova, 16/09/2026 — mesmo padrão de Categorias de Custo). Sem cache. */
-export async function getDescricoesCusto(): Promise<Leitura<DescricaoCusto>> {
-  const { linhas, stale, carregadoEm } = await lerAbaFresca('Descrições de Custo');
-  return { itens: mapDescricoesCusto(linhas), configurado: spreadsheetId() != null, stale, carregadoEm };
-}
-
 /** Aba "Custos" (nova, 15/09/2026). Sem cache — ver `lerAbaFresca`. */
 export async function getCustos(): Promise<Leitura<Custo>> {
   const { linhas, stale, carregadoEm } = await lerAbaFresca('Custos');
@@ -173,7 +165,7 @@ export async function getCustos(): Promise<Leitura<Custo>> {
  * só recebe o valor já calculado (ver montarEventos em financeiro.ts).
  */
 export async function getDadosFinanceiro() {
-  const [vendas, baixas, abortos, lancamentos, rebanho, categoriaArroba, custos, categoriasCusto, descricoesCusto] = await Promise.all([
+  const [vendas, baixas, abortos, lancamentos, rebanho, categoriaArroba, custos, categoriasCusto] = await Promise.all([
     getVendas(),
     getBaixas(),
     getAbortos(),
@@ -182,9 +174,8 @@ export async function getDadosFinanceiro() {
     getCategoriaArroba(),
     getCustos(),
     getCategoriasCusto(),
-    getDescricoesCusto(),
   ]);
-  return { vendas, baixas, abortos, lancamentos, rebanho, categoriaArroba, custos, categoriasCusto, descricoesCusto };
+  return { vendas, baixas, abortos, lancamentos, rebanho, categoriaArroba, custos, categoriasCusto };
 }
 
 /** Usado por POST /FI_FCG/api/atualizar — limpa tudo do FI_FCG pro botão "Atualizar" forçar releitura. */
