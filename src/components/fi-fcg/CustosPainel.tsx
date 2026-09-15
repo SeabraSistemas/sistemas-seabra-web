@@ -2,9 +2,10 @@
 
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Pencil, Plus, Trash2, X } from 'lucide-react';
+import { ChevronDown, Pencil, Plus, Trash2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DataTable, type DataTableColumn } from '@/components/painel/DataTable';
 import { CsvExport, type CsvColumn } from '@/components/painel/CsvExport';
@@ -32,29 +33,50 @@ function nomeCategoria(id: string | null, categorias: CategoriaCusto[]): string 
 }
 
 /**
- * Uma lista editável genérica (adicionar/renomear/remover), o mesmo
- * comportamento pra Categorias e Descrições de custo — cada uma é uma aba
- * própria na planilha ({ID, Nome}), gerenciada por `apiPath`.
+ * Um campo de seleção que é AO MESMO TEMPO a lista gerenciável (adicionar/
+ * renomear/remover) — estilo AppSheet: não existe tela/card separado só
+ * pra gerenciar Categoria ou Descrição, tudo acontece dentro do próprio
+ * popover do campo (16/09/2026, pedido do Felipe). Cada lista é uma aba
+ * própria na planilha ({ID, Nome}), gerenciada por `apiPath`. `valorDoItem`
+ * decide se o valor selecionado é o `id` (Categoria — renomear não altera
+ * custos já lançados) ou o `nome` (Descrição — o texto é o próprio dado,
+ * ver DescricaoCusto em types.ts).
  */
-function ListaGerenciavel({
-  titulo,
+function SelectGerenciavel({
+  value,
+  onValueChange,
   itens,
-  apiPath,
+  valorDoItem,
   placeholder,
+  novoPlaceholder,
+  apiPath,
   avisoRemover,
+  permiteVazio,
   onChanged,
 }: {
-  titulo: string;
+  value: string;
+  onValueChange: (v: string) => void;
   itens: { id: string; nome: string }[];
-  apiPath: string;
+  valorDoItem: (it: { id: string; nome: string }) => string;
   placeholder: string;
+  novoPlaceholder: string;
+  apiPath: string;
   avisoRemover: string;
+  permiteVazio?: boolean;
   onChanged: () => void;
 }) {
+  const [aberto, setAberto] = useState(false);
   const [novoNome, setNovoNome] = useState('');
   const [adicionando, setAdicionando] = useState(false);
   const [editandoId, setEditandoId] = useState<string | null>(null);
   const [nomeEdicao, setNomeEdicao] = useState('');
+
+  const rotuloAtual = itens.find((it) => valorDoItem(it) === value)?.nome ?? null;
+
+  function selecionar(v: string) {
+    onValueChange(v);
+    setAberto(false);
+  }
 
   async function adicionar() {
     const nome = novoNome.trim();
@@ -65,9 +87,11 @@ function ListaGerenciavel({
       body: JSON.stringify({ nome }),
     });
     if (res.ok) {
+      const { id } = (await res.json()) as { id: string };
       setNovoNome('');
       setAdicionando(false);
       onChanged();
+      selecionar(valorDoItem({ id, nome }));
     }
   }
 
@@ -96,100 +120,128 @@ function ListaGerenciavel({
   }
 
   return (
-    <div className="rounded-xl border border-border bg-card p-5">
-      <h3 className="mb-4 text-sm font-medium text-muted-foreground">{titulo}</h3>
-      <ul className="flex flex-col divide-y divide-border/60">
-        {itens.map((it) => (
-          <li key={it.id} className="flex items-center gap-2 py-2 text-sm first:pt-0">
-            {editandoId === it.id ? (
-              <>
-                <Input value={nomeEdicao} onChange={(e) => setNomeEdicao(e.target.value)} className="h-8 flex-1" autoFocus />
-                <Button type="button" size="sm" onClick={() => salvarRenomeio(it.id)}>
+    <Popover open={aberto} onOpenChange={setAberto}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className="flex h-8 w-full items-center justify-between gap-2 rounded-md border border-input bg-transparent px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 dark:bg-input/30 dark:hover:bg-input/50"
+        >
+          <span className={rotuloAtual ? 'truncate text-foreground' : 'truncate text-muted-foreground'}>
+            {rotuloAtual ?? placeholder}
+          </span>
+          <ChevronDown className="size-4 shrink-0 text-muted-foreground" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="p-2">
+        <ul className="flex max-h-72 flex-col divide-y divide-border/60 overflow-y-auto">
+          {permiteVazio && (
+            <li className="py-1.5 text-sm">
+              <button type="button" className="w-full text-left text-muted-foreground hover:text-foreground" onClick={() => selecionar('')}>
+                {placeholder}
+              </button>
+            </li>
+          )}
+          {itens.map((it) => (
+            <li key={it.id} className="flex items-center gap-1.5 py-1.5 text-sm">
+              {editandoId === it.id ? (
+                <>
+                  <Input value={nomeEdicao} onChange={(e) => setNomeEdicao(e.target.value)} className="h-8 flex-1" autoFocus />
+                  <Button type="button" size="sm" onClick={() => salvarRenomeio(it.id)}>
+                    Salvar
+                  </Button>
+                  <Button type="button" size="sm" variant="ghost" onClick={() => setEditandoId(null)}>
+                    <X className="size-3.5" />
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    className="flex-1 truncate text-left text-foreground hover:text-primary"
+                    onClick={() => selecionar(valorDoItem(it))}
+                  >
+                    {it.nome}
+                  </button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="size-6"
+                    onClick={() => {
+                      setEditandoId(it.id);
+                      setNomeEdicao(it.nome);
+                    }}
+                    aria-label="Renomear"
+                  >
+                    <Pencil className="size-3" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="size-6 text-destructive"
+                    onClick={() => excluir(it.id)}
+                    aria-label="Remover"
+                  >
+                    <Trash2 className="size-3" />
+                  </Button>
+                </>
+              )}
+            </li>
+          ))}
+          <li className="py-1.5 text-sm">
+            {adicionando ? (
+              <div className="flex items-center gap-1.5">
+                <Input
+                  value={novoNome}
+                  onChange={(e) => setNovoNome(e.target.value)}
+                  placeholder={novoPlaceholder}
+                  className="h-8 flex-1"
+                  autoFocus
+                  onKeyDown={(e) => e.key === 'Enter' && adicionar()}
+                />
+                <Button type="button" size="sm" onClick={adicionar}>
                   Salvar
                 </Button>
-                <Button type="button" size="sm" variant="ghost" onClick={() => setEditandoId(null)}>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => {
+                    setAdicionando(false);
+                    setNovoNome('');
+                  }}
+                >
                   <X className="size-3.5" />
                 </Button>
-              </>
+              </div>
             ) : (
-              <>
-                <span className="flex-1 text-foreground">{it.nome}</span>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="size-6"
-                  onClick={() => {
-                    setEditandoId(it.id);
-                    setNomeEdicao(it.nome);
-                  }}
-                  aria-label="Renomear"
-                >
-                  <Pencil className="size-3" />
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="size-6 text-destructive"
-                  onClick={() => excluir(it.id)}
-                  aria-label="Remover"
-                >
-                  <Trash2 className="size-3" />
-                </Button>
-              </>
+              <button
+                type="button"
+                onClick={() => setAdicionando(true)}
+                className="flex w-full items-center gap-1.5 rounded-md py-1 text-primary transition-colors hover:bg-accent"
+              >
+                <Plus className="size-3.5" />
+                Novo
+              </button>
             )}
           </li>
-        ))}
-        <li className="flex items-center gap-2 py-2 text-sm first:pt-0">
-          {adicionando ? (
-            <>
-              <Input
-                value={novoNome}
-                onChange={(e) => setNovoNome(e.target.value)}
-                placeholder={placeholder}
-                className="h-8 flex-1"
-                autoFocus
-                onKeyDown={(e) => e.key === 'Enter' && adicionar()}
-              />
-              <Button type="button" size="sm" onClick={adicionar}>
-                Salvar
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                variant="ghost"
-                onClick={() => {
-                  setAdicionando(false);
-                  setNovoNome('');
-                }}
-              >
-                <X className="size-3.5" />
-              </Button>
-            </>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setAdicionando(true)}
-              className="flex w-full items-center gap-1.5 rounded-md py-1 text-sm text-primary transition-colors hover:bg-accent"
-            >
-              <Plus className="size-3.5" />
-              Novo
-            </button>
-          )}
-        </li>
-      </ul>
-    </div>
+        </ul>
+      </PopoverContent>
+    </Popover>
   );
 }
 
 /**
  * Cadastro de custos (mensal/anual, com distribuição pelos meses) — aba
- * "Custos" do Financeiro, 15/09/2026. Primeira tela de escrita do FI_FCG:
- * formulário + tabela + gráfico mensal (o mesmo total que entra no Resumo)
- * + um cantinho pra gerenciar Categorias e Descrições (adicionar/renomear/
- * remover — Categorias nasce só com "Geral", Descrições já nasce com uma
- * lista inicial pedida pelo Felipe, 16/09).
+ * "Custos" do Financeiro, 15/09/2026. Formulário + tabela + gráfico mensal
+ * (o mesmo total que entra no Resumo). Categoria e Descrição são campos
+ * `SelectGerenciavel` — não existe card/tela separado pra gerenciar essas
+ * listas (removido em 16/09, pedido do Felipe): adicionar/renomear/remover
+ * acontece dentro do próprio popover do campo, estilo AppSheet. Quando
+ * Tipo é "Mensal", Data início/fim viram `<input type=month>` (não precisa
+ * escolher um dia, já que a distribuição é sempre por mês inteiro — ver
+ * distribuirCusto em custos.ts).
  */
 export function CustosPainel({
   custos,
@@ -326,33 +378,32 @@ export function CustosPainel({
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <div className="flex flex-col gap-1 sm:col-span-2">
             <span className="text-xs text-muted-foreground">Descrição</span>
-            <Select value={form.descricao || undefined} onValueChange={(v) => setForm({ ...form, descricao: v })}>
-              <SelectTrigger size="sm" className="w-full">
-                <SelectValue placeholder="Selecione..." />
-              </SelectTrigger>
-              <SelectContent>
-                {descricoes.map((d) => (
-                  <SelectItem key={d.id} value={d.nome}>
-                    {d.nome}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <SelectGerenciavel
+              value={form.descricao}
+              onValueChange={(v) => setForm({ ...form, descricao: v })}
+              itens={descricoes}
+              valorDoItem={(it) => it.nome}
+              placeholder="Selecione..."
+              novoPlaceholder="Nova descrição..."
+              apiPath="/FI_FCG/api/descricoes-custo"
+              avisoRemover="Remover esta descrição da lista? Custos já lançados com ela mantêm o texto — só some das opções pra escolher em novos custos."
+              onChanged={() => router.refresh()}
+            />
           </div>
           <div className="flex flex-col gap-1">
             <span className="text-xs text-muted-foreground">Categoria</span>
-            <Select value={form.categoria || undefined} onValueChange={(v) => setForm({ ...form, categoria: v })}>
-              <SelectTrigger size="sm" className="w-full">
-                <SelectValue placeholder="Sem categoria" />
-              </SelectTrigger>
-              <SelectContent>
-                {categorias.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {c.nome}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <SelectGerenciavel
+              value={form.categoria}
+              onValueChange={(v) => setForm({ ...form, categoria: v })}
+              itens={categorias}
+              valorDoItem={(it) => it.id}
+              placeholder="Sem categoria"
+              novoPlaceholder="Nova categoria..."
+              apiPath="/FI_FCG/api/categorias-custo"
+              avisoRemover='Remover esta categoria? Custos já lançados com ela ficam mostrando "(categoria removida)".'
+              permiteVazio
+              onChanged={() => router.refresh()}
+            />
           </div>
           <div className="flex flex-col gap-1">
             <span className="text-xs text-muted-foreground">Fazenda</span>
@@ -387,11 +438,27 @@ export function CustosPainel({
           </div>
           <div className="flex flex-col gap-1">
             <span className="text-xs text-muted-foreground">Data início</span>
-            <Input type="date" value={form.dataInicio} onChange={(e) => setForm({ ...form, dataInicio: e.target.value })} />
+            {form.tipo === 'Mensal' ? (
+              <Input
+                type="month"
+                value={form.dataInicio.slice(0, 7)}
+                onChange={(e) => setForm({ ...form, dataInicio: e.target.value ? `${e.target.value}-01` : '' })}
+              />
+            ) : (
+              <Input type="date" value={form.dataInicio} onChange={(e) => setForm({ ...form, dataInicio: e.target.value })} />
+            )}
           </div>
           <div className="flex flex-col gap-1">
             <span className="text-xs text-muted-foreground">Data fim (opcional — em aberto se vazio)</span>
-            <Input type="date" value={form.dataFim} onChange={(e) => setForm({ ...form, dataFim: e.target.value })} />
+            {form.tipo === 'Mensal' ? (
+              <Input
+                type="month"
+                value={form.dataFim.slice(0, 7)}
+                onChange={(e) => setForm({ ...form, dataFim: e.target.value ? `${e.target.value}-01` : '' })}
+              />
+            ) : (
+              <Input type="date" value={form.dataFim} onChange={(e) => setForm({ ...form, dataFim: e.target.value })} />
+            )}
           </div>
           <div className="flex flex-col gap-1 sm:col-span-2 lg:col-span-4">
             <span className="text-xs text-muted-foreground">Observação</span>
@@ -412,25 +479,6 @@ export function CustosPainel({
             </Button>
           )}
         </div>
-      </div>
-
-      <div className="grid gap-6 sm:grid-cols-2">
-        <ListaGerenciavel
-          titulo="Categorias"
-          itens={categorias}
-          apiPath="/FI_FCG/api/categorias-custo"
-          placeholder="Nova categoria..."
-          avisoRemover='Remover esta categoria? Custos já lançados com ela ficam mostrando "(categoria removida)".'
-          onChanged={() => router.refresh()}
-        />
-        <ListaGerenciavel
-          titulo="Descrições"
-          itens={descricoes}
-          apiPath="/FI_FCG/api/descricoes-custo"
-          placeholder="Nova descrição..."
-          avisoRemover="Remover esta descrição da lista? Custos já lançados com ela mantêm o texto — só some das opções pra escolher em novos custos."
-          onChanged={() => router.refresh()}
-        />
       </div>
 
       <div className="flex items-center justify-between gap-3">
