@@ -455,6 +455,35 @@ describe('removerVendasSemRastro', () => {
     const vendas = [venda({ id: 'v1', idAnimal: null, valor: null })];
     assert.deepEqual(removerVendasSemRastro(vendas, rebanhoPorId), []);
   });
+
+  test('fim a fim: o lançamento da venda excluída (sem rastro) some, não vira "lancamento-orfao"', () => {
+    const { eventos, orfaos } = montarEventos(
+      [venda({ id: 'v1', idAnimal: 'nao-existe', data: 20241001, valor: null })], // sem rastro, excluída
+      [], [],
+      [lanc({ id: 'f1', identificacao: 'nao-existe', descricao: 'Venda', valor: 100, data: 20241001 })],
+      [], [],
+    );
+    assert.equal(eventos.length, 0);
+    assert.deepEqual(orfaos, []); // o lançamento foi removido ANTES da conciliação, não sobra órfão
+  });
+
+  test('fim a fim: o lançamento da venda duplicada excedente some, não vira "lancamento-orfao"', () => {
+    const { eventos, orfaos } = montarEventos(
+      [
+        venda({ id: 'v1', idAnimal: '24011', data: 20241017, valor: 4000, cliente: 'Frigorífico' }),
+        venda({ id: 'v2', idAnimal: '24011', data: 20241017, valor: 4000, cliente: 'Frigorífico' }), // duplicata, excluída
+      ],
+      [], [],
+      [
+        lanc({ id: 'f1', identificacao: '24011', descricao: 'Venda', valor: 4000, data: 20241017 }),
+        lanc({ id: 'f2', identificacao: '24011', descricao: 'Venda', valor: 4000, data: 20241017 }),
+      ],
+      [], [],
+    );
+    assert.equal(eventos.length, 1);
+    assert.equal(eventos[0].conciliacao, 'conciliado'); // v1 consome um dos dois lançamentos normalmente
+    assert.deepEqual(orfaos, []); // o segundo lançamento (da venda duplicada excluída) não sobra órfão
+  });
 });
 
 describe('aConferir', () => {
@@ -481,16 +510,16 @@ describe('aConferir', () => {
     ].sort());
   });
 
-  test('baixa com valor estimado pela categoria gera "baixa-valor-substituido", não "baixa-sem-valor"', () => {
+  test('baixa com valor estimado pela categoria NÃO aparece como "baixa-sem-valor" (a estimativa já resolveu, só o "sem-lancamento" genuíno fica)', () => {
     const { eventos, orfaos } = montarEventos(
       [], [baixa({ id: 'b1', tipo: 'Morte', data: 20241009, valor: null, categoria: null })], [], [],
       [animal({ id: 'b1', sexo: 'Fêmea', nascimento: 20241009 })], PRECOS,
     );
     const itens = aConferir(eventos, orfaos, 20260101);
-    assert.deepEqual(itens.map((i) => i.problema).sort(), ['baixa-valor-substituido', 'sem-lancamento'].sort());
+    assert.deepEqual(itens.map((i) => i.problema).sort(), ['sem-lancamento']);
   });
 
-  test('venda com valor substituido pela estimativa gera "venda-valor-substituido", nao "venda-sem-estimativa"', () => {
+  test('venda com valor substituido pela estimativa NÃO aparece em A conferir (informativo, já mostrado na coluna Origem)', () => {
     const { eventos, orfaos } = montarEventos(
       [venda({ id: 'v1', idAnimal: '1', data: 20250411, valor: 290, pesoKg: 470 })],
       [], [], [],
@@ -498,7 +527,7 @@ describe('aConferir', () => {
       PRECOS,
     );
     const itens = aConferir(eventos, orfaos, 20260101);
-    assert.deepEqual(itens.map((i) => i.problema).sort(), ['sem-lancamento', 'venda-valor-substituido'].sort());
+    assert.deepEqual(itens.map((i) => i.problema).sort(), ['sem-lancamento']);
   });
 
   test('sem problema nenhum, lista vazia', () => {

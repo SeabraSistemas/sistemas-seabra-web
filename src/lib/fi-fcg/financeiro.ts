@@ -246,15 +246,18 @@ export function removerVendasSemRastro(
   });
 }
 
-/** Monta os eventos SEM conciliação ainda. `rebanhoPorId`/`precosPorCategoria` só valem pra Venda (ver `estimarValorVenda`). */
+/**
+ * Monta os eventos SEM conciliação ainda. `vendas` já deve vir filtrada
+ * (sem duplicata, sem "sem rastro" — ver `montarEventos`); `rebanhoPorId`/
+ * `precosPorCategoria` só valem pra Venda/Baixa (ver `estimarValorVenda`).
+ */
 function montarBase(
-  vendasBrutas: RegVenda[],
+  vendas: RegVenda[],
   baixas: RegBaixa[],
   abortos: RegAborto[],
   rebanhoPorId: Map<string, { sexo: string | null; nascimento: DiaCompacto | null }>,
   precosPorCategoria: Map<string, number>,
 ): EventoBase[] {
-  const vendas = removerVendasSemRastro(removerVendasDuplicadas(vendasBrutas), rebanhoPorId);
   const deVendas = vendas.map((v) => {
     const statusValorVenda = classificarValorVenda(v.valor);
     const animal = v.idAnimal ? rebanhoPorId.get(v.idAnimal.trim().toLowerCase()) : undefined;
@@ -329,6 +332,37 @@ function montarBase(
 
 function chaveConciliacao(idAnimal: string | null, data: DiaCompacto | null, descricao: string): string {
   return `${(idAnimal ?? '').trim().toLowerCase()}|${data ?? ''}|${descricao}`;
+}
+
+/**
+ * Achado ao vivo (16/09/2026): excluir uma Venda duplicada/sem-rastro da
+ * conta (ver `removerVendasDuplicadas`/`removerVendasSemRastro`) faz o
+ * lançamento dela no livro-caixa "sobrar" como órfão — não é um órfão de
+ * verdade (nenhuma edição estranha aconteceu), é só a sombra de uma venda
+ * que a gente decidiu não contar. Remove ANTES da conciliação (mesma chave
+ * idAnimal+data+"Venda", fila FIFO) pra "A conferir" só mostrar órfão
+ * genuíno — o Felipe pediu (16/09) pra deixar essa lista o mais limpa
+ * possível.
+ */
+function removerLancamentosDeVendasExcluidas(lancamentos: LancamentoFinanceiro[], vendasExcluidas: RegVenda[]): LancamentoFinanceiro[] {
+  const aRemover = new Map<string, number>();
+  for (const v of vendasExcluidas) {
+    if (!v.idAnimal) continue;
+    const chave = chaveConciliacao(v.idAnimal, v.data, 'Venda');
+    aRemover.set(chave, (aRemover.get(chave) ?? 0) + 1);
+  }
+  if (aRemover.size === 0) return lancamentos;
+
+  return lancamentos.filter((l) => {
+    if (!l.descricao) return true;
+    const chave = chaveConciliacao(l.identificacao, l.data, l.descricao);
+    const restante = aRemover.get(chave);
+    if (restante && restante > 0) {
+      aRemover.set(chave, restante - 1);
+      return false;
+    }
+    return true;
+  });
 }
 
 /** 'Conferência' não tem contrapartida no livro-caixa (Descrição só tem Venda/Morte/Matula/Aborto — conferido ao vivo). */
@@ -419,15 +453,22 @@ export function conciliar(
 }
 
 export function montarEventos(
-  vendas: RegVenda[],
+  vendasBrutas: RegVenda[],
   baixas: RegBaixa[],
   abortos: RegAborto[],
-  lancamentos: LancamentoFinanceiro[],
+  lancamentosBrutos: LancamentoFinanceiro[],
   rebanho: RegRebanho[],
   precos: CategoriaArroba[],
 ): { eventos: EventoFin[]; orfaos: LancamentoFinanceiro[] } {
   const rebanhoPorId = mapaRebanhoPorId(rebanho);
   const precosPorCategoria = mapaPrecosPorCategoria(precos);
+
+  const vendas = removerVendasSemRastro(removerVendasDuplicadas(vendasBrutas), rebanhoPorId);
+  // Compara direto contra a lista BRUTA (não a deduplicada) pra pegar as
+  // duas etapas de exclusão de uma vez — duplicata E sem-rastro.
+  const vendasExcluidas = vendasBrutas.filter((v) => !vendas.includes(v));
+  const lancamentos = removerLancamentosDeVendasExcluidas(lancamentosBrutos, vendasExcluidas);
+
   return conciliar(montarBase(vendas, baixas, abortos, rebanhoPorId, precosPorCategoria), lancamentos);
 }
 
@@ -554,16 +595,16 @@ export function receitaPor(eventos: EventoFin[], campo: (e: EventoFin) => string
 
 // ---- "A conferir" ----
 
-export type ProblemaFin =
-  | 'venda-valor-substituido'
-  | 'venda-sem-estimativa'
-  | 'venda-sem-peso'
-  | 'data-invalida-ou-futura'
-  | 'baixa-valor-substituido'
-  | 'baixa-sem-valor'
-  | 'sem-lancamento'
-  | 'lancamento-orfao'
-  | 'valor-diverge';
+/**
+ * Achado ao vivo (16/09/2026): a maioria dos itens que apareciam aqui era
+ * informativa por design, não "problema pra resolver" — 'venda-valor-
+ * substituido' (2.183), 'venda-sem-peso' (526) e 'baixa-valor-substituido'
+ * (24) são quase 97% da lista, mas só repetem o que a coluna "Origem" das
+ * tabelas de Vendas/Perdas já mostra (amber = estimado). O Felipe pediu
+ * (16/09) pra deixar "A conferir" só com problema de verdade — essas 3
+ * categorias saíram do `ProblemaFin`/`aConferir` de propósito.
+ */
+export type ProblemaFin = 'venda-sem-estimativa' | 'data-invalida-ou-futura' | 'baixa-sem-valor' | 'sem-lancamento' | 'lancamento-orfao' | 'valor-diverge';
 
 export interface ItemConferir {
   problema: ProblemaFin;
@@ -572,7 +613,8 @@ export interface ItemConferir {
 }
 
 /**
- * Lista "A conferir" — cada linha aponta UM problema (um evento pode aparecer
+ * Lista "A conferir" — só o que precisa de ação de verdade (ver nota em
+ * `ProblemaFin`). Cada linha aponta UM problema (um evento pode aparecer
  * mais de uma vez, uma vez por problema, pra cada aba de conferência poder
  * filtrar só o seu). `hoje` entra como parâmetro pra a função ficar pura e
  * testável sem mockar relógio.
@@ -580,18 +622,14 @@ export interface ItemConferir {
 export function aConferir(eventos: EventoFin[], orfaos: LancamentoFinanceiro[], hoje: DiaCompacto): ItemConferir[] {
   const itens: ItemConferir[] = [];
   for (const e of eventos) {
-    if (e.tipo === 'Venda') {
-      if (e.statusValorVenda !== 'ok') {
-        itens.push({ problema: e.origemValor === 'estimado' ? 'venda-valor-substituido' : 'venda-sem-estimativa', evento: e });
-      }
-      if (e.pesoKg == null) itens.push({ problema: 'venda-sem-peso', evento: e });
+    // 'venda-sem-estimativa' só acontece quando o animal EXISTE no rebanho
+    // mas mesmo assim não deu pra estimar (ex: Sexo inválido) — o caso
+    // "animal não existe" nem chega a virar evento (removerVendasSemRastro).
+    if (e.tipo === 'Venda' && e.statusValorVenda !== 'ok' && e.origemValor === 'sem-valor') {
+      itens.push({ problema: 'venda-sem-estimativa', evento: e });
     }
-    if (e.tipo === 'Morte' || e.tipo === 'Matula') {
-      if (e.valorMetrica == null) {
-        itens.push({ problema: 'baixa-sem-valor', evento: e });
-      } else if (e.origemValor === 'estimado') {
-        itens.push({ problema: 'baixa-valor-substituido', evento: e });
-      }
+    if ((e.tipo === 'Morte' || e.tipo === 'Matula') && e.valorMetrica == null) {
+      itens.push({ problema: 'baixa-sem-valor', evento: e });
     }
     if (e.data == null || e.data > hoje) itens.push({ problema: 'data-invalida-ou-futura', evento: e });
     if (e.conciliacao === 'sem-lancamento') itens.push({ problema: 'sem-lancamento', evento: e });

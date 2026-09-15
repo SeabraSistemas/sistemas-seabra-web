@@ -31,11 +31,8 @@ import type { PacoteFinanceiro } from '@/lib/fi-fcg/pacotes';
 import type { CategoriaCusto, Custo, LancamentoFinanceiro } from '@/lib/fi-fcg/types';
 
 const PROBLEMA_LABEL: Record<ProblemaFin, string> = {
-  'venda-valor-substituido': 'Venda: valor registrado trocado pelo estimado',
   'venda-sem-estimativa': 'Venda sem valor e sem estimativa possível',
-  'venda-sem-peso': 'Venda sem peso',
   'data-invalida-ou-futura': 'Data inválida ou futura',
-  'baixa-valor-substituido': 'Baixa (Morte/Matula): valor estimado por categoria e idade',
   'baixa-sem-valor': 'Baixa (Morte/Matula) sem valor',
   'sem-lancamento': 'Sem lançamento no livro-caixa',
   'lancamento-orfao': 'Lançamento sem evento correspondente',
