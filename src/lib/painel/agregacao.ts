@@ -30,20 +30,52 @@ export function percentual(numerador: number, denominador: number): number | nul
 
 /**
  * Contagem por categoria — a base de todo Donut/BarrasHorizontais do
- * FI_FCG (partida, diagnóstico, sexo, método...). Único lugar que decide
- * "sem valor não vira fatia": um item com `campo(item)` vazio/null é
- * SEMPRE descartado da contagem, nunca aparece como categoria "" ou
- * "null" no gráfico. Existia como função idêntica duplicada em 3 Views
- * (Toque/Rebanho/Partos) — consolidado aqui pra a regra valer em todo
- * gráfico novo por construção, não por cada View lembrar de repetir o
- * `if (!v) continue`.
+ * FI_FCG (partida, diagnóstico, sexo, método...). Duas regras, sempre:
+ *
+ * 1. Item com `campo(item)` vazio/null é SEMPRE descartado da contagem —
+ *    nunca aparece como categoria "" ou "null" no gráfico.
+ * 2. Grafias que só diferem em maiúscula/minúscula ou espaço nas pontas
+ *    ("Monta Livre" / "Monta livre") viram UMA fatia só, contada junto —
+ *    duas fatias pra mesma categoria é estatisticamente errado, não só
+ *    feio. O rótulo mostrado é a grafia mais FREQUENTE entre as
+ *    variantes (não a primeira encontrada, que seria arbitrária). Só vale
+ *    pra AGREGAÇÃO (aqui) — filtro e tabela continuam mostrando a grafia
+ *    exata de cada linha, sem normalizar nada (decisão do Felipe,
+ *    14/09/2026: ele corrige o dado na planilha, o filtro é o jeito dele
+ *    de enxergar a duplicata).
+ *
+ * Existia como função idêntica duplicada em 3 Views (Toque/Rebanho/
+ * Partos) — consolidado aqui pra as duas regras valerem em todo gráfico
+ * novo por construção, não por cada View lembrar de repetir a lógica.
  */
 export function contagemPor<T>(itens: T[], campo: (item: T) => string | null): { rotulo: string; valor: number }[] {
-  const mapa = new Map<string, number>();
+  // chave = grafia normalizada (minúscula, sem espaço nas pontas) só pra
+  // AGRUPAR; o rótulo de exibição guarda a contagem de cada grafia exata
+  // dentro do grupo, pra escolher a mais frequente no final.
+  const grupos = new Map<string, Map<string, number>>();
   for (const item of itens) {
-    const v = campo(item);
-    if (!v) continue;
-    mapa.set(v, (mapa.get(v) ?? 0) + 1);
+    const bruto = campo(item);
+    const valor = bruto?.trim();
+    if (!valor) continue;
+    const chave = valor.toLowerCase();
+    let variantes = grupos.get(chave);
+    if (!variantes) {
+      variantes = new Map();
+      grupos.set(chave, variantes);
+    }
+    variantes.set(valor, (variantes.get(valor) ?? 0) + 1);
   }
-  return Array.from(mapa, ([rotulo, valor]) => ({ rotulo, valor }));
+  return Array.from(grupos.values(), (variantes) => {
+    let total = 0;
+    let rotulo = '';
+    let maiorContagem = -1;
+    for (const [grafia, contagem] of variantes) {
+      total += contagem;
+      if (contagem > maiorContagem) {
+        maiorContagem = contagem;
+        rotulo = grafia;
+      }
+    }
+    return { rotulo, valor: total };
+  });
 }
