@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx eslint *)",
+      "Bash(npm test *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(npx vercel *)",
+      "Bash(vercel whoami *)",
+      "Bash(vercel env *)",
+      "Bash(vercel ls *)",
+      "Bash(vercel inspect *)",
+      "Bash(vercel --prod)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" https://www.sistemaseabra.com.br/FI_FCG)",
+      "Bash(curl -s -D - -o /dev/null -c /private/tmp/claude-501/-Users-seabra-Projects-sistemas-seabra-web/6c8b0588-2780-42e8-a49f-618b0919ff9f/scratchpad/prod-cookies.txt -X POST https://www.sistemaseabra.com.br/FI_FCG/api/login -d 'email=fzdinhumas@gmail.com&manter=1')",
+      "Bash(curl -s -D - -o /dev/null -X POST https://www.sistemaseabra.com.br/FI_FCG/api/login -d \"email=alguem@fora.com\")",
+      "Bash(python3 -c ' *)",
+      "Bash(curl -s -b /private/tmp/claude-501/-Users-seabra-Projects-sistemas-seabra-web/6c8b0588-2780-42e8-a49f-618b0919ff9f/scratchpad/prod-cookies.txt -o /private/tmp/claude-501/-Users-seabra-Projects-sistemas-seabra-web/6c8b0588-2780-42e8-a49f-618b0919ff9f/scratchpad/prod-fin.html -w '%{http_code}\\\\n' https://www.sistemaseabra.com.br/FI_FCG/financeiro)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" https://www.sistemaseabra.com.br/katmandu)",
+      "Bash(curl -s -D - -o /dev/null -b /private/tmp/claude-501/-Users-seabra-Projects-sistemas-seabra-web/6c8b0588-2780-42e8-a49f-618b0919ff9f/scratchpad/prod-cookies.txt -X POST https://www.sistemaseabra.com.br/FI_FCG/api/logout)",
+      "Bash(python3 -)"
+    ]
+  }
+}

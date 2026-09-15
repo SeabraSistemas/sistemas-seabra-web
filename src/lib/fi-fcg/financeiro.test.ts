@@ -494,7 +494,7 @@ describe('aConferir', () => {
         // já filtra, nem chega a virar evento — não aparece em A conferir.
         venda({ id: 'v1', idAnimal: '1', data: 20241001, valor: null, pesoKg: null }),
       ],
-      [baixa({ id: 'b1', idAnimal: '2', tipo: 'Morte', data: 20990101, valor: null })],
+      [baixa({ id: 'b1', tipo: 'Morte', data: 20990101, valor: null })],
       [],
       [lanc({ id: 'f1', identificacao: '999', descricao: 'Venda', valor: 100, data: 20241001 })],
       [], PRECOS,

@@ -56,11 +56,17 @@ export function ToqueView({ dados }: { dados: PacoteLeitura<RegToque> }) {
   const total = filtrados.length;
   const escoreMedio = useMemo(() => media(filtrados.map((r) => r.escoreNum)), [filtrados]);
   const idadeMedia = useMemo(() => media(filtrados.map((r) => r.idadeAnos)), [filtrados]);
-  const vaziaCount = useMemo(() => contar(filtrados, (r) => r.diagnostico === 'Vazia'), [filtrados]);
-  const prenhaPct = percentual(total - vaziaCount, total);
-  const vaziaPct = percentual(vaziaCount, total);
+  // Looker exclui do Diagnóstico os toques sem Data preenchida (63 linhas) — replicamos aqui
+  // para o "Vazia"/"Prenha" bater com o dashboard antigo (2.988 -> 2.926 vazias).
+  const comDataParaDiagnostico = useMemo(() => filtrados.filter((r) => r.data != null), [filtrados]);
+  const vaziaCount = useMemo(
+    () => contar(comDataParaDiagnostico, (r) => r.diagnostico === 'Vazia'),
+    [comDataParaDiagnostico],
+  );
+  const prenhaPct = percentual(comDataParaDiagnostico.length - vaziaCount, comDataParaDiagnostico.length);
+  const vaziaPct = percentual(vaziaCount, comDataParaDiagnostico.length);
 
-  const porDiagnostico = useMemo(() => contagemPor(filtrados, (r) => r.diagnostico), [filtrados]);
+  const porDiagnostico = useMemo(() => contagemPor(comDataParaDiagnostico, (r) => r.diagnostico), [comDataParaDiagnostico]);
   const porStatus = useMemo(() => contagemPor(filtrados, (r) => r.status), [filtrados]);
   const porDestino = useMemo(() => contagemPor(filtrados, (r) => r.destino), [filtrados]);
 
