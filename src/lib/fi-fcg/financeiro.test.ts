@@ -11,6 +11,7 @@ import {
   perdasMensais,
   receitaMensal,
   receitaPor,
+  removerVendasDuplicadas,
   resumoFinanceiro,
   type EventoBase,
 } from '@/lib/fi-fcg/financeiro';
@@ -339,6 +340,43 @@ describe('receitaPor', () => {
     );
     const porCliente = receitaPor(eventos, (e) => e.cliente, 'Sem cliente');
     assert.deepEqual(new Map(porCliente.map((f) => [f.rotulo, f.valor])), new Map([['Frigorífico', 3264], ['Sem cliente', 4000]]));
+  });
+});
+
+describe('removerVendasDuplicadas', () => {
+  test('mesmo animal + mesma data => mantém só a primeira', () => {
+    const vendas = [
+      venda({ id: 'v1', idAnimal: '24011', data: 20241017, valor: 4000, cliente: 'Frigorífico' }),
+      venda({ id: 'v2', idAnimal: '24011', data: 20241017, valor: 4000, cliente: 'Frigorífico' }),
+    ];
+    const resultado = removerVendasDuplicadas(vendas);
+    assert.deepEqual(resultado.map((v) => v.id), ['v1']);
+  });
+  test('mesmo animal, data diferente => são 2 vendas reais, nenhuma removida', () => {
+    const vendas = [
+      venda({ id: 'v1', idAnimal: '24011', data: 20241017 }),
+      venda({ id: 'v2', idAnimal: '24011', data: 20250101 }),
+    ];
+    assert.deepEqual(removerVendasDuplicadas(vendas).map((v) => v.id), ['v1', 'v2']);
+  });
+  test('idAnimal vazio nunca conta como duplicata de outra venda sem idAnimal', () => {
+    const vendas = [
+      venda({ id: 'v1', idAnimal: null, data: 20241017 }),
+      venda({ id: 'v2', idAnimal: null, data: 20241017 }),
+    ];
+    assert.deepEqual(removerVendasDuplicadas(vendas).map((v) => v.id), ['v1', 'v2']);
+  });
+  test('afeta montarEventos de ponta a ponta: duplicata não vira EventoFin nem entra na receita', () => {
+    const { eventos } = montarEventos(
+      [
+        venda({ id: 'v1', idAnimal: '24011', data: 20241017, valor: 4000, cliente: 'Frigorífico' }),
+        venda({ id: 'v2', idAnimal: '24011', data: 20241017, valor: 4000, cliente: 'Frigorífico' }),
+      ],
+      [], [], [], [], [],
+    );
+    assert.equal(eventos.length, 1);
+    assert.equal(eventos[0].id, 'v1');
+    assert.equal(resumoFinanceiro(eventos).receitaRegistrada, 4000);
   });
 });
 

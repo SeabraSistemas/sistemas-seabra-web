@@ -155,14 +155,43 @@ function mapaPrecosPorCategoria(precos: CategoriaArroba[]): Map<string, number> 
   return mapa;
 }
 
+/**
+ * Remove Venda duplicada: mesmo animal + mesma data. Achado ao vivo
+ * (16/09/2026, planilha real): 5 pares assim, sempre com mesmo Cliente e
+ * mesma Fazenda também (peso às vezes com 1kg de diferença) — um animal
+ * físico não é vendido duas vezes no mesmo dia, então é lançamento
+ * duplicado (o usuário/AppSheet salvou 2x), não duas vendas reais. Decisão
+ * do Felipe (16/09): excluir da conta, mantendo a PRIMEIRA ocorrência (a
+ * ordem da própria planilha) — a linha extra continua existindo na
+ * planilha, só não entra em nenhuma métrica nem na tabela de Vendas. Nunca
+ * agrupa por `idAnimal` vazio (senão juntaria vendas sem ID que não têm
+ * nada a ver umas com as outras).
+ */
+export function removerVendasDuplicadas(vendas: RegVenda[]): RegVenda[] {
+  const vistos = new Set<string>();
+  const resultado: RegVenda[] = [];
+  for (const v of vendas) {
+    if (!v.idAnimal) {
+      resultado.push(v);
+      continue;
+    }
+    const chave = `${v.idAnimal.trim().toLowerCase()}|${v.data ?? ''}`;
+    if (vistos.has(chave)) continue;
+    vistos.add(chave);
+    resultado.push(v);
+  }
+  return resultado;
+}
+
 /** Monta os eventos SEM conciliação ainda. `rebanhoPorId`/`precosPorCategoria` só valem pra Venda (ver `estimarValorVenda`). */
 function montarBase(
-  vendas: RegVenda[],
+  vendasBrutas: RegVenda[],
   baixas: RegBaixa[],
   abortos: RegAborto[],
   rebanhoPorId: Map<string, { sexo: string | null; nascimento: DiaCompacto | null }>,
   precosPorCategoria: Map<string, number>,
 ): EventoBase[] {
+  const vendas = removerVendasDuplicadas(vendasBrutas);
   const deVendas = vendas.map((v) => {
     const statusValorVenda = classificarValorVenda(v.valor);
     const animal = v.idAnimal ? rebanhoPorId.get(v.idAnimal.trim().toLowerCase()) : undefined;
