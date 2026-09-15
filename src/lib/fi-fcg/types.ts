@@ -155,6 +155,20 @@ export interface CategoriaCusto {
   nome: string;
 }
 
+/**
+ * Uma descrição de custo (aba nova "Descrições de Custo", 16/09/2026) —
+ * mesmo espírito da CategoriaCusto (lista editável, não fixa no código),
+ * mas só serve de VOCABULÁRIO pro campo "Descrição" do formulário: o
+ * `Custo.descricao` guarda o TEXTO escolhido, não o id daqui (diferente de
+ * `Custo.categoria`) — renomear um item da lista não reescreve custos já
+ * lançados com o nome antigo, porque descrição é rótulo do lançamento, não
+ * agrupamento.
+ */
+export interface DescricaoCusto {
+  id: string;
+  nome: string;
+}
+
 export type TipoCusto = 'Mensal' | 'Anual';
 
 /**

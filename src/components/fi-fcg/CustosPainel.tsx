@@ -11,7 +11,7 @@ import { CsvExport, type CsvColumn } from '@/components/painel/CsvExport';
 import { SerieMensal } from '@/components/painel/SerieMensal';
 import { diaParaInput, formatDia, formatMoeda } from '@/lib/painel/format';
 import { custosMensais } from '@/lib/fi-fcg/custos';
-import type { CategoriaCusto, Custo, DiaCompacto, TipoCusto } from '@/lib/fi-fcg/types';
+import type { CategoriaCusto, Custo, DescricaoCusto, DiaCompacto, TipoCusto } from '@/lib/fi-fcg/types';
 
 const FAZENDA_GERAL = 'Geral';
 
@@ -32,21 +32,143 @@ function nomeCategoria(id: string | null, categorias: CategoriaCusto[]): string 
 }
 
 /**
+ * Uma lista editável genérica (adicionar/renomear/remover), o mesmo
+ * comportamento pra Categorias e Descrições de custo — cada uma é uma aba
+ * própria na planilha ({ID, Nome}), gerenciada por `apiPath`.
+ */
+function ListaGerenciavel({
+  titulo,
+  itens,
+  apiPath,
+  placeholder,
+  avisoRemover,
+  onChanged,
+}: {
+  titulo: string;
+  itens: { id: string; nome: string }[];
+  apiPath: string;
+  placeholder: string;
+  avisoRemover: string;
+  onChanged: () => void;
+}) {
+  const [novoNome, setNovoNome] = useState('');
+  const [editandoId, setEditandoId] = useState<string | null>(null);
+  const [nomeEdicao, setNomeEdicao] = useState('');
+
+  async function adicionar() {
+    const nome = novoNome.trim();
+    if (!nome) return;
+    const res = await fetch(apiPath, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nome }),
+    });
+    if (res.ok) {
+      setNovoNome('');
+      onChanged();
+    }
+  }
+
+  async function salvarRenomeio(id: string) {
+    const nome = nomeEdicao.trim();
+    if (!nome) return;
+    const res = await fetch(apiPath, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, nome }),
+    });
+    if (res.ok) {
+      setEditandoId(null);
+      onChanged();
+    }
+  }
+
+  async function excluir(id: string) {
+    if (!confirm(avisoRemover)) return;
+    const res = await fetch(apiPath, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id }),
+    });
+    if (res.ok) onChanged();
+  }
+
+  return (
+    <div className="rounded-xl border border-border bg-card p-5">
+      <h3 className="mb-4 text-sm font-medium text-muted-foreground">{titulo}</h3>
+      <ul className="mb-3 flex flex-col gap-1.5">
+        {itens.map((it) => (
+          <li key={it.id} className="flex items-center gap-2 text-sm">
+            {editandoId === it.id ? (
+              <>
+                <Input value={nomeEdicao} onChange={(e) => setNomeEdicao(e.target.value)} className="h-8 w-48" autoFocus />
+                <Button type="button" size="sm" onClick={() => salvarRenomeio(it.id)}>
+                  Salvar
+                </Button>
+                <Button type="button" size="sm" variant="ghost" onClick={() => setEditandoId(null)}>
+                  <X className="size-3.5" />
+                </Button>
+              </>
+            ) : (
+              <>
+                <span className="text-foreground">{it.nome}</span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="size-6"
+                  onClick={() => {
+                    setEditandoId(it.id);
+                    setNomeEdicao(it.nome);
+                  }}
+                  aria-label="Renomear"
+                >
+                  <Pencil className="size-3" />
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="size-6 text-destructive"
+                  onClick={() => excluir(it.id)}
+                  aria-label="Remover"
+                >
+                  <Trash2 className="size-3" />
+                </Button>
+              </>
+            )}
+          </li>
+        ))}
+      </ul>
+      <div className="flex gap-2">
+        <Input value={novoNome} onChange={(e) => setNovoNome(e.target.value)} placeholder={placeholder} className="h-8 w-48" />
+        <Button type="button" size="sm" variant="outline" onClick={adicionar} className="gap-1.5">
+          <Plus className="size-3.5" />
+          Adicionar
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+/**
  * Cadastro de custos (mensal/anual, com distribuição pelos meses) — aba
  * "Custos" do Financeiro, 15/09/2026. Primeira tela de escrita do FI_FCG:
  * formulário + tabela + gráfico mensal (o mesmo total que entra no Resumo)
- * + um cantinho pra gerenciar as categorias (adicionar/renomear/remover —
- * nasce só com "Geral", pro usuário aprender a agrupar aos poucos, não uma
- * lista pronta que ninguém escolheu).
+ * + um cantinho pra gerenciar Categorias e Descrições (adicionar/renomear/
+ * remover — Categorias nasce só com "Geral", Descrições já nasce com uma
+ * lista inicial pedida pelo Felipe, 16/09).
  */
 export function CustosPainel({
   custos,
   categorias,
+  descricoes,
   hoje,
   fazendas,
 }: {
   custos: Custo[];
   categorias: CategoriaCusto[];
+  descricoes: DescricaoCusto[];
   hoje: DiaCompacto;
   fazendas: string[];
 }) {
@@ -55,10 +177,6 @@ export function CustosPainel({
   const [editandoId, setEditandoId] = useState<string | null>(null);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
-
-  const [novaCategoria, setNovaCategoria] = useState('');
-  const [categoriaEditandoId, setCategoriaEditandoId] = useState<string | null>(null);
-  const [nomeEdicaoCategoria, setNomeEdicaoCategoria] = useState('');
 
   const opcoesFazenda = useMemo(() => [FAZENDA_GERAL, ...fazendas.filter((f) => f !== FAZENDA_GERAL)], [fazendas]);
   const serieCustos = useMemo(() => custosMensais(custos, hoje), [custos, hoje]);
@@ -87,7 +205,7 @@ export function CustosPainel({
   async function salvar() {
     const valorNum = Number(form.valor.replace(',', '.'));
     if (!form.descricao.trim() || !form.dataInicio || !Number.isFinite(valorNum) || valorNum <= 0) {
-      setErro('Preencha descrição, valor (maior que zero) e data início.');
+      setErro('Selecione a descrição, e preencha valor (maior que zero) e data início.');
       return;
     }
     setErro(null);
@@ -122,44 +240,6 @@ export function CustosPainel({
   async function excluir(id: string) {
     if (!confirm('Apagar este custo?')) return;
     const res = await fetch('/FI_FCG/api/custos', {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id }),
-    });
-    if (res.ok) router.refresh();
-  }
-
-  async function adicionarCategoria() {
-    const nome = novaCategoria.trim();
-    if (!nome) return;
-    const res = await fetch('/FI_FCG/api/categorias-custo', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nome }),
-    });
-    if (res.ok) {
-      setNovaCategoria('');
-      router.refresh();
-    }
-  }
-
-  async function salvarRenomeio(id: string) {
-    const nome = nomeEdicaoCategoria.trim();
-    if (!nome) return;
-    const res = await fetch('/FI_FCG/api/categorias-custo', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, nome }),
-    });
-    if (res.ok) {
-      setCategoriaEditandoId(null);
-      router.refresh();
-    }
-  }
-
-  async function excluirCategoria(id: string) {
-    if (!confirm('Remover esta categoria? Custos já lançados com ela ficam mostrando "(categoria removida)".')) return;
-    const res = await fetch('/FI_FCG/api/categorias-custo', {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id }),
@@ -214,7 +294,18 @@ export function CustosPainel({
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <div className="flex flex-col gap-1 sm:col-span-2">
             <span className="text-xs text-muted-foreground">Descrição</span>
-            <Input value={form.descricao} onChange={(e) => setForm({ ...form, descricao: e.target.value })} placeholder="Ração, mão de obra..." />
+            <Select value={form.descricao || undefined} onValueChange={(v) => setForm({ ...form, descricao: v })}>
+              <SelectTrigger size="sm" className="w-full">
+                <SelectValue placeholder="Selecione..." />
+              </SelectTrigger>
+              <SelectContent>
+                {descricoes.map((d) => (
+                  <SelectItem key={d.id} value={d.nome}>
+                    {d.nome}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="flex flex-col gap-1">
             <span className="text-xs text-muted-foreground">Categoria</span>
@@ -291,69 +382,23 @@ export function CustosPainel({
         </div>
       </div>
 
-      <div className="rounded-xl border border-border bg-card p-5">
-        <h3 className="mb-4 text-sm font-medium text-muted-foreground">Categorias</h3>
-        <ul className="mb-3 flex flex-col gap-1.5">
-          {categorias.map((c) => (
-            <li key={c.id} className="flex items-center gap-2 text-sm">
-              {categoriaEditandoId === c.id ? (
-                <>
-                  <Input
-                    value={nomeEdicaoCategoria}
-                    onChange={(e) => setNomeEdicaoCategoria(e.target.value)}
-                    className="h-8 w-48"
-                    autoFocus
-                  />
-                  <Button type="button" size="sm" onClick={() => salvarRenomeio(c.id)}>
-                    Salvar
-                  </Button>
-                  <Button type="button" size="sm" variant="ghost" onClick={() => setCategoriaEditandoId(null)}>
-                    <X className="size-3.5" />
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <span className="text-foreground">{c.nome}</span>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="size-6"
-                    onClick={() => {
-                      setCategoriaEditandoId(c.id);
-                      setNomeEdicaoCategoria(c.nome);
-                    }}
-                    aria-label="Renomear"
-                  >
-                    <Pencil className="size-3" />
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="size-6 text-destructive"
-                    onClick={() => excluirCategoria(c.id)}
-                    aria-label="Remover"
-                  >
-                    <Trash2 className="size-3" />
-                  </Button>
-                </>
-              )}
-            </li>
-          ))}
-        </ul>
-        <div className="flex gap-2">
-          <Input
-            value={novaCategoria}
-            onChange={(e) => setNovaCategoria(e.target.value)}
-            placeholder="Nova categoria..."
-            className="h-8 w-48"
-          />
-          <Button type="button" size="sm" variant="outline" onClick={adicionarCategoria} className="gap-1.5">
-            <Plus className="size-3.5" />
-            Adicionar
-          </Button>
-        </div>
+      <div className="grid gap-6 sm:grid-cols-2">
+        <ListaGerenciavel
+          titulo="Categorias"
+          itens={categorias}
+          apiPath="/FI_FCG/api/categorias-custo"
+          placeholder="Nova categoria..."
+          avisoRemover='Remover esta categoria? Custos já lançados com ela ficam mostrando "(categoria removida)".'
+          onChanged={() => router.refresh()}
+        />
+        <ListaGerenciavel
+          titulo="Descrições"
+          itens={descricoes}
+          apiPath="/FI_FCG/api/descricoes-custo"
+          placeholder="Nova descrição..."
+          avisoRemover="Remover esta descrição da lista? Custos já lançados com ela mantêm o texto — só some das opções pra escolher em novos custos."
+          onChanged={() => router.refresh()}
+        />
       </div>
 
       <div className="flex items-center justify-between gap-3">

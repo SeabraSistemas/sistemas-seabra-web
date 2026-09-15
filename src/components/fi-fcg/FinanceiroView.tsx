@@ -28,7 +28,7 @@ import {
   type ProblemaFin,
 } from '@/lib/fi-fcg/financeiro';
 import type { PacoteFinanceiro } from '@/lib/fi-fcg/pacotes';
-import type { CategoriaCusto, Custo, LancamentoFinanceiro } from '@/lib/fi-fcg/types';
+import type { CategoriaCusto, Custo, DescricaoCusto, LancamentoFinanceiro } from '@/lib/fi-fcg/types';
 
 const PROBLEMA_LABEL: Record<ProblemaFin, string> = {
   'venda-valor-substituido': 'Venda: valor registrado trocado pelo estimado',
@@ -59,6 +59,7 @@ export function FinanceiroView({ dados }: { dados: PacoteFinanceiro }) {
   const orfaos = useMemo(() => desempacotar<LancamentoFinanceiro>(dados.orfaos), [dados.orfaos]);
   const custos = useMemo(() => desempacotar<Custo>(dados.custos), [dados.custos]);
   const categoriasCusto = useMemo(() => desempacotar<CategoriaCusto>(dados.categoriasCusto), [dados.categoriasCusto]);
+  const descricoesCusto = useMemo(() => desempacotar<DescricaoCusto>(dados.descricoesCusto), [dados.descricoesCusto]);
   const hoje = useMemo(() => hojeCompacto(), []);
 
   const [fazenda, setFazenda] = useState('');
@@ -412,7 +413,13 @@ export function FinanceiroView({ dados }: { dados: PacoteFinanceiro }) {
         </TabsContent>
 
         <TabsContent value="custos">
-          <CustosPainel custos={custos} categorias={categoriasCusto} hoje={hoje} fazendas={todasFazendas} />
+          <CustosPainel
+            custos={custos}
+            categorias={categoriasCusto}
+            descricoes={descricoesCusto}
+            hoje={hoje}
+            fazendas={todasFazendas}
+          />
         </TabsContent>
       </Tabs>
     </div>

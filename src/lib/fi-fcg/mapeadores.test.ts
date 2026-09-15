@@ -7,6 +7,7 @@ import {
   mapCategoriaArroba,
   mapCategoriasCusto,
   mapCustos,
+  mapDescricoesCusto,
   mapFinanceiro,
   mapIatf,
   mapPartos,
@@ -215,6 +216,23 @@ describe('mapCategoriasCusto', () => {
       ['', 'Sem id'],
     ];
     assert.deepEqual(mapCategoriasCusto(rows), []);
+  });
+});
+
+describe('mapDescricoesCusto', () => {
+  test('mapeia id e nome (mesmo formato de mapCategoriasCusto)', () => {
+    const rows = [
+      ['ID', 'Nome'],
+      ['ab12cd34', 'Combustível'],
+    ];
+    assert.deepEqual(mapDescricoesCusto(rows), [{ id: 'ab12cd34', nome: 'Combustível' }]);
+  });
+  test('linha sem ID e descartada', () => {
+    const rows = [
+      ['ID', 'Nome'],
+      ['', 'Sem id'],
+    ];
+    assert.deepEqual(mapDescricoesCusto(rows), []);
   });
 });
 

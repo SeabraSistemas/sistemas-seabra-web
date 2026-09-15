@@ -230,3 +230,30 @@ export async function limparLinha(spreadsheetId: string, range: string): Promise
     return false;
   }
 }
+
+/**
+ * Cria uma aba nova (vazia) na planilha, via `spreadsheets:batchUpdate`
+ * (`addSheet`) — usado só uma vez por aba nova do /FI_FCG que ainda não
+ * existe na planilha do cliente (ex: "Categorias de Custo", "Custos",
+ * "Descrições de Custo"), nunca em runtime normal do site.
+ */
+export async function criarAba(spreadsheetId: string, titulo: string): Promise<boolean> {
+  const t = await token();
+  if (!t) return false;
+  try {
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}:batchUpdate`;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${t}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ requests: [{ addSheet: { properties: { title: titulo } } }] }),
+    });
+    if (!res.ok) {
+      console.error('[sheets] falha ao criar aba', titulo, res.status, await res.text());
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error('[sheets] falha ao criar aba', titulo, err);
+    return false;
+  }
+}
