@@ -25,6 +25,11 @@
  *   vivo, ver `categoriaEstimadaPorIdade`), usando a idade do animal NA
  *   DATA DA VENDA (não hoje) — Sexo e Data de nascimento nunca são
  *   sobrescritos, diferente de Categoria.
+ * - 16/09: a MESMA reconstrução vale pra Morte/Matula (Baixa) quando ela
+ *   não tem valor NEM categoria própria (achado ao vivo: 23 de 24 baixas
+ *   sem valor também estão sem Categoria — é por isso que o AppSheet não
+ *   calculou sozinho). Baixa com categoria própria já é valorada pelo
+ *   AppSheet, nunca é reestimada aqui.
  */
 import { diasEntre } from '@/lib/painel/format';
 import type { CategoriaArroba, DiaCompacto, LancamentoFinanceiro, RegAborto, RegBaixa, RegRebanho, RegVenda } from './types';
@@ -106,7 +111,13 @@ export interface EventoFin {
   conciliacao: StatusConciliacao;
   /** Só preenchido quando tipo === 'Venda'. */
   statusValorVenda: StatusValorVenda | null;
-  /** Categoria reconstruída pela idade na venda — só preenchida quando tipo === 'Venda' e statusValorVenda !== 'ok' (nunca calculada à toa). */
+  /**
+   * Categoria reconstruída pela idade do animal na data do evento — pra
+   * Venda, só quando statusValorVenda !== 'ok'; pra Morte/Matula, só quando
+   * a Baixa não tem valor NEM categoria própria (a Baixa normalmente já vem
+   * com Categoria preenchida e o AppSheet já valora sozinho; só reconstrói
+   * quando falta os dois). Nunca calculada à toa.
+   */
   categoriaEstimada: string | null;
   /** Valor Categoria@ correspondente a `categoriaEstimada` — null se a categoria não tiver preço (ex: "Recria") ou não deu pra estimar. */
   valorEstimado: number | null;
@@ -214,26 +225,37 @@ function montarBase(
       valorEstimado: estimativa?.valor ?? null,
     };
   });
-  const deBaixas = baixas.map((b) => ({
-    origem: 'Baixa' as const,
+  const deBaixas = baixas.map((b) => {
     // Os 3 valores reais de "Causa da baixa" (conferido ao vivo); um valor
     // fora disso (dado novo na planilha) cai em 'Conferência' — nunca gera
     // R$, então o pior caso é só entrar como cabeça contada, não dinheiro
     // errado.
-    tipo: (b.tipo === 'Morte' || b.tipo === 'Matula' ? b.tipo : 'Conferência') as TipoEvento,
-    id: b.id,
-    idAnimal: b.id,
-    data: b.data,
-    fazenda: b.fazenda,
-    cliente: null,
-    pesoKg: null,
-    categoria: b.categoria,
-    causa: b.causaObito,
-    valorEvento: b.valor,
-    statusValorVenda: null,
-    categoriaEstimada: null,
-    valorEstimado: null,
-  }));
+    const tipo = (b.tipo === 'Morte' || b.tipo === 'Matula' ? b.tipo : 'Conferência') as TipoEvento;
+    // Achado ao vivo (16/09/2026): 24 Morte/Matula sem Valor TÊM a Categoria
+    // na baixa também vazia — é por isso que o próprio AppSheet não
+    // calculou o valor (a fórmula dele também precisa da categoria). Mesmo
+    // fallback da Venda: reconstrói a categoria pela idade+sexo do animal
+    // NA DATA DA BAIXA (RebanhoProd.Sexo/Nascimento nunca são sobrescritos),
+    // só quando a baixa em si não tem valor nem categoria.
+    const animal = tipo !== 'Conferência' && b.valor == null && !b.categoria ? rebanhoPorId.get(b.id.trim().toLowerCase()) : undefined;
+    const estimativa = animal ? estimarValorVenda(animal.sexo, animal.nascimento, b.data, precosPorCategoria) : null;
+    return {
+      origem: 'Baixa' as const,
+      tipo,
+      id: b.id,
+      idAnimal: b.id,
+      data: b.data,
+      fazenda: b.fazenda,
+      cliente: null,
+      pesoKg: null,
+      categoria: b.categoria,
+      causa: b.causaObito,
+      valorEvento: b.valor,
+      statusValorVenda: null,
+      categoriaEstimada: estimativa?.categoria ?? null,
+      valorEstimado: estimativa?.valor ?? null,
+    };
+  });
   const deAbortos = abortos.map((a) => ({
     origem: 'Aborto' as const,
     tipo: 'Aborto' as const,
@@ -326,9 +348,11 @@ export function conciliar(
       valorMetrica = null;
       origemValor = 'sem-valor';
     } else {
-      // Morte/Matula
-      valorMetrica = e.valorEvento ?? valorLancado;
-      origemValor = valorMetrica != null ? 'registrado' : 'sem-valor';
+      // Morte/Matula: registrado (na própria Baixa ou no livro-caixa) antes
+      // de estimado — `categoriaEstimada`/`valorEstimado` só existem quando
+      // NENHUM dos dois veio preenchido (ver montarBase).
+      valorMetrica = e.valorEvento ?? valorLancado ?? e.valorEstimado;
+      origemValor = e.valorEvento != null || valorLancado != null ? 'registrado' : valorMetrica != null ? 'estimado' : 'sem-valor';
     }
 
     return { ...e, valorLancado, conciliacao, valorMetrica, origemValor };
@@ -474,6 +498,7 @@ export type ProblemaFin =
   | 'venda-sem-estimativa'
   | 'venda-sem-peso'
   | 'data-invalida-ou-futura'
+  | 'baixa-valor-substituido'
   | 'baixa-sem-valor'
   | 'sem-lancamento'
   | 'lancamento-orfao'
@@ -500,8 +525,12 @@ export function aConferir(eventos: EventoFin[], orfaos: LancamentoFinanceiro[], 
       }
       if (e.pesoKg == null) itens.push({ problema: 'venda-sem-peso', evento: e });
     }
-    if ((e.tipo === 'Morte' || e.tipo === 'Matula') && e.valorMetrica == null) {
-      itens.push({ problema: 'baixa-sem-valor', evento: e });
+    if (e.tipo === 'Morte' || e.tipo === 'Matula') {
+      if (e.valorMetrica == null) {
+        itens.push({ problema: 'baixa-sem-valor', evento: e });
+      } else if (e.origemValor === 'estimado') {
+        itens.push({ problema: 'baixa-valor-substituido', evento: e });
+      }
     }
     if (e.data == null || e.data > hoje) itens.push({ problema: 'data-invalida-ou-futura', evento: e });
     if (e.conciliacao === 'sem-lancamento') itens.push({ problema: 'sem-lancamento', evento: e });

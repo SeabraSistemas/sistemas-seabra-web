@@ -35,6 +35,7 @@ const PROBLEMA_LABEL: Record<ProblemaFin, string> = {
   'venda-sem-estimativa': 'Venda sem valor e sem estimativa possível',
   'venda-sem-peso': 'Venda sem peso',
   'data-invalida-ou-futura': 'Data inválida ou futura',
+  'baixa-valor-substituido': 'Baixa (Morte/Matula): valor estimado por categoria e idade',
   'baixa-sem-valor': 'Baixa (Morte/Matula) sem valor',
   'sem-lancamento': 'Sem lançamento no livro-caixa',
   'lancamento-orfao': 'Lançamento sem evento correspondente',
@@ -176,14 +177,27 @@ export function FinanceiroView({ dados }: { dados: PacoteFinanceiro }) {
     { key: 'data', header: 'Data', cell: (e) => formatDia(e.data), sortValue: (e) => e.data },
     { key: 'tipo', header: 'Tipo', cell: (e) => e.tipo, sortValue: (e) => e.tipo },
     { key: 'id', header: 'ID animal', cell: (e) => e.idAnimal ?? e.id, sortValue: (e) => e.idAnimal ?? e.id },
-    { key: 'categoria', header: 'Categoria', cell: (e) => e.categoria ?? '—', sortValue: (e) => e.categoria },
+    {
+      key: 'categoria',
+      header: 'Categoria',
+      cell: (e) => e.categoria ?? e.categoriaEstimada ?? '—',
+      sortValue: (e) => e.categoria ?? e.categoriaEstimada,
+    },
     { key: 'causa', header: 'Causa', cell: (e) => e.causa ?? '—', sortValue: (e) => e.causa },
     { key: 'fazenda', header: 'Fazenda', cell: (e) => e.fazenda ?? '—', sortValue: (e) => e.fazenda },
     {
       key: 'valor',
       header: 'Valor',
-      cell: (e) => (e.valorMetrica != null ? formatMoeda(e.valorMetrica) : <span className="text-amber-400">Sem valor</span>),
+      cell: (e) => (
+        <span className={ORIGEM_CLASSE[e.origemValor]}>{e.valorMetrica != null ? formatMoeda(e.valorMetrica) : 'Sem valor'}</span>
+      ),
       sortValue: (e) => e.valorMetrica,
+    },
+    {
+      key: 'origem',
+      header: 'Origem',
+      cell: (e) => <span className={ORIGEM_CLASSE[e.origemValor]}>{ORIGEM_LABEL[e.origemValor]}</span>,
+      sortValue: (e) => e.origemValor,
     },
   ];
 
@@ -368,10 +382,11 @@ export function FinanceiroView({ dados }: { dados: PacoteFinanceiro }) {
                 { key: 'data', header: 'Data', value: (e: EventoFin) => formatDia(e.data) },
                 { key: 'tipo', header: 'Tipo', value: (e: EventoFin) => e.tipo },
                 { key: 'id', header: 'ID animal', value: (e: EventoFin) => e.idAnimal ?? e.id },
-                { key: 'categoria', header: 'Categoria', value: (e: EventoFin) => e.categoria ?? '' },
+                { key: 'categoria', header: 'Categoria', value: (e: EventoFin) => e.categoria ?? e.categoriaEstimada ?? '' },
                 { key: 'causa', header: 'Causa', value: (e: EventoFin) => e.causa ?? '' },
                 { key: 'fazenda', header: 'Fazenda', value: (e: EventoFin) => e.fazenda ?? '' },
                 { key: 'valor', header: 'Valor', value: (e: EventoFin) => formatMoeda(e.valorMetrica) },
+                { key: 'origem', header: 'Origem', value: (e: EventoFin) => ORIGEM_LABEL[e.origemValor] },
               ]}
               rows={perdasFiltradas}
               requiredKeys={['id']}

@@ -264,6 +264,38 @@ describe('valorMetrica por tipo (via montarEventos)', () => {
     assert.equal(eventos[0].valorMetrica, 3840);
   });
 
+  test('Morte/Matula sem valor NEM categoria: estima pela idade+sexo na data da baixa, origemValor="estimado"', () => {
+    const { eventos } = montarEventos(
+      [], [baixa({ id: 'b1', tipo: 'Morte', data: 20241009, valor: null, categoria: null })], [], [],
+      [animal({ id: 'b1', sexo: 'Fêmea', nascimento: 20241009 })], // 0 dias na baixa -> Bezerra
+      PRECOS,
+    );
+    assert.equal(eventos[0].categoriaEstimada, 'Bezerra');
+    assert.equal(eventos[0].valorEstimado, 3840);
+    assert.equal(eventos[0].valorMetrica, 3840);
+    assert.equal(eventos[0].origemValor, 'estimado');
+  });
+
+  test('Morte/Matula sem valor MAS COM categoria própria: nunca reestima (AppSheet já devia ter valorado)', () => {
+    const { eventos } = montarEventos(
+      [], [baixa({ id: 'b1', tipo: 'Morte', data: 20241009, valor: null, categoria: 'Vaca' })], [], [],
+      [animal({ id: 'b1', sexo: 'Fêmea', nascimento: 19900101 })],
+      PRECOS,
+    );
+    assert.equal(eventos[0].categoriaEstimada, null);
+    assert.equal(eventos[0].valorMetrica, null);
+    assert.equal(eventos[0].origemValor, 'sem-valor');
+  });
+
+  test('Morte/Matula sem valor/categoria e animal não encontrado no rebanho: sem estimativa possível', () => {
+    const { eventos } = montarEventos(
+      [], [baixa({ id: 'nao-existe', tipo: 'Morte', data: 20241009, valor: null, categoria: null })], [], [], [], PRECOS,
+    );
+    assert.equal(eventos[0].categoriaEstimada, null);
+    assert.equal(eventos[0].valorMetrica, null);
+    assert.equal(eventos[0].origemValor, 'sem-valor');
+  });
+
   test('Aborto: SEMPRE vem do lançamento (a aba Aborto não tem coluna de valor)', () => {
     const { eventos } = montarEventos([], [], [aborto({ id: 'a1', idAnimal: 'C430', data: 20240902 })], [
       lanc({ id: 'f1', identificacao: 'C430', descricao: 'Aborto', valor: 2500, data: 20240902 }),
@@ -402,6 +434,15 @@ describe('aConferir', () => {
       'venda-sem-estimativa',
       'venda-sem-peso',
     ].sort());
+  });
+
+  test('baixa com valor estimado pela categoria gera "baixa-valor-substituido", não "baixa-sem-valor"', () => {
+    const { eventos, orfaos } = montarEventos(
+      [], [baixa({ id: 'b1', tipo: 'Morte', data: 20241009, valor: null, categoria: null })], [], [],
+      [animal({ id: 'b1', sexo: 'Fêmea', nascimento: 20241009 })], PRECOS,
+    );
+    const itens = aConferir(eventos, orfaos, 20260101);
+    assert.deepEqual(itens.map((i) => i.problema).sort(), ['baixa-valor-substituido', 'sem-lancamento'].sort());
   });
 
   test('venda com valor substituido pela estimativa gera "venda-valor-substituido", nao "venda-sem-estimativa"', () => {
