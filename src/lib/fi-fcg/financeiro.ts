@@ -48,6 +48,9 @@ export const LIMITE_IRRISORIO = 100;
 export const LIMITE_ARROBA_MAX = 1000;
 export const LIMITE_ALTO = 20000;
 
+/** Todo Aborto com lançamento no livro-caixa vem com este valor fixo (conferido ao vivo, 132/132) — usado como fallback quando NÃO existe lançamento nenhum (16/09/2026, decisão do Felipe). */
+export const VALOR_ABORTO_PADRAO = 2500;
+
 /**
  * Espelha a fórmula real da coluna Categoria em RebanhoProd (lida com
  * valueRenderOption=FORMULA em 15/09/2026): idade em dias ≤365/730/1095/
@@ -61,9 +64,10 @@ export const LIMITE_ALTO = 20000;
  *
  * Achado no caminho: a faixa 366–730 dias dá "Garrote" (macho) / "Recria"
  * (fêmea) — mas a aba Categoria@ não tem preço pra "Recria" (só Bezerro,
- * Bezerra, Novilha, Garrote, Boi, Vaca, Touro, Leiteira). Uma fêmea
- * estimada nessa faixa fica sem preço — cai em "venda-sem-estimativa" em
- * vez de usar um número inventado.
+ * Bezerra, Novilha, Garrote, Boi, Vaca, Touro, Leiteira). `mapaPrecosPorCategoria`
+ * cobre isso com um preço DERIVADO (média Bezerra/Novilha), decisão do
+ * Felipe (16/09) — não é um número inventado à toa, é a mesma lógica de
+ * "entre a faixa anterior e a seguinte" que a própria idade já usa.
  */
 export function categoriaEstimadaPorIdade(sexo: string | null, idadeDiasNaVenda: number | null): string | null {
   if (idadeDiasNaVenda == null || idadeDiasNaVenda < 0) return null;
@@ -119,7 +123,7 @@ export interface EventoFin {
    * quando falta os dois). Nunca calculada à toa.
    */
   categoriaEstimada: string | null;
-  /** Valor Categoria@ correspondente a `categoriaEstimada` — null se a categoria não tiver preço (ex: "Recria") ou não deu pra estimar. */
+  /** Valor Categoria@ (ou derivado, no caso de "Recria" — ver `mapaPrecosPorCategoria`) correspondente a `categoriaEstimada`; null só quando nem isso deu pra estimar. */
   valorEstimado: number | null;
   /**
    * O valor que de fato entra nas métricas de receita/perdas — nunca o
@@ -158,10 +162,29 @@ function mapaRebanhoPorId(rebanho: RegRebanho[]): Map<string, { sexo: string | n
   return mapa;
 }
 
+/**
+ * "Recria" (fêmea, 366-730 dias — ver `categoriaEstimadaPorIdade`) não tem
+ * preço próprio na aba Categoria@ (só Bezerro/Bezerra/Novilha/Garrote/Boi/
+ * Vaca/Touro/Leiteira — achado ao vivo, 16/09/2026). Decisão do Felipe:
+ * média entre a faixa anterior (Bezerra) e a seguinte (Novilha), só no
+ * cálculo do painel — nunca escrita na planilha. Se um dia a aba ganhar uma
+ * linha "Recria" de verdade, ela passa a valer (nunca sobrescreve um preço
+ * que já exista).
+ */
+function precoRecriaDerivado(mapa: Map<string, number>): number | null {
+  const bezerra = mapa.get('Bezerra');
+  const novilha = mapa.get('Novilha');
+  return bezerra != null && novilha != null ? (bezerra + novilha) / 2 : null;
+}
+
 function mapaPrecosPorCategoria(precos: CategoriaArroba[]): Map<string, number> {
   const mapa = new Map<string, number>();
   for (const p of precos) {
     if (p.valorCategoria != null) mapa.set(p.categoria, p.valorCategoria);
+  }
+  if (!mapa.has('Recria')) {
+    const derivado = precoRecriaDerivado(mapa);
+    if (derivado != null) mapa.set('Recria', derivado);
   }
   return mapa;
 }
@@ -342,8 +365,12 @@ export function conciliar(
         origemValor = 'sem-valor';
       }
     } else if (e.tipo === 'Aborto') {
-      valorMetrica = valorLancado;
-      origemValor = valorLancado != null ? 'registrado' : 'sem-valor';
+      // Todo aborto CONCILIADO (com lançamento) vem com o mesmo R$ fixo —
+      // quando não existe lançamento NENHUM (não é questão de valor, é a
+      // linha que não existe), usa esse mesmo valor como estimativa em vez
+      // de deixar sem nada (decisão do Felipe, 16/09).
+      valorMetrica = valorLancado ?? VALOR_ABORTO_PADRAO;
+      origemValor = valorLancado != null ? 'registrado' : 'estimado';
     } else if (e.tipo === 'Conferência') {
       valorMetrica = null;
       origemValor = 'sem-valor';
@@ -387,7 +414,7 @@ export interface ResumoFinanceiro {
   vendasRegistradas: number;
   /** Venda sem valor bom, mas com categoria+preço estimável (idade × sexo na data da venda). */
   vendasEstimadas: number;
-  /** Venda sem valor bom E sem como estimar (animal não achado no rebanho, sexo desconhecido, ou categoria sem preço tipo "Recria"). */
+  /** Venda sem valor bom E sem como estimar — só resta o animal não achado no rebanho (sem ele não dá nem pra saber sexo/idade). */
   vendasSemValor: number;
   vendasComPeso: number;
   kgVendidos: number;

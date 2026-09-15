@@ -13,6 +13,7 @@ import {
   receitaPor,
   removerVendasDuplicadas,
   resumoFinanceiro,
+  VALOR_ABORTO_PADRAO,
   type EventoBase,
 } from '@/lib/fi-fcg/financeiro';
 import type { CategoriaArroba, LancamentoFinanceiro, RegAborto, RegBaixa, RegRebanho, RegVenda } from '@/lib/fi-fcg/types';
@@ -250,6 +251,18 @@ describe('valorMetrica por tipo (via montarEventos)', () => {
     assert.equal(eventos[0].origemValor, 'sem-valor');
   });
 
+  test('Venda de fêmea na faixa "Recria": montarEventos (fim a fim) usa o preço DERIVADO (média Bezerra/Novilha), diferente de estimarValorVenda isolado', () => {
+    const { eventos } = montarEventos(
+      [venda({ id: 'v1', idAnimal: '1', data: 20240701, valor: null })],
+      [], [], [],
+      [animal({ id: '1', sexo: 'Fêmea', nascimento: 20230101 })], // 547 dias -> Recria
+      PRECOS,
+    );
+    assert.equal(eventos[0].categoriaEstimada, 'Recria');
+    assert.equal(eventos[0].valorEstimado, (3840 + 4800) / 2); // média Bezerra (3840) / Novilha (4800)
+    assert.equal(eventos[0].origemValor, 'estimado');
+  });
+
   test('Morte/Matula: usa o valor do proprio evento quando existe', () => {
     const { eventos } = montarEventos([], [baixa({ id: 'b1', tipo: 'Morte', data: 20241001, valor: 3840 })], [], [], [], []);
     assert.equal(eventos[0].valorMetrica, 3840);
@@ -296,11 +309,18 @@ describe('valorMetrica por tipo (via montarEventos)', () => {
     assert.equal(eventos[0].origemValor, 'sem-valor');
   });
 
-  test('Aborto: SEMPRE vem do lançamento (a aba Aborto não tem coluna de valor)', () => {
+  test('Aborto: usa o valor do lançamento quando existe', () => {
     const { eventos } = montarEventos([], [], [aborto({ id: 'a1', idAnimal: 'C430', data: 20240902 })], [
       lanc({ id: 'f1', identificacao: 'C430', descricao: 'Aborto', valor: 2500, data: 20240902 }),
     ], [], []);
     assert.equal(eventos[0].valorMetrica, 2500);
+    assert.equal(eventos[0].origemValor, 'registrado');
+  });
+
+  test('Aborto sem NENHUM lançamento: cai pro valor padrão fixo (VALOR_ABORTO_PADRAO), origemValor="estimado"', () => {
+    const { eventos } = montarEventos([], [], [aborto({ id: 'a1', idAnimal: 'C430', data: 20240902 })], [], [], []);
+    assert.equal(eventos[0].valorMetrica, VALOR_ABORTO_PADRAO);
+    assert.equal(eventos[0].origemValor, 'estimado');
   });
 
   test('Conferência: nunca tem valor', () => {
