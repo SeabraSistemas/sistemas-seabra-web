@@ -94,6 +94,21 @@ export function diaDeInput(v: string): number | null {
   return y * 10000 + m * 100 + d;
 }
 
+/** "aaaammdd" => Date local (meia-noite) — só uso interno de diasEntre, nunca exportar timestamp cru (mesma armadilha de fuso que diaDe evita). */
+function dataDeCompacto(v: number): Date {
+  const ano = Math.floor(v / 10000);
+  const mes = Math.floor((v % 10000) / 100) - 1;
+  const dia = v % 100;
+  return new Date(ano, mes, dia);
+}
+
+/** Dias corridos entre duas datas "aaaammdd" (fim - início). Negativo se fim vier antes. null se qualquer uma faltar. */
+export function diasEntre(inicio: number | null, fim: number | null): number | null {
+  if (inicio == null || fim == null) return null;
+  const ms = dataDeCompacto(fim).getTime() - dataDeCompacto(inicio).getTime();
+  return Math.round(ms / 86400000);
+}
+
 const numberFormatter = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 2 });
 
 export function formatNumber(n: number | null | undefined): string {

@@ -29,14 +29,26 @@ import type { PacoteFinanceiro } from '@/lib/fi-fcg/pacotes';
 import type { LancamentoFinanceiro } from '@/lib/fi-fcg/types';
 
 const PROBLEMA_LABEL: Record<ProblemaFin, string> = {
-  'venda-sem-valor': 'Venda sem valor',
-  'venda-valor-suspeito': 'Venda com valor suspeito',
+  'venda-valor-substituido': 'Venda: valor registrado trocado pelo estimado',
+  'venda-sem-estimativa': 'Venda sem valor e sem estimativa possível',
   'venda-sem-peso': 'Venda sem peso',
   'data-invalida-ou-futura': 'Data inválida ou futura',
   'baixa-sem-valor': 'Baixa (Morte/Matula) sem valor',
   'sem-lancamento': 'Sem lançamento no livro-caixa',
   'lancamento-orfao': 'Lançamento sem evento correspondente',
   'valor-diverge': 'Valor diverge do livro-caixa',
+};
+
+const ORIGEM_LABEL: Record<EventoFin['origemValor'], string> = {
+  registrado: 'Registrado',
+  estimado: 'Estimado',
+  'sem-valor': 'Sem valor',
+};
+
+const ORIGEM_CLASSE: Record<EventoFin['origemValor'], string> = {
+  registrado: 'text-emerald-400',
+  estimado: 'text-amber-400',
+  'sem-valor': 'text-muted-foreground',
 };
 
 export function FinanceiroView({ dados }: { dados: PacoteFinanceiro }) {
@@ -107,14 +119,24 @@ export function FinanceiroView({ dados }: { dados: PacoteFinanceiro }) {
     { key: 'fazenda', header: 'Fazenda', cell: (e) => e.fazenda ?? '—', sortValue: (e) => e.fazenda },
     { key: 'peso', header: 'Peso/kg', cell: (e) => formatNumber(e.pesoKg), sortValue: (e) => e.pesoKg },
     {
+      key: 'categoriaEstimada',
+      header: 'Categoria (estimada)',
+      cell: (e) => e.categoriaEstimada ?? '—',
+      sortValue: (e) => e.categoriaEstimada,
+    },
+    {
       key: 'valor',
-      header: 'Valor',
+      header: 'Valor usado',
       cell: (e) => (
-        <span className={e.statusValorVenda === 'ok' ? undefined : 'text-amber-400'}>
-          {e.valorEvento != null ? formatMoeda(e.valorEvento) : 'Sem valor'}
-        </span>
+        <span className={ORIGEM_CLASSE[e.origemValor]}>{e.valorMetrica != null ? formatMoeda(e.valorMetrica) : 'Sem valor'}</span>
       ),
-      sortValue: (e) => e.valorEvento,
+      sortValue: (e) => e.valorMetrica,
+    },
+    {
+      key: 'origem',
+      header: 'Origem',
+      cell: (e) => <span className={ORIGEM_CLASSE[e.origemValor]}>{ORIGEM_LABEL[e.origemValor]}</span>,
+      sortValue: (e) => e.origemValor,
     },
   ];
 
@@ -157,6 +179,14 @@ export function FinanceiroView({ dados }: { dados: PacoteFinanceiro }) {
       header: 'Valor (livro-caixa)',
       cell: (i) => formatMoeda(i.evento?.valorLancado ?? i.lancamentoOrfao?.valor ?? null),
     },
+    {
+      key: 'estimativa',
+      header: 'Categoria/valor estimado',
+      cell: (i) =>
+        i.evento?.categoriaEstimada
+          ? `${i.evento.categoriaEstimada} · ${formatMoeda(i.evento.valorEstimado)}`
+          : '—',
+    },
   ];
 
   const csvColunasConferir: CsvColumn<ItemConferir>[] = [
@@ -166,6 +196,8 @@ export function FinanceiroView({ dados }: { dados: PacoteFinanceiro }) {
     { key: 'data', header: 'Data', value: (i) => formatDia(i.evento?.data ?? i.lancamentoOrfao?.data ?? null) },
     { key: 'valorEvento', header: 'Valor (evento)', value: (i) => (i.evento ? formatMoeda(i.evento.valorEvento) : '') },
     { key: 'valorLancado', header: 'Valor (livro-caixa)', value: (i) => formatMoeda(i.evento?.valorLancado ?? i.lancamentoOrfao?.valor ?? null) },
+    { key: 'categoriaEstimada', header: 'Categoria estimada', value: (i) => i.evento?.categoriaEstimada ?? '' },
+    { key: 'valorEstimado', header: 'Valor estimado', value: (i) => formatMoeda(i.evento?.valorEstimado ?? null) },
   ];
 
   return (
@@ -185,7 +217,12 @@ export function FinanceiroView({ dados }: { dados: PacoteFinanceiro }) {
       </div>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-        <MetricCard id="cabecasVendidas" label="Cabeças vendidas" value={formatNumber(resumo.cabecasVendidas)} />
+        <MetricCard
+          id="cabecasVendidas"
+          label="Cabeças vendidas"
+          value={formatNumber(resumo.cabecasVendidas)}
+          detalhe={`registrado ${formatNumber(resumo.vendasRegistradas)} · estimado ${formatNumber(resumo.vendasEstimadas)} · sem valor ${formatNumber(resumo.vendasSemValor)}`}
+        />
         <MetricCard
           id="kgVendidos"
           label="Kg vendidos"
@@ -194,9 +231,9 @@ export function FinanceiroView({ dados }: { dados: PacoteFinanceiro }) {
         />
         <MetricCard
           id="receita"
-          label="Receita registrada"
-          value={formatMoeda(resumo.receitaRegistrada)}
-          detalhe={`vendas com valor ${formatNumber(resumo.vendasComValorOk)} de ${formatNumber(resumo.cabecasVendidas)}`}
+          label="Receita (registrado + estimado)"
+          value={formatMoeda(resumo.receitaTotal)}
+          detalhe={`registrada ${formatMoeda(resumo.receitaRegistrada)} + estimada ${formatMoeda(resumo.receitaEstimada)}`}
           tom="bom"
         />
         <MetricCard id="ticket" label="Ticket médio" value={formatMoeda(resumo.ticketMedio)} />
@@ -211,16 +248,16 @@ export function FinanceiroView({ dados }: { dados: PacoteFinanceiro }) {
         <MetricCard id="abortos" label="Abortos" value={formatNumber(resumo.abortos)} />
         <MetricCard
           id="resultado"
-          label="Resultado registrado"
-          value={formatMoeda(resumo.resultadoRegistrado)}
-          tom={resumo.resultadoRegistrado >= 0 ? 'bom' : 'ruim'}
+          label="Resultado (registrado + estimado)"
+          value={formatMoeda(resumo.resultadoTotal)}
+          tom={resumo.resultadoTotal >= 0 ? 'bom' : 'ruim'}
         />
         <MetricCard
           id="percentual"
           label="Perdas/Receita"
           value={formatPct(resumo.percentualPerdasReceita)}
-          detalhe={`cobertura ${formatNumber(resumo.vendasComValorOk)} de ${formatNumber(resumo.cabecasVendidas)} vendas`}
-          tom="ruim"
+          detalhe={`sobre a receita registrada + estimada`}
+          tom={resumo.percentualPerdasReceita != null && resumo.percentualPerdasReceita > 30 ? 'ruim' : 'neutro'}
         />
       </div>
 
@@ -275,7 +312,11 @@ export function FinanceiroView({ dados }: { dados: PacoteFinanceiro }) {
                 { key: 'cliente', header: 'Cliente', value: (e: EventoFin) => e.cliente ?? '' },
                 { key: 'fazenda', header: 'Fazenda', value: (e: EventoFin) => e.fazenda ?? '' },
                 { key: 'peso', header: 'Peso/kg', value: (e: EventoFin) => formatNumber(e.pesoKg) },
-                { key: 'valor', header: 'Valor', value: (e: EventoFin) => formatMoeda(e.valorEvento) },
+                { key: 'valorRegistrado', header: 'Valor registrado na planilha', value: (e: EventoFin) => formatMoeda(e.valorEvento) },
+                { key: 'categoriaEstimada', header: 'Categoria estimada', value: (e: EventoFin) => e.categoriaEstimada ?? '' },
+                { key: 'valorEstimado', header: 'Valor estimado', value: (e: EventoFin) => formatMoeda(e.valorEstimado) },
+                { key: 'valorUsado', header: 'Valor usado nas contas', value: (e: EventoFin) => formatMoeda(e.valorMetrica) },
+                { key: 'origem', header: 'Origem', value: (e: EventoFin) => ORIGEM_LABEL[e.origemValor] },
               ]}
               rows={vendasFiltradas}
               requiredKeys={['id']}

@@ -149,15 +149,20 @@ export const CAMPOS_EVENTO: (keyof EventoFin & string)[] = [
   'valorLancado',
   'conciliacao',
   'statusValorVenda',
+  'categoriaEstimada',
+  'valorEstimado',
   'valorMetrica',
+  'origemValor',
 ];
 
 /**
  * Prop empacotada da página Financeiro — diferente das outras páginas
- * (`PacoteLeitura<T>`, uma leitura só) porque aqui o servidor já combina 4
- * abas (Venda, Baixa, Aborto, Financeiro) em `eventos` + `orfaos` via
- * `montarEventos` (financeiro.ts) ANTES de empacotar, pra não mandar os 4
- * datasets crus pro cliente só pra ele refazer a mesma conciliação lá.
+ * (`PacoteLeitura<T>`, uma leitura só) porque aqui o servidor já combina 6
+ * abas (Venda, Baixa, Aborto, Financeiro, RebanhoProd, Categoria@) em
+ * `eventos` + `orfaos` via `montarEventos` (financeiro.ts) ANTES de
+ * empacotar — RebanhoProd/Categoria@ só entram pra CALCULAR
+ * categoriaEstimada/valorEstimado no servidor; o cliente nunca vê essas
+ * duas abas, só o resultado já pronto em cada evento.
  */
 export interface PacoteFinanceiro {
   eventos: Pacote<EventoFin>;

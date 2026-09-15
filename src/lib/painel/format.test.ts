@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import {
   diaDe,
   diaDeInput,
+  diasEntre,
   formatCompacto,
   formatDia,
   formatMoeda,
@@ -57,6 +58,25 @@ describe('diaDe / formatDia / diaDeInput', () => {
   test('diaDeInput le o formato do <input type=date>', () => {
     assert.equal(diaDeInput('2025-03-05'), 20250305);
     assert.equal(diaDeInput(''), null);
+  });
+});
+
+describe('diasEntre', () => {
+  test('dias corridos dentro do mesmo mes', () => {
+    assert.equal(diasEntre(20250101, 20250110), 9);
+  });
+  test('atravessa virada de mes/ano (nao e so subtrair os inteiros)', () => {
+    assert.equal(diasEntre(20241225, 20250105), 11);
+  });
+  test('ano bissexto conta certo', () => {
+    assert.equal(diasEntre(20240228, 20240301), 2); // 2024 tem 29/02
+  });
+  test('fim antes do inicio da negativo', () => {
+    assert.equal(diasEntre(20250110, 20250101), -9);
+  });
+  test('falta qualquer uma das datas vira null', () => {
+    assert.equal(diasEntre(null, 20250101), null);
+    assert.equal(diasEntre(20250101, null), null);
   });
 });
 

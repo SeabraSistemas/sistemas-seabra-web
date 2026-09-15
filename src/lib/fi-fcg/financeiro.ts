@@ -8,14 +8,26 @@
  * AppSheet) entra só pra conciliar e pra fornecer o valor do aborto (a aba
  * Aborto não tem coluna de valor) — a coluna "Fazenda" do livro-caixa está
  * SEMPRE "Inhumas" (achado ao vivo, 2.622/2.622 linhas), nunca usar como
- * fonte de Fazenda.
+ * fonte de Fazenda. Essa mesma trava vale pra Venda: sua própria Fazenda
+ * (não a do livro-caixa) é a que o evento carrega.
  *
- * DECISÃO DE RECEITA (Felipe, 14/09): "só o registrado" — nunca estimar um
- * valor de venda que não foi digitado. `classificarValorVenda` só CLASSIFICA
- * pra separar o que entra na receita do que precisa de conferência; nunca
- * inventa um número.
+ * DECISÃO DE RECEITA (Felipe, 14/09→15/09): mudou no caminho.
+ * - 14/09: "só o registrado" — nunca estimar.
+ * - 15/09: "só no front" — quando o valor de uma Venda não existe OU não
+ *   faz sentido (irrisório/parece preço de @/absurdamente alto), ESTIMAR
+ *   com a MESMA fórmula que o AppSheet já usa pra valorar a Baixa
+ *   automaticamente: Média@ (arrobas da categoria) × Valor da @ (aba
+ *   Categoria@, hoje R$ 320). A estimativa nunca é ESCRITA na planilha —
+ *   só entra na conta do /FI_FCG. A categoria do animal na venda não está
+ *   em lugar nenhum (RebanhoProd.Categoria vira "Venda" pra sempre assim
+ *   que ele sai), então ela é RECONSTRUÍDA com a mesma fórmula de idade
+ *   que a própria RebanhoProd usa pra calcular Categoria (conferida ao
+ *   vivo, ver `categoriaEstimadaPorIdade`), usando a idade do animal NA
+ *   DATA DA VENDA (não hoje) — Sexo e Data de nascimento nunca são
+ *   sobrescritos, diferente de Categoria.
  */
-import type { DiaCompacto, LancamentoFinanceiro, RegAborto, RegBaixa, RegVenda } from './types';
+import { diasEntre } from '@/lib/painel/format';
+import type { CategoriaArroba, DiaCompacto, LancamentoFinanceiro, RegAborto, RegBaixa, RegRebanho, RegVenda } from './types';
 
 export type OrigemEvento = 'Venda' | 'Baixa' | 'Aborto';
 /** 'Venda' e 'Aborto' vêm da própria aba; 'Morte'/'Matula'/'Conferência' são os 3 valores reais de Baixa.Causa da baixa. */
@@ -23,11 +35,53 @@ export type TipoEvento = 'Venda' | 'Morte' | 'Matula' | 'Conferência' | 'Aborto
 
 export type StatusConciliacao = 'conciliado' | 'sem-lancamento' | 'valor-diverge' | 'nao-aplicavel';
 export type StatusValorVenda = 'sem-valor' | 'irrisorio' | 'parece-arroba' | 'alto' | 'ok';
+/** De onde veio o valor que de fato entra na conta — a base de tudo que a UI mostra como "Estimado". */
+export type OrigemValor = 'registrado' | 'estimado' | 'sem-valor';
 
 /** Limites da classificação de Venda.valor — nomeados pra poder confirmar/ajustar com o Felipe sem caçar número mágico no meio do código. */
 export const LIMITE_IRRISORIO = 100;
 export const LIMITE_ARROBA_MAX = 1000;
 export const LIMITE_ALTO = 20000;
+
+/**
+ * Espelha a fórmula real da coluna Categoria em RebanhoProd (lida com
+ * valueRenderOption=FORMULA em 15/09/2026): idade em dias ≤365/730/1095/
+ * >1095, cruzada com Sexo — SÓ o ramo etário, sem os overrides manuais tipo
+ * "Sêmen"/"Touro"/"Leiteira" (não fazem sentido pra reconstruir uma venda
+ * passada). Único desvio deliberado da fórmula original: ela trata
+ * QUALQUER Sexo diferente de "Macho" como fêmea (nem sempre e por padrão);
+ * aqui um Sexo que não seja exatamente "Macho" ou "Fêmea" (ex: o "-" que
+ * existe na planilha) devolve null — melhor não estimar do que estimar em
+ * cima de um chute.
+ *
+ * Achado no caminho: a faixa 366–730 dias dá "Garrote" (macho) / "Recria"
+ * (fêmea) — mas a aba Categoria@ não tem preço pra "Recria" (só Bezerro,
+ * Bezerra, Novilha, Garrote, Boi, Vaca, Touro, Leiteira). Uma fêmea
+ * estimada nessa faixa fica sem preço — cai em "venda-sem-estimativa" em
+ * vez de usar um número inventado.
+ */
+export function categoriaEstimadaPorIdade(sexo: string | null, idadeDiasNaVenda: number | null): string | null {
+  if (idadeDiasNaVenda == null || idadeDiasNaVenda < 0) return null;
+  if (sexo !== 'Macho' && sexo !== 'Fêmea') return null;
+  const macho = sexo === 'Macho';
+  if (idadeDiasNaVenda <= 365) return macho ? 'Bezerro' : 'Bezerra';
+  if (idadeDiasNaVenda <= 730) return macho ? 'Garrote' : 'Recria';
+  if (idadeDiasNaVenda <= 1095) return macho ? 'Boi' : 'Novilha';
+  return macho ? 'Touro' : 'Vaca';
+}
+
+/** Idade na data da venda (não hoje) => categoria estimada => preço da aba Categoria@. null em qualquer etapa se faltar dado ou a categoria não tiver preço cadastrado. */
+export function estimarValorVenda(
+  sexo: string | null,
+  nascimento: DiaCompacto | null,
+  dataVenda: DiaCompacto | null,
+  precosPorCategoria: Map<string, number>,
+): { categoria: string | null; valor: number | null } {
+  const idade = diasEntre(nascimento, dataVenda);
+  const categoria = categoriaEstimadaPorIdade(sexo, idade);
+  if (!categoria) return { categoria: null, valor: null };
+  return { categoria, valor: precosPorCategoria.get(categoria) ?? null };
+}
 
 export interface EventoFin {
   origem: OrigemEvento;
@@ -52,16 +106,24 @@ export interface EventoFin {
   conciliacao: StatusConciliacao;
   /** Só preenchido quando tipo === 'Venda'. */
   statusValorVenda: StatusValorVenda | null;
+  /** Categoria reconstruída pela idade na venda — só preenchida quando tipo === 'Venda' e statusValorVenda !== 'ok' (nunca calculada à toa). */
+  categoriaEstimada: string | null;
+  /** Valor Categoria@ correspondente a `categoriaEstimada` — null se a categoria não tiver preço (ex: "Recria") ou não deu pra estimar. */
+  valorEstimado: number | null;
   /**
-   * O valor que de fato entra nas métricas de receita/perdas — nunca o mesmo
-   * cálculo pros 3 tipos: Venda só conta se `statusValorVenda === 'ok'`
-   * (nunca o lançamento, mesmo que ele exista — "só o registrado" é sobre o
-   * que o usuário digitou na VENDA); Morte/Matula usam `valorEvento` e caem
-   * pro `valorLancado` só quando a Baixa em si não tem valor; Aborto usa
-   * SEMPRE `valorLancado` (a aba não tem coluna de valor); Conferência
-   * nunca tem valor (é só contagem de cabeça, não movimenta dinheiro).
+   * O valor que de fato entra nas métricas de receita/perdas — nunca o
+   * mesmo cálculo pros 3 tipos: Venda usa `valorEvento` quando 'ok', cai
+   * pra `valorEstimado` quando não é (nunca pro `valorLancado` do
+   * livro-caixa — "só o registrado" era sobre o que o usuário digitou NA
+   * VENDA, o livro-caixa não é uma fonte melhor); Morte/Matula usam
+   * `valorEvento` e caem pro `valorLancado` só quando a Baixa em si não
+   * tem valor; Aborto usa SEMPRE `valorLancado` (a aba não tem coluna de
+   * valor); Conferência nunca tem valor (é só contagem de cabeça, não
+   * movimenta dinheiro).
    */
   valorMetrica: number | null;
+  /** De onde veio `valorMetrica` — a UI usa isto pra marcar "Estimado" na tabela, nunca `statusValorVenda` sozinho (que só existe pra Venda). */
+  origemValor: OrigemValor;
 }
 
 export function classificarValorVenda(valor: number | null): StatusValorVenda {
@@ -73,25 +135,56 @@ export function classificarValorVenda(valor: number | null): StatusValorVenda {
   return 'ok';
 }
 
-/** Forma do evento ANTES de conciliar com o livro-caixa — `conciliar` preenche valorLancado/conciliacao/valorMetrica. Exportado pra `conciliar` ser testável direto, sem precisar montar a partir das abas. */
-export type EventoBase = Omit<EventoFin, 'valorLancado' | 'conciliacao' | 'valorMetrica'>;
+/** Forma do evento ANTES de conciliar com o livro-caixa — `conciliar` preenche valorLancado/conciliacao/valorMetrica/origemValor. Exportado pra `conciliar` ser testável direto, sem precisar montar a partir das abas. */
+export type EventoBase = Omit<EventoFin, 'valorLancado' | 'conciliacao' | 'valorMetrica' | 'origemValor'>;
 
-/** Monta os eventos SEM conciliação ainda. */
-function montarBase(vendas: RegVenda[], baixas: RegBaixa[], abortos: RegAborto[]): EventoBase[] {
-  const deVendas = vendas.map((v) => ({
-    origem: 'Venda' as const,
-    tipo: 'Venda' as const,
-    id: v.id,
-    idAnimal: v.idAnimal,
-    data: v.data,
-    fazenda: v.fazenda,
-    cliente: v.cliente,
-    pesoKg: v.pesoKg,
-    categoria: null,
-    causa: null,
-    valorEvento: v.valor,
-    statusValorVenda: classificarValorVenda(v.valor),
-  }));
+function mapaRebanhoPorId(rebanho: RegRebanho[]): Map<string, { sexo: string | null; nascimento: DiaCompacto | null }> {
+  const mapa = new Map<string, { sexo: string | null; nascimento: DiaCompacto | null }>();
+  for (const r of rebanho) {
+    if (!r.id) continue;
+    mapa.set(r.id.trim().toLowerCase(), { sexo: r.sexo, nascimento: r.nascimento });
+  }
+  return mapa;
+}
+
+function mapaPrecosPorCategoria(precos: CategoriaArroba[]): Map<string, number> {
+  const mapa = new Map<string, number>();
+  for (const p of precos) {
+    if (p.valorCategoria != null) mapa.set(p.categoria, p.valorCategoria);
+  }
+  return mapa;
+}
+
+/** Monta os eventos SEM conciliação ainda. `rebanhoPorId`/`precosPorCategoria` só valem pra Venda (ver `estimarValorVenda`). */
+function montarBase(
+  vendas: RegVenda[],
+  baixas: RegBaixa[],
+  abortos: RegAborto[],
+  rebanhoPorId: Map<string, { sexo: string | null; nascimento: DiaCompacto | null }>,
+  precosPorCategoria: Map<string, number>,
+): EventoBase[] {
+  const deVendas = vendas.map((v) => {
+    const statusValorVenda = classificarValorVenda(v.valor);
+    const animal = v.idAnimal ? rebanhoPorId.get(v.idAnimal.trim().toLowerCase()) : undefined;
+    const estimativa =
+      statusValorVenda !== 'ok' && animal ? estimarValorVenda(animal.sexo, animal.nascimento, v.data, precosPorCategoria) : null;
+    return {
+      origem: 'Venda' as const,
+      tipo: 'Venda' as const,
+      id: v.id,
+      idAnimal: v.idAnimal,
+      data: v.data,
+      fazenda: v.fazenda,
+      cliente: v.cliente,
+      pesoKg: v.pesoKg,
+      categoria: null,
+      causa: null,
+      valorEvento: v.valor,
+      statusValorVenda,
+      categoriaEstimada: estimativa?.categoria ?? null,
+      valorEstimado: estimativa?.valor ?? null,
+    };
+  });
   const deBaixas = baixas.map((b) => ({
     origem: 'Baixa' as const,
     // Os 3 valores reais de "Causa da baixa" (conferido ao vivo); um valor
@@ -109,6 +202,8 @@ function montarBase(vendas: RegVenda[], baixas: RegBaixa[], abortos: RegAborto[]
     causa: b.causaObito,
     valorEvento: b.valor,
     statusValorVenda: null,
+    categoriaEstimada: null,
+    valorEstimado: null,
   }));
   const deAbortos = abortos.map((a) => ({
     origem: 'Aborto' as const,
@@ -123,6 +218,8 @@ function montarBase(vendas: RegVenda[], baixas: RegBaixa[], abortos: RegAborto[]
     causa: a.suspeita,
     valorEvento: null,
     statusValorVenda: null,
+    categoriaEstimada: null,
+    valorEstimado: null,
   }));
   return [...deVendas, ...deBaixas, ...deAbortos];
 }
@@ -160,7 +257,7 @@ export function conciliar(
   const eventos: EventoFin[] = base.map((e) => {
     const descricao = descricaoDoTipo(e.tipo);
     if (!descricao) {
-      return { ...e, valorLancado: null, conciliacao: 'nao-aplicavel', valorMetrica: null };
+      return { ...e, valorLancado: null, conciliacao: 'nao-aplicavel', valorMetrica: null, origemValor: 'sem-valor' };
     }
 
     const chave = chaveConciliacao(e.idAnimal, e.data, descricao);
@@ -180,16 +277,32 @@ export function conciliar(
           ? 'valor-diverge'
           : 'conciliado';
 
-    const valorMetrica =
-      e.tipo === 'Venda'
-        ? (e.statusValorVenda === 'ok' ? e.valorEvento : null)
-        : e.tipo === 'Aborto'
-          ? valorLancado
-          : e.tipo === 'Conferência'
-            ? null
-            : (e.valorEvento ?? valorLancado); // Morte/Matula
+    let valorMetrica: number | null;
+    let origemValor: OrigemValor;
+    if (e.tipo === 'Venda') {
+      if (e.statusValorVenda === 'ok') {
+        valorMetrica = e.valorEvento;
+        origemValor = 'registrado';
+      } else if (e.valorEstimado != null) {
+        valorMetrica = e.valorEstimado;
+        origemValor = 'estimado';
+      } else {
+        valorMetrica = null;
+        origemValor = 'sem-valor';
+      }
+    } else if (e.tipo === 'Aborto') {
+      valorMetrica = valorLancado;
+      origemValor = valorLancado != null ? 'registrado' : 'sem-valor';
+    } else if (e.tipo === 'Conferência') {
+      valorMetrica = null;
+      origemValor = 'sem-valor';
+    } else {
+      // Morte/Matula
+      valorMetrica = e.valorEvento ?? valorLancado;
+      origemValor = valorMetrica != null ? 'registrado' : 'sem-valor';
+    }
 
-    return { ...e, valorLancado, conciliacao, valorMetrica };
+    return { ...e, valorLancado, conciliacao, valorMetrica, origemValor };
   });
 
   const orfaos = Array.from(filas.values()).flat();
@@ -201,8 +314,12 @@ export function montarEventos(
   baixas: RegBaixa[],
   abortos: RegAborto[],
   lancamentos: LancamentoFinanceiro[],
+  rebanho: RegRebanho[],
+  precos: CategoriaArroba[],
 ): { eventos: EventoFin[]; orfaos: LancamentoFinanceiro[] } {
-  return conciliar(montarBase(vendas, baixas, abortos), lancamentos);
+  const rebanhoPorId = mapaRebanhoPorId(rebanho);
+  const precosPorCategoria = mapaPrecosPorCategoria(precos);
+  return conciliar(montarBase(vendas, baixas, abortos, rebanhoPorId, precosPorCategoria), lancamentos);
 }
 
 // ---- Métricas ----
@@ -213,45 +330,61 @@ function soma(valores: (number | null)[]): number {
 
 export interface ResumoFinanceiro {
   cabecasVendidas: number;
-  vendasComValorOk: number;
+  /** Venda com `statusValorVenda === 'ok'` — o valor que o usuário digitou fez sentido, usado como está. */
+  vendasRegistradas: number;
+  /** Venda sem valor bom, mas com categoria+preço estimável (idade × sexo na data da venda). */
+  vendasEstimadas: number;
+  /** Venda sem valor bom E sem como estimar (animal não achado no rebanho, sexo desconhecido, ou categoria sem preço tipo "Recria"). */
+  vendasSemValor: number;
   vendasComPeso: number;
   kgVendidos: number;
   receitaRegistrada: number;
+  receitaEstimada: number;
+  /** registrada + estimada — o número que entra em Resultado/Perdas-Receita%. */
+  receitaTotal: number;
   ticketMedio: number | null;
   perdasRegistradas: number;
   perdasMorteMatula: number;
   perdasAborto: number;
   cabecasBaixadas: number;
   abortos: number;
-  resultadoRegistrado: number;
+  resultadoTotal: number;
   percentualPerdasReceita: number | null;
 }
 
 export function resumoFinanceiro(eventos: EventoFin[]): ResumoFinanceiro {
   const vendas = eventos.filter((e) => e.tipo === 'Venda');
-  const vendasOk = vendas.filter((e) => e.statusValorVenda === 'ok');
+  const vendasRegistradasArr = vendas.filter((e) => e.origemValor === 'registrado');
+  const vendasEstimadasArr = vendas.filter((e) => e.origemValor === 'estimado');
   const morteMatula = eventos.filter((e) => e.tipo === 'Morte' || e.tipo === 'Matula');
   const abortoEventos = eventos.filter((e) => e.tipo === 'Aborto');
 
-  const receitaRegistrada = soma(vendasOk.map((e) => e.valorMetrica));
+  const receitaRegistrada = soma(vendasRegistradasArr.map((e) => e.valorMetrica));
+  const receitaEstimada = soma(vendasEstimadasArr.map((e) => e.valorMetrica));
+  const receitaTotal = receitaRegistrada + receitaEstimada;
   const perdasMorteMatula = soma(morteMatula.map((e) => e.valorMetrica));
   const perdasAborto = soma(abortoEventos.map((e) => e.valorMetrica));
   const perdasRegistradas = perdasMorteMatula + perdasAborto;
+  const vendasComValor = vendasRegistradasArr.length + vendasEstimadasArr.length;
 
   return {
     cabecasVendidas: vendas.length,
-    vendasComValorOk: vendasOk.length,
+    vendasRegistradas: vendasRegistradasArr.length,
+    vendasEstimadas: vendasEstimadasArr.length,
+    vendasSemValor: vendas.length - vendasComValor,
     vendasComPeso: vendas.filter((e) => e.pesoKg != null).length,
     kgVendidos: soma(vendas.map((e) => e.pesoKg)),
     receitaRegistrada,
-    ticketMedio: vendasOk.length > 0 ? receitaRegistrada / vendasOk.length : null,
+    receitaEstimada,
+    receitaTotal,
+    ticketMedio: vendasComValor > 0 ? receitaTotal / vendasComValor : null,
     perdasRegistradas,
     perdasMorteMatula,
     perdasAborto,
     cabecasBaixadas: eventos.filter((e) => e.origem === 'Baixa').length,
     abortos: abortoEventos.length,
-    resultadoRegistrado: receitaRegistrada - perdasRegistradas,
-    percentualPerdasReceita: receitaRegistrada > 0 ? (perdasRegistradas / receitaRegistrada) * 100 : null,
+    resultadoTotal: receitaTotal - perdasRegistradas,
+    percentualPerdasReceita: receitaTotal > 0 ? (perdasRegistradas / receitaTotal) * 100 : null,
   };
 }
 
@@ -272,8 +405,9 @@ function agruparPorMes(eventos: EventoFin[], filtro: (e: EventoFin) => boolean, 
   return Array.from(mapa, ([mes, valor]) => ({ mes, valor }));
 }
 
+/** Receita mensal (registrada + estimada) — o mês fica completo mesmo quando a maioria das vendas do período não tinha valor digitado. */
 export function receitaMensal(eventos: EventoFin[]): PontoMes[] {
-  return agruparPorMes(eventos, (e) => e.tipo === 'Venda' && e.statusValorVenda === 'ok', (e) => e.valorMetrica);
+  return agruparPorMes(eventos, (e) => e.tipo === 'Venda' && e.origemValor !== 'sem-valor', (e) => e.valorMetrica);
 }
 
 export function perdasMensais(eventos: EventoFin[]): PontoMes[] {
@@ -293,11 +427,11 @@ export interface FatiaRotulo {
   valor: number;
 }
 
-/** Receita ('ok') agrupada por um campo do evento — usado pra "por Cliente" e "por Fazenda". */
+/** Receita (registrada + estimada) agrupada por um campo do evento — usado pra "por Cliente" e "por Fazenda". */
 export function receitaPor(eventos: EventoFin[], campo: (e: EventoFin) => string | null, semRotulo: string): FatiaRotulo[] {
   const mapa = new Map<string, number>();
   for (const e of eventos) {
-    if (e.tipo !== 'Venda' || e.statusValorVenda !== 'ok') continue;
+    if (e.tipo !== 'Venda' || e.origemValor === 'sem-valor') continue;
     const chave = campo(e) ?? semRotulo;
     mapa.set(chave, (mapa.get(chave) ?? 0) + (e.valorMetrica ?? 0));
   }
@@ -307,8 +441,8 @@ export function receitaPor(eventos: EventoFin[], campo: (e: EventoFin) => string
 // ---- "A conferir" ----
 
 export type ProblemaFin =
-  | 'venda-sem-valor'
-  | 'venda-valor-suspeito'
+  | 'venda-valor-substituido'
+  | 'venda-sem-estimativa'
   | 'venda-sem-peso'
   | 'data-invalida-ou-futura'
   | 'baixa-sem-valor'
@@ -332,8 +466,9 @@ export function aConferir(eventos: EventoFin[], orfaos: LancamentoFinanceiro[], 
   const itens: ItemConferir[] = [];
   for (const e of eventos) {
     if (e.tipo === 'Venda') {
-      if (e.statusValorVenda === 'sem-valor') itens.push({ problema: 'venda-sem-valor', evento: e });
-      else if (e.statusValorVenda !== 'ok') itens.push({ problema: 'venda-valor-suspeito', evento: e });
+      if (e.statusValorVenda !== 'ok') {
+        itens.push({ problema: e.origemValor === 'estimado' ? 'venda-valor-substituido' : 'venda-sem-estimativa', evento: e });
+      }
       if (e.pesoKg == null) itens.push({ problema: 'venda-sem-peso', evento: e });
     }
     if ((e.tipo === 'Morte' || e.tipo === 'Matula') && e.valorMetrica == null) {

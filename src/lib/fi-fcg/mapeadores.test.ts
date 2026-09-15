@@ -4,6 +4,7 @@ import { describe, test } from 'node:test';
 import {
   mapAbortos,
   mapBaixas,
+  mapCategoriaArroba,
   mapFinanceiro,
   mapIatf,
   mapPartos,
@@ -82,6 +83,34 @@ describe('mapRebanho', () => {
       ['A1', 'Vaca', '7 - Campina grande', 'não é isto'],
     ];
     assert.equal(mapRebanho(rows)[0].lote, '7 - Campina grande');
+  });
+
+  test('mapeia Data de nascimento (nunca sobrescrita, base pra estimativa de venda)', () => {
+    const rows = [
+      ['ID animal', 'Data de nascimento'],
+      ['A1', '10/08/2018'],
+    ];
+    assert.equal(mapRebanho(rows)[0].nascimento, 20180810);
+  });
+});
+
+describe('mapCategoriaArroba', () => {
+  test('mapeia categoria, media@ e valor ja calculado', () => {
+    const rows = [
+      ['ID valor categoria', 'Categoria', 'Média@', 'Valor categoria'],
+      ['ncbvxc0001', 'Bezerro', '12,0', 'R$ 3.840,00'],
+    ];
+    const [c] = mapCategoriaArroba(rows);
+    assert.equal(c.categoria, 'Bezerro');
+    assert.equal(c.mediaArroba, 12);
+    assert.equal(c.valorCategoria, 3840);
+  });
+  test('linha sem categoria e descartada', () => {
+    const rows = [
+      ['Categoria', 'Média@', 'Valor categoria'],
+      ['', '12,0', 'R$ 3.840,00'],
+    ];
+    assert.deepEqual(mapCategoriaArroba(rows), []);
   });
 });
 

@@ -5,6 +5,7 @@ import { spreadsheetId } from './config';
 import {
   mapAbortos,
   mapBaixas,
+  mapCategoriaArroba,
   mapFinanceiro,
   mapIatf,
   mapPartos,
@@ -14,6 +15,7 @@ import {
   mapVendas,
 } from './mapeadores';
 import type {
+  CategoriaArroba,
   LancamentoFinanceiro,
   RegAborto,
   RegBaixa,
@@ -110,15 +112,32 @@ export async function getLancamentosFinanceiros(): Promise<Leitura<LancamentoFin
   return { itens: mapFinanceiro(linhas), configurado: spreadsheetId() != null, stale, carregadoEm };
 }
 
-/** Tudo que a página Financeiro precisa, numa só leva (4 abas em paralelo, cada uma com seu próprio cache por aba). */
+/** Aba "Categoria@" — preço fixo por categoria, usado pra estimar venda sem valor (ver financeiro.ts). */
+export async function getCategoriaArroba(): Promise<Leitura<CategoriaArroba>> {
+  const { linhas, stale, carregadoEm } = await lerAbaCache('Categoria@');
+  return { itens: mapCategoriaArroba(linhas), configurado: spreadsheetId() != null, stale, carregadoEm };
+}
+
+/**
+ * Tudo que a página Financeiro precisa, numa só leva. RebanhoProd e
+ * Categoria@ entram aqui (mesmo cache por aba do Rebanho — se a página
+ * /rebanho já rodou nos últimos 5 min, é hit) pra estimar o valor de uma
+ * Venda sem valor registrado: Sexo + Data de nascimento (nunca sobrescritos)
+ * dão a idade do animal NA DATA DA VENDA, a mesma fórmula de idade+sexo que
+ * a própria RebanhoProd usa pra calcular Categoria vira a categoria
+ * estimada, e Categoria@ dá o preço — tudo isso fica no servidor, o cliente
+ * só recebe o valor já calculado (ver montarEventos em financeiro.ts).
+ */
 export async function getDadosFinanceiro() {
-  const [vendas, baixas, abortos, lancamentos] = await Promise.all([
+  const [vendas, baixas, abortos, lancamentos, rebanho, categoriaArroba] = await Promise.all([
     getVendas(),
     getBaixas(),
     getAbortos(),
     getLancamentosFinanceiros(),
+    getRebanho(),
+    getCategoriaArroba(),
   ]);
-  return { vendas, baixas, abortos, lancamentos };
+  return { vendas, baixas, abortos, lancamentos, rebanho, categoriaArroba };
 }
 
 /** Usado por POST /FI_FCG/api/atualizar — limpa tudo do FI_FCG pro botão "Atualizar" forçar releitura. */

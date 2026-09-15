@@ -7,6 +7,7 @@
  */
 import { diaDe, parseMoeda, parseNumber, parseText } from '@/lib/painel/format';
 import type {
+  CategoriaArroba,
   LancamentoFinanceiro,
   RegAborto,
   RegBaixa,
@@ -107,6 +108,7 @@ export function mapRebanho(rows: string[][] | null): RegRebanho[] {
       destino: parseText(r['Destino']),
       ultimaPesagemKg: parseNumber(r['Última pesagem']),
       dataUltimaPesagem: diaDe(r['data_ultima_pesagem']),
+      nascimento: diaDe(r['Data de nascimento']),
     }))
     .filter((x) => x.id !== '');
 }
@@ -208,4 +210,15 @@ export function mapFinanceiro(rows: string[][] | null): LancamentoFinanceiro[] {
     valor: parseMoeda(r['Valor total']),
     data: diaDe(r['Data']),
   }));
+}
+
+/** Aba "Categoria@" — preço fixo por categoria (Média@ × Valor da @), a mesma tabela que o AppSheet usa pra valorar Baixa automaticamente. */
+export function mapCategoriaArroba(rows: string[][] | null): CategoriaArroba[] {
+  return toObjects(rows)
+    .map((r) => ({
+      categoria: parseText(r['Categoria']) ?? '',
+      mediaArroba: parseNumber(r['Média@']),
+      valorCategoria: parseMoeda(r['Valor categoria']),
+    }))
+    .filter((x) => x.categoria !== '');
 }

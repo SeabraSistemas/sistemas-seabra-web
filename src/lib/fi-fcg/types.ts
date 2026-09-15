@@ -57,6 +57,8 @@ export interface RegRebanho {
   destino: string | null;
   ultimaPesagemKg: number | null;
   dataUltimaPesagem: DiaCompacto | null;
+  /** Nunca é sobrescrita (ao contrário de Categoria, que vira "Venda"/"Baixa" quando o animal sai) — é o que permite reconstruir a categoria que o animal TINHA num evento passado (ver financeiro.ts, estimativa de venda sem valor). */
+  nascimento: DiaCompacto | null;
 }
 
 export interface RegParto {
@@ -127,4 +129,16 @@ export interface LancamentoFinanceiro {
   categoria: string | null;
   valor: number | null;
   data: DiaCompacto | null;
+}
+
+/**
+ * Uma linha da aba "Categoria@" — preço fixo por categoria (Média@ arrobas
+ * × Valor da @, já pré-calculado pelo AppSheet) que o cliente usa pra
+ * valorar a Baixa automaticamente. Usado em financeiro.ts pra estimar o
+ * valor de uma Venda sem valor registrado, com a MESMA fórmula.
+ */
+export interface CategoriaArroba {
+  categoria: string;
+  mediaArroba: number | null;
+  valorCategoria: number | null;
 }

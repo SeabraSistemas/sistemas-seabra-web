@@ -6,14 +6,15 @@ export interface MetricDef {
   value: string;
   /** Linha pequena abaixo do valor — ex. cobertura "vendas com valor 124 de 2.287". */
   detalhe?: string;
-  /** 'ruim' pinta o valor em vermelho (ex. perdas) — default neutro. */
-  tom?: 'neutro' | 'ruim' | 'bom';
+  /** 'ruim' pinta o valor em vermelho (ex. perdas), 'aviso' em âmbar (ex. valor estimado, não digitado) — default neutro. */
+  tom?: 'neutro' | 'ruim' | 'bom' | 'aviso';
 }
 
 const TOM_CLASSE: Record<NonNullable<MetricDef['tom']>, string> = {
   neutro: 'text-foreground',
   ruim: 'text-destructive',
   bom: 'text-emerald-400',
+  aviso: 'text-amber-400',
 };
 
 /**

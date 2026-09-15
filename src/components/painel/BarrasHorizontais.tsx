@@ -52,10 +52,24 @@ export function BarrasHorizontais({
 
   const altura = Math.max(120, linhas.length * 34 + 16);
 
+  /**
+   * A etiqueta de cada barra é desenhada FORA dela (`position="right"`), no
+   * espaço reservado por `margin.right` — um valor curto ("923") cabe na
+   * margem fixa de 56px, mas moeda formatada ("R$ 5.226.880,00", como no
+   * Financeiro) passa disso e o <svg> corta o texto (o próprio elemento
+   * clipa por padrão o que sai do viewBox — mesma causa do rótulo cortado
+   * que já corrigimos no Donut). Em vez de aumentar a margem fixa pra um
+   * número grande o bastante pra qualquer caso (desperdiçando espaço nos
+   * gráficos de contagem curta), calcula pela etiqueta mais larga que ESTE
+   * gráfico realmente tem.
+   */
+  const maiorEtiqueta = Math.max(...linhas.map((l) => l.etiqueta.length), 0);
+  const margemDireita = Math.max(56, maiorEtiqueta * 7 + 16);
+
   return (
     <div className="w-full tabular-nums" style={{ height: altura }}>
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={linhas} layout="vertical" margin={{ top: 4, right: 56, bottom: 4, left: 0 }} barCategoryGap="22%">
+        <BarChart data={linhas} layout="vertical" margin={{ top: 4, right: margemDireita, bottom: 4, left: 0 }} barCategoryGap="22%">
           <XAxis type="number" dataKey="valor" hide domain={[0, 'dataMax']} />
           <YAxis
             type="category"
