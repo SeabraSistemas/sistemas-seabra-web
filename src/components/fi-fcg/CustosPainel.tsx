@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { DataTable, type DataTableColumn } from '@/components/painel/DataTable';
 import { CsvExport, type CsvColumn } from '@/components/painel/CsvExport';
 import { SerieMensal } from '@/components/painel/SerieMensal';
+import { CampoLabel, type InfoCampo } from '@/components/painel/CampoInfo';
 import { diaParaInput, formatDia, formatMoeda } from '@/lib/painel/format';
 import { custosMensais } from '@/lib/fi-fcg/custos';
 import type { CategoriaCusto, Custo, DiaCompacto, TipoCusto } from '@/lib/fi-fcg/types';
@@ -23,6 +24,52 @@ const FORM_VAZIO = {
   dataInicio: '',
   dataFim: '',
   observacao: '',
+};
+
+const INFO_DESCRICAO: InfoCampo = {
+  oQue: 'Nome curto do gasto — ex: Ração, Salários, Combustível, Manutenção.',
+  ajuda: 'Identifica cada custo na lista e nos relatórios do Financeiro.',
+  como: 'Digite um nome que descreva o gasto. Pode repetir o mesmo nome em meses diferentes.',
+};
+const INFO_CATEGORIA: InfoCampo = {
+  oQue: 'Um agrupador pra custos parecidos (ex: Alimentação, Mão de obra, Sanidade).',
+  ajuda: 'Permite comparar quanto você gasta em cada tipo de custo, não só o total.',
+  como: 'Escolha uma categoria existente ou clique em "Novo" pra criar uma. Pode deixar sem categoria.',
+};
+const INFO_FAZENDA_CUSTO: InfoCampo = {
+  oQue: 'A fazenda dona desse custo — Inhumas ou Campina grande.',
+  ajuda: 'Faz o custo entrar certo no cálculo de custo por cabeça de CADA fazenda (aba Custo de formação), em vez de dividir errado entre as duas.',
+  como: 'Selecione a fazenda. Campo obrigatório — todo custo é de uma fazenda específica.',
+};
+const INFO_TIPO_CUSTO: InfoCampo = {
+  oQue: 'Mensal (se repete todo mês) ou Anual (vale só num período com início e fim).',
+  ajuda: 'Define como o valor é distribuído no tempo pros gráficos e cálculos de custo diário.',
+  como: 'Escolha Mensal pra gastos recorrentes (ex: salário). Escolha Anual pra um valor de um período fechado (ex: um contrato).',
+};
+const INFO_VALOR_CUSTO: InfoCampo = {
+  oQue: 'O valor em reais do custo.',
+  ajuda: 'Base de tudo: soma no total de custos e vira custo por dia/por cabeça nos cálculos.',
+  como: 'Se o Tipo é Mensal, digite o valor de UM mês. Se é Anual, digite o valor TOTAL do período inteiro.',
+};
+const INFO_MES_CUSTO: InfoCampo = {
+  oQue: 'O mês a partir de quando esse custo mensal passa a valer.',
+  ajuda: 'Define de onde os gráficos e cálculos começam a contar esse gasto.',
+  como: 'Escolha o mês/ano. O custo mensal fica valendo todo mês a partir daí, em aberto (sem data de fim).',
+};
+const INFO_DATA_INICIO_CUSTO: InfoCampo = {
+  oQue: 'A data em que esse custo anual começa a valer.',
+  ajuda: 'Define de onde os gráficos e cálculos começam a contar esse gasto.',
+  como: 'Escolha a data de início do período (ex: início do contrato).',
+};
+const INFO_DATA_FIM_CUSTO: InfoCampo = {
+  oQue: 'A data em que esse custo anual deixa de valer.',
+  ajuda: 'Depois dessa data o custo para de contar nos cálculos.',
+  como: 'Opcional — deixe em branco se o custo continua em aberto, sem data pra acabar.',
+};
+const INFO_OBSERVACAO_CUSTO: InfoCampo = {
+  oQue: 'Um espaço livre pra qualquer anotação extra sobre esse custo.',
+  ajuda: 'Só aparece na tabela detalhada — não entra em nenhum cálculo.',
+  como: 'Opcional — preencha só se quiser deixar um lembrete ou detalhe.',
 };
 
 function nomeCategoria(id: string | null, categorias: CategoriaCusto[]): string {
@@ -379,7 +426,7 @@ export function CustosPainel({
         <h3 className="mb-4 text-sm font-medium text-muted-foreground">{editandoId ? 'Editar custo' : 'Novo custo'}</h3>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <div className="flex flex-col gap-1 sm:col-span-2">
-            <span className="text-xs text-muted-foreground">Descrição</span>
+            <CampoLabel texto="Descrição" info={INFO_DESCRICAO} />
             <Input
               value={form.descricao}
               onChange={(e) => setForm({ ...form, descricao: e.target.value })}
@@ -387,7 +434,7 @@ export function CustosPainel({
             />
           </div>
           <div className="flex flex-col gap-1">
-            <span className="text-xs text-muted-foreground">Categoria</span>
+            <CampoLabel texto="Categoria" info={INFO_CATEGORIA} />
             <SelectGerenciavel
               value={form.categoria}
               onValueChange={(v) => setForm({ ...form, categoria: v })}
@@ -402,7 +449,7 @@ export function CustosPainel({
             />
           </div>
           <div className="flex flex-col gap-1">
-            <span className="text-xs text-muted-foreground">Fazenda</span>
+            <CampoLabel texto="Fazenda" info={INFO_FAZENDA_CUSTO} />
             <Select value={form.fazenda || undefined} onValueChange={(v) => setForm({ ...form, fazenda: v })}>
               <SelectTrigger size="sm" className="w-full">
                 <SelectValue placeholder="Selecione..." />
@@ -417,7 +464,7 @@ export function CustosPainel({
             </Select>
           </div>
           <div className="flex flex-col gap-1">
-            <span className="text-xs text-muted-foreground">Tipo</span>
+            <CampoLabel texto="Tipo" info={INFO_TIPO_CUSTO} />
             <Select
               value={form.tipo}
               onValueChange={(v) => setForm({ ...form, tipo: v as TipoCusto, dataFim: v === 'Mensal' ? '' : form.dataFim })}
@@ -432,12 +479,12 @@ export function CustosPainel({
             </Select>
           </div>
           <div className="flex flex-col gap-1">
-            <span className="text-xs text-muted-foreground">Valor (R$)</span>
+            <CampoLabel texto="Valor (R$)" info={INFO_VALOR_CUSTO} />
             <Input inputMode="decimal" value={form.valor} onChange={(e) => setForm({ ...form, valor: e.target.value })} placeholder="15000" />
           </div>
           {form.tipo === 'Mensal' ? (
             <div className="flex flex-col gap-1">
-              <span className="text-xs text-muted-foreground">Mês do custo</span>
+              <CampoLabel texto="Mês do custo" info={INFO_MES_CUSTO} />
               <Input
                 type="month"
                 value={form.dataInicio.slice(0, 7)}
@@ -447,17 +494,17 @@ export function CustosPainel({
           ) : (
             <>
               <div className="flex flex-col gap-1">
-                <span className="text-xs text-muted-foreground">Data início</span>
+                <CampoLabel texto="Data início" info={INFO_DATA_INICIO_CUSTO} />
                 <Input type="date" value={form.dataInicio} onChange={(e) => setForm({ ...form, dataInicio: e.target.value })} />
               </div>
               <div className="flex flex-col gap-1">
-                <span className="text-xs text-muted-foreground">Data fim (opcional — em aberto se vazio)</span>
+                <CampoLabel texto="Data fim (opcional — em aberto se vazio)" info={INFO_DATA_FIM_CUSTO} />
                 <Input type="date" value={form.dataFim} onChange={(e) => setForm({ ...form, dataFim: e.target.value })} />
               </div>
             </>
           )}
           <div className="flex flex-col gap-1 sm:col-span-2 lg:col-span-4">
-            <span className="text-xs text-muted-foreground">Observação</span>
+            <CampoLabel texto="Observação" info={INFO_OBSERVACAO_CUSTO} />
             <Input value={form.observacao} onChange={(e) => setForm({ ...form, observacao: e.target.value })} />
           </div>
         </div>

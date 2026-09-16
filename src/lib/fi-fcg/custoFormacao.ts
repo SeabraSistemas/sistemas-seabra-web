@@ -6,7 +6,15 @@
  * 16/09/2026).
  *
  * Fórmula (por fase = uma categoria do funil):
- *   custoDietaDia = Σ (kg/dia de cada insumo da dieta da categoria × valor/kg do insumo)
+ *   custoDietaDia = Σ, por TIPO (Concentrado/Volumoso/Sal mineral):
+ *                     (Σ percentual × valor/kg dos insumos daquele tipo) × consumo do tipo (kg/dia)
+ *                   — ALINHADO ao "Nutrição & Custo" do seabra-app-main (16/09/2026, pedido do
+ *                   Felipe): lá a dieta é % de cada insumo DENTRO do seu tipo (não kg/dia
+ *                   direto), e o consumo total (kg/dia) de cada tipo é um campo à parte
+ *                   (`ConsumoCategoria`). Antes desta mudança o FI_FCG usava kg/dia direto por
+ *                   insumo — matematicamente idêntico (kg/dia = percentual × consumo do tipo),
+ *                   mas o usuário pensa em "quanto como no total" + "qual a mistura", não em
+ *                   kg exato de cada insumo já calculado de cabeça.
  *   custoFixoDia  = custo fixo do mês / 30 / efetivo do rebanho (ver `custoFixoDiaPorCabeca`)
  *   dias          = (pesoFinalKg − pesoInicialKg) / GMD(kg/dia) da categoria
  *   custoFase     = (custoDietaDia + custoFixoDia) × dias
@@ -21,7 +29,18 @@
 import { media } from '@/lib/painel/agregacao';
 import { diasEntre } from '@/lib/painel/format';
 import { custosNoPeriodo } from '@/lib/fi-fcg/custos';
-import type { CategoriaArroba, Custo, DiaCompacto, GmdCategoria, Insumo, ItemDieta, MarcoIdade, RegRebanho } from './types';
+import {
+  TIPOS_INSUMO,
+  type CategoriaArroba,
+  type ConsumoCategoria,
+  type Custo,
+  type DiaCompacto,
+  type GmdCategoria,
+  type Insumo,
+  type ItemDieta,
+  type MarcoIdade,
+  type RegRebanho,
+} from '@/lib/fi-fcg/types';
 
 export interface FaseFunil {
   categoria: string;
@@ -104,24 +123,57 @@ export function custoFixoDiaPorCabeca(
   return geralDia + fazendaDia;
 }
 
-function precosPorInsumo(insumos: Insumo[]): Map<string, number> {
-  const mapa = new Map<string, number>();
-  for (const i of insumos) if (i.valorKg != null) mapa.set(i.nome, i.valorKg);
-  return mapa;
+function insumosPorNome(insumos: Insumo[]): Map<string, Insumo> {
+  return new Map(insumos.map((i) => [i.nome, i]));
 }
 
-/** Soma do custo de todos os insumos na dieta de uma categoria (kg/dia × R$/kg). null = categoria sem dieta cadastrada (ou nenhum insumo com preço). */
-export function custoDietaDia(categoria: string, dieta: ItemDieta[], insumos: Insumo[]): number | null {
-  const precos = precosPorInsumo(insumos);
-  const itens = dieta.filter((d) => d.categoria === categoria);
-  if (itens.length === 0) return null;
+/** Tolerância pra "a % de um tipo fecha 100%" — mesma faixa do seabra-app-main (99-101%, ver DietaSecao). */
+export const PERCENTUAL_TOLERANCIA_MIN = 99;
+export const PERCENTUAL_TOLERANCIA_MAX = 101;
+
+/** Soma das % cadastradas de um tipo (Concentrado/Volumoso/Sal mineral), pra uma categoria — 100% = mistura completa. */
+export function percentualPorTipo(categoria: string, tipo: string, dieta: ItemDieta[], insumos: Insumo[]): number {
+  const porNome = insumosPorNome(insumos);
+  return dieta
+    .filter((d) => d.categoria === categoria && d.insumo != null && porNome.get(d.insumo)?.tipo === tipo)
+    .reduce((soma, d) => soma + (d.percentual ?? 0), 0);
+}
+
+/**
+ * Custo de dieta/dia de uma categoria: soma, por tipo, do preço médio
+ * ponderado da mistura (Σ percentual/100 × valor/kg dos insumos daquele
+ * tipo) × consumo total do tipo (kg/dia, de `ConsumoCategoria`). Um tipo
+ * sem consumo cadastrado (ou 0) simplesmente não contribui — não precisa
+ * usar os 3 tipos. null = nenhum tipo rendeu custo (dieta não configurada
+ * pra essa categoria).
+ */
+export function custoDietaDia(
+  categoria: string,
+  dieta: ItemDieta[],
+  insumos: Insumo[],
+  consumoCategoria: ConsumoCategoria[],
+): number | null {
+  const porNome = insumosPorNome(insumos);
+  const itensCategoria = dieta.filter((d) => d.categoria === categoria);
+  if (itensCategoria.length === 0) return null;
+
   let total = 0;
   let algumValido = false;
-  for (const item of itens) {
-    if (item.insumo == null || item.kgDia == null) continue;
-    const preco = precos.get(item.insumo);
-    if (preco == null) continue;
-    total += item.kgDia * preco;
+  for (const tipo of TIPOS_INSUMO) {
+    const kgDiaTipo = consumoCategoria.find((c) => c.categoria === categoria && c.tipo === tipo)?.kgDia;
+    if (kgDiaTipo == null || kgDiaTipo <= 0) continue;
+
+    let valorKgTipo = 0;
+    let algumInsumoValido = false;
+    for (const item of itensCategoria) {
+      if (item.insumo == null || item.percentual == null || item.percentual <= 0) continue;
+      const insumo = porNome.get(item.insumo);
+      if (insumo?.tipo !== tipo || insumo.valorKg == null) continue;
+      valorKgTipo += (item.percentual / 100) * insumo.valorKg;
+      algumInsumoValido = true;
+    }
+    if (!algumInsumoValido) continue;
+    total += valorKgTipo * kgDiaTipo;
     algumValido = true;
   }
   return algumValido ? total : null;
@@ -173,6 +225,7 @@ function calcularFases(
   fases: FaseFunil[],
   insumos: Insumo[],
   dieta: ItemDieta[],
+  consumoCategoria: ConsumoCategoria[],
   gmdPorCategoria: Map<string, number>,
   arrobaPorCategoria: Map<string, number>,
   custoFixoDia: number | null,
@@ -185,7 +238,7 @@ function calcularFases(
     const pesoFinalKg = pesoKgDaCategoria(fase.categoria, arrobaPorCategoria);
     const pesoInicialKg = fase.anterior != null ? pesoKgDaCategoria(fase.anterior, arrobaPorCategoria) : pesoFinalKg;
     const gmdKgDia = gmdPorCategoria.get(fase.categoria) ?? null;
-    const dietaDia = custoDietaDia(fase.categoria, dieta, insumos);
+    const dietaDia = custoDietaDia(fase.categoria, dieta, insumos, consumoCategoria);
 
     let dias: number | null = null;
     let custoFase: number | null = null;
@@ -262,6 +315,7 @@ export function montarRetratoMomento(
   categoriasArroba: CategoriaArroba[],
   insumos: Insumo[],
   dieta: ItemDieta[],
+  consumoCategoria: ConsumoCategoria[],
   marcosIdade: MarcoIdade[],
   hoje: DiaCompacto,
 ): RetratoCategoria[] {
@@ -293,7 +347,7 @@ export function montarRetratoMomento(
     const pesos = animais.map((a) => a.ultimaPesagemKg).filter((v): v is number => v != null);
     const pesoMedioKg = media(pesos);
 
-    const custoDietaDiaCat = custoDietaDia(categoria, dieta, insumos);
+    const custoDietaDiaCat = custoDietaDia(categoria, dieta, insumos, consumoCategoria);
     const temCusto = custoDietaDiaCat != null || custoFixoDia != null;
     const custoTotalDia = temCusto ? (custoDietaDiaCat ?? 0) + (custoFixoDia ?? 0) : null;
     const custoAcumuladoHoje = idadeMediaDias != null && custoTotalDia != null ? idadeMediaDias * custoTotalDia : null;
@@ -340,6 +394,7 @@ export function calcularFunis(
   categoriasArroba: CategoriaArroba[],
   insumos: Insumo[],
   dieta: ItemDieta[],
+  consumoCategoria: ConsumoCategoria[],
   gmdCategoria: GmdCategoria[],
   hoje: DiaCompacto,
 ): FunilCalculado[] {
@@ -352,7 +407,7 @@ export function calcularFunis(
   const custoFixoDia = custoFixoDiaPorCabeca(custos, rebanho, fazenda, hoje);
 
   return funis.map(({ nome, fases }) => {
-    const fasesCalc = calcularFases(fases, insumos, dieta, gmdPorCategoria, arrobaPorCategoria, custoFixoDia);
+    const fasesCalc = calcularFases(fases, insumos, dieta, consumoCategoria, gmdPorCategoria, arrobaPorCategoria, custoFixoDia);
     const ultima = fasesCalc[fasesCalc.length - 1] as FaseCalculada | undefined;
     const custoTotal = ultima?.custoAcumulado ?? null;
     const pesoFinalKg = ultima?.pesoFinalKg ?? null;

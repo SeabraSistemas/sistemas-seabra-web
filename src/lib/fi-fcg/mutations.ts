@@ -153,11 +153,12 @@ export async function excluirInsumo(id: string): Promise<boolean> {
 export interface DadosItemDieta {
   categoria: string;
   insumo: string;
-  kgDia: number;
+  /** % que esse insumo representa DENTRO do seu tipo (Concentrado/Volumoso/Sal mineral) — não kg/dia direto, ver types.ts. */
+  percentual: number;
 }
 
 function linhaItemDieta(id: string, d: DadosItemDieta): string[] {
-  return [id, d.categoria.trim(), d.insumo.trim(), formatNumber(d.kgDia)];
+  return [id, d.categoria.trim(), d.insumo.trim(), formatNumber(d.percentual)];
 }
 
 export async function criarItemDieta(dados: DadosItemDieta): Promise<{ ok: boolean; id: string | null }> {
@@ -202,4 +203,15 @@ export async function atualizarMarcoIdade(id: string, idadeDias: number): Promis
   const linha = await encontrarLinhaPorId(sid, ABA_MARCOS_IDADE, 'ID', id);
   if (linha == null) return false;
   return escreverLinha(sid, `${citar(ABA_MARCOS_IDADE)}!C${linha}`, [formatNumber(idadeDias)], 'USER_ENTERED');
+}
+
+const ABA_CONSUMO_CATEGORIA = 'Consumo por Categoria';
+
+/** Só edita o consumo total (kg/dia) de um tipo (Concentrado/Volumoso/Sal mineral) já existente por categoria — as 21 linhas (7 categorias × 3 tipos) são fixas, mesmo padrão de `atualizarGmdCategoria`. */
+export async function atualizarConsumoCategoria(id: string, kgDia: number): Promise<boolean> {
+  const sid = spreadsheetId();
+  if (!sid || !Number.isFinite(kgDia)) return false;
+  const linha = await encontrarLinhaPorId(sid, ABA_CONSUMO_CATEGORIA, 'ID', id);
+  if (linha == null) return false;
+  return escreverLinha(sid, `${citar(ABA_CONSUMO_CATEGORIA)}!D${linha}`, [formatNumber(kgDia)], 'USER_ENTERED');
 }

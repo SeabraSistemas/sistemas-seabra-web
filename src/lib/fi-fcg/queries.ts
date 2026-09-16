@@ -7,6 +7,7 @@ import {
   mapBaixas,
   mapCategoriaArroba,
   mapCategoriasCusto,
+  mapConsumoCategoria,
   mapCustos,
   mapDieta,
   mapFinanceiro,
@@ -23,6 +24,7 @@ import {
 import type {
   CategoriaArroba,
   CategoriaCusto,
+  ConsumoCategoria,
   Custo,
   GmdCategoria,
   Insumo,
@@ -197,6 +199,12 @@ export async function getMarcosIdade(): Promise<Leitura<MarcoIdade>> {
   return { itens: mapMarcosIdade(linhas), configurado: spreadsheetId() != null, stale, carregadoEm };
 }
 
+/** Aba "Consumo por Categoria" (nova, 16/09/2026 — Custo de formação, alinhado ao seabra-app-main). Sem cache — ver `lerAbaFresca`. */
+export async function getConsumoCategoria(): Promise<Leitura<ConsumoCategoria>> {
+  const { linhas, stale, carregadoEm } = await lerAbaFresca('Consumo por Categoria');
+  return { itens: mapConsumoCategoria(linhas), configurado: spreadsheetId() != null, stale, carregadoEm };
+}
+
 /**
  * Tudo que a página Financeiro precisa, numa só leva. RebanhoProd e
  * Categoria@ entram aqui (mesmo cache por aba do Rebanho — se a página
@@ -219,6 +227,7 @@ export async function getDadosFinanceiro() {
     categoriasCusto,
     insumos,
     dieta,
+    consumoCategoria,
     gmdCategoria,
     marcosIdade,
     iatf,
@@ -234,6 +243,7 @@ export async function getDadosFinanceiro() {
     getCategoriasCusto(),
     getInsumos(),
     getDieta(),
+    getConsumoCategoria(),
     getGmdCategoria(),
     getMarcosIdade(),
     getIatf(),
@@ -250,6 +260,7 @@ export async function getDadosFinanceiro() {
     categoriasCusto,
     insumos,
     dieta,
+    consumoCategoria,
     gmdCategoria,
     marcosIdade,
     iatf,

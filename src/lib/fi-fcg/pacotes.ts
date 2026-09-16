@@ -10,6 +10,7 @@ import { empacotar, type Pacote } from '@/lib/painel/pacote';
 import type { Leitura } from './queries';
 import type {
   CategoriaCusto,
+  ConsumoCategoria,
   Custo,
   GmdCategoria,
   Insumo,
@@ -25,6 +26,7 @@ import type {
   LancamentoFinanceiro,
   RegAborto,
 } from './types';
+
 import type { EventoFin } from './financeiro';
 import type { FunilCalculado, RetratoCategoria } from './custoFormacao';
 
@@ -188,7 +190,9 @@ export const CAMPOS_CUSTO: (keyof Custo & string)[] = [
 
 export const CAMPOS_INSUMO: (keyof Insumo & string)[] = ['id', 'nome', 'tipo', 'valorKg'];
 
-export const CAMPOS_ITEM_DIETA: (keyof ItemDieta & string)[] = ['id', 'categoria', 'insumo', 'kgDia'];
+export const CAMPOS_ITEM_DIETA: (keyof ItemDieta & string)[] = ['id', 'categoria', 'insumo', 'percentual'];
+
+export const CAMPOS_CONSUMO_CATEGORIA: (keyof ConsumoCategoria & string)[] = ['id', 'categoria', 'tipo', 'kgDia'];
 
 export const CAMPOS_GMD_CATEGORIA: (keyof GmdCategoria & string)[] = ['id', 'categoria', 'gmdKgDia'];
 
@@ -207,6 +211,9 @@ export const CAMPOS_REBANHO_PROJECAO: (keyof RegRebanho & string)[] = ['id', 'ca
 
 /** Idem, mas de RegIatf — só a Data IATF mais recente de cada animal Prenha importa aqui (ver projecaoRebanho.ts). */
 export const CAMPOS_IATF_PROJECAO: (keyof RegIatf & string)[] = ['id', 'data'];
+
+/** Idem, mas de RegToque — âncora de fallback quando o IATF do animal Prenha é velho demais (repasse não lançado, ver projecaoRebanho.ts). */
+export const CAMPOS_TOQUE_PROJECAO: (keyof RegToque & string)[] = ['id', 'data', 'diagnostico'];
 
 export const CAMPOS_EVENTO: (keyof EventoFin & string)[] = [
   'origem',
@@ -255,6 +262,7 @@ export interface PacoteFinanceiro {
   categoriasCusto: Pacote<CategoriaCusto>;
   insumos: Pacote<Insumo>;
   dieta: Pacote<ItemDieta>;
+  consumoCategoria: Pacote<ConsumoCategoria>;
   gmdCategoria: Pacote<GmdCategoria>;
   gmdSugerido: [string, number][];
   marcosIdade: Pacote<MarcoIdade>;
@@ -263,6 +271,8 @@ export interface PacoteFinanceiro {
   /** Subconjunto reduzido (Prenha + 4 categorias-fonte), ver CAMPOS_REBANHO_PROJECAO — a "Projeção de rebanho" roda `projetarRebanho` no cliente com isto. */
   rebanhoProjecao: Pacote<RegRebanho>;
   iatfProjecao: Pacote<RegIatf>;
+  /** Toque de cada animal Prenha — usado como âncora de fallback quando o IATF é velho demais, ver projecaoRebanho.ts. */
+  toqueProjecao: Pacote<RegToque>;
   configurado: boolean;
   stale: boolean;
   carregadoEm: number | null;

@@ -202,19 +202,47 @@ export interface Custo {
  * de corte e produz R$/@, usando `Categoria@` como peso-alvo de cada
  * categoria do funil). Nenhuma das 3 é do AppSheet do cliente.
  */
+/**
+ * Os 3 tipos fixos de insumo (16/09/2026, alinhado com o "Nutrição & Custo"
+ * do seabra-app-main — `formulacao_categoria`/`consumo_categoria` de lá) —
+ * cada um tem seu próprio consumo total (kg/dia) por categoria, e dentro
+ * dele os insumos se dividem por PERCENTUAL da mistura, não kg/dia direto.
+ */
+export const TIPOS_INSUMO = ['Concentrado', 'Volumoso', 'Sal mineral'] as const;
+export type TipoInsumo = (typeof TIPOS_INSUMO)[number];
+
 export interface Insumo {
   id: string;
   nome: string;
-  /** Livre — só organiza a lista (ex.: "Concentrado", "Volumoso", "Sal mineral"), não entra na conta. */
+  /** Um dos TIPOS_INSUMO — agora estrutural (decide o "balde" de consumo/% que o insumo entra), não só organizacional. */
   tipo: string | null;
   valorKg: number | null;
 }
 
-/** Uma linha "esta Categoria consome X kg/dia deste Insumo" — a dieta de uma categoria é a soma de todas as suas linhas. */
+/**
+ * Quanto (%) um Insumo representa DENTRO do seu tipo, para uma Categoria —
+ * ex.: "Vaca, dentro do Concentrado, 55% Milho + 45% Farelo de soja". Não é
+ * kg/dia direto (isso é `ConsumoCategoria`, o total do tipo) — o custo/dia
+ * de cada tipo = (Σ percentual × valorKg dos insumos daquele tipo) ×
+ * kgDia do tipo (ver custoDietaDia, custoFormacao.ts).
+ */
 export interface ItemDieta {
   id: string;
   categoria: string | null;
   insumo: string | null;
+  percentual: number | null;
+}
+
+/**
+ * Consumo total (kg/dia) de um TIPO inteiro (Concentrado/Volumoso/Sal
+ * mineral) por Categoria — independente de quantos insumos compõem a
+ * mistura daquele tipo (ver ItemDieta.percentual). 21 linhas fixas
+ * semeadas uma vez (7 categorias × 3 tipos), mesmo padrão de GmdCategoria.
+ */
+export interface ConsumoCategoria {
+  id: string;
+  categoria: string | null;
+  tipo: string | null;
   kgDia: number | null;
 }
 

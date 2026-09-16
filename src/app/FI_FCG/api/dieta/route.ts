@@ -9,14 +9,14 @@ export const dynamic = 'force-dynamic';
 interface CorpoItemDieta {
   categoria?: string;
   insumo?: string;
-  kgDia?: number;
+  percentual?: number;
 }
 
 function dadosDe(corpo: CorpoItemDieta): DadosItemDieta | null {
   const categoria = corpo.categoria?.trim();
   const insumo = corpo.insumo?.trim();
-  if (!categoria || !insumo || typeof corpo.kgDia !== 'number' || !Number.isFinite(corpo.kgDia)) return null;
-  return { categoria, insumo, kgDia: corpo.kgDia };
+  if (!categoria || !insumo || typeof corpo.percentual !== 'number' || !Number.isFinite(corpo.percentual)) return null;
+  return { categoria, insumo, percentual: corpo.percentual };
 }
 
 export async function POST(request: Request) {

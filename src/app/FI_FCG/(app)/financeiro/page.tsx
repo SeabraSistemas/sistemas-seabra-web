@@ -3,6 +3,7 @@ import { montarEventos } from '@/lib/fi-fcg/financeiro';
 import { FUNIS_BOVINO, calcularFunis, gmdSugeridoPorCategoria, montarRetratoMomento } from '@/lib/fi-fcg/custoFormacao';
 import {
   CAMPOS_CATEGORIA_CUSTO,
+  CAMPOS_CONSUMO_CATEGORIA,
   CAMPOS_CUSTO,
   CAMPOS_EVENTO,
   CAMPOS_FINANCEIRO,
@@ -12,6 +13,7 @@ import {
   CAMPOS_INSUMO,
   CAMPOS_MARCO_IDADE,
   CAMPOS_REBANHO_PROJECAO,
+  CAMPOS_TOQUE_PROJECAO,
   type PacoteFinanceiro,
 } from '@/lib/fi-fcg/pacotes';
 import { getDadosFinanceiro } from '@/lib/fi-fcg/queries';
@@ -32,9 +34,11 @@ export default async function FinanceiroPage() {
     categoriasCusto,
     insumos,
     dieta,
+    consumoCategoria,
     gmdCategoria,
     marcosIdade,
     iatf,
+    toque,
   } = await getDadosFinanceiro();
   const { eventos, orfaos } = montarEventos(
     vendas.itens,
@@ -57,6 +61,7 @@ export default async function FinanceiroPage() {
       categoriaArroba.itens,
       insumos.itens,
       dieta.itens,
+      consumoCategoria.itens,
       gmdCategoria.itens,
       hoje,
     ),
@@ -68,6 +73,7 @@ export default async function FinanceiroPage() {
     (a) => idsPrenha.has(a.id) || categoriasFonteProjecao.has(a.categoria ?? ''),
   );
   const iatfProjecao = iatf.itens.filter((r) => idsPrenha.has(r.id));
+  const toqueProjecao = toque.itens.filter((r) => idsPrenha.has(r.id));
   const retratoPorFazenda = [null, ...fazendas].map((fazenda) => ({
     fazenda,
     retrato: montarRetratoMomento(
@@ -77,6 +83,7 @@ export default async function FinanceiroPage() {
       categoriaArroba.itens,
       insumos.itens,
       dieta.itens,
+      consumoCategoria.itens,
       marcosIdade.itens,
       hoje,
     ),
@@ -93,9 +100,11 @@ export default async function FinanceiroPage() {
     categoriasCusto,
     insumos,
     dieta,
+    consumoCategoria,
     gmdCategoria,
     marcosIdade,
     iatf,
+    toque,
   ];
   const carregadoEm = todas
     .map((l) => l.carregadoEm)
@@ -109,6 +118,7 @@ export default async function FinanceiroPage() {
     categoriasCusto: empacotar(categoriasCusto.itens, CAMPOS_CATEGORIA_CUSTO),
     insumos: empacotar(insumos.itens, CAMPOS_INSUMO),
     dieta: empacotar(dieta.itens, CAMPOS_ITEM_DIETA),
+    consumoCategoria: empacotar(consumoCategoria.itens, CAMPOS_CONSUMO_CATEGORIA),
     gmdCategoria: empacotar(gmdCategoria.itens, CAMPOS_GMD_CATEGORIA),
     gmdSugerido,
     marcosIdade: empacotar(marcosIdade.itens, CAMPOS_MARCO_IDADE),
@@ -116,6 +126,7 @@ export default async function FinanceiroPage() {
     retratoPorFazenda,
     rebanhoProjecao: empacotar(rebanhoProjecao, CAMPOS_REBANHO_PROJECAO),
     iatfProjecao: empacotar(iatfProjecao, CAMPOS_IATF_PROJECAO),
+    toqueProjecao: empacotar(toqueProjecao, CAMPOS_TOQUE_PROJECAO),
     configurado: vendas.configurado,
     stale: todas.some((l) => l.stale),
     carregadoEm,

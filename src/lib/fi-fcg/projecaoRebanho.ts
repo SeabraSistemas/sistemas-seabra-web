@@ -1,6 +1,15 @@
 /**
  * Projeção de rebanho (16/09/2026) — partos previstos + mudança de
- * categoria por idade, num horizonte de meses escolhido pelo usuário.
+ * categoria por idade, num horizonte de DIAS escolhido pelo usuário (não
+ * meses — trocado no mesmo dia após o Felipe comparar com a ferramenta
+ * "Projeção/Estoque" de outro sistema do ecossistema: lá o produtor escolhe
+ * a data exata, dia a dia, não um número redondo de meses). O filtro de
+ * inclusão (parto/transição cai dentro de [hoje, hoje+horizonteDias]) agora
+ * é por DIA exato — antes era por mês inteiro, o que incluía datas do mês
+ * corrente mesmo se já tivessem passado. O agrupamento em `meses:
+ * MesProjetado[]` continua existindo só pra alimentar o gráfico mensal
+ * (SerieMensal) — a granularidade de EXIBIÇÃO é mensal, a de CÁLCULO é
+ * diária.
  *
  * Investigado ao vivo no seabra-app-main antes de escrever isto: não existe
  * pronto (nem no backlog) — o motor daqui é novo, só inspirado na
@@ -8,22 +17,48 @@
  * real de cobertura (IATF) e diagnóstico (Toque/Reprodução), sem precisar
  * de "Monta livre" (aba vazia nesta planilha, cliente não usa).
  *
- * Parto previsto: Data IATF mais recente do animal + `DIAS_GESTACAO_BOVINO`
- * — confirmado ao vivo (16/09/2026): cobre 1.922 das 2.027 vacas "Prenha"
- * hoje (95%). O resto vira `partosSemDataConhecida` — nunca inventamos uma
- * data.
+ * Parto previsto: Data IATF mais recente do animal + `DIAS_GESTACAO_BOVINO`.
+ * Achado ao vivo (16/09/2026, investigação junto com o Felipe): pra 97 das
+ * ~2.000 vacas "Prenha" hoje, a Data IATF mais recente é ANTIGA (>373 dias -
+ * ver `IATF_MAX_DIAS`) mas existe um Toque BEM recente confirmando Prenha.
+ * Isso é repasse com touro solto (monta natural) depois do IATF, que o
+ * AppSheet não registra numa aba própria — a vaca provavelmente já pariu
+ * daquele ciclo do IATF antigo e prenhou de novo. Usar o IATF velho previa
+ * um parto no passado e a vaca sumia da projeção em silêncio. Decisão do
+ * Felipe: quando o IATF passar de `IATF_MAX_DIAS`, cair pro Toque mais
+ * recente com Diagnóstico de prenhez como âncora (aproximação, não é dia 0
+ * da gestação, mas mais realista que um IATF de 2-3 anos atrás) — e só
+ * aceitar esse Toque se ele também não for velho demais (`TOQUE_MAX_DIAS`,
+ * o próprio limite da gestação: toque é sempre DEPOIS da cobertura, então
+ * acima de 283 dias o parto já estaria vencido mesmo no melhor caso).
+ * Sem nenhuma âncora utilizável, vira `partosSemDataConhecida` — nunca
+ * inventamos uma data.
  *
  * Mudança de categoria: idade atual (nascimento -> hoje) cruza a idade do
  * marco (aba "Idades por Marco") -> muda de categoria naquele mês. Novilha
  * vira Vaca no 1º PARTO (não na cobertura — decisão do Felipe, 16/09/2026:
  * biologicamente ela só "é" Vaca depois de parir). Touro fica de fora (é
  * seleção manual do produtor, não idade — decisão do Felipe).
+ *
+ * `filtroIdade` (opcional, 16/09/2026) — inspirado na ferramenta
+ * "Projeção/Estoque" de outro sistema do ecossistema (idade mínima/máxima
+ * em dias, filtrando quem entra na contagem): aqui só filtra a MUDANÇA DE
+ * CATEGORIA, calculado pela idade que o animal VAI TER em `dataFinal`
+ * (hoje + horizonte) — fora da faixa, o animal simplesmente não aparece
+ * em nenhuma migração. Partos previstos NÃO são afetados (calculado à
+ * parte, mesma separação da ferramenta de referência: idade da mãe não
+ * decide se ela pare ou não).
  */
 import { mesDe, proximoMes } from '@/lib/fi-fcg/custos';
 import { diasEntre, somarDias } from '@/lib/painel/format';
-import type { DiaCompacto, MarcoIdade, RegIatf, RegRebanho } from './types';
+import type { DiaCompacto, MarcoIdade, RegIatf, RegRebanho, RegToque } from './types';
 
 export const DIAS_GESTACAO_BOVINO = 283;
+
+/** Cobertura (IATF) + até 90 dias de repasse com touro solto não lançado — acima disso o IATF é velho demais pra ser a origem da gestação atual. */
+export const IATF_MAX_DIAS = DIAS_GESTACAO_BOVINO + 90;
+/** Toque é sempre feito DEPOIS da cobertura (nunca no dia 0) — acima da gestação inteira o parto já estaria vencido mesmo no melhor caso. */
+export const TOQUE_MAX_DIAS = DIAS_GESTACAO_BOVINO;
 
 interface Transicao {
   de: string;
@@ -54,6 +89,17 @@ function ultimaDataIatfPorAnimal(iatf: RegIatf[]): Map<string, DiaCompacto> {
   return mapa;
 }
 
+/** Data do Toque mais recente por animal, só entre os que CONFIRMARAM prenhez (Diagnóstico != Vazia/vazio). */
+function ultimoTequePrenhaPorAnimal(toque: RegToque[]): Map<string, DiaCompacto> {
+  const mapa = new Map<string, DiaCompacto>();
+  for (const t of toque) {
+    if (t.data == null || t.diagnostico == null || t.diagnostico === 'Vazia') continue;
+    const atual = mapa.get(t.id);
+    if (atual == null || t.data > atual) mapa.set(t.id, t.data);
+  }
+  return mapa;
+}
+
 export interface Migracao {
   de: string;
   para: string;
@@ -66,52 +112,101 @@ export interface MesProjetado {
   migracoes: Migracao[];
 }
 
+export interface PartoEstimadoViaToque {
+  id: string;
+  fazenda: string | null;
+  dataToque: DiaCompacto;
+  partoPrevisto: DiaCompacto;
+}
+
+export interface PrenhaSemDataConhecida {
+  id: string;
+  fazenda: string | null;
+  /** Data do IATF ou do Toque mais recente, quando existir — só velha demais pra usar como âncora (ver IATF_MAX_DIAS/TOQUE_MAX_DIAS). Ambos null = nenhum registro. */
+  ultimaIatf: DiaCompacto | null;
+  ultimoToque: DiaCompacto | null;
+}
+
 export interface ProjecaoRebanho {
   meses: MesProjetado[];
-  /** Vacas "Prenha" sem nenhuma Data IATF registrada — não entram em nenhum mês, não inventamos data. */
+  /** Vacas "Prenha" sem nenhuma âncora de gestação utilizável (nem IATF recente, nem Toque recente confirmando prenhez) — não entram em nenhum mês, não inventamos data. */
   partosSemDataConhecida: number;
+  /** Das que entraram em algum mês, quantas usaram o Toque como âncora (IATF velho demais ou inexistente) — estimativa, não a data exata de cobertura. */
+  partosEstimadosViaToque: number;
+  /** Detalhe animal a animal de `partosEstimadosViaToque`, pro usuário conferir quem são e quando foi o Toque. */
+  animaisEstimadosViaToque: PartoEstimadoViaToque[];
+  /** Detalhe animal a animal de `partosSemDataConhecida`. */
+  animaisSemDataConhecida: PrenhaSemDataConhecida[];
   efetivoPorCategoriaHoje: Record<string, number>;
   /** Efetivo ao final do horizonte, só com as migrações por idade — nascimentos NÃO entram aqui (sexo do bezerro é desconhecido antes de nascer), ver `partosPrevistos` à parte. */
   efetivoPorCategoriaFinal: Record<string, number>;
 }
 
+export interface FiltroIdadeProjecao {
+  /** Idade mínima em dias, na data final do horizonte, pra um animal entrar na mudança de categoria. */
+  minDias: number;
+  /** Idade máxima em dias, na data final do horizonte. */
+  maxDias: number;
+}
+
 /**
- * @param horizonteMeses mínimo 1 — meses corridos a partir do mês de `hoje`, inclusive.
+ * @param horizonteDias mínimo 1 — dias corridos a partir de `hoje`, inclusive (hoje + horizonteDias é o último dia considerado).
  */
 export function projetarRebanho(
   rebanho: RegRebanho[],
   iatf: RegIatf[],
+  toque: RegToque[],
   marcosIdade: MarcoIdade[],
   fazenda: string | null,
-  horizonteMeses: number,
+  horizonteDias: number,
   hoje: DiaCompacto,
+  filtroIdade?: FiltroIdadeProjecao | null,
 ): ProjecaoRebanho {
-  const horizonte = Math.max(1, Math.round(horizonteMeses));
+  const horizonte = Math.max(1, Math.round(horizonteDias));
+  const dataFinal = somarDias(hoje, horizonte) as DiaCompacto;
   const relevantes = rebanho.filter((a) => vivo(a) && (fazenda == null || a.fazenda === fazenda));
 
   const mesesDoHorizonte: string[] = [];
+  const mesFinal = mesDe(dataFinal);
   let mesAtual = mesDe(hoje);
-  for (let i = 0; i < horizonte; i++) {
+  while (true) {
     mesesDoHorizonte.push(mesAtual);
+    if (mesAtual === mesFinal) break;
     mesAtual = proximoMes(mesAtual);
   }
-  const ultimoMes = mesesDoHorizonte[mesesDoHorizonte.length - 1];
 
   const partosPorMes = new Map<string, number>(mesesDoHorizonte.map((m) => [m, 0]));
   let partosSemDataConhecida = 0;
+  let partosEstimadosViaToque = 0;
+  const animaisEstimadosViaToque: PartoEstimadoViaToque[] = [];
+  const animaisSemDataConhecida: PrenhaSemDataConhecida[] = [];
   const ultimaIatf = ultimaDataIatfPorAnimal(iatf);
+  const ultimoToque = ultimoTequePrenhaPorAnimal(toque);
   for (const a of relevantes) {
     if (a.reproducao !== 'Prenha') continue;
-    const dataCobertura = ultimaIatf.get(a.id);
+    const dataIatfRecente = ultimaIatf.get(a.id) ?? null;
+    const diasIatf = dataIatfRecente != null ? diasEntre(dataIatfRecente, hoje) : null;
+    const usaIatf = dataIatfRecente != null && diasIatf != null && diasIatf <= IATF_MAX_DIAS;
+
+    const dataToqueRecente = ultimoToque.get(a.id) ?? null;
+    const diasToque = dataToqueRecente != null ? diasEntre(dataToqueRecente, hoje) : null;
+    const usaToque = !usaIatf && dataToqueRecente != null && diasToque != null && diasToque <= TOQUE_MAX_DIAS;
+
+    const dataCobertura = usaIatf ? dataIatfRecente : usaToque ? dataToqueRecente : null;
     if (dataCobertura == null) {
       partosSemDataConhecida++;
+      animaisSemDataConhecida.push({ id: a.id, fazenda: a.fazenda, ultimaIatf: dataIatfRecente, ultimoToque: dataToqueRecente });
       continue;
     }
     const partoPrevisto = somarDias(dataCobertura, DIAS_GESTACAO_BOVINO);
     if (partoPrevisto == null) continue;
-    const mesParto = mesDe(partoPrevisto);
-    if (mesParto >= mesesDoHorizonte[0] && mesParto <= ultimoMes) {
+    if (partoPrevisto >= hoje && partoPrevisto <= dataFinal) {
+      const mesParto = mesDe(partoPrevisto);
       partosPorMes.set(mesParto, (partosPorMes.get(mesParto) ?? 0) + 1);
+      if (usaToque) {
+        partosEstimadosViaToque++;
+        animaisEstimadosViaToque.push({ id: a.id, fazenda: a.fazenda, dataToque: dataToqueRecente!, partoPrevisto });
+      }
     }
   }
 
@@ -126,11 +221,14 @@ export function projetarRebanho(
       if (a.categoria !== t.de || a.nascimento == null) continue;
       const idadeAtual = diasEntre(a.nascimento, hoje);
       if (idadeAtual == null) continue;
-      const diasAteTransicao = Math.max(0, idadeAlvo - idadeAtual); // já vencido => transiciona já no 1º mês
+      if (filtroIdade != null) {
+        const idadeNaDataFinal = diasEntre(a.nascimento, dataFinal);
+        if (idadeNaDataFinal == null || idadeNaDataFinal < filtroIdade.minDias || idadeNaDataFinal > filtroIdade.maxDias) continue;
+      }
+      const diasAteTransicao = Math.max(0, idadeAlvo - idadeAtual); // já vencido => transiciona já no dia 0 do horizonte
       const dataTransicao = somarDias(hoje, diasAteTransicao);
-      if (dataTransicao == null) continue;
+      if (dataTransicao == null || dataTransicao < hoje || dataTransicao > dataFinal) continue;
       const mesTransicao = mesDe(dataTransicao);
-      if (mesTransicao < mesesDoHorizonte[0] || mesTransicao > ultimoMes) continue;
       const porTransicao = migracoesPorMes.get(mesTransicao)!;
       const chave = `${t.de}|${t.para}`;
       porTransicao.set(chave, (porTransicao.get(chave) ?? 0) + 1);
@@ -160,5 +258,13 @@ export function projetarRebanho(
     }
   }
 
-  return { meses, partosSemDataConhecida, efetivoPorCategoriaHoje, efetivoPorCategoriaFinal };
+  return {
+    meses,
+    partosSemDataConhecida,
+    partosEstimadosViaToque,
+    animaisEstimadosViaToque,
+    animaisSemDataConhecida,
+    efetivoPorCategoriaHoje,
+    efetivoPorCategoriaFinal,
+  };
 }

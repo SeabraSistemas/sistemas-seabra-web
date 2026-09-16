@@ -9,6 +9,7 @@ import { diaDe, parseMoeda, parseNumber, parseText } from '@/lib/painel/format';
 import type {
   CategoriaArroba,
   CategoriaCusto,
+  ConsumoCategoria,
   Custo,
   GmdCategoria,
   Insumo,
@@ -277,13 +278,25 @@ export function mapInsumos(rows: string[][] | null): Insumo[] {
     .filter((x) => x.id !== '' && x.nome !== '');
 }
 
-/** Aba "Dieta por Categoria" (nova, 16/09/2026 — Custo de formação). Uma linha = 1 insumo na dieta de 1 categoria. */
+/** Aba "Dieta por Categoria" (16/09/2026 — Custo de formação). Uma linha = % que 1 insumo representa dentro do seu tipo, para 1 categoria. */
 export function mapDieta(rows: string[][] | null): ItemDieta[] {
   return toObjects(rows)
     .map((r) => ({
       id: parseText(r['ID']) ?? '',
       categoria: parseText(r['Categoria']),
       insumo: parseText(r['Insumo']),
+      percentual: parseNumber(r['Percentual']),
+    }))
+    .filter((x) => x.id !== '');
+}
+
+/** Aba "Consumo por Categoria" (nova, 16/09/2026 — Custo de formação). 21 linhas fixas (7 categorias × 3 tipos), semeadas uma vez. */
+export function mapConsumoCategoria(rows: string[][] | null): ConsumoCategoria[] {
+  return toObjects(rows)
+    .map((r) => ({
+      id: parseText(r['ID']) ?? '',
+      categoria: parseText(r['Categoria']),
+      tipo: parseText(r['Tipo']),
       kgDia: parseNumber(r['Kg por dia']),
     }))
     .filter((x) => x.id !== '');
