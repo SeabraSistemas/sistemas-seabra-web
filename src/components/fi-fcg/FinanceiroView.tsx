@@ -29,7 +29,7 @@ import {
   type ProblemaFin,
 } from '@/lib/fi-fcg/financeiro';
 import type { PacoteFinanceiro } from '@/lib/fi-fcg/pacotes';
-import type { CategoriaCusto, Custo, GmdCategoria, Insumo, ItemDieta, LancamentoFinanceiro } from '@/lib/fi-fcg/types';
+import type { CategoriaCusto, Custo, GmdCategoria, Insumo, ItemDieta, LancamentoFinanceiro, MarcoIdade } from '@/lib/fi-fcg/types';
 
 const PROBLEMA_LABEL: Record<ProblemaFin, string> = {
   'venda-sem-estimativa': 'Venda sem valor e sem estimativa possível',
@@ -60,6 +60,7 @@ export function FinanceiroView({ dados }: { dados: PacoteFinanceiro }) {
   const insumos = useMemo(() => desempacotar<Insumo>(dados.insumos), [dados.insumos]);
   const itensDieta = useMemo(() => desempacotar<ItemDieta>(dados.dieta), [dados.dieta]);
   const gmdCategoria = useMemo(() => desempacotar<GmdCategoria>(dados.gmdCategoria), [dados.gmdCategoria]);
+  const marcosIdade = useMemo(() => desempacotar<MarcoIdade>(dados.marcosIdade), [dados.marcosIdade]);
   const hoje = useMemo(() => hojeCompacto(), []);
 
   const [fazenda, setFazenda] = useState('');
@@ -426,8 +427,10 @@ export function FinanceiroView({ dados }: { dados: PacoteFinanceiro }) {
           <CustoFormacaoPainel
             fazendas={todasFazendas}
             funisPorFazenda={dados.funisPorFazenda}
+            retratoPorFazenda={dados.retratoPorFazenda}
             gmdCategoria={gmdCategoria}
             gmdSugerido={dados.gmdSugerido}
+            marcosIdade={marcosIdade}
             insumos={insumos}
             dieta={itensDieta}
           />

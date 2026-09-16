@@ -14,6 +14,7 @@ import type {
   Insumo,
   ItemDieta,
   LancamentoFinanceiro,
+  MarcoIdade,
   RegAborto,
   RegBaixa,
   RegIatf,
@@ -295,6 +296,17 @@ export function mapGmdCategoria(rows: string[][] | null): GmdCategoria[] {
       id: parseText(r['ID']) ?? '',
       categoria: parseText(r['Categoria']),
       gmdKgDia: parseNumber(r['GMD kg/dia']),
+    }))
+    .filter((x) => x.id !== '');
+}
+
+/** Aba "Idades por Marco" (nova, 16/09/2026 — Retrato do momento / Projeção de rebanho). 5 linhas fixas; `idadeDias` null até o usuário editar. */
+export function mapMarcosIdade(rows: string[][] | null): MarcoIdade[] {
+  return toObjects(rows)
+    .map((r) => ({
+      id: parseText(r['ID']) ?? '',
+      marco: parseText(r['Marco']),
+      idadeDias: parseNumber(r['Idade dias']),
     }))
     .filter((x) => x.id !== '');
 }

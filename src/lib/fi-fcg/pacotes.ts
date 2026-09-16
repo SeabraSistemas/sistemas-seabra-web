@@ -14,6 +14,7 @@ import type {
   GmdCategoria,
   Insumo,
   ItemDieta,
+  MarcoIdade,
   RegBaixa,
   RegIatf,
   RegParto,
@@ -25,7 +26,7 @@ import type {
   RegAborto,
 } from './types';
 import type { EventoFin } from './financeiro';
-import type { FunilCalculado } from './custoFormacao';
+import type { FunilCalculado, RetratoCategoria } from './custoFormacao';
 
 export interface PacoteLeitura<T extends object> {
   pacote: Pacote<T>;
@@ -191,6 +192,8 @@ export const CAMPOS_ITEM_DIETA: (keyof ItemDieta & string)[] = ['id', 'categoria
 
 export const CAMPOS_GMD_CATEGORIA: (keyof GmdCategoria & string)[] = ['id', 'categoria', 'gmdKgDia'];
 
+export const CAMPOS_MARCO_IDADE: (keyof MarcoIdade & string)[] = ['id', 'marco', 'idadeDias'];
+
 export const CAMPOS_EVENTO: (keyof EventoFin & string)[] = [
   'origem',
   'tipo',
@@ -240,7 +243,9 @@ export interface PacoteFinanceiro {
   dieta: Pacote<ItemDieta>;
   gmdCategoria: Pacote<GmdCategoria>;
   gmdSugerido: [string, number][];
+  marcosIdade: Pacote<MarcoIdade>;
   funisPorFazenda: { fazenda: string | null; funis: FunilCalculado[] }[];
+  retratoPorFazenda: { fazenda: string | null; retrato: RetratoCategoria[] }[];
   configurado: boolean;
   stale: boolean;
   carregadoEm: number | null;

@@ -13,6 +13,7 @@ import {
   mapGmdCategoria,
   mapIatf,
   mapInsumos,
+  mapMarcosIdade,
   mapPartos,
   mapPesagem,
   mapRebanho,
@@ -27,6 +28,7 @@ import type {
   Insumo,
   ItemDieta,
   LancamentoFinanceiro,
+  MarcoIdade,
   RegAborto,
   RegBaixa,
   RegIatf,
@@ -189,6 +191,12 @@ export async function getGmdCategoria(): Promise<Leitura<GmdCategoria>> {
   return { itens: mapGmdCategoria(linhas), configurado: spreadsheetId() != null, stale, carregadoEm };
 }
 
+/** Aba "Idades por Marco" (nova, 16/09/2026 — Retrato do momento / Projeção de rebanho). Sem cache — ver `lerAbaFresca`. */
+export async function getMarcosIdade(): Promise<Leitura<MarcoIdade>> {
+  const { linhas, stale, carregadoEm } = await lerAbaFresca('Idades por Marco');
+  return { itens: mapMarcosIdade(linhas), configurado: spreadsheetId() != null, stale, carregadoEm };
+}
+
 /**
  * Tudo que a página Financeiro precisa, numa só leva. RebanhoProd e
  * Categoria@ entram aqui (mesmo cache por aba do Rebanho — se a página
@@ -212,6 +220,9 @@ export async function getDadosFinanceiro() {
     insumos,
     dieta,
     gmdCategoria,
+    marcosIdade,
+    iatf,
+    toque,
   ] = await Promise.all([
     getVendas(),
     getBaixas(),
@@ -224,8 +235,26 @@ export async function getDadosFinanceiro() {
     getInsumos(),
     getDieta(),
     getGmdCategoria(),
+    getMarcosIdade(),
+    getIatf(),
+    getToque(),
   ]);
-  return { vendas, baixas, abortos, lancamentos, rebanho, categoriaArroba, custos, categoriasCusto, insumos, dieta, gmdCategoria };
+  return {
+    vendas,
+    baixas,
+    abortos,
+    lancamentos,
+    rebanho,
+    categoriaArroba,
+    custos,
+    categoriasCusto,
+    insumos,
+    dieta,
+    gmdCategoria,
+    marcosIdade,
+    iatf,
+    toque,
+  };
 }
 
 /** Usado por POST /FI_FCG/api/atualizar — limpa tudo do FI_FCG pro botão "Atualizar" forçar releitura. */

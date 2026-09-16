@@ -1,6 +1,6 @@
 import { FinanceiroView } from '@/components/fi-fcg/FinanceiroView';
 import { montarEventos } from '@/lib/fi-fcg/financeiro';
-import { FUNIS_BOVINO, calcularFunis, gmdSugeridoPorCategoria } from '@/lib/fi-fcg/custoFormacao';
+import { FUNIS_BOVINO, calcularFunis, gmdSugeridoPorCategoria, montarRetratoMomento } from '@/lib/fi-fcg/custoFormacao';
 import {
   CAMPOS_CATEGORIA_CUSTO,
   CAMPOS_CUSTO,
@@ -9,6 +9,7 @@ import {
   CAMPOS_GMD_CATEGORIA,
   CAMPOS_ITEM_DIETA,
   CAMPOS_INSUMO,
+  CAMPOS_MARCO_IDADE,
   type PacoteFinanceiro,
 } from '@/lib/fi-fcg/pacotes';
 import { getDadosFinanceiro } from '@/lib/fi-fcg/queries';
@@ -30,6 +31,7 @@ export default async function FinanceiroPage() {
     insumos,
     dieta,
     gmdCategoria,
+    marcosIdade,
   } = await getDadosFinanceiro();
   const { eventos, orfaos } = montarEventos(
     vendas.itens,
@@ -57,6 +59,19 @@ export default async function FinanceiroPage() {
     ),
   }));
   const gmdSugerido = Array.from(gmdSugeridoPorCategoria(rebanho.itens).entries());
+  const retratoPorFazenda = [null, ...fazendas].map((fazenda) => ({
+    fazenda,
+    retrato: montarRetratoMomento(
+      rebanho.itens,
+      fazenda,
+      custos.itens,
+      categoriaArroba.itens,
+      insumos.itens,
+      dieta.itens,
+      marcosIdade.itens,
+      hoje,
+    ),
+  }));
 
   const todas = [
     vendas,
@@ -70,6 +85,7 @@ export default async function FinanceiroPage() {
     insumos,
     dieta,
     gmdCategoria,
+    marcosIdade,
   ];
   const carregadoEm = todas
     .map((l) => l.carregadoEm)
@@ -85,7 +101,9 @@ export default async function FinanceiroPage() {
     dieta: empacotar(dieta.itens, CAMPOS_ITEM_DIETA),
     gmdCategoria: empacotar(gmdCategoria.itens, CAMPOS_GMD_CATEGORIA),
     gmdSugerido,
+    marcosIdade: empacotar(marcosIdade.itens, CAMPOS_MARCO_IDADE),
     funisPorFazenda,
+    retratoPorFazenda,
     configurado: vendas.configurado,
     stale: todas.some((l) => l.stale),
     carregadoEm,

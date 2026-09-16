@@ -192,3 +192,14 @@ export async function atualizarGmdCategoria(id: string, gmdKgDia: number): Promi
   if (linha == null) return false;
   return escreverLinha(sid, `${citar(ABA_GMD_CATEGORIA)}!C${linha}`, [formatNumber(gmdKgDia)], 'USER_ENTERED');
 }
+
+const ABA_MARCOS_IDADE = 'Idades por Marco';
+
+/** Só edita a idade (dias) de um marco já existente — as 5 linhas são fixas, mesmo padrão de `atualizarGmdCategoria`. */
+export async function atualizarMarcoIdade(id: string, idadeDias: number): Promise<boolean> {
+  const sid = spreadsheetId();
+  if (!sid || !Number.isFinite(idadeDias)) return false;
+  const linha = await encontrarLinhaPorId(sid, ABA_MARCOS_IDADE, 'ID', id);
+  if (linha == null) return false;
+  return escreverLinha(sid, `${citar(ABA_MARCOS_IDADE)}!C${linha}`, [formatNumber(idadeDias)], 'USER_ENTERED');
+}

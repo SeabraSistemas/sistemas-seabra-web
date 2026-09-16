@@ -19,8 +19,9 @@
  * calculado A PARTIR da entrada no funil, nunca antes dela.
  */
 import { media } from '@/lib/painel/agregacao';
+import { diasEntre } from '@/lib/painel/format';
 import { custosNoPeriodo } from '@/lib/fi-fcg/custos';
-import type { CategoriaArroba, Custo, DiaCompacto, GmdCategoria, Insumo, ItemDieta, RegRebanho } from './types';
+import type { CategoriaArroba, Custo, DiaCompacto, GmdCategoria, Insumo, ItemDieta, MarcoIdade, RegRebanho } from './types';
 
 export interface FaseFunil {
   categoria: string;
@@ -212,6 +213,123 @@ function calcularFases(
     });
   }
   return resultado;
+}
+
+/**
+ * "Retrato do momento" (16/09/2026, pedido do Felipe): diferente do funil
+ * acumulado acima (que projeta peso/GMD), este usa a IDADE REAL de cada
+ * animal (nascimento => hoje, sempre disponível, nunca depende de GMD
+ * cadastrado) × o custo diário atual da categoria — "com a dieta e o
+ * efetivo de hoje, quanto custou manter esse animal até agora". Pra cada
+ * categoria mostra também os marcos de saída dela (ex.: Bezerro mostra
+ * "até Garrote"; Novilha mostra os 2 marcos reprodutivos), calculados à
+ * MESMA taxa diária da categoria atual — não é uma reconstrução histórica
+ * (não sabemos a dieta que o animal teve no passado), é "quanto custaria
+ * alcançar aquele marco, ao custo de hoje".
+ */
+const MARCOS_POR_CATEGORIA: Record<string, string[]> = {
+  Bezerro: ['Bezerro -> Garrote'],
+  Garrote: ['Garrote -> Boi'],
+  Bezerra: ['Bezerra -> Novilha'],
+  Novilha: ['Novilha -> Vaca (1a cobertura)', 'Novilha -> Vaca (1o parto)'],
+};
+
+export interface MarcoRetrato {
+  nome: string;
+  idadeDias: number;
+  custoAcumulado: number;
+}
+
+export interface RetratoCategoria {
+  categoria: string;
+  efetivo: number;
+  idadeMediaDias: number | null;
+  pesoMedioKg: number | null;
+  custoDietaDia: number | null;
+  custoFixoDia: number | null;
+  custoTotalDia: number | null;
+  custoAcumuladoHoje: number | null;
+  arrobaReferencia: number | null;
+  custoPorArrobaReal: number | null;
+  custoPorArrobaReferencia: number | null;
+  marcos: MarcoRetrato[];
+}
+
+export function montarRetratoMomento(
+  rebanho: RegRebanho[],
+  fazenda: string | null,
+  custos: Custo[],
+  categoriasArroba: CategoriaArroba[],
+  insumos: Insumo[],
+  dieta: ItemDieta[],
+  marcosIdade: MarcoIdade[],
+  hoje: DiaCompacto,
+): RetratoCategoria[] {
+  const arrobaPorCategoria = new Map<string, number>();
+  for (const c of categoriasArroba) if (c.mediaArroba != null) arrobaPorCategoria.set(c.categoria, c.mediaArroba);
+
+  const idadePorMarco = new Map<string, number>();
+  for (const m of marcosIdade) if (m.marco != null && m.idadeDias != null) idadePorMarco.set(m.marco, m.idadeDias);
+
+  const custoFixoDia = custoFixoDiaPorCabeca(custos, rebanho, fazenda, hoje);
+
+  const relevantes = rebanho.filter((a) => vivo(a) && (fazenda == null || a.fazenda === fazenda) && a.categoria != null);
+  const porCategoria = new Map<string, RegRebanho[]>();
+  for (const a of relevantes) {
+    const cat = a.categoria as string;
+    let lista = porCategoria.get(cat);
+    if (!lista) {
+      lista = [];
+      porCategoria.set(cat, lista);
+    }
+    lista.push(a);
+  }
+
+  const retrato = Array.from(porCategoria.entries(), ([categoria, animais]): RetratoCategoria => {
+    const idades = animais
+      .map((a) => (a.nascimento != null ? diasEntre(a.nascimento, hoje) : null))
+      .filter((v): v is number => v != null);
+    const idadeMediaDias = media(idades);
+    const pesos = animais.map((a) => a.ultimaPesagemKg).filter((v): v is number => v != null);
+    const pesoMedioKg = media(pesos);
+
+    const custoDietaDiaCat = custoDietaDia(categoria, dieta, insumos);
+    const temCusto = custoDietaDiaCat != null || custoFixoDia != null;
+    const custoTotalDia = temCusto ? (custoDietaDiaCat ?? 0) + (custoFixoDia ?? 0) : null;
+    const custoAcumuladoHoje = idadeMediaDias != null && custoTotalDia != null ? idadeMediaDias * custoTotalDia : null;
+
+    const arrobaReferencia = arrobaPorCategoria.get(categoria) ?? null;
+    const custoPorArrobaReal =
+      custoAcumuladoHoje != null && pesoMedioKg != null && pesoMedioKg > 0 ? custoAcumuladoHoje / (pesoMedioKg / 15) : null;
+    const custoPorArrobaReferencia =
+      custoAcumuladoHoje != null && arrobaReferencia != null && arrobaReferencia > 0
+        ? custoAcumuladoHoje / arrobaReferencia
+        : null;
+
+    const marcos: MarcoRetrato[] = [];
+    for (const nome of MARCOS_POR_CATEGORIA[categoria] ?? []) {
+      const idadeDias = idadePorMarco.get(nome);
+      if (idadeDias == null || custoTotalDia == null) continue;
+      marcos.push({ nome, idadeDias, custoAcumulado: idadeDias * custoTotalDia });
+    }
+
+    return {
+      categoria,
+      efetivo: animais.length,
+      idadeMediaDias,
+      pesoMedioKg,
+      custoDietaDia: custoDietaDiaCat,
+      custoFixoDia,
+      custoTotalDia,
+      custoAcumuladoHoje,
+      arrobaReferencia,
+      custoPorArrobaReal,
+      custoPorArrobaReferencia,
+      marcos,
+    };
+  });
+
+  return retrato.sort((a, b) => b.efetivo - a.efetivo);
 }
 
 export function calcularFunis(

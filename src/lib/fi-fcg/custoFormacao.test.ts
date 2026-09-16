@@ -9,8 +9,9 @@ import {
   calcularFunis,
   efetivoVivo,
   gmdSugeridoPorCategoria,
+  montarRetratoMomento,
 } from '@/lib/fi-fcg/custoFormacao';
-import type { CategoriaArroba, Custo, GmdCategoria, Insumo, ItemDieta, RegRebanho } from '@/lib/fi-fcg/types';
+import type { CategoriaArroba, Custo, GmdCategoria, Insumo, ItemDieta, MarcoIdade, RegRebanho } from '@/lib/fi-fcg/types';
 
 function animal(p: Partial<RegRebanho> & { id: string }): RegRebanho {
   return {
@@ -31,6 +32,9 @@ function item(p: Partial<ItemDieta> & { id: string }): ItemDieta {
 }
 function gmd(p: Partial<GmdCategoria> & { id: string }): GmdCategoria {
   return { categoria: null, gmdKgDia: null, ...p };
+}
+function marco(p: Partial<MarcoIdade> & { id: string }): MarcoIdade {
+  return { marco: null, idadeDias: null, ...p };
 }
 function categoriaArroba(categoria: string, mediaArroba: number): CategoriaArroba {
   return { categoria, mediaArroba, valorCategoria: null };
@@ -201,5 +205,92 @@ describe('calcularFunis', () => {
     );
     assert.equal(funis.length, 2);
     assert.deepEqual(funis.map((f) => f.nome), ['Macho para corte', 'Fêmea de reposição']);
+  });
+});
+
+describe('montarRetratoMomento', () => {
+  const arrobas = [categoriaArroba('Bezerro', 12)];
+
+  test('idade media real (nascimento -> hoje), custo acumulado hoje = idade x custo total/dia', () => {
+    const rebanho = [
+      animal({ id: 'a1', categoria: 'Bezerro', fazenda: 'Inhumas', nascimento: 20250101, ultimaPesagemKg: 150 }),
+    ];
+    const custos = [custo({ id: 'c1', fazenda: 'Geral', tipo: 'Mensal', valor: 300, dataInicio: 20260101 })]; // 300/30/1 = 10/dia
+    const insumos = [insumo({ id: 'i1', nome: 'Ração', valorKg: 1 })];
+    const dieta = [item({ id: 'd1', categoria: 'Bezerro', insumo: 'Ração', kgDia: 2 })]; // 2/dia
+
+    const [retrato] = montarRetratoMomento(rebanho, null, custos, arrobas, insumos, dieta, [], 20260101);
+    assert.equal(retrato.categoria, 'Bezerro');
+    assert.equal(retrato.efetivo, 1);
+    assert.equal(retrato.idadeMediaDias, 365); // 2025 nao é bissexto
+    assert.equal(retrato.custoDietaDia, 2);
+    assert.equal(retrato.custoFixoDia, 10);
+    assert.equal(retrato.custoTotalDia, 12);
+    assert.equal(retrato.custoAcumuladoHoje, 365 * 12);
+  });
+
+  test('custo por @ real (peso medido/15) diverge do custo por @ de referencia (Categoria@)', () => {
+    const rebanho = [
+      animal({ id: 'a1', categoria: 'Bezerro', fazenda: 'Inhumas', nascimento: 20250101, ultimaPesagemKg: 150 }), // 10@ reais
+    ];
+    const custos = [custo({ id: 'c1', fazenda: 'Geral', tipo: 'Mensal', valor: 300, dataInicio: 20260101 })];
+    const insumos = [insumo({ id: 'i1', nome: 'Ração', valorKg: 1 })];
+    const dieta = [item({ id: 'd1', categoria: 'Bezerro', insumo: 'Ração', kgDia: 2 })];
+
+    const [retrato] = montarRetratoMomento(rebanho, null, custos, arrobas, insumos, dieta, [], 20260101);
+    const acumulado = retrato.custoAcumuladoHoje as number;
+    assert.equal(retrato.custoPorArrobaReal, acumulado / 10); // 150kg / 15 = 10@
+    assert.equal(retrato.custoPorArrobaReferencia, acumulado / 12); // Categoria@ Bezerro = 12@
+    assert.notEqual(retrato.custoPorArrobaReal, retrato.custoPorArrobaReferencia);
+  });
+
+  test('marcos: cada categoria so mostra os marcos de SAIDA dela; Novilha mostra os 2 reprodutivos', () => {
+    const rebanho = [
+      animal({ id: 'a1', categoria: 'Bezerro', fazenda: 'Inhumas', nascimento: 20250101 }),
+      animal({ id: 'a2', categoria: 'Novilha', fazenda: 'Inhumas', nascimento: 20250101 }),
+      animal({ id: 'a3', categoria: 'Vaca', fazenda: 'Inhumas', nascimento: 20250101 }), // sem marco (terminal)
+    ];
+    const custos = [custo({ id: 'c1', fazenda: 'Geral', tipo: 'Mensal', valor: 300, dataInicio: 20260101 })];
+    const marcos = [
+      marco({ id: 'm1', marco: 'Bezerro -> Garrote', idadeDias: 200 }),
+      marco({ id: 'm2', marco: 'Novilha -> Vaca (1a cobertura)', idadeDias: 300 }),
+      marco({ id: 'm3', marco: 'Novilha -> Vaca (1o parto)', idadeDias: 583 }),
+    ];
+
+    const retrato = montarRetratoMomento(rebanho, null, custos, arrobas, [], [], marcos, 20260101);
+    const bezerro = retrato.find((r) => r.categoria === 'Bezerro')!;
+    const novilha = retrato.find((r) => r.categoria === 'Novilha')!;
+    const vaca = retrato.find((r) => r.categoria === 'Vaca')!;
+
+    assert.deepEqual(bezerro.marcos.map((m) => m.nome), ['Bezerro -> Garrote']);
+    assert.deepEqual(novilha.marcos.map((m) => m.nome), ['Novilha -> Vaca (1a cobertura)', 'Novilha -> Vaca (1o parto)']);
+    assert.deepEqual(vaca.marcos, []);
+
+    // custoTotalDia so tem o fixo (300/30/3 efetivo = 10/3 por dia, sem dieta cadastrada) -- marco usa a MESMA taxa da categoria atual
+    const custoFixoDiaEsperado = 300 / 30 / 3;
+    assert.equal(bezerro.marcos[0].custoAcumulado, 200 * custoFixoDiaEsperado);
+    assert.equal(novilha.marcos[1].custoAcumulado, 583 * custoFixoDiaEsperado);
+  });
+
+  test('sem dieta cadastrada e sem custo fixo lançado: custoFixoDiaPorCabeca ainda é 0 (não null, efetivo>0) — custoTotalDia e marcos viram 0, não somem', () => {
+    const rebanho = [animal({ id: 'a1', categoria: 'Bezerro', fazenda: 'Inhumas', nascimento: 20250101 })];
+    const marcos = [marco({ id: 'm1', marco: 'Bezerro -> Garrote', idadeDias: 200 })];
+    const [retrato] = montarRetratoMomento(rebanho, null, [], arrobas, [], [], marcos, 20260101);
+    assert.equal(retrato.custoDietaDia, null);
+    assert.equal(retrato.custoFixoDia, 0);
+    assert.equal(retrato.custoTotalDia, 0);
+    assert.equal(retrato.custoAcumuladoHoje, 0);
+    assert.deepEqual(retrato.marcos, [{ nome: 'Bezerro -> Garrote', idadeDias: 200, custoAcumulado: 0 }]);
+  });
+
+  test('fazenda filtra o efetivo (mesma logica de calcularFunis)', () => {
+    const rebanho = [
+      animal({ id: 'a1', categoria: 'Bezerro', fazenda: 'Inhumas', nascimento: 20250101 }),
+      animal({ id: 'a2', categoria: 'Bezerro', fazenda: 'Campina grande', nascimento: 20250101 }),
+    ];
+    const retratoInhumas = montarRetratoMomento(rebanho, 'Inhumas', [], arrobas, [], [], [], 20260101);
+    assert.equal(retratoInhumas[0].efetivo, 1);
+    const retratoTodas = montarRetratoMomento(rebanho, null, [], arrobas, [], [], [], 20260101);
+    assert.equal(retratoTodas[0].efetivo, 2);
   });
 });

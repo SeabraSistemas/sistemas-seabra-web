@@ -229,3 +229,17 @@ export interface GmdCategoria {
   categoria: string | null;
   gmdKgDia: number | null;
 }
+
+/**
+ * Idade (dias) de cada marco de transição/reprodução — aba nova
+ * (16/09/2026, "Retrato do momento" + "Projeção de rebanho"). 5 linhas
+ * fixas, semeadas uma vez: as 3 transições de categoria por idade
+ * (Bezerro→Garrote, Garrote→Boi, Bezerra→Novilha) e os 2 marcos
+ * reprodutivos da fêmea (1ª cobertura, 1º parto — Novilha vira Vaca no
+ * 1º parto, não na cobertura). `idadeDias` null = ainda não editado.
+ */
+export interface MarcoIdade {
+  id: string;
+  marco: string | null;
+  idadeDias: number | null;
+}

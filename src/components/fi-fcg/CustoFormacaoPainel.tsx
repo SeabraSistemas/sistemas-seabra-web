@@ -8,8 +8,8 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DataTable, type DataTableColumn } from '@/components/painel/DataTable';
 import { formatMoeda, formatNumber } from '@/lib/painel/format';
-import type { FunilCalculado } from '@/lib/fi-fcg/custoFormacao';
-import type { GmdCategoria, Insumo, ItemDieta } from '@/lib/fi-fcg/types';
+import type { FunilCalculado, RetratoCategoria } from '@/lib/fi-fcg/custoFormacao';
+import type { GmdCategoria, Insumo, ItemDieta, MarcoIdade } from '@/lib/fi-fcg/types';
 
 /**
  * Mesma ordem das 7 linhas semeadas em "GMD por Categoria" (mutations.ts,
@@ -26,53 +26,74 @@ const CATEGORIAS_FUNIL = ['Bezerro', 'Bezerra', 'Garrote', 'Novilha', 'Boi', 'Va
 export function CustoFormacaoPainel({
   fazendas,
   funisPorFazenda,
+  retratoPorFazenda,
   gmdCategoria,
   gmdSugerido,
+  marcosIdade,
   insumos,
   dieta,
 }: {
   fazendas: string[];
   funisPorFazenda: { fazenda: string | null; funis: FunilCalculado[] }[];
+  retratoPorFazenda: { fazenda: string | null; retrato: RetratoCategoria[] }[];
   gmdCategoria: GmdCategoria[];
   gmdSugerido: [string, number][];
+  marcosIdade: MarcoIdade[];
   insumos: Insumo[];
   dieta: ItemDieta[];
 }) {
   const router = useRouter();
   const [fazendaSelecionada, setFazendaSelecionada] = useState<string | null>(null);
   const funis = funisPorFazenda.find((f) => f.fazenda === fazendaSelecionada)?.funis ?? [];
+  const retrato = retratoPorFazenda.find((f) => f.fazenda === fazendaSelecionada)?.retrato ?? [];
   const sugestaoPorCategoria = useMemo(() => new Map(gmdSugerido), [gmdSugerido]);
 
   return (
     <div className="flex flex-col gap-8">
-      <section className="flex flex-col gap-3">
-        <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
+        <Button
+          type="button"
+          size="sm"
+          variant={fazendaSelecionada === null ? 'default' : 'outline'}
+          onClick={() => setFazendaSelecionada(null)}
+        >
+          Consolidado
+        </Button>
+        {fazendas.map((f) => (
           <Button
             type="button"
+            key={f}
             size="sm"
-            variant={fazendaSelecionada === null ? 'default' : 'outline'}
-            onClick={() => setFazendaSelecionada(null)}
+            variant={fazendaSelecionada === f ? 'default' : 'outline'}
+            onClick={() => setFazendaSelecionada(f)}
           >
-            Consolidado
+            {f}
           </Button>
-          {fazendas.map((f) => (
-            <Button
-              type="button"
-              key={f}
-              size="sm"
-              variant={fazendaSelecionada === f ? 'default' : 'outline'}
-              onClick={() => setFazendaSelecionada(f)}
-            >
-              {f}
-            </Button>
+        ))}
+      </div>
+
+      <section className="flex flex-col gap-3">
+        <h2 className="text-sm font-medium text-muted-foreground">Retrato do momento</h2>
+        <p className="text-xs text-muted-foreground">
+          Idade real de cada animal (nascimento até hoje) × custo diário atual da categoria — não depende de GMD nem de cadeia.
+        </p>
+        <div className="grid gap-4 lg:grid-cols-3">
+          {retrato.map((r) => (
+            <RetratoCard key={r.categoria} retrato={r} />
           ))}
         </div>
+      </section>
+
+      <section className="flex flex-col gap-3">
+        <h2 className="text-sm font-medium text-muted-foreground">Funil acumulado (peso/GMD)</h2>
         <div className="grid gap-4 lg:grid-cols-3">
           {funis.map((funil) => (
             <FunilCard key={funil.nome} funil={funil} />
           ))}
         </div>
       </section>
+
+      <MarcosIdadeSecao marcosIdade={marcosIdade} onChanged={() => router.refresh()} />
 
       <GmdCategoriaSecao
         gmdCategoria={gmdCategoria}
@@ -84,6 +105,100 @@ export function CustoFormacaoPainel({
 
       <DietaSecao dieta={dieta} insumos={insumos} onChanged={() => router.refresh()} />
     </div>
+  );
+}
+
+function RetratoCard({ retrato }: { retrato: RetratoCategoria }) {
+  const arrobaReal = retrato.pesoMedioKg != null ? retrato.pesoMedioKg / 15 : null;
+  return (
+    <div className="rounded-xl border border-border bg-card p-5">
+      <div className="flex items-baseline justify-between gap-2">
+        <h3 className="text-sm font-medium text-foreground">{retrato.categoria}</h3>
+        <span className="text-xs text-muted-foreground">{formatNumber(retrato.efetivo)} cabeças</span>
+      </div>
+      <p className="mt-0.5 text-xs text-muted-foreground">
+        Idade média: {retrato.idadeMediaDias != null ? `${formatNumber(retrato.idadeMediaDias)} dias` : '—'}
+      </p>
+      <div className="mt-3 grid grid-cols-2 gap-y-3 text-xs">
+        <div>
+          <p className="text-muted-foreground">Custo/dia (dieta+fixo)</p>
+          <p className="text-sm font-semibold tabular-nums text-foreground">{formatMoeda(retrato.custoTotalDia)}</p>
+        </div>
+        <div>
+          <p className="text-muted-foreground">Acumulado até hoje</p>
+          <p className="text-sm font-semibold tabular-nums text-foreground">{formatMoeda(retrato.custoAcumuladoHoje)}</p>
+        </div>
+        <div>
+          <p className="text-muted-foreground">Custo por @ (real)</p>
+          <p className="text-sm font-semibold tabular-nums text-foreground">{formatMoeda(retrato.custoPorArrobaReal)}</p>
+          {arrobaReal != null && <p className="text-muted-foreground">{formatNumber(arrobaReal)}@ reais</p>}
+        </div>
+        <div>
+          <p className="text-muted-foreground">Custo por @ (referência)</p>
+          <p className="text-sm font-semibold tabular-nums text-foreground">{formatMoeda(retrato.custoPorArrobaReferencia)}</p>
+          {retrato.arrobaReferencia != null && <p className="text-muted-foreground">{formatNumber(retrato.arrobaReferencia)}@ Categoria@</p>}
+        </div>
+      </div>
+      {retrato.marcos.length > 0 && (
+        <div className="mt-3 flex flex-col gap-1.5 border-t border-border/60 pt-2 text-xs">
+          {retrato.marcos.map((m) => (
+            <div key={m.nome} className="flex items-center justify-between gap-2">
+              <span className="text-muted-foreground">
+                {m.nome.replace(`${retrato.categoria} -> `, '')} ({formatNumber(m.idadeDias)}d)
+              </span>
+              <span className="tabular-nums text-foreground">{formatMoeda(m.custoAcumulado)}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MarcosIdadeSecao({ marcosIdade, onChanged }: { marcosIdade: MarcoIdade[]; onChanged: () => void }) {
+  const [valores, setValores] = useState<Record<string, string>>({});
+  const [salvandoId, setSalvandoId] = useState<string | null>(null);
+
+  async function salvar(m: MarcoIdade) {
+    const bruto = valores[m.id];
+    const num = Number((bruto ?? '').replace(',', '.'));
+    if (!Number.isFinite(num) || num <= 0) return;
+    setSalvandoId(m.id);
+    try {
+      const res = await fetch('/FI_FCG/api/marcos-idade', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: m.id, idadeDias: num }),
+      });
+      if (res.ok) onChanged();
+    } finally {
+      setSalvandoId(null);
+    }
+  }
+
+  return (
+    <section className="flex flex-col gap-3">
+      <h2 className="text-sm font-medium text-muted-foreground">Idades por Marco (dias)</h2>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {marcosIdade.map((m) => (
+          <div key={m.id} className="rounded-xl border border-border bg-card p-4">
+            <p className="text-sm font-medium text-foreground">{m.marco}</p>
+            <div className="mt-2 flex items-center gap-2">
+              <Input
+                value={valores[m.id] ?? (m.idadeDias != null ? String(m.idadeDias) : '')}
+                onChange={(e) => setValores((v) => ({ ...v, [m.id]: e.target.value }))}
+                placeholder="dias"
+                className="h-8"
+                inputMode="numeric"
+              />
+              <Button type="button" size="sm" disabled={salvandoId === m.id} onClick={() => salvar(m)}>
+                Salvar
+              </Button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
 
