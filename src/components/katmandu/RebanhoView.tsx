@@ -137,6 +137,8 @@ export function RebanhoView({ animais: todos }: { animais: AnimalRebanho[] }) {
     { key: 'categoria', header: 'Categoria', cell: (a) => a.categoria ?? '—', sortValue: (a) => a.categoria },
     { key: 'idade', header: 'Idade (dias)', cell: (a) => formatNumber(a.idadeDias), sortValue: (a) => a.idadeDias },
     { key: 'status', header: 'Status', cell: (a) => a.status ?? '—', sortValue: (a) => a.status },
+    { key: 'lote', header: 'Lote', cell: (a) => a.lote ?? '—', sortValue: (a) => a.lote },
+    { key: 'local', header: 'Local', cell: (a) => a.local ?? '—', sortValue: (a) => a.local },
   ];
 
   const completaColumns: DataTableColumn<AnimalRebanho>[] = [
