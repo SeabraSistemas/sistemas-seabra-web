@@ -194,6 +194,20 @@ export const CAMPOS_GMD_CATEGORIA: (keyof GmdCategoria & string)[] = ['id', 'cat
 
 export const CAMPOS_MARCO_IDADE: (keyof MarcoIdade & string)[] = ['id', 'marco', 'idadeDias'];
 
+/**
+ * Subconjunto de campos de RegRebanho pra "Projeção de rebanho" — só os
+ * animais Prenha ou numa das 4 categorias-fonte de transição (Bezerro,
+ * Bezerra, Garrote, Novilha) entram aqui (filtrado ANTES de empacotar, ver
+ * page.tsx), pra não mandar as ~7.500 linhas que não interessam pra essa
+ * conta. `projetarRebanho` roda no CLIENTE com este subconjunto — o
+ * horizonte em meses é interativo, recalcular no servidor a cada mudança
+ * custaria um round-trip por clique.
+ */
+export const CAMPOS_REBANHO_PROJECAO: (keyof RegRebanho & string)[] = ['id', 'categoria', 'fazenda', 'nascimento', 'reproducao'];
+
+/** Idem, mas de RegIatf — só a Data IATF mais recente de cada animal Prenha importa aqui (ver projecaoRebanho.ts). */
+export const CAMPOS_IATF_PROJECAO: (keyof RegIatf & string)[] = ['id', 'data'];
+
 export const CAMPOS_EVENTO: (keyof EventoFin & string)[] = [
   'origem',
   'tipo',
@@ -246,6 +260,9 @@ export interface PacoteFinanceiro {
   marcosIdade: Pacote<MarcoIdade>;
   funisPorFazenda: { fazenda: string | null; funis: FunilCalculado[] }[];
   retratoPorFazenda: { fazenda: string | null; retrato: RetratoCategoria[] }[];
+  /** Subconjunto reduzido (Prenha + 4 categorias-fonte), ver CAMPOS_REBANHO_PROJECAO — a "Projeção de rebanho" roda `projetarRebanho` no cliente com isto. */
+  rebanhoProjecao: Pacote<RegRebanho>;
+  iatfProjecao: Pacote<RegIatf>;
   configurado: boolean;
   stale: boolean;
   carregadoEm: number | null;

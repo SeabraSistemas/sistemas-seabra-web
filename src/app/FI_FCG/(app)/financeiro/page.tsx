@@ -7,9 +7,11 @@ import {
   CAMPOS_EVENTO,
   CAMPOS_FINANCEIRO,
   CAMPOS_GMD_CATEGORIA,
+  CAMPOS_IATF_PROJECAO,
   CAMPOS_ITEM_DIETA,
   CAMPOS_INSUMO,
   CAMPOS_MARCO_IDADE,
+  CAMPOS_REBANHO_PROJECAO,
   type PacoteFinanceiro,
 } from '@/lib/fi-fcg/pacotes';
 import { getDadosFinanceiro } from '@/lib/fi-fcg/queries';
@@ -32,6 +34,7 @@ export default async function FinanceiroPage() {
     dieta,
     gmdCategoria,
     marcosIdade,
+    iatf,
   } = await getDadosFinanceiro();
   const { eventos, orfaos } = montarEventos(
     vendas.itens,
@@ -59,6 +62,12 @@ export default async function FinanceiroPage() {
     ),
   }));
   const gmdSugerido = Array.from(gmdSugeridoPorCategoria(rebanho.itens).entries());
+  const idsPrenha = new Set(rebanho.itens.filter((a) => a.reproducao === 'Prenha').map((a) => a.id));
+  const categoriasFonteProjecao = new Set(['Bezerro', 'Bezerra', 'Garrote', 'Novilha']);
+  const rebanhoProjecao = rebanho.itens.filter(
+    (a) => idsPrenha.has(a.id) || categoriasFonteProjecao.has(a.categoria ?? ''),
+  );
+  const iatfProjecao = iatf.itens.filter((r) => idsPrenha.has(r.id));
   const retratoPorFazenda = [null, ...fazendas].map((fazenda) => ({
     fazenda,
     retrato: montarRetratoMomento(
@@ -86,6 +95,7 @@ export default async function FinanceiroPage() {
     dieta,
     gmdCategoria,
     marcosIdade,
+    iatf,
   ];
   const carregadoEm = todas
     .map((l) => l.carregadoEm)
@@ -104,6 +114,8 @@ export default async function FinanceiroPage() {
     marcosIdade: empacotar(marcosIdade.itens, CAMPOS_MARCO_IDADE),
     funisPorFazenda,
     retratoPorFazenda,
+    rebanhoProjecao: empacotar(rebanhoProjecao, CAMPOS_REBANHO_PROJECAO),
+    iatfProjecao: empacotar(iatfProjecao, CAMPOS_IATF_PROJECAO),
     configurado: vendas.configurado,
     stale: todas.some((l) => l.stale),
     carregadoEm,

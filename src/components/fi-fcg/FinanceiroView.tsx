@@ -29,7 +29,17 @@ import {
   type ProblemaFin,
 } from '@/lib/fi-fcg/financeiro';
 import type { PacoteFinanceiro } from '@/lib/fi-fcg/pacotes';
-import type { CategoriaCusto, Custo, GmdCategoria, Insumo, ItemDieta, LancamentoFinanceiro, MarcoIdade } from '@/lib/fi-fcg/types';
+import type {
+  CategoriaCusto,
+  Custo,
+  GmdCategoria,
+  Insumo,
+  ItemDieta,
+  LancamentoFinanceiro,
+  MarcoIdade,
+  RegIatf,
+  RegRebanho,
+} from '@/lib/fi-fcg/types';
 
 const PROBLEMA_LABEL: Record<ProblemaFin, string> = {
   'venda-sem-estimativa': 'Venda sem valor e sem estimativa possível',
@@ -61,6 +71,8 @@ export function FinanceiroView({ dados }: { dados: PacoteFinanceiro }) {
   const itensDieta = useMemo(() => desempacotar<ItemDieta>(dados.dieta), [dados.dieta]);
   const gmdCategoria = useMemo(() => desempacotar<GmdCategoria>(dados.gmdCategoria), [dados.gmdCategoria]);
   const marcosIdade = useMemo(() => desempacotar<MarcoIdade>(dados.marcosIdade), [dados.marcosIdade]);
+  const rebanhoProjecao = useMemo(() => desempacotar<RegRebanho>(dados.rebanhoProjecao), [dados.rebanhoProjecao]);
+  const iatfProjecao = useMemo(() => desempacotar<RegIatf>(dados.iatfProjecao), [dados.iatfProjecao]);
   const hoje = useMemo(() => hojeCompacto(), []);
 
   const [fazenda, setFazenda] = useState('');
@@ -433,6 +445,9 @@ export function FinanceiroView({ dados }: { dados: PacoteFinanceiro }) {
             marcosIdade={marcosIdade}
             insumos={insumos}
             dieta={itensDieta}
+            rebanhoProjecao={rebanhoProjecao}
+            iatfProjecao={iatfProjecao}
+            hoje={hoje}
           />
         </TabsContent>
       </Tabs>

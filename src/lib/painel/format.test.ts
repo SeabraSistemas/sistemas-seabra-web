@@ -7,6 +7,7 @@ import {
   diaDeInput,
   diaParaInput,
   diasEntre,
+  somarDias,
   formatCompacto,
   formatDia,
   formatMoeda,
@@ -79,6 +80,27 @@ describe('diasEntre', () => {
   test('falta qualquer uma das datas vira null', () => {
     assert.equal(diasEntre(null, 20250101), null);
     assert.equal(diasEntre(20250101, null), null);
+  });
+});
+
+describe('somarDias', () => {
+  test('soma dias dentro do mesmo mes', () => {
+    assert.equal(somarDias(20250101, 9), 20250110);
+  });
+  test('atravessa virada de mes/ano', () => {
+    assert.equal(somarDias(20241225, 11), 20250105);
+  });
+  test('ano bissexto conta certo', () => {
+    assert.equal(somarDias(20240228, 2), 20240301); // 2024 tem 29/02
+  });
+  test('numero negativo subtrai', () => {
+    assert.equal(somarDias(20250110, -9), 20250101);
+  });
+  test('e o inverso de diasEntre', () => {
+    assert.equal(diasEntre(20240615, somarDias(20240615, 283)), 283);
+  });
+  test('data null vira null', () => {
+    assert.equal(somarDias(null, 10), null);
   });
 });
 

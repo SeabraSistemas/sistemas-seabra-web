@@ -9,7 +9,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { DataTable, type DataTableColumn } from '@/components/painel/DataTable';
 import { formatMoeda, formatNumber } from '@/lib/painel/format';
 import type { FunilCalculado, RetratoCategoria } from '@/lib/fi-fcg/custoFormacao';
-import type { GmdCategoria, Insumo, ItemDieta, MarcoIdade } from '@/lib/fi-fcg/types';
+import { projetarRebanho } from '@/lib/fi-fcg/projecaoRebanho';
+import type { DiaCompacto, GmdCategoria, Insumo, ItemDieta, MarcoIdade, RegIatf, RegRebanho } from '@/lib/fi-fcg/types';
+
+const MES_LABEL = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+/** "aaaamm" => "mmm/aaaa". */
+function formatMes(mes: string): string {
+  const ano = mes.slice(0, 4);
+  const m = Number(mes.slice(4, 6));
+  return `${MES_LABEL[m - 1]}/${ano}`;
+}
 
 /**
  * Mesma ordem das 7 linhas semeadas em "GMD por Categoria" (mutations.ts,
@@ -32,6 +41,9 @@ export function CustoFormacaoPainel({
   marcosIdade,
   insumos,
   dieta,
+  rebanhoProjecao,
+  iatfProjecao,
+  hoje,
 }: {
   fazendas: string[];
   funisPorFazenda: { fazenda: string | null; funis: FunilCalculado[] }[];
@@ -41,6 +53,9 @@ export function CustoFormacaoPainel({
   marcosIdade: MarcoIdade[];
   insumos: Insumo[];
   dieta: ItemDieta[];
+  rebanhoProjecao: RegRebanho[];
+  iatfProjecao: RegIatf[];
+  hoje: DiaCompacto;
 }) {
   const router = useRouter();
   const [fazendaSelecionada, setFazendaSelecionada] = useState<string | null>(null);
@@ -92,6 +107,15 @@ export function CustoFormacaoPainel({
           ))}
         </div>
       </section>
+
+      <ProjecaoSecao
+        rebanhoProjecao={rebanhoProjecao}
+        iatfProjecao={iatfProjecao}
+        marcosIdade={marcosIdade}
+        fazendaSelecionada={fazendaSelecionada}
+        retrato={retrato}
+        hoje={hoje}
+      />
 
       <MarcosIdadeSecao marcosIdade={marcosIdade} onChanged={() => router.refresh()} />
 
@@ -152,6 +176,149 @@ function RetratoCard({ retrato }: { retrato: RetratoCategoria }) {
         </div>
       )}
     </div>
+  );
+}
+
+/**
+ * Projeção de rebanho (16/09/2026): partos previstos (Prenha + Data IATF
+ * mais recente + 283 dias) e mudança de categoria por idade (Idades por
+ * Marco), mês a mês, num horizonte que o usuário escolhe — assim como as
+ * categorias que quer ver. Roda no CLIENTE (`projetarRebanho`, puro) sobre
+ * um subconjunto já reduzido pelo servidor (ver CAMPOS_REBANHO_PROJECAO) —
+ * mudar o horizonte não pede um round-trip. "Efetivo hoje" vem do
+ * `retrato` (todas as categorias, sempre certo); "final" soma as
+ * migrações projetadas em cima dele — nascimento não entra na composição
+ * (sexo do bezerro é desconhecido antes de nascer), só na contagem de
+ * partos à parte.
+ */
+function ProjecaoSecao({
+  rebanhoProjecao,
+  iatfProjecao,
+  marcosIdade,
+  fazendaSelecionada,
+  retrato,
+  hoje,
+}: {
+  rebanhoProjecao: RegRebanho[];
+  iatfProjecao: RegIatf[];
+  marcosIdade: MarcoIdade[];
+  fazendaSelecionada: string | null;
+  retrato: RetratoCategoria[];
+  hoje: DiaCompacto;
+}) {
+  const [horizonteTexto, setHorizonteTexto] = useState('6');
+  const horizonteMeses = Math.max(1, Math.round(Number(horizonteTexto)) || 1);
+  const [categoriasVisiveis, setCategoriasVisiveis] = useState<Set<string>>(
+    () => new Set(CATEGORIAS_FUNIL.filter((c) => c !== 'Touro')),
+  );
+
+  function alternarCategoria(c: string) {
+    setCategoriasVisiveis((atual) => {
+      const proximo = new Set(atual);
+      if (proximo.has(c)) proximo.delete(c);
+      else proximo.add(c);
+      return proximo;
+    });
+  }
+
+  const projecao = useMemo(
+    () => projetarRebanho(rebanhoProjecao, iatfProjecao, marcosIdade, fazendaSelecionada, horizonteMeses, hoje),
+    [rebanhoProjecao, iatfProjecao, marcosIdade, fazendaSelecionada, horizonteMeses, hoje],
+  );
+
+  const efetivoHoje = useMemo(() => new Map(retrato.map((r) => [r.categoria, r.efetivo])), [retrato]);
+  const efetivoFinal = useMemo(() => {
+    const mapa = new Map(efetivoHoje);
+    for (const mes of projecao.meses) {
+      for (const mig of mes.migracoes) {
+        mapa.set(mig.de, (mapa.get(mig.de) ?? 0) - mig.quantidade);
+        mapa.set(mig.para, (mapa.get(mig.para) ?? 0) + mig.quantidade);
+      }
+    }
+    return mapa;
+  }, [efetivoHoje, projecao.meses]);
+
+  const mesesComAlgo = projecao.meses.filter(
+    (m) => m.partosPrevistos > 0 || m.migracoes.some((mig) => categoriasVisiveis.has(mig.de) || categoriasVisiveis.has(mig.para)),
+  );
+
+  return (
+    <section className="flex flex-col gap-3">
+      <h2 className="text-sm font-medium text-muted-foreground">Projeção de rebanho</h2>
+      <div className="flex flex-wrap items-end gap-3">
+        <div className="flex flex-col gap-1">
+          <span className="text-xs text-muted-foreground">Horizonte (meses)</span>
+          <Input
+            type="number"
+            min={1}
+            value={horizonteTexto}
+            onChange={(e) => setHorizonteTexto(e.target.value)}
+            className="h-8 w-24"
+          />
+        </div>
+        <div className="flex flex-wrap gap-1.5">
+          {CATEGORIAS_FUNIL.map((c) => (
+            <Button
+              type="button"
+              key={c}
+              size="sm"
+              variant={categoriasVisiveis.has(c) ? 'default' : 'outline'}
+              onClick={() => alternarCategoria(c)}
+            >
+              {c}
+            </Button>
+          ))}
+        </div>
+      </div>
+
+      {projecao.partosSemDataConhecida > 0 && (
+        <p className="text-xs text-amber-400">
+          {formatNumber(projecao.partosSemDataConhecida)} vaca(s) prenha(s) sem Data IATF registrada — não entram na previsão
+          de parto (não inventamos a data).
+        </p>
+      )}
+
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {mesesComAlgo.length === 0 ? (
+          <p className="col-span-full rounded-xl border border-border bg-card p-5 text-sm text-muted-foreground">
+            Nada previsto nesse horizonte — confira se &quot;Idades por Marco&quot; está preenchido.
+          </p>
+        ) : (
+          mesesComAlgo.map((m) => (
+            <div key={m.mes} className="rounded-xl border border-border bg-card p-4 text-xs">
+              <p className="text-sm font-medium capitalize text-foreground">{formatMes(m.mes)}</p>
+              {m.partosPrevistos > 0 && (
+                <p className="mt-1.5 text-muted-foreground">
+                  <span className="font-semibold text-foreground">{formatNumber(m.partosPrevistos)}</span> parto(s) previsto(s)
+                </p>
+              )}
+              {m.migracoes
+                .filter((mig) => categoriasVisiveis.has(mig.de) || categoriasVisiveis.has(mig.para))
+                .map((mig) => (
+                  <p key={`${mig.de}-${mig.para}`} className="mt-1 text-muted-foreground">
+                    {mig.de} → {mig.para}: <span className="font-semibold text-foreground">{formatNumber(mig.quantidade)}</span>
+                  </p>
+                ))}
+            </div>
+          ))
+        )}
+      </div>
+
+      <div className="mt-1 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {CATEGORIAS_FUNIL.filter((c) => categoriasVisiveis.has(c)).map((c) => (
+          <div key={c} className="rounded-xl border border-border bg-card p-4 text-xs">
+            <p className="text-sm font-medium text-foreground">{c}</p>
+            <p className="mt-1 text-muted-foreground">
+              Hoje: <span className="font-semibold text-foreground">{formatNumber(efetivoHoje.get(c) ?? 0)}</span>
+            </p>
+            <p className="text-muted-foreground">
+              Em {horizonteMeses} {horizonteMeses === 1 ? 'mês' : 'meses'}:{' '}
+              <span className="font-semibold text-foreground">{formatNumber(efetivoFinal.get(c) ?? 0)}</span>
+            </p>
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
 

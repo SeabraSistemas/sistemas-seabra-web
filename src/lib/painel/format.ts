@@ -112,7 +112,7 @@ export function anosPresentes(datas: (number | null)[]): number[] {
   return Array.from(anos).sort((a, b) => b - a);
 }
 
-/** "aaaammdd" => Date local (meia-noite) — só uso interno de diasEntre, nunca exportar timestamp cru (mesma armadilha de fuso que diaDe evita). */
+/** "aaaammdd" => Date local (meia-noite) — só uso interno de diasEntre/somarDias, nunca exportar timestamp cru (mesma armadilha de fuso que diaDe evita). */
 function dataDeCompacto(v: number): Date {
   const ano = Math.floor(v / 10000);
   const mes = Math.floor((v % 10000) / 100) - 1;
@@ -125,6 +125,14 @@ export function diasEntre(inicio: number | null, fim: number | null): number | n
   if (inicio == null || fim == null) return null;
   const ms = dataDeCompacto(fim).getTime() - dataDeCompacto(inicio).getTime();
   return Math.round(ms / 86400000);
+}
+
+/** "aaaammdd" + N dias corridos (N pode ser negativo) => "aaaammdd" novo. null se a data faltar. */
+export function somarDias(dia: number | null, dias: number): number | null {
+  if (dia == null) return null;
+  const data = dataDeCompacto(dia);
+  data.setDate(data.getDate() + dias);
+  return data.getFullYear() * 10000 + (data.getMonth() + 1) * 100 + data.getDate();
 }
 
 const numberFormatter = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 2 });

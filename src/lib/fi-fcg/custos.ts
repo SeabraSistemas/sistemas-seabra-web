@@ -15,12 +15,13 @@
 import type { Custo, DiaCompacto } from './types';
 import type { PontoMes } from './financeiro';
 
-/** "aaaammdd" => "aaaamm". */
-function mesDe(dia: DiaCompacto): string {
+/** "aaaammdd" => "aaaamm". Exportado — também usado por projecaoRebanho.ts pro bucket de mês. */
+export function mesDe(dia: DiaCompacto): string {
   return String(Math.floor(dia / 100));
 }
 
-function proximoMes(mes: string): string {
+/** Exportado — também usado por projecaoRebanho.ts pra gerar os meses do horizonte. */
+export function proximoMes(mes: string): string {
   const ano = Number(mes.slice(0, 4));
   const m = Number(mes.slice(4, 6));
   return m === 12 ? `${ano + 1}01` : `${ano}${String(m + 1).padStart(2, '0')}`;
