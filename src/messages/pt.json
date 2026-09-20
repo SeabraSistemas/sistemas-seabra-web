@@ -239,7 +239,7 @@
   },
   "privacyPage": {
     "title": "Política de Privacidade",
-    "lastUpdated": "Última atualização: 5 de setembro de 2026",
+    "lastUpdated": "Última atualização: 19 de setembro de 2026",
     "localeNotice": ""
   },
   "termsPage": {
@@ -247,6 +247,48 @@
     "lastUpdated": "Última atualização: 10 de maio de 2026",
     "localeNotice": "",
     "draftNotice": ""
+  },
+  "operatorsPage": {
+    "title": "Operadores que tratam seus dados",
+    "lastUpdated": "Última atualização: 19 de setembro de 2026",
+    "intro": "Esta é a lista sempre atual dos operadores que tratam dados em nome da Sistema Seabra, referida pela seção 7.1 da Política de Privacidade. Se a versão do aplicativo que você tem descrever algo diferente, vale esta página.",
+    "colOperator": "Operador",
+    "colPurpose": "Para que serve",
+    "colData": "Que dado recebe",
+    "colCountry": "País",
+    "rows": [
+      {
+        "operator": "Supabase Inc.",
+        "purpose": "Hospedagem, banco de dados e autenticação",
+        "data": "Todos os dados da conta e do rebanho",
+        "country": "EUA"
+      },
+      {
+        "operator": "Google LLC — Firebase Cloud Messaging",
+        "purpose": "Notificações no celular",
+        "data": "Identificador do aparelho",
+        "country": "EUA"
+      },
+      {
+        "operator": "Google LLC — Gemini",
+        "purpose": "Assistente de inteligência artificial",
+        "data": "Pergunta + dados do rebanho relacionados",
+        "country": "EUA"
+      },
+      {
+        "operator": "Asaas",
+        "purpose": "Assinatura e cobrança",
+        "data": "Nome, CPF/CNPJ, e-mail, telefone, dados do pagamento",
+        "country": "Brasil"
+      },
+      {
+        "operator": "Seabra Solutions (servidor próprio)",
+        "purpose": "Avisos e código de acesso por WhatsApp",
+        "data": "Telefone e conteúdo da mensagem",
+        "country": "Brasil"
+      }
+    ],
+    "backLink": "Voltar para a Política de Privacidade"
   },
   "whatsapp": {
     "defaultMessage": "Olá! Quero saber mais sobre as soluções da Seabra.",

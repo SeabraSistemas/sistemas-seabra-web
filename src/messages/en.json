@@ -239,14 +239,56 @@
   },
   "privacyPage": {
     "title": "Privacy Policy",
-    "lastUpdated": "Last updated: September 5, 2026",
-    "localeNotice": "The legal text below is in Portuguese (Brazilian law applies). For an automated translation, use your browser's translate feature."
+    "lastUpdated": "Last updated: September 19, 2026",
+    "localeNotice": ""
   },
   "termsPage": {
     "title": "Terms of Use",
     "lastUpdated": "Last updated: May 10, 2026",
     "localeNotice": "The legal text below is in Portuguese (Brazilian law applies). For an automated translation, use your browser's translate feature.",
     "draftNotice": ""
+  },
+  "operatorsPage": {
+    "title": "Operators that process your data",
+    "lastUpdated": "Last updated: September 19, 2026",
+    "intro": "This is the always-current list of operators that process data on behalf of Sistema Seabra, referenced by section 7.1 of the Privacy Policy. If the app version you have describes something different, this page controls.",
+    "colOperator": "Operator",
+    "colPurpose": "What it is for",
+    "colData": "What data it receives",
+    "colCountry": "Country",
+    "rows": [
+      {
+        "operator": "Supabase Inc.",
+        "purpose": "Hosting, database and authentication",
+        "data": "All account and herd data",
+        "country": "USA"
+      },
+      {
+        "operator": "Google LLC — Firebase Cloud Messaging",
+        "purpose": "Mobile push notifications",
+        "data": "Device identifier",
+        "country": "USA"
+      },
+      {
+        "operator": "Google LLC — Gemini",
+        "purpose": "AI assistant",
+        "data": "Your question + related herd data",
+        "country": "USA"
+      },
+      {
+        "operator": "Asaas",
+        "purpose": "Subscription and billing",
+        "data": "Name, CPF/CNPJ (Brazilian tax ID), email, phone, payment data",
+        "country": "Brazil"
+      },
+      {
+        "operator": "Seabra Solutions (own server)",
+        "purpose": "Alerts and access codes via WhatsApp",
+        "data": "Phone number and message content",
+        "country": "Brazil"
+      }
+    ],
+    "backLink": "Back to the Privacy Policy"
   },
   "whatsapp": {
     "defaultMessage": "Hello! I want to know more about Seabra.",
