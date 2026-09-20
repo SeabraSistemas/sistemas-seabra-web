@@ -92,7 +92,7 @@
     "filhasContagem": "{n} de {total}",
     "progenieTitulo": "Performance da Progênie",
     "progenieBase": "Base Materna",
-    "progenieConfiabilidade": "Confiabilidade: {n}%",
+    "progenieConfiabilidade": "Robustez da amostra: {n}%",
     "genMacho": "macho",
     "genFemea": "fêmea",
     "fatoNascimento": "Nascimento",

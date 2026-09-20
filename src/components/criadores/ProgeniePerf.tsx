@@ -15,10 +15,12 @@ function cor(v: number): 'pos' | 'neg' {
 }
 
 /**
- * Performance da Progênie (Base Materna) — espelha o card do app e o protótipo
- * v12 (perfProgenie). Categorias expansíveis: header com o índice médio (azul/
- * vermelho) e, ao expandir, os subitens. A confiabilidade (%) vira um badge
- * verde/âmbar/vermelho; some quando é 0 (ex.: fêmea sem filhas avaliadas).
+ * Performance da Progênie (Base Materna) — IFM (Índice Filha-Mãe), espelha o
+ * card do app e o protótipo v12 (perfProgenie). Categorias expansíveis: header
+ * com o índice médio (azul/vermelho) e, ao expandir, os subitens. A robustez
+ * da amostra (%) vira um badge verde/âmbar/vermelho; some quando é 0 (ex.:
+ * fêmea sem filhas avaliadas). NÃO é herdabilidade (h²) — ver
+ * docs/planos/NOMENCLATURA_HERDABILIDADE_REPRODUTORES.md no app.
  *
  * Os valores vêm prontos do snapshot (vitrine_animal.progenie) — herdados do app,
  * nunca recalculados aqui. A composição do leite já vem fora dos subitens.

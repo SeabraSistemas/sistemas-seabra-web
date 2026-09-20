@@ -61,11 +61,13 @@ export interface Filhas {
 }
 
 /**
- * Snapshot de Performance da Progênie (vitrine_animal.progenie). '{}' quando não
- * há dado (ou oculto por exibe_producao). Espelha o card do app: macho = média do
- * HC das filhas; fêmea = HC individual dela. `conf` é a confiabilidade (%, badge
- * some se 0); `cats` são as 5 categorias com o valor médio e os subitens visíveis
- * (composição do leite fica de fora dos subitens por decisão de produto).
+ * Snapshot de Performance da Progênie / IFM — Índice Filha-Mãe
+ * (vitrine_animal.progenie). '{}' quando não há dado (ou oculto por
+ * exibe_producao). Espelha o card do app: macho = média do IFM das filhas;
+ * fêmea = IFM individual dela. NÃO é herdabilidade (h²). `conf` é a robustez
+ * da amostra (%, badge some se 0); `cats` são as 5 categorias com o valor
+ * médio e os subitens visíveis (composição do leite fica de fora dos
+ * subitens por decisão de produto).
  */
 export interface Progenie {
   conf?: number;
