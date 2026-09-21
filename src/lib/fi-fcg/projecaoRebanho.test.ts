@@ -1,7 +1,13 @@
 import assert from 'node:assert/strict';
 import { describe, test } from 'node:test';
 
-import { DIAS_GESTACAO_BOVINO, IATF_MAX_DIAS, TOQUE_MAX_DIAS, projetarRebanho } from '@/lib/fi-fcg/projecaoRebanho';
+import {
+  DIAS_GESTACAO_BOVINO,
+  DIAS_PARA_PARTO_POR_DIAGNOSTICO,
+  IATF_MAX_DIAS,
+  TOQUE_MAX_DIAS,
+  projetarRebanho,
+} from '@/lib/fi-fcg/projecaoRebanho';
 import { mesDe, proximoMes } from '@/lib/fi-fcg/custos';
 import { somarDias } from '@/lib/painel/format';
 import type { MarcoIdade, RegIatf, RegRebanho, RegToque } from '@/lib/fi-fcg/types';
@@ -78,14 +84,16 @@ describe('projetarRebanho — partos previstos', () => {
     assert.equal(proj.meses.reduce((s, m) => s + m.partosPrevistos, 0), 0);
   });
 
-  test('IATF velho demais (repasse nao lancado): cai pro Toque recente que confirmou prenhez', () => {
+  test('IATF velho demais (repasse nao lancado): cai pro Toque recente que confirmou prenhez, estimado pelo Diagnostico', () => {
     const rebanho = [animal({ id: 'v1', categoria: 'Vaca', fazenda: 'Inhumas', reproducao: 'Prenha' })];
     const dataIatfVelha = somarDias(HOJE, -(IATF_MAX_DIAS + 1)) as number; // passou do limite
-    const dataToqueRecente = somarDias(HOJE, -30) as number; // bem dentro do limite de Toque, parto cai ~253 dias apos HOJE
+    const dataToqueRecente = somarDias(HOJE, -30) as number; // bem dentro do limite de Toque
     const iatfRows = [iatf({ id: 'v1', data: dataIatfVelha })];
     const toqueRows = [toqueReg({ id: 'v1', data: dataToqueRecente, diagnostico: 'Regular' })];
-    const proj = projetarRebanho(rebanho, iatfRows, toqueRows, [], null, 260, HOJE);
-    const mesEsperado = String(Math.floor((somarDias(dataToqueRecente, DIAS_GESTACAO_BOVINO) as number) / 100));
+    const proj = projetarRebanho(rebanho, iatfRows, toqueRows, [], null, 200, HOJE);
+    // Regular = 150 dias a partir do Toque (nao mais 283) — ver DIAS_PARA_PARTO_POR_DIAGNOSTICO.
+    const partoEsperado = somarDias(dataToqueRecente, DIAS_PARA_PARTO_POR_DIAGNOSTICO.Regular) as number;
+    const mesEsperado = String(Math.floor(partoEsperado / 100));
     assert.equal(proj.meses.find((m) => m.mes === mesEsperado)?.partosPrevistos, 1);
     assert.equal(proj.partosEstimadosViaToque, 1);
     assert.equal(proj.partosSemDataConhecida, 0);
@@ -93,6 +101,24 @@ describe('projetarRebanho — partos previstos', () => {
     assert.equal(proj.animaisEstimadosViaToque[0].id, 'v1');
     assert.equal(proj.animaisEstimadosViaToque[0].fazenda, 'Inhumas');
     assert.equal(proj.animaisEstimadosViaToque[0].dataToque, dataToqueRecente);
+    assert.equal(proj.animaisEstimadosViaToque[0].diagnostico, 'Regular');
+    assert.equal(proj.animaisEstimadosViaToque[0].partoPrevisto, partoEsperado);
+  });
+
+  test('estimativa pelo Diagnostico do Toque: Adiantada=2 meses, Regular=5 meses, Tardia=8 meses ate o parto', () => {
+    for (const [diagnostico, dias] of Object.entries(DIAS_PARA_PARTO_POR_DIAGNOSTICO)) {
+      const dataToque = somarDias(HOJE, -5) as number;
+      const rebanho = [animal({ id: 'v1', categoria: 'Vaca', reproducao: 'Prenha' })];
+      const toqueRows = [toqueReg({ id: 'v1', data: dataToque, diagnostico })];
+      const proj = projetarRebanho(rebanho, [], toqueRows, [], null, dias + 10, HOJE);
+      const partoEsperado = somarDias(dataToque, dias) as number;
+      const mesEsperado = String(Math.floor(partoEsperado / 100));
+      assert.equal(
+        proj.meses.find((m) => m.mes === mesEsperado)?.partosPrevistos,
+        1,
+        `diagnostico ${diagnostico} deveria prever parto em ${dias} dias apos o Toque`,
+      );
+    }
   });
 
   test('IATF recente (dentro do limite): usa o IATF, nao cai pro Toque mesmo se ele existir', () => {
@@ -119,6 +145,14 @@ describe('projetarRebanho — partos previstos', () => {
     assert.equal(proj.animaisSemDataConhecida[0].ultimoToque, toqueRows[0].data);
   });
 
+  test('Toque com Diagnostico fora do mapa conhecido: nao serve de ancora (nunca inventa dias)', () => {
+    const rebanho = [animal({ id: 'v1', categoria: 'Vaca', reproducao: 'Prenha' })];
+    const toqueRows = [toqueReg({ id: 'v1', data: somarDias(HOJE, -10) as number, diagnostico: 'Estágio desconhecido' })];
+    const proj = projetarRebanho(rebanho, [], toqueRows, [], null, 365, HOJE);
+    assert.equal(proj.partosSemDataConhecida, 1);
+    assert.equal(proj.partosEstimadosViaToque, 0);
+  });
+
   test('Toque com Diagnostico "Vazia" nao confirma prenhez: nao serve de ancora', () => {
     const rebanho = [animal({ id: 'v1', categoria: 'Vaca', reproducao: 'Prenha' })];
     const toqueRows = [toqueReg({ id: 'v1', data: somarDias(HOJE, -10) as number, diagnostico: 'Vazia' })];
@@ -126,12 +160,12 @@ describe('projetarRebanho — partos previstos', () => {
     assert.equal(proj.partosSemDataConhecida, 1);
   });
 
-  test('sem IATF nenhum mas com Toque recente confirmando prenhez: usa o Toque', () => {
+  test('sem IATF nenhum mas com Toque recente confirmando prenhez: usa o Toque (Tardia = 240 dias)', () => {
     const rebanho = [animal({ id: 'v1', categoria: 'Vaca', reproducao: 'Prenha' })];
-    const dataToque = somarDias(HOJE, -50) as number; // parto cai ~233 dias apos HOJE
+    const dataToque = somarDias(HOJE, -50) as number; // parto cai ~190 dias apos HOJE
     const toqueRows = [toqueReg({ id: 'v1', data: dataToque, diagnostico: 'Tardia' })];
     const proj = projetarRebanho(rebanho, [], toqueRows, [], null, 240, HOJE);
-    const mesEsperado = String(Math.floor((somarDias(dataToque, DIAS_GESTACAO_BOVINO) as number) / 100));
+    const mesEsperado = String(Math.floor((somarDias(dataToque, DIAS_PARA_PARTO_POR_DIAGNOSTICO.Tardia) as number) / 100));
     assert.equal(proj.meses.find((m) => m.mes === mesEsperado)?.partosPrevistos, 1);
     assert.equal(proj.partosEstimadosViaToque, 1);
   });

@@ -8,36 +8,21 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DataTable, type DataTableColumn } from '@/components/painel/DataTable';
 import { CampoLabel, InfoTip, type InfoCampo } from '@/components/painel/CampoInfo';
-import { SerieMensal, type PontoMensal } from '@/components/painel/SerieMensal';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { formatDia, formatMoeda, formatNumber } from '@/lib/painel/format';
+import { DIAS_POR_UNIDADE, LABEL_UNIDADE_IDADE, formatMoeda, formatNumber, type UnidadeIdade } from '@/lib/painel/format';
 import {
   PERCENTUAL_TOLERANCIA_MAX,
   PERCENTUAL_TOLERANCIA_MIN,
   type FunilCalculado,
   type RetratoCategoria,
 } from '@/lib/fi-fcg/custoFormacao';
-import { projetarRebanho, type PartoEstimadoViaToque, type PrenhaSemDataConhecida } from '@/lib/fi-fcg/projecaoRebanho';
 import {
   TIPOS_INSUMO,
   type ConsumoCategoria,
-  type DiaCompacto,
   type GmdCategoria,
   type Insumo,
   type ItemDieta,
   type MarcoIdade,
-  type RegIatf,
-  type RegRebanho,
-  type RegToque,
 } from '@/lib/fi-fcg/types';
-
-const MES_LABEL = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
-/** "aaaamm" => "mmm/aaaa". */
-function formatMes(mes: string): string {
-  const ano = mes.slice(0, 4);
-  const m = Number(mes.slice(4, 6));
-  return `${MES_LABEL[m - 1]}/${ano}`;
-}
 
 /**
  * Mesma ordem das 7 linhas semeadas em "GMD por Categoria" (mutations.ts,
@@ -66,9 +51,9 @@ const INFO_MARCOS: Record<string, InfoCampo> = {
 };
 
 const INFO_GMD_CATEGORIA: InfoCampo = {
-  oQue: 'Quantos kg essa categoria ganha de peso, em média, por dia (GMD — Ganho Médio Diário).',
+  oQue: 'Quantos kg essa categoria ganha de peso, em média, por dia (GPD — Ganho de Peso Diário, desde o nascimento).',
   ajuda:
-    'Base do Funil acumulado (peso/GMD): sem ela não dá pra calcular quantos dias o animal leva em cada fase nem o custo por @ formada.',
+    'Base do Funil acumulado (peso/GPD): sem ela não dá pra calcular quantos dias o animal leva em cada fase nem o custo por @ formada.',
   como:
     'Se aparecer "Sugestão", é a média real calculada a partir das pesagens registradas — pode usar ela ou digitar outro valor manualmente.',
 };
@@ -89,22 +74,6 @@ const INFO_INSUMO_VALOR: InfoCampo = {
   como: 'Digite o preço por kg — se você compra em saca, divida o valor da saca pelo peso dela em kg.',
 };
 
-const INFO_HORIZONTE_PROJECAO: InfoCampo = {
-  oQue: 'Até quantos meses no futuro a projeção olha, a partir de hoje (mínimo 1, máximo 6).',
-  ajuda: 'Define o alcance do gráfico de partos e das mudanças de categoria — quanto maior, mais longe no futuro você enxerga (e menos confiável fica).',
-  como: 'Digite um número de 1 a 6. Fora desse intervalo, o campo trava no limite mais próximo.',
-};
-const INFO_IDADE_MIN_PROJECAO: InfoCampo = {
-  oQue: 'A idade mínima (em dias de vida) que um animal precisa ter, na data final da projeção, pra entrar na contagem de mudança de categoria.',
-  ajuda: 'Filtra fora quem for jovem demais pra esse recorte — esses animais simplesmente não aparecem nas mudanças de categoria previstas (os partos previstos não são afetados).',
-  como: 'Deixe em branco pra não aplicar limite mínimo (equivale a 0 dias).',
-};
-const INFO_IDADE_MAX_PROJECAO: InfoCampo = {
-  oQue: 'A idade máxima (em dias de vida) que um animal pode ter, na data final da projeção, pra entrar na contagem de mudança de categoria.',
-  ajuda: 'Filtra fora quem for velho demais pra esse recorte (ex: só quer ver quem ainda está se formando) — esses animais simplesmente não aparecem.',
-  como: 'Deixe em branco pra não aplicar limite máximo (sem teto).',
-};
-
 const INFO_CONSUMO_TIPO: InfoCampo = {
   oQue: 'Quantos kg desse tipo (Concentrado/Volumoso/Sal mineral) inteiro a categoria come por dia, por cabeça.',
   ajuda: 'Multiplicado pelo preço médio da mistura (a % de cada insumo × seu valor/kg), forma o custo diário desse tipo — somado aos outros 2 tipos, dá o custo de dieta da categoria.',
@@ -123,13 +92,8 @@ const INFO_SECAO_RETRATO: InfoCampo = {
 };
 const INFO_SECAO_FUNIL: InfoCampo = {
   oQue: 'A cadeia de formação de cada tipo de animal (ex: Bezerro → Garrote → Boi), com o custo acumulado fase a fase até virar @ formada.',
-  ajuda: 'Diferente do Retrato do momento: usa o GMD (ganho de peso por dia) pra estimar quantos dias o animal leva em cada fase, não a idade real dele.',
-  como: 'Precisa do GMD por Categoria preenchido pra cada categoria da cadeia — sem isso, a fase fica com "—" e o card avisa em amarelo.',
-};
-const INFO_SECAO_PROJECAO: InfoCampo = {
-  oQue: 'Uma previsão de quantos partos vão acontecer e quantos animais vão mudar de categoria, mês a mês, dentro do horizonte escolhido.',
-  ajuda: 'Ajuda a planejar: quantos bezerros vão nascer, quantas novilhas vão virar vaca etc, nos próximos meses.',
-  como: 'Ajuste o Horizonte e, se quiser, a faixa de Idade mínima/máxima pra restringir quais animais entram na mudança de categoria.',
+  ajuda: 'Diferente do Retrato do momento: usa o GPD (ganho de peso por dia) pra estimar quantos dias o animal leva em cada fase, não a idade real dele.',
+  como: 'Precisa do GPD por Categoria preenchido pra cada categoria da cadeia — sem isso, a fase fica com "—" e o card avisa em amarelo.',
 };
 const INFO_SECAO_MARCOS: InfoCampo = {
   oQue: 'A idade em dias que marca a transição entre categorias no seu rebanho (ex: quando um Bezerro vira Garrote).',
@@ -137,7 +101,7 @@ const INFO_SECAO_MARCOS: InfoCampo = {
   como: 'Preencha a idade real das transições na sua fazenda — tem uma sugestão pré-preenchida baseada numa fórmula padrão, ajuste se souber o valor real.',
 };
 const INFO_SECAO_GMD: InfoCampo = {
-  oQue: 'Quanto cada categoria ganha de peso, em média, por dia.',
+  oQue: 'Quanto cada categoria ganha de peso, em média, por dia, desde o nascimento (GPD).',
   ajuda: 'Alimenta o Funil acumulado — sem isso, não dá pra calcular quantos dias o animal leva em cada fase nem o custo por @.',
   como: 'Use a sugestão (média real das pesagens) ou digite um valor manual por categoria.',
 };
@@ -170,10 +134,6 @@ export function CustoFormacaoPainel({
   insumos,
   dieta,
   consumoCategoria,
-  rebanhoProjecao,
-  iatfProjecao,
-  toqueProjecao,
-  hoje,
 }: {
   fazendas: string[];
   funisPorFazenda: { fazenda: string | null; funis: FunilCalculado[] }[];
@@ -184,10 +144,6 @@ export function CustoFormacaoPainel({
   insumos: Insumo[];
   dieta: ItemDieta[];
   consumoCategoria: ConsumoCategoria[];
-  rebanhoProjecao: RegRebanho[];
-  iatfProjecao: RegIatf[];
-  toqueProjecao: RegToque[];
-  hoje: DiaCompacto;
 }) {
   const router = useRouter();
   const [fazendaSelecionada, setFazendaSelecionada] = useState<string | null>(null);
@@ -245,16 +201,6 @@ export function CustoFormacaoPainel({
           ))}
         </div>
       </section>
-
-      <ProjecaoSecao
-        rebanhoProjecao={rebanhoProjecao}
-        iatfProjecao={iatfProjecao}
-        toqueProjecao={toqueProjecao}
-        marcosIdade={marcosIdade}
-        fazendaSelecionada={fazendaSelecionada}
-        retrato={retrato}
-        hoje={hoje}
-      />
 
       <MarcosIdadeSecao marcosIdade={marcosIdade} onChanged={() => router.refresh()} />
 
@@ -319,306 +265,6 @@ function RetratoCard({ retrato }: { retrato: RetratoCategoria }) {
 }
 
 /**
- * Projeção de rebanho (16/09/2026, horizonte em MESES — 1 a 6, decisão do
- * Felipe): partos previstos (Prenha + Data IATF mais recente + 283 dias) e
- * mudança de categoria por idade (Idades por Marco), assim como as
- * categorias que quer ver. O cálculo em si é por dia exato (30 dias por
- * mês, ver `horizonteDias` abaixo e projecaoRebanho.ts) — só a ESCOLHA do
- * horizonte na tela é em meses, redonda e limitada (evita horizontes longos
- * demais, onde a projeção por idade fica pouco confiável). `filtroIdade`
- * (idade mínima/máxima em dias, opcional) é inspirado na ferramenta
- * "Projeção/Estoque" de outro sistema do ecossistema: animal fora da faixa
- * etária (na data final) não aparece na mudança de categoria — só ali, não
- * nos partos previstos (não depende da idade da mãe).
- * Roda no CLIENTE (`projetarRebanho`, puro) sobre um subconjunto já
- * reduzido pelo servidor (ver CAMPOS_REBANHO_PROJECAO) — mudar o horizonte
- * não pede um round-trip. "Efetivo hoje" vem do `retrato` (todas as
- * categorias, sempre certo); "final" soma as migrações projetadas em cima
- * dele — nascimento não entra na composição (sexo do bezerro é desconhecido
- * antes de nascer), só na contagem de partos à parte.
- */
-const HORIZONTE_MIN_MESES = 1;
-const HORIZONTE_MAX_MESES = 6;
-const DIAS_POR_MES_PROJECAO = 30;
-
-function ProjecaoSecao({
-  rebanhoProjecao,
-  iatfProjecao,
-  toqueProjecao,
-  marcosIdade,
-  fazendaSelecionada,
-  retrato,
-  hoje,
-}: {
-  rebanhoProjecao: RegRebanho[];
-  iatfProjecao: RegIatf[];
-  toqueProjecao: RegToque[];
-  marcosIdade: MarcoIdade[];
-  fazendaSelecionada: string | null;
-  retrato: RetratoCategoria[];
-  hoje: DiaCompacto;
-}) {
-  const [horizonteTexto, setHorizonteTexto] = useState('6');
-  const horizonteMeses = Math.min(HORIZONTE_MAX_MESES, Math.max(HORIZONTE_MIN_MESES, Math.round(Number(horizonteTexto)) || 1));
-  const horizonteDias = horizonteMeses * DIAS_POR_MES_PROJECAO;
-  const [idadeMinTexto, setIdadeMinTexto] = useState('');
-  const [idadeMaxTexto, setIdadeMaxTexto] = useState('');
-  const filtroIdade = useMemo(() => {
-    if (idadeMinTexto.trim() === '' && idadeMaxTexto.trim() === '') return null;
-    const minDias = idadeMinTexto.trim() === '' ? 0 : Math.max(0, Number(idadeMinTexto) || 0);
-    const maxDias = idadeMaxTexto.trim() === '' ? Infinity : Math.max(0, Number(idadeMaxTexto) || 0);
-    return { minDias, maxDias };
-  }, [idadeMinTexto, idadeMaxTexto]);
-  const [categoriasVisiveis, setCategoriasVisiveis] = useState<Set<string>>(
-    () => new Set(CATEGORIAS_FUNIL.filter((c) => c !== 'Touro')),
-  );
-  const [painelAberto, setPainelAberto] = useState<'toque' | 'semdata' | null>(null);
-
-  function alternarCategoria(c: string) {
-    setCategoriasVisiveis((atual) => {
-      const proximo = new Set(atual);
-      if (proximo.has(c)) proximo.delete(c);
-      else proximo.add(c);
-      return proximo;
-    });
-  }
-
-  const projecao = useMemo(
-    () =>
-      projetarRebanho(rebanhoProjecao, iatfProjecao, toqueProjecao, marcosIdade, fazendaSelecionada, horizonteDias, hoje, filtroIdade),
-    [rebanhoProjecao, iatfProjecao, toqueProjecao, marcosIdade, fazendaSelecionada, horizonteDias, hoje, filtroIdade],
-  );
-
-  const efetivoHoje = useMemo(() => new Map(retrato.map((r) => [r.categoria, r.efetivo])), [retrato]);
-  const efetivoFinal = useMemo(() => {
-    const mapa = new Map(efetivoHoje);
-    for (const mes of projecao.meses) {
-      for (const mig of mes.migracoes) {
-        mapa.set(mig.de, (mapa.get(mig.de) ?? 0) - mig.quantidade);
-        mapa.set(mig.para, (mapa.get(mig.para) ?? 0) + mig.quantidade);
-      }
-    }
-    return mapa;
-  }, [efetivoHoje, projecao.meses]);
-
-  const totalPartos = useMemo(() => projecao.meses.reduce((s, m) => s + m.partosPrevistos, 0), [projecao.meses]);
-  const pontosPartos: PontoMensal[] = useMemo(
-    () => projecao.meses.map((m) => ({ mes: m.mes, valor: m.partosPrevistos })),
-    [projecao.meses],
-  );
-  const mesesComMigracao = useMemo(
-    () =>
-      projecao.meses
-        .map((m) => ({
-          mes: m.mes,
-          migracoes: m.migracoes.filter((mig) => categoriasVisiveis.has(mig.de) || categoriasVisiveis.has(mig.para)),
-        }))
-        .filter((m) => m.migracoes.length > 0),
-    [projecao.meses, categoriasVisiveis],
-  );
-
-  return (
-    <section className="flex flex-col gap-3">
-      <h2 className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground">
-        Projeção de rebanho
-        <InfoTip info={INFO_SECAO_PROJECAO} />
-      </h2>
-      <div className="flex flex-wrap items-end gap-3">
-        <div className="flex flex-col gap-1">
-          <CampoLabel texto="Horizonte (meses)" info={INFO_HORIZONTE_PROJECAO} />
-          <Input
-            type="number"
-            min={HORIZONTE_MIN_MESES}
-            max={HORIZONTE_MAX_MESES}
-            value={horizonteTexto}
-            onChange={(e) => setHorizonteTexto(e.target.value)}
-            className="h-8 w-24"
-          />
-        </div>
-        <div className="flex flex-col gap-1">
-          <CampoLabel texto="Idade mínima (dias)" info={INFO_IDADE_MIN_PROJECAO} />
-          <Input
-            type="number"
-            min={0}
-            placeholder="sem limite"
-            value={idadeMinTexto}
-            onChange={(e) => setIdadeMinTexto(e.target.value)}
-            className="h-8 w-28"
-          />
-        </div>
-        <div className="flex flex-col gap-1">
-          <CampoLabel texto="Idade máxima (dias)" info={INFO_IDADE_MAX_PROJECAO} />
-          <Input
-            type="number"
-            min={0}
-            placeholder="sem limite"
-            value={idadeMaxTexto}
-            onChange={(e) => setIdadeMaxTexto(e.target.value)}
-            className="h-8 w-28"
-          />
-        </div>
-        <div className="flex flex-wrap gap-1.5">
-          {CATEGORIAS_FUNIL.map((c) => (
-            <Button
-              type="button"
-              key={c}
-              size="sm"
-              variant={categoriasVisiveis.has(c) ? 'default' : 'outline'}
-              onClick={() => alternarCategoria(c)}
-            >
-              {c}
-            </Button>
-          ))}
-        </div>
-      </div>
-
-      {projecao.partosEstimadosViaToque > 0 && (
-        <p className="text-xs text-amber-400">
-          {formatNumber(projecao.partosEstimadosViaToque)} parto(s) previsto(s) estimado(s) pelo Toque, não pelo IATF — a Data
-          IATF dessa(s) vaca(s) é antiga demais (provável repasse com touro solto não lançado). Data aproximada, não exata.{' '}
-          <button type="button" className="underline hover:text-amber-300" onClick={() => setPainelAberto('toque')}>
-            Ver quem são
-          </button>
-          .
-        </p>
-      )}
-
-      {projecao.partosSemDataConhecida > 0 && (
-        <p className="text-xs text-amber-400">
-          {formatNumber(projecao.partosSemDataConhecida)} vaca(s) prenha(s) sem nenhuma data confiável (IATF ou Toque recente)
-          — não entram na previsão de parto (não inventamos a data).{' '}
-          <button type="button" className="underline hover:text-amber-300" onClick={() => setPainelAberto('semdata')}>
-            Ver quem são
-          </button>
-          .
-        </p>
-      )}
-
-      <PainelAnimaisSuspeitos
-        aberto={painelAberto}
-        onOpenChange={setPainelAberto}
-        animaisEstimadosViaToque={projecao.animaisEstimadosViaToque}
-        animaisSemDataConhecida={projecao.animaisSemDataConhecida}
-      />
-
-      <div className="rounded-xl border border-border bg-card p-4">
-        <h3 className="mb-3 text-xs font-medium text-muted-foreground">Partos previstos por mês</h3>
-        <SerieMensal series={[{ chave: 'partos', nome: 'Partos previstos', cor: '#c98500', pontos: pontosPartos }]} />
-        <p className="mt-3 rounded-lg bg-secondary/40 px-3 py-2 text-xs text-muted-foreground">
-          <span className="font-semibold text-foreground">{formatNumber(totalPartos)}</span> parto(s) previsto(s) ao todo em{' '}
-          {horizonteMeses} {horizonteMeses === 1 ? 'mês' : 'meses'}
-          {projecao.partosEstimadosViaToque > 0 && (
-            <>
-              {' '}
-              — <span className="font-semibold text-foreground">{formatNumber(projecao.partosEstimadosViaToque)}</span>{' '}
-              estimado(s) via Toque
-            </>
-          )}
-          .
-        </p>
-      </div>
-
-      {mesesComMigracao.length === 0 ? (
-        totalPartos === 0 && (
-          <p className="rounded-xl border border-border bg-card p-5 text-sm text-muted-foreground">
-            Nenhuma mudança de categoria prevista nesse horizonte — confira se &quot;Idades por Marco&quot; está preenchido.
-          </p>
-        )
-      ) : (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {mesesComMigracao.map((m) => (
-            <div key={m.mes} className="rounded-xl border border-border bg-card p-4 text-xs">
-              <p className="text-sm font-medium capitalize text-foreground">{formatMes(m.mes)}</p>
-              {m.migracoes.map((mig) => (
-                <p key={`${mig.de}-${mig.para}`} className="mt-1 text-muted-foreground">
-                  {mig.de} → {mig.para}: <span className="font-semibold text-foreground">{formatNumber(mig.quantidade)}</span>
-                </p>
-              ))}
-            </div>
-          ))}
-        </div>
-      )}
-
-      <div className="mt-1 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-7">
-        {CATEGORIAS_FUNIL.filter((c) => categoriasVisiveis.has(c)).map((c) => (
-          <div key={c} className="rounded-xl border border-border bg-card p-3 text-xs">
-            <p className="text-sm font-medium text-foreground">{c}</p>
-            <p className="mt-1 text-muted-foreground">
-              Hoje: <span className="font-semibold text-foreground">{formatNumber(efetivoHoje.get(c) ?? 0)}</span>
-            </p>
-            <p className="text-muted-foreground">
-              Em {horizonteMeses} {horizonteMeses === 1 ? 'mês' : 'meses'}:{' '}
-              <span className="font-semibold text-foreground">{formatNumber(efetivoFinal.get(c) ?? 0)}</span>
-            </p>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-const COLUNAS_ESTIMADOS_TOQUE: DataTableColumn<PartoEstimadoViaToque>[] = [
-  { key: 'id', header: 'Animal', cell: (a) => a.id },
-  { key: 'fazenda', header: 'Fazenda', cell: (a) => a.fazenda ?? '—' },
-  { key: 'dataToque', header: 'Data do Toque', cell: (a) => formatDia(a.dataToque), sortValue: (a) => a.dataToque ?? 0 },
-  {
-    key: 'partoPrevisto',
-    header: 'Parto previsto (estimado)',
-    cell: (a) => formatDia(a.partoPrevisto),
-    sortValue: (a) => a.partoPrevisto ?? 0,
-  },
-];
-
-const COLUNAS_SEM_DATA: DataTableColumn<PrenhaSemDataConhecida>[] = [
-  { key: 'id', header: 'Animal', cell: (a) => a.id },
-  { key: 'fazenda', header: 'Fazenda', cell: (a) => a.fazenda ?? '—' },
-  {
-    key: 'ultimaIatf',
-    header: 'Último IATF',
-    cell: (a) => (a.ultimaIatf != null ? formatDia(a.ultimaIatf) + ' (velho demais)' : '—'),
-    sortValue: (a) => a.ultimaIatf ?? 0,
-  },
-  {
-    key: 'ultimoToque',
-    header: 'Último Toque',
-    cell: (a) => (a.ultimoToque != null ? formatDia(a.ultimoToque) + ' (velho demais)' : '—'),
-    sortValue: (a) => a.ultimoToque ?? 0,
-  },
-];
-
-/** Popup (Sheet) acionado pelos avisos da Projeção de rebanho — Felipe pediu (16/09/2026) pra dar pra ver quem são os animais, não só a contagem. */
-function PainelAnimaisSuspeitos({
-  aberto,
-  onOpenChange,
-  animaisEstimadosViaToque,
-  animaisSemDataConhecida,
-}: {
-  aberto: 'toque' | 'semdata' | null;
-  onOpenChange: (v: 'toque' | 'semdata' | null) => void;
-  animaisEstimadosViaToque: PartoEstimadoViaToque[];
-  animaisSemDataConhecida: PrenhaSemDataConhecida[];
-}) {
-  return (
-    <Sheet open={aberto !== null} onOpenChange={(v) => !v && onOpenChange(null)}>
-      <SheetContent className="w-full overflow-y-auto sm:max-w-2xl">
-        <SheetHeader>
-          <SheetTitle>
-            {aberto === 'toque' ? 'Partos estimados pelo Toque' : 'Prenhas sem data confiável'}
-          </SheetTitle>
-        </SheetHeader>
-        <div className="px-4 pb-4">
-          {aberto === 'toque' ? (
-            <DataTable columns={COLUNAS_ESTIMADOS_TOQUE} rows={animaisEstimadosViaToque} rowKey={(a) => a.id} />
-          ) : (
-            <DataTable columns={COLUNAS_SEM_DATA} rows={animaisSemDataConhecida} rowKey={(a) => a.id} />
-          )}
-        </div>
-      </SheetContent>
-    </Sheet>
-  );
-}
-
-/**
  * Valor inicial sugerido pros marcos que também existem, com outro nome, na
  * fórmula de Categoria por idade de outro cliente AppSheet (Katmandu, ver
  * `lib/katmandu/categoria.ts`, 4 faixas de ~365 dias confirmadas célula a
@@ -637,23 +283,32 @@ const DEFAULT_IDADE_MARCO: Record<string, number> = {
 function MarcosIdadeSecao({ marcosIdade, onChanged }: { marcosIdade: MarcoIdade[]; onChanged: () => void }) {
   const [valores, setValores] = useState<Record<string, string>>({});
   const [salvandoId, setSalvandoId] = useState<string | null>(null);
+  const [unidade, setUnidade] = useState<UnidadeIdade>('dias');
 
   function valorInicial(m: MarcoIdade): string {
-    if (m.idadeDias != null) return String(m.idadeDias);
-    const sugestao = m.marco != null ? DEFAULT_IDADE_MARCO[m.marco] : undefined;
-    return sugestao != null ? String(sugestao) : '';
+    const dias = m.idadeDias ?? (m.marco != null ? DEFAULT_IDADE_MARCO[m.marco] : undefined);
+    if (dias == null) return '';
+    if (unidade === 'dias') return String(dias);
+    return String(Math.round((dias / DIAS_POR_UNIDADE[unidade]) * 10) / 10);
+  }
+
+  /** Troca de unidade limpa os campos digitados — o texto exibido é sempre recomputado de `idadeDias` na unidade nova, nunca convertido às cegas. */
+  function trocarUnidade(u: UnidadeIdade) {
+    setUnidade(u);
+    setValores({});
   }
 
   async function salvar(m: MarcoIdade) {
     const bruto = valores[m.id] ?? valorInicial(m);
     const num = Number(bruto.replace(',', '.'));
     if (!Number.isFinite(num) || num <= 0) return;
+    const idadeDias = Math.round(num * DIAS_POR_UNIDADE[unidade]);
     setSalvandoId(m.id);
     try {
       const res = await fetch('/FI_FCG/api/marcos-idade', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: m.id, idadeDias: num }),
+        body: JSON.stringify({ id: m.id, idadeDias }),
       });
       if (res.ok) onChanged();
     } finally {
@@ -663,10 +318,25 @@ function MarcosIdadeSecao({ marcosIdade, onChanged }: { marcosIdade: MarcoIdade[
 
   return (
     <section className="flex flex-col gap-3">
-      <h2 className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground">
-        Idades por Marco (dias)
-        <InfoTip info={INFO_SECAO_MARCOS} />
-      </h2>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground">
+          Idades por Marco
+          <InfoTip info={INFO_SECAO_MARCOS} />
+        </h2>
+        <div className="flex gap-1">
+          {(Object.keys(LABEL_UNIDADE_IDADE) as UnidadeIdade[]).map((u) => (
+            <Button
+              type="button"
+              key={u}
+              size="sm"
+              variant={unidade === u ? 'default' : 'outline'}
+              onClick={() => trocarUnidade(u)}
+            >
+              {LABEL_UNIDADE_IDADE[u]}
+            </Button>
+          ))}
+        </div>
+      </div>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {marcosIdade.map((m) => (
           <div key={m.id} className="rounded-xl border border-border bg-card p-4">
@@ -678,7 +348,7 @@ function MarcosIdadeSecao({ marcosIdade, onChanged }: { marcosIdade: MarcoIdade[
               <Input
                 value={valores[m.id] ?? valorInicial(m)}
                 onChange={(e) => setValores((v) => ({ ...v, [m.id]: e.target.value }))}
-                placeholder="dias"
+                placeholder={unidade}
                 className="h-8"
                 inputMode="numeric"
               />
@@ -725,7 +395,7 @@ function FunilCard({ funil }: { funil: FunilCalculado }) {
         </span>
       </div>
       {funil.custoTotal == null && (
-        <p className="mt-1 text-xs text-amber-400">Falta GMD de alguma categoria da cadeia — ver seção GMD por Categoria.</p>
+        <p className="mt-1 text-xs text-amber-400">Falta GPD de alguma categoria da cadeia — ver seção GPD por Categoria.</p>
       )}
     </div>
   );
@@ -763,7 +433,7 @@ function GmdCategoriaSecao({
   return (
     <section className="flex flex-col gap-3">
       <h2 className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground">
-        GMD por Categoria (kg/dia)
+        GPD por Categoria (kg/dia)
         <InfoTip info={INFO_SECAO_GMD} />
       </h2>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">

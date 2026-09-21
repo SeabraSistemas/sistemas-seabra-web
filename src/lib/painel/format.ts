@@ -135,6 +135,16 @@ export function somarDias(dia: number | null, dias: number): number | null {
   return data.getFullYear() * 10000 + (data.getMonth() + 1) * 100 + data.getDate();
 }
 
+/**
+ * Unidade escolhível pra campos de "idade em dias" (Projeção, Idades por
+ * Marco) — o dado sempre fica em dias por baixo, isto só converte o que o
+ * usuário vê/digita. Meses/anos em base 30/365 (mesma aproximação usada em
+ * todo o motor de projeção, não calendário exato).
+ */
+export type UnidadeIdade = 'dias' | 'meses' | 'anos';
+export const DIAS_POR_UNIDADE: Record<UnidadeIdade, number> = { dias: 1, meses: 30, anos: 365 };
+export const LABEL_UNIDADE_IDADE: Record<UnidadeIdade, string> = { dias: 'Dias', meses: 'Meses', anos: 'Anos' };
+
 const numberFormatter = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 2 });
 
 export function formatNumber(n: number | null | undefined): string {

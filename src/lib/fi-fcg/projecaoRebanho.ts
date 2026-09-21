@@ -26,13 +26,21 @@
  * daquele ciclo do IATF antigo e prenhou de novo. Usar o IATF velho previa
  * um parto no passado e a vaca sumia da projeção em silêncio. Decisão do
  * Felipe: quando o IATF passar de `IATF_MAX_DIAS`, cair pro Toque mais
- * recente com Diagnóstico de prenhez como âncora (aproximação, não é dia 0
- * da gestação, mas mais realista que um IATF de 2-3 anos atrás) — e só
- * aceitar esse Toque se ele também não for velho demais (`TOQUE_MAX_DIAS`,
- * o próprio limite da gestação: toque é sempre DEPOIS da cobertura, então
- * acima de 283 dias o parto já estaria vencido mesmo no melhor caso).
- * Sem nenhuma âncora utilizável, vira `partosSemDataConhecida` — nunca
- * inventamos uma data.
+ * recente com Diagnóstico de prenhez como âncora, e só aceitar esse Toque se
+ * ele também não for velho demais (`TOQUE_MAX_DIAS`, o próprio limite da
+ * gestação: toque é sempre DEPOIS da cobertura, então acima de 283 dias o
+ * parto já estaria vencido mesmo no melhor caso). Sem nenhuma âncora
+ * utilizável, vira `partosSemDataConhecida` — nunca inventamos uma data.
+ *
+ * Quando cai pro Toque (21/09/2026, pedido do Felipe): NÃO soma mais
+ * `DIAS_GESTACAO_BOVINO` a partir da data do Toque (isso tratava o Toque
+ * como se fosse o dia da cobertura, o que ele nunca é — ele é sempre
+ * posterior). Em vez disso usa o próprio estágio do Diagnóstico do Toque
+ * (Adiantada/Regular/Tardia) pra estimar quanto falta AQUELE dia até o
+ * parto, direto — ver `DIAS_PARA_PARTO_POR_DIAGNOSTICO`. É uma estimativa
+ * (o Diagnóstico é um estágio, não um dia exato de gestação), mas mais
+ * precisa que somar a gestação inteira a partir de um toque que já pode ter
+ * sido feito meses depois da cobertura real.
  *
  * Mudança de categoria: idade atual (nascimento -> hoje) cruza a idade do
  * marco (aba "Idades por Marco") -> muda de categoria naquele mês. Novilha
@@ -59,6 +67,19 @@ export const DIAS_GESTACAO_BOVINO = 283;
 export const IATF_MAX_DIAS = DIAS_GESTACAO_BOVINO + 90;
 /** Toque é sempre feito DEPOIS da cobertura (nunca no dia 0) — acima da gestação inteira o parto já estaria vencido mesmo no melhor caso. */
 export const TOQUE_MAX_DIAS = DIAS_GESTACAO_BOVINO;
+
+/**
+ * Meses-até-o-parto por estágio do Diagnóstico do Toque, convertidos pra
+ * dias (×30, mesma unidade do resto do motor) — pedido do Felipe
+ * (21/09/2026): Adiantada = gestação avançada (perto do parto), Regular =
+ * meio da gestação, Tardia = gestação recém-confirmada (ainda falta quase
+ * tudo). Só usado quando não há Cobertura (IATF) utilizável, ver `usaToque`.
+ */
+export const DIAS_PARA_PARTO_POR_DIAGNOSTICO: Record<string, number> = {
+  Adiantada: 2 * 30,
+  Regular: 5 * 30,
+  Tardia: 8 * 30,
+};
 
 interface Transicao {
   de: string;
@@ -89,13 +110,18 @@ function ultimaDataIatfPorAnimal(iatf: RegIatf[]): Map<string, DiaCompacto> {
   return mapa;
 }
 
-/** Data do Toque mais recente por animal, só entre os que CONFIRMARAM prenhez (Diagnóstico != Vazia/vazio). */
-function ultimoTequePrenhaPorAnimal(toque: RegToque[]): Map<string, DiaCompacto> {
-  const mapa = new Map<string, DiaCompacto>();
+interface ToquePrenha {
+  data: DiaCompacto;
+  diagnostico: string;
+}
+
+/** Toque mais recente por animal, só entre os que CONFIRMARAM prenhez (Diagnóstico != Vazia/vazio) — data + o próprio Diagnóstico (Adiantada/Regular/Tardia), usado como estimativa de quanto falta pro parto (ver DIAS_PARA_PARTO_POR_DIAGNOSTICO). */
+function ultimoTequePrenhaPorAnimal(toque: RegToque[]): Map<string, ToquePrenha> {
+  const mapa = new Map<string, ToquePrenha>();
   for (const t of toque) {
     if (t.data == null || t.diagnostico == null || t.diagnostico === 'Vazia') continue;
     const atual = mapa.get(t.id);
-    if (atual == null || t.data > atual) mapa.set(t.id, t.data);
+    if (atual == null || t.data > atual.data) mapa.set(t.id, { data: t.data, diagnostico: t.diagnostico });
   }
   return mapa;
 }
@@ -116,6 +142,8 @@ export interface PartoEstimadoViaToque {
   id: string;
   fazenda: string | null;
   dataToque: DiaCompacto;
+  /** Adiantada/Regular/Tardia — o estágio usado pra estimar `partoPrevisto` (ver DIAS_PARA_PARTO_POR_DIAGNOSTICO). */
+  diagnostico: string;
   partoPrevisto: DiaCompacto;
 }
 
@@ -188,24 +216,43 @@ export function projetarRebanho(
     const diasIatf = dataIatfRecente != null ? diasEntre(dataIatfRecente, hoje) : null;
     const usaIatf = dataIatfRecente != null && diasIatf != null && diasIatf <= IATF_MAX_DIAS;
 
-    const dataToqueRecente = ultimoToque.get(a.id) ?? null;
+    const toqueRecente = ultimoToque.get(a.id) ?? null;
+    const dataToqueRecente = toqueRecente?.data ?? null;
     const diasToque = dataToqueRecente != null ? diasEntre(dataToqueRecente, hoje) : null;
-    const usaToque = !usaIatf && dataToqueRecente != null && diasToque != null && diasToque <= TOQUE_MAX_DIAS;
+    // Diagnóstico sem mapeamento conhecido (nunca deveria acontecer com os 3
+    // valores reais — Adiantada/Regular/Tardia — mas defensivo: sem estimativa
+    // de dias, o Toque não serve de âncora, igual a não ter Toque nenhum).
+    const diasParaPartoToque = toqueRecente != null ? (DIAS_PARA_PARTO_POR_DIAGNOSTICO[toqueRecente.diagnostico] ?? null) : null;
+    const usaToque =
+      !usaIatf && toqueRecente != null && diasToque != null && diasToque <= TOQUE_MAX_DIAS && diasParaPartoToque != null;
 
-    const dataCobertura = usaIatf ? dataIatfRecente : usaToque ? dataToqueRecente : null;
-    if (dataCobertura == null) {
+    if (!usaIatf && !usaToque) {
       partosSemDataConhecida++;
       animaisSemDataConhecida.push({ id: a.id, fazenda: a.fazenda, ultimaIatf: dataIatfRecente, ultimoToque: dataToqueRecente });
       continue;
     }
-    const partoPrevisto = somarDias(dataCobertura, DIAS_GESTACAO_BOVINO);
+
+    // IATF é a Cobertura real => soma a gestação inteira a partir dela. Toque
+    // NUNCA é o dia da cobertura (é sempre posterior) — em vez de somar a
+    // gestação inteira a partir dele, usa o próprio Diagnóstico (estágio da
+    // gestação naquele dia) pra estimar quanto falta (ver comentário no topo
+    // do arquivo e DIAS_PARA_PARTO_POR_DIAGNOSTICO).
+    const partoPrevisto = usaIatf
+      ? somarDias(dataIatfRecente, DIAS_GESTACAO_BOVINO)
+      : somarDias(dataToqueRecente, diasParaPartoToque!);
     if (partoPrevisto == null) continue;
     if (partoPrevisto >= hoje && partoPrevisto <= dataFinal) {
       const mesParto = mesDe(partoPrevisto);
       partosPorMes.set(mesParto, (partosPorMes.get(mesParto) ?? 0) + 1);
       if (usaToque) {
         partosEstimadosViaToque++;
-        animaisEstimadosViaToque.push({ id: a.id, fazenda: a.fazenda, dataToque: dataToqueRecente!, partoPrevisto });
+        animaisEstimadosViaToque.push({
+          id: a.id,
+          fazenda: a.fazenda,
+          dataToque: dataToqueRecente!,
+          diagnostico: toqueRecente!.diagnostico,
+          partoPrevisto,
+        });
       }
     }
   }

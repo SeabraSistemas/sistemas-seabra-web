@@ -255,8 +255,6 @@ export async function getDadosFinanceiro() {
     consumoCategoria,
     gmdCategoria,
     marcosIdade,
-    iatf,
-    toque,
   ] = await Promise.all([
     getVendas(),
     getBaixas(),
@@ -271,8 +269,6 @@ export async function getDadosFinanceiro() {
     getConsumoCategoria(),
     getGmdCategoria(),
     getMarcosIdade(),
-    getIatf(),
-    getToque(),
   ]);
   return {
     vendas,
@@ -288,8 +284,6 @@ export async function getDadosFinanceiro() {
     consumoCategoria,
     gmdCategoria,
     marcosIdade,
-    iatf,
-    toque,
   };
 }
 
