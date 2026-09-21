@@ -12,13 +12,24 @@ import { FilterRange } from '@/components/painel/FilterRange';
 import { CsvExport, type CsvColumn } from '@/components/painel/CsvExport';
 import { EstadoCarga } from '@/components/painel/EstadoCarga';
 import { WeightLossBadge } from '@/components/painel/WeightLossBadge';
+import { GlossarioTip, type TermoGlossario } from '@/components/painel/CampoInfo';
+import { FichaAnimalPesagem } from '@/components/fi-fcg/FichaAnimalPesagem';
+import { FormarLotePainel } from '@/components/fi-fcg/FormarLotePainel';
 import { media, soma } from '@/lib/painel/agregacao';
 import { comparadorDataDesc, dentroFaixa, filtrarPor, opcoesExcluindo, type Condicao } from '@/lib/painel/filters';
 import { desempacotar } from '@/lib/painel/pacote';
 import { formatCompacto, formatDia, formatNumber, hojeCompacto, numberBounds } from '@/lib/painel/format';
 import { montarLotesEngorda, type AnimalDoLote } from '@/lib/fi-fcg/engorda';
 import type { PacoteLeitura } from '@/lib/fi-fcg/pacotes';
-import type { RegPesagem, RegRebanho } from '@/lib/fi-fcg/types';
+import type { LoteCadastrado, RegPesagem, RegRebanho } from '@/lib/fi-fcg/types';
+
+/** Mesmo texto do app e do /katmandu (SiglasInfo.tsx) — o produtor já conhece essa redação. */
+const SIGLAS_PESAGEM: readonly TermoGlossario[] = [
+  ['GPDi', 'Ganho de Peso Diário entre pesagens — quanto o animal ganhou por dia desde a pesagem anterior (kg/dia)'],
+  ['GPD', 'Ganho de Peso Diário — ganho médio por dia desde o nascimento (kg/dia)'],
+  ['PDI', 'Peso Diário de Idade — peso do animal dividido pelos dias de vida (kg/dia)'],
+  ['GMD', 'Ganho Médio Diário — ganho por dia desde o início da engorda (kg/dia)'],
+] as const;
 
 const SITUACAO_LABEL: Record<AnimalDoLote['situacao'], string> = {
   ativo: 'Ativo',
@@ -34,16 +45,23 @@ const SITUACAO_VARIANTE: Record<AnimalDoLote['situacao'], 'outline' | 'secondary
 export function PesagemView({
   dados,
   engorda,
+  rebanhoLotes,
+  lotesCadastrados,
 }: {
   dados: PacoteLeitura<RegPesagem>;
   engorda: PacoteLeitura<RegRebanho>;
+  rebanhoLotes: PacoteLeitura<RegRebanho>;
+  lotesCadastrados: PacoteLeitura<LoteCadastrado>;
 }) {
   const itens = useMemo(() => desempacotar<RegPesagem>(dados.pacote), [dados.pacote]);
   const animaisEmEngorda = useMemo(() => desempacotar<RegRebanho>(engorda.pacote), [engorda.pacote]);
+  const animaisComLote = useMemo(() => desempacotar<RegRebanho>(rebanhoLotes.pacote), [rebanhoLotes.pacote]);
+  const lotes = useMemo(() => desempacotar<LoteCadastrado>(lotesCadastrados.pacote), [lotesCadastrados.pacote]);
 
   const [data, setData] = useState('');
   const [fazenda, setFazenda] = useState('');
   const [soPerdaPeso, setSoPerdaPeso] = useState(false);
+  const [animalAberto, setAnimalAberto] = useState<string | null>(null);
 
   const pesoBounds = useMemo(() => numberBounds(itens.map((r) => r.pesoKg)), [itens]);
   const [pesoRange, setPesoRange] = useState<[number, number] | null>(null);
@@ -195,27 +213,36 @@ export function PesagemView({
         </Button>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-        <MetricCard id="total" label="Total" value={formatCompacto(total)} />
-        <MetricCard id="mediaKg" label="Média/Kg" value={formatNumber(mediaKg)} />
-        <MetricCard id="totalKg" label="Total/Kg" value={formatCompacto(totalKg)} />
-        <MetricCard id="mediaGmd" label="Média/GMD" value={formatNumber(mediaGmd)} />
-        <MetricCard id="mediaPdi" label="Média/PDI" value={formatNumber(mediaPdi)} />
-        <MetricCard id="mediaGpdi" label="Média/GPDi" value={formatNumber(mediaGpdi)} />
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center gap-1.5">
+          <h2 className="text-sm font-medium text-muted-foreground">Indicadores</h2>
+          <GlossarioTip titulo="O que significa cada sigla" termos={SIGLAS_PESAGEM} />
+        </div>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+          <MetricCard id="total" label="Total" value={formatCompacto(total)} />
+          <MetricCard id="mediaKg" label="Média/Kg" value={formatNumber(mediaKg)} />
+          <MetricCard id="totalKg" label="Total/Kg" value={formatCompacto(totalKg)} />
+          <MetricCard id="mediaGmd" label="Média/GMD" value={formatNumber(mediaGmd)} />
+          <MetricCard id="mediaPdi" label="Média/PDI" value={formatNumber(mediaPdi)} />
+          <MetricCard id="mediaGpdi" label="Média/GPDi" value={formatNumber(mediaGpdi)} />
+        </div>
       </div>
 
       <Tabs defaultValue="tabela">
         <TabsList>
           <TabsTrigger value="tabela">Tabela</TabsTrigger>
           <TabsTrigger value="lotes">Lotes de engorda</TabsTrigger>
+          <TabsTrigger value="formar">Formar lote / GMD</TabsTrigger>
         </TabsList>
 
         <TabsContent value="tabela" className="flex flex-col gap-3">
           <div className="flex items-center justify-between gap-3">
-            <h2 className="text-sm font-medium text-muted-foreground">{formatNumber(filtrados.length)} registros</h2>
+            <h2 className="text-sm font-medium text-muted-foreground">
+              {formatNumber(filtrados.length)} registros · clique numa linha pra ver a ficha do animal
+            </h2>
             <CsvExport columns={csvColunas} rows={filtrados} requiredKeys={['id']} filename="fi_fcg_pesagem" />
           </div>
-          <DataTable columns={colunas} rows={filtrados} rowKey={(r) => r.id} />
+          <DataTable columns={colunas} rows={filtrados} rowKey={(r) => r.id} onRowClick={(r) => setAnimalAberto(r.id)} />
         </TabsContent>
 
         <TabsContent value="lotes" className="flex flex-col gap-3">
@@ -282,7 +309,12 @@ export function PesagemView({
                     </Button>
                     {aberto && (
                       <div className="mt-3">
-                        <DataTable columns={colunasAnimalLote} rows={lote.animais} rowKey={(a) => a.id} />
+                        <DataTable
+                          columns={colunasAnimalLote}
+                          rows={lote.animais}
+                          rowKey={(a) => a.id}
+                          onRowClick={(a) => setAnimalAberto(a.id)}
+                        />
                       </div>
                     )}
                   </div>
@@ -291,7 +323,17 @@ export function PesagemView({
             </div>
           )}
         </TabsContent>
+        <TabsContent value="formar">
+          <FormarLotePainel pesagens={itens} rebanhoLotes={animaisComLote} lotesCadastrados={lotes} />
+        </TabsContent>
       </Tabs>
+
+      <FichaAnimalPesagem
+        animalId={animalAberto}
+        pesagens={itens}
+        siglas={SIGLAS_PESAGEM}
+        onFechar={() => setAnimalAberto(null)}
+      />
     </div>
   );
 }

@@ -15,6 +15,7 @@ import type {
   Insumo,
   ItemDieta,
   LancamentoFinanceiro,
+  LoteCadastrado,
   MarcoIdade,
   RegAborto,
   RegBaixa,
@@ -288,6 +289,13 @@ export function mapDieta(rows: string[][] | null): ItemDieta[] {
       percentual: parseNumber(r['Percentual']),
     }))
     .filter((x) => x.id !== '');
+}
+
+/** Aba "Lotes" (do AppSheet do cliente) — a lista de lotes cadastrados que alimenta o dropdown dele. */
+export function mapLotes(rows: string[][] | null): LoteCadastrado[] {
+  return toObjects(rows)
+    .map((r) => ({ id: parseText(r['ID lote']) ?? '', nome: parseText(r['Lote']) ?? '' }))
+    .filter((x) => x.nome !== '');
 }
 
 /** Aba "Consumo por Categoria" (nova, 16/09/2026 — Custo de formação). 21 linhas fixas (7 categorias × 3 tipos), semeadas uma vez. */

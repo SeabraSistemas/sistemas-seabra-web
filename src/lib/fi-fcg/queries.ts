@@ -14,6 +14,7 @@ import {
   mapGmdCategoria,
   mapIatf,
   mapInsumos,
+  mapLotes,
   mapMarcosIdade,
   mapPartos,
   mapPesagem,
@@ -30,6 +31,7 @@ import type {
   Insumo,
   ItemDieta,
   LancamentoFinanceiro,
+  LoteCadastrado,
   MarcoIdade,
   RegAborto,
   RegBaixa,
@@ -135,6 +137,29 @@ export async function getPesagem(): Promise<Leitura<RegPesagem>> {
 export async function getAnimaisEmEngorda(): Promise<Leitura<RegRebanho>> {
   const rebanho = await getRebanho();
   return { ...rebanho, itens: rebanho.itens.filter((r) => r.entradaEngorda != null) };
+}
+
+/**
+ * Aba "Lotes" (do AppSheet) — a lista de lotes cadastrados. Sem cache: a
+ * tela "Formar lote" precisa ver na hora o lote que ela mesma acabou de
+ * criar, e a aba é minúscula (48 linhas).
+ */
+export async function getLotes(): Promise<Leitura<LoteCadastrado>> {
+  const { linhas, stale, carregadoEm } = await lerAbaFresca('Lotes');
+  return { itens: mapLotes(linhas), configurado: spreadsheetId() != null, stale, carregadoEm };
+}
+
+/**
+ * RebanhoProd inteiro, mas só os campos que a tela de Pesagem precisa pra
+ * lidar com lote: qual o lote ATUAL do animal (a aba Pesagem guarda o lote
+ * congelado do dia da pesagem — decisão do Felipe, 21/09/2026: o filtro e a
+ * formação de lote trabalham com o de RebanhoProd) e a Categoria, pra não
+ * deixar pôr animal vendido/baixado num lote novo. Sem cache: depois de
+ * formar um lote o usuário tem que ver o resultado na hora.
+ */
+export async function getRebanhoLotes(): Promise<Leitura<RegRebanho>> {
+  const { linhas, stale, carregadoEm } = await lerAbaFresca('RebanhoProd');
+  return { itens: mapRebanho(linhas), configurado: spreadsheetId() != null, stale, carregadoEm };
 }
 
 export async function getBaixas(): Promise<Leitura<RegBaixa>> {

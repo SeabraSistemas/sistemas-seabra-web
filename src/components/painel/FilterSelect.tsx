@@ -1,6 +1,7 @@
 'use client';
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { InfoTip, type InfoCampo } from '@/components/painel/CampoInfo';
 
 const TODOS = '__todos__';
 
@@ -16,6 +17,7 @@ export function FilterSelect({
   labelDe,
   placeholder = 'Todos',
   triggerClassName = 'w-full sm:w-40',
+  info,
 }: {
   label: string;
   value: string;
@@ -24,10 +26,15 @@ export function FilterSelect({
   labelDe?: (value: string) => string;
   placeholder?: string;
   triggerClassName?: string;
+  /** Quando passado, mostra o "i" ao lado do label (mesma altura dos outros filtros da linha). */
+  info?: InfoCampo;
 }) {
   return (
     <div className="flex min-w-0 flex-col gap-1">
-      <span className="text-xs text-muted-foreground">{label}</span>
+      <span className="flex items-center gap-1 text-xs text-muted-foreground">
+        {label}
+        {info && <InfoTip info={info} />}
+      </span>
       <Select value={value || TODOS} onValueChange={(v) => onChange(v === TODOS ? '' : v)}>
         <SelectTrigger size="sm" className={triggerClassName}>
           <SelectValue placeholder={placeholder} />

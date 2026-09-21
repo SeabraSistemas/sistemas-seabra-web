@@ -15,6 +15,7 @@ import type {
   GmdCategoria,
   Insumo,
   ItemDieta,
+  LoteCadastrado,
   MarcoIdade,
   RegBaixa,
   RegIatf,
@@ -148,6 +149,16 @@ export const CAMPOS_REBANHO_ENGORDA: (keyof RegRebanho & string)[] = [
   'pesoEntradaEngorda',
   'gmdAtual',
 ];
+
+/**
+ * Subconjunto de RegRebanho pra tela "Formar lote" (Pesagem, 21/09/2026) —
+ * o lote ATUAL de cada animal e a categoria (pra barrar vendido/baixado).
+ * São os 7.860 animais, mas só 3 campos: empacotado em tupla isso é ordem
+ * de grandeza menor que `CAMPOS_REBANHO` (15 campos) do /rebanho.
+ */
+export const CAMPOS_REBANHO_LOTE: (keyof RegRebanho & string)[] = ['id', 'lote', 'categoria'];
+
+export const CAMPOS_LOTE_CADASTRADO: (keyof LoteCadastrado & string)[] = ['id', 'nome'];
 
 export const CAMPOS_BAIXA: (keyof RegBaixa & string)[] = [
   'id',

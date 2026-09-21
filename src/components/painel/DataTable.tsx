@@ -25,11 +25,14 @@ export function DataTable<T>({
   rows,
   rowKey,
   pageSize = PAGE_SIZE_PADRAO,
+  onRowClick,
 }: {
   columns: DataTableColumn<T>[];
   rows: T[];
   rowKey: (row: T) => string;
   pageSize?: number;
+  /** Opcional — quando passado, a linha inteira vira clicável (cursor, hover e Enter/Espaço pelo teclado). Sem isto a tabela fica exatamente como era. */
+  onRowClick?: (row: T) => void;
 }) {
   const [sort, setSort] = useState<{ key: string; dir: 'asc' | 'desc' } | null>(null);
   const [page, setPage] = useState(0);
@@ -123,7 +126,22 @@ export function DataTable<T>({
               </TableRow>
             ) : (
               pageRows.map((row, i) => (
-                <TableRow key={chaves[i]}>
+                <TableRow
+                  key={chaves[i]}
+                  className={onRowClick ? 'cursor-pointer hover:bg-accent/50' : undefined}
+                  tabIndex={onRowClick ? 0 : undefined}
+                  onClick={onRowClick ? () => onRowClick(row) : undefined}
+                  onKeyDown={
+                    onRowClick
+                      ? (e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            onRowClick(row);
+                          }
+                        }
+                      : undefined
+                  }
+                >
                   {columns.map((col) => (
                     <TableCell key={col.key} className={col.className}>
                       {col.cell(row)}

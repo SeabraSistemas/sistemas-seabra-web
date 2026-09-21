@@ -179,6 +179,62 @@ export async function escreverColuna(
   }
 }
 
+export interface CelulasParaEscrever {
+  /** Range A1 já com a aba citada, ex: "'RebanhoProd'!N5". */
+  range: string;
+  /** Matriz de valores daquele range (normalmente uma linha só). */
+  valores: string[][];
+}
+
+/**
+ * Escreve MUITOS ranges esparsos numa tacada (`values:batchUpdate`) — o
+ * recálculo de GMD de um lote (21/09/2026) toca 4 células não-contíguas por
+ * animal em RebanhoProd e 2 por pesagem em Pesagem; num lote de 500 animais
+ * isso passa de 7 mil ranges, e uma requisição por range estouraria a cota
+ * da API. `escreverColuna` não serve: as colunas não são contíguas e as
+ * linhas não são sequenciais.
+ *
+ * Quebra em lotes de `TAMANHO_LOTE` ranges por requisição. Para na primeira
+ * falha e devolve quantos ranges foram efetivamente escritos — quem chama
+ * decide o que fazer com uma escrita parcial (é Sheets, não tem transação).
+ */
+const TAMANHO_LOTE_ESCRITA = 500;
+
+export async function escreverCelulas(
+  spreadsheetId: string,
+  atualizacoes: CelulasParaEscrever[],
+  valueInputOption: 'RAW' | 'USER_ENTERED' = 'USER_ENTERED',
+): Promise<{ ok: boolean; escritos: number }> {
+  if (atualizacoes.length === 0) return { ok: true, escritos: 0 };
+  const t = await token();
+  if (!t) return { ok: false, escritos: 0 };
+
+  let escritos = 0;
+  for (let i = 0; i < atualizacoes.length; i += TAMANHO_LOTE_ESCRITA) {
+    const fatia = atualizacoes.slice(i, i + TAMANHO_LOTE_ESCRITA);
+    try {
+      const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values:batchUpdate`;
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${t}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          valueInputOption,
+          data: fatia.map((a) => ({ range: a.range, values: a.valores })),
+        }),
+      });
+      if (!res.ok) {
+        console.error('[sheets] falha no batchUpdate', res.status, await res.text());
+        return { ok: false, escritos };
+      }
+      escritos += fatia.length;
+    } catch (err) {
+      console.error('[sheets] falha no batchUpdate', err);
+      return { ok: false, escritos };
+    }
+  }
+  return { ok: true, escritos };
+}
+
 /** Acrescenta uma linha no fim de `aba`. false se faltar config ou falhar. */
 export async function adicionarLinha(
   spreadsheetId: string,

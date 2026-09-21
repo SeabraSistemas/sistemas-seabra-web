@@ -203,6 +203,16 @@ export interface Custo {
  * categoria do funil). Nenhuma das 3 é do AppSheet do cliente.
  */
 /**
+ * Uma linha da aba "Lotes" do AppSheet do cliente (ID lote | Lote) — é a
+ * lista que alimenta o dropdown de lote dele. O site lê pra não duplicar
+ * nome ao formar um lote novo, e acrescenta quando o nome é inédito.
+ */
+export interface LoteCadastrado {
+  id: string;
+  nome: string;
+}
+
+/**
  * Os 3 tipos fixos de insumo (16/09/2026, alinhado com o "Nutrição & Custo"
  * do seabra-app-main — `formulacao_categoria`/`consumo_categoria` de lá) —
  * cada um tem seu próprio consumo total (kg/dia) por categoria, e dentro
