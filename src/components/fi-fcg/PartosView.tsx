@@ -23,6 +23,7 @@ export function PartosView({ dados }: { dados: PacoteLeitura<RegParto> }) {
   const [fazenda, setFazenda] = useState('');
   const [marca, setMarca] = useState('');
   const [sexo, setSexo] = useState('');
+  const [busca, setBusca] = useState('');
   const [buscaEletronica, setBuscaEletronica] = useState('');
   const [buscaMae, setBuscaMae] = useState('');
   const [buscaPai, setBuscaPai] = useState('');
@@ -36,12 +37,13 @@ export function PartosView({ dados }: { dados: PacoteLeitura<RegParto> }) {
       { key: 'fazenda', test: (r) => !fazenda || r.fazenda === fazenda },
       { key: 'marca', test: (r) => !marca || r.marca === marca },
       { key: 'sexo', test: (r) => !sexo || r.sexo === sexo },
+      { key: 'busca', test: (r) => !busca || r.id.toLowerCase().includes(busca.toLowerCase()) },
       { key: 'eletronica', test: (r) => !buscaEletronica || (r.eletronica ?? '').toLowerCase().includes(buscaEletronica.toLowerCase()) },
       { key: 'mae', test: (r) => !buscaMae || (r.idMae ?? '').toLowerCase().includes(buscaMae.toLowerCase()) },
       { key: 'pai', test: (r) => !buscaPai || (r.idPai ?? '').toLowerCase().includes(buscaPai.toLowerCase()) },
       { key: 'periodo', test: (r) => dentroPeriodo(r.nascimento, inicio, fim) },
     ];
-  }, [fazenda, marca, sexo, buscaEletronica, buscaMae, buscaPai, dataInicio, dataFim]);
+  }, [fazenda, marca, sexo, busca, buscaEletronica, buscaMae, buscaPai, dataInicio, dataFim]);
 
   const anos = useMemo(() => anosPresentes(itens.map((r) => r.nascimento)), [itens]);
 
@@ -88,6 +90,7 @@ export function PartosView({ dados }: { dados: PacoteLeitura<RegParto> }) {
       />
 
       <div className="flex flex-wrap items-end gap-3">
+        <FilterBusca label="ID animal" value={busca} onChange={setBusca} placeholder="Buscar ID..." />
         <FilterBusca label="ID eletrônica" value={buscaEletronica} onChange={setBuscaEletronica} placeholder="Buscar..." />
         <FilterSelect label="Marca" value={marca} onChange={setMarca} options={marcas} />
         <FilterSelect label="Sexo" value={sexo} onChange={setSexo} options={sexos} />

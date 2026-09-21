@@ -9,6 +9,7 @@ import { MetricCard } from '@/components/painel/MetricCard';
 import { DataTable, type DataTableColumn } from '@/components/painel/DataTable';
 import { FilterSelect } from '@/components/painel/FilterSelect';
 import { FilterRange } from '@/components/painel/FilterRange';
+import { FilterBusca } from '@/components/painel/FilterBusca';
 import { CsvExport, type CsvColumn } from '@/components/painel/CsvExport';
 import { EstadoCarga } from '@/components/painel/EstadoCarga';
 import { WeightLossBadge } from '@/components/painel/WeightLossBadge';
@@ -60,6 +61,9 @@ export function PesagemView({
 
   const [data, setData] = useState('');
   const [fazenda, setFazenda] = useState('');
+  const [busca, setBusca] = useState('');
+  const [sexo, setSexo] = useState('');
+  const [categoria, setCategoria] = useState('');
   const [soPerdaPeso, setSoPerdaPeso] = useState(false);
   const [animalAberto, setAnimalAberto] = useState<string | null>(null);
 
@@ -69,21 +73,44 @@ export function PesagemView({
   const diasBounds = useMemo(() => numberBounds(itens.map((r) => r.diasEngorda)), [itens]);
   const [diasRange, setDiasRange] = useState<[number, number] | null>(null);
 
+  // Pesagem não tem Categoria própria (só Sexo) — junta pelo ID com o rebanho
+  // (mesmo mapa que FormarLotePainel já usa) só pra esse filtro.
+  const categoriaPorId = useMemo(() => new Map(animaisComLote.map((a) => [a.id, a.categoria])), [animaisComLote]);
+
   const condicoes = useMemo((): Condicao<RegPesagem>[] => [
     { key: 'data', test: (r) => !data || String(r.data) === data },
     { key: 'fazenda', test: (r) => !fazenda || r.fazenda === fazenda },
+    { key: 'busca', test: (r) => !busca || r.id.toLowerCase().includes(busca.toLowerCase()) },
+    { key: 'sexo', test: (r) => !sexo || r.sexo === sexo },
+    { key: 'categoria', test: (r) => !categoria || categoriaPorId.get(r.id) === categoria },
     { key: 'peso', test: (r) => dentroFaixa(r.pesoKg, pesoBounds, pesoRange) },
     { key: 'dias', test: (r) => dentroFaixa(r.diasEngorda, diasBounds, diasRange) },
     { key: 'soPerdaPeso', test: (r) => !soPerdaPeso || (r.diferencaKg != null && r.diferencaKg < 0) },
-  ], [data, fazenda, pesoBounds, pesoRange, diasBounds, diasRange, soPerdaPeso]);
+  ], [data, fazenda, busca, sexo, categoria, categoriaPorId, pesoBounds, pesoRange, diasBounds, diasRange, soPerdaPeso]);
 
   const datas = useMemo(
     () => opcoesExcluindo(itens, condicoes, 'data', (r) => (r.data != null ? String(r.data) : null), comparadorDataDesc),
     [itens, condicoes],
   );
   const fazendas = useMemo(() => opcoesExcluindo(itens, condicoes, 'fazenda', (r) => r.fazenda), [itens, condicoes]);
+  const sexos = useMemo(() => opcoesExcluindo(itens, condicoes, 'sexo', (r) => r.sexo), [itens, condicoes]);
+  const categorias = useMemo(
+    () => opcoesExcluindo(itens, condicoes, 'categoria', (r) => categoriaPorId.get(r.id) ?? null),
+    [itens, condicoes, categoriaPorId],
+  );
 
   const filtrados = useMemo(() => filtrarPor(itens, condicoes), [itens, condicoes]);
+
+  // IDs que passam nos filtros acima — usado pra estreitar os animais
+  // exibidos dentro de cada card de "Lotes de engorda" (só quando algum
+  // filtro está de fato ativo; sem filtro, o lote mostra todo mundo, igual
+  // hoje). Peso/Dias comparam com os bounds pelo valor, não pela referência,
+  // porque cada render recalcula um array novo.
+  const filtrosPesagemAtivos =
+    Boolean(data || fazenda || busca || sexo || categoria || soPerdaPeso) ||
+    (pesoRange != null && pesoBounds != null && (pesoRange[0] !== pesoBounds[0] || pesoRange[1] !== pesoBounds[1])) ||
+    (diasRange != null && diasBounds != null && (diasRange[0] !== diasBounds[0] || diasRange[1] !== diasBounds[1]));
+  const idsFiltrados = useMemo(() => new Set(filtrados.map((r) => r.id)), [filtrados]);
 
   const total = filtrados.length;
   const mediaKg = useMemo(() => media(filtrados.map((r) => r.pesoKg)), [filtrados]);
@@ -194,6 +221,9 @@ export function PesagemView({
           triggerClassName="w-full sm:w-36"
         />
         <FilterSelect label="Fazenda" value={fazenda} onChange={setFazenda} options={fazendas} />
+        <FilterBusca label="ID animal" value={busca} onChange={setBusca} placeholder="Buscar ID..." />
+        <FilterSelect label="Sexo" value={sexo} onChange={setSexo} options={sexos} />
+        <FilterSelect label="Categoria" value={categoria} onChange={setCategoria} options={categorias} />
         {pesoBounds && (
           <FilterRange label="Intervalo do Peso/Kg" bounds={pesoBounds} value={pesoRange ?? pesoBounds} onChange={setPesoRange} />
         )}
@@ -255,6 +285,9 @@ export function PesagemView({
               {lotesEngorda.map((lote) => {
                 const chave = `${lote.fazenda}|${lote.entrada}`;
                 const aberto = lotesAbertos.has(chave);
+                const animaisVisiveis = filtrosPesagemAtivos
+                  ? lote.animais.filter((a) => idsFiltrados.has(a.id))
+                  : lote.animais;
                 return (
                   <div
                     key={chave}
@@ -305,16 +338,33 @@ export function PesagemView({
                       onClick={() => alternarLote(chave)}
                     >
                       {aberto ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
-                      {aberto ? 'Fechar acompanhamento' : `Ver os ${lote.total} animais`}
+                      {aberto
+                        ? 'Fechar acompanhamento'
+                        : filtrosPesagemAtivos && animaisVisiveis.length !== lote.total
+                          ? `Ver ${animaisVisiveis.length} de ${lote.total} animais`
+                          : `Ver os ${lote.total} animais`}
                     </Button>
                     {aberto && (
                       <div className="mt-3">
-                        <DataTable
-                          columns={colunasAnimalLote}
-                          rows={lote.animais}
-                          rowKey={(a) => a.id}
-                          onRowClick={(a) => setAnimalAberto(a.id)}
-                        />
+                        {filtrosPesagemAtivos && animaisVisiveis.length === 0 ? (
+                          <p className="rounded-lg border border-border bg-background p-4 text-sm text-muted-foreground">
+                            Nenhum animal deste lote corresponde aos filtros da Pesagem.
+                          </p>
+                        ) : (
+                          <>
+                            {filtrosPesagemAtivos && animaisVisiveis.length !== lote.total && (
+                              <p className="mb-2 text-xs text-muted-foreground">
+                                Mostrando {animaisVisiveis.length} de {lote.total} — filtros da Pesagem aplicados.
+                              </p>
+                            )}
+                            <DataTable
+                              columns={colunasAnimalLote}
+                              rows={animaisVisiveis}
+                              rowKey={(a) => a.id}
+                              onRowClick={(a) => setAnimalAberto(a.id)}
+                            />
+                          </>
+                        )}
                       </div>
                     )}
                   </div>

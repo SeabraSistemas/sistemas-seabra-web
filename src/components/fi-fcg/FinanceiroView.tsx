@@ -8,6 +8,7 @@ import { SerieMensal } from '@/components/painel/SerieMensal';
 import { DataTable, type DataTableColumn } from '@/components/painel/DataTable';
 import { FilterSelect } from '@/components/painel/FilterSelect';
 import { FilterPeriodo } from '@/components/painel/FilterPeriodo';
+import { FilterBusca } from '@/components/painel/FilterBusca';
 import { CsvExport, type CsvColumn } from '@/components/painel/CsvExport';
 import { EstadoCarga } from '@/components/painel/EstadoCarga';
 import { CustosPainel } from '@/components/fi-fcg/CustosPainel';
@@ -82,6 +83,7 @@ export function FinanceiroView({ dados }: { dados: PacoteFinanceiro }) {
   const [fazenda, setFazenda] = useState('');
   const [cliente, setCliente] = useState('');
   const [tipo, setTipo] = useState('');
+  const [busca, setBusca] = useState('');
   const [dataInicio, setDataInicio] = useState('');
   const [dataFim, setDataFim] = useState('');
 
@@ -92,9 +94,10 @@ export function FinanceiroView({ dados }: { dados: PacoteFinanceiro }) {
       { key: 'fazenda', test: (e) => !fazenda || e.fazenda === fazenda },
       { key: 'cliente', test: (e) => !cliente || e.cliente === cliente },
       { key: 'tipo', test: (e) => !tipo || e.tipo === tipo },
+      { key: 'busca', test: (e) => !busca || (e.idAnimal ?? e.id).toLowerCase().includes(busca.toLowerCase()) },
       { key: 'periodo', test: (e) => dentroPeriodo(e.data, inicio, fim) },
     ];
-  }, [fazenda, cliente, tipo, dataInicio, dataFim]);
+  }, [fazenda, cliente, tipo, busca, dataInicio, dataFim]);
 
   const anos = useMemo(() => anosPresentes(eventos.map((e) => e.data)), [eventos]);
 
@@ -278,6 +281,7 @@ export function FinanceiroView({ dados }: { dados: PacoteFinanceiro }) {
         <FilterSelect label="Fazenda" value={fazenda} onChange={setFazenda} options={fazendas} />
         <FilterSelect label="Cliente" value={cliente} onChange={setCliente} options={clientes} />
         <FilterSelect label="Tipo" value={tipo} onChange={setTipo} options={tipos} />
+        <FilterBusca label="ID animal" value={busca} onChange={setBusca} placeholder="Buscar ID..." />
       </div>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">

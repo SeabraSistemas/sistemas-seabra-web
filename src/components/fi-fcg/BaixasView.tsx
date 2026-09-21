@@ -5,6 +5,7 @@ import { MetricCard } from '@/components/painel/MetricCard';
 import { DataTable, type DataTableColumn } from '@/components/painel/DataTable';
 import { FilterSelect } from '@/components/painel/FilterSelect';
 import { FilterPeriodo } from '@/components/painel/FilterPeriodo';
+import { FilterBusca } from '@/components/painel/FilterBusca';
 import { CsvExport, type CsvColumn } from '@/components/painel/CsvExport';
 import { EstadoCarga } from '@/components/painel/EstadoCarga';
 import { media } from '@/lib/painel/agregacao';
@@ -18,6 +19,7 @@ export function BaixasView({ dados }: { dados: PacoteLeitura<RegBaixa> }) {
   const itens = useMemo(() => desempacotar<RegBaixa>(dados.pacote), [dados.pacote]);
 
   const [fazenda, setFazenda] = useState('');
+  const [busca, setBusca] = useState('');
   const [causaObito, setCausaObito] = useState('');
   const [tipo, setTipo] = useState('');
   const [dataInicio, setDataInicio] = useState('');
@@ -28,11 +30,12 @@ export function BaixasView({ dados }: { dados: PacoteLeitura<RegBaixa> }) {
     const fim = diaDeInput(dataFim);
     return [
       { key: 'fazenda', test: (b) => !fazenda || b.fazenda === fazenda },
+      { key: 'busca', test: (b) => !busca || b.id.toLowerCase().includes(busca.toLowerCase()) },
       { key: 'causaObito', test: (b) => !causaObito || b.causaObito === causaObito },
       { key: 'tipo', test: (b) => !tipo || b.tipo === tipo },
       { key: 'periodo', test: (b) => dentroPeriodo(b.data, inicio, fim) },
     ];
-  }, [fazenda, causaObito, tipo, dataInicio, dataFim]);
+  }, [fazenda, busca, causaObito, tipo, dataInicio, dataFim]);
 
   const anos = useMemo(() => anosPresentes(itens.map((b) => b.data)), [itens]);
 
@@ -79,6 +82,7 @@ export function BaixasView({ dados }: { dados: PacoteLeitura<RegBaixa> }) {
       <div className="flex flex-wrap items-end gap-3">
         <FilterPeriodo inicio={dataInicio} fim={dataFim} onInicioChange={setDataInicio} onFimChange={setDataFim} anos={anos} />
         <FilterSelect label="Fazenda" value={fazenda} onChange={setFazenda} options={fazendas} />
+        <FilterBusca label="Animal" value={busca} onChange={setBusca} placeholder="Buscar ID..." />
         <FilterSelect label="Causa do óbito" value={causaObito} onChange={setCausaObito} options={causas} />
         <FilterSelect label="Tipo" value={tipo} onChange={setTipo} options={tipos} />
       </div>

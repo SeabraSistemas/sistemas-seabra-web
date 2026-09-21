@@ -7,6 +7,7 @@ import { Donut } from '@/components/painel/Donut';
 import { BarrasHorizontais } from '@/components/painel/BarrasHorizontais';
 import { DataTable, type DataTableColumn } from '@/components/painel/DataTable';
 import { FilterSelect } from '@/components/painel/FilterSelect';
+import { FilterBusca } from '@/components/painel/FilterBusca';
 import { CsvExport, type CsvColumn } from '@/components/painel/CsvExport';
 import { EstadoCarga } from '@/components/painel/EstadoCarga';
 import { contagemPor, media } from '@/lib/painel/agregacao';
@@ -21,6 +22,7 @@ export function IatfView({ dados }: { dados: PacoteLeitura<RegIatf> }) {
 
   const [data, setData] = useState('');
   const [fazenda, setFazenda] = useState('');
+  const [busca, setBusca] = useState('');
   const [touro, setTouro] = useState('');
   const [inseminador, setInseminador] = useState('');
   const [ecc, setEcc] = useState('');
@@ -29,11 +31,12 @@ export function IatfView({ dados }: { dados: PacoteLeitura<RegIatf> }) {
   const condicoes = useMemo((): Condicao<RegIatf>[] => [
     { key: 'data', test: (r) => !data || String(r.data) === data },
     { key: 'fazenda', test: (r) => !fazenda || r.fazenda === fazenda },
+    { key: 'busca', test: (r) => !busca || r.id.toLowerCase().includes(busca.toLowerCase()) },
     { key: 'touro', test: (r) => !touro || r.partida === touro },
     { key: 'inseminador', test: (r) => !inseminador || r.inseminador === inseminador },
     { key: 'ecc', test: (r) => !ecc || r.ecc === ecc },
     { key: 'lote', test: (r) => !lote || r.lote === lote },
-  ], [data, fazenda, touro, inseminador, ecc, lote]);
+  ], [data, fazenda, busca, touro, inseminador, ecc, lote]);
 
   const datas = useMemo(
     () => opcoesExcluindo(itens, condicoes, 'data', (r) => (r.data != null ? String(r.data) : null), comparadorDataDesc),
@@ -93,6 +96,7 @@ export function IatfView({ dados }: { dados: PacoteLeitura<RegIatf> }) {
       <div className="flex flex-wrap items-end gap-3">
         <FilterSelect label="Data IATF" value={data} onChange={setData} options={datas} labelDe={(v) => formatDia(Number(v))} />
         <FilterSelect label="Fazenda" value={fazenda} onChange={setFazenda} options={fazendas} />
+        <FilterBusca label="ID animal" value={busca} onChange={setBusca} placeholder="Buscar ID..." />
         <FilterSelect label="Touro" value={touro} onChange={setTouro} options={touros} triggerClassName="w-full sm:w-48" />
         <FilterSelect label="Inseminador" value={inseminador} onChange={setInseminador} options={inseminadores} />
         <FilterSelect label="ECC" value={ecc} onChange={setEcc} options={eccs} />

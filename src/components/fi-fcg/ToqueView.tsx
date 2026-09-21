@@ -7,6 +7,7 @@ import { Donut } from '@/components/painel/Donut';
 import { BarrasHorizontais } from '@/components/painel/BarrasHorizontais';
 import { DataTable, type DataTableColumn } from '@/components/painel/DataTable';
 import { FilterSelect } from '@/components/painel/FilterSelect';
+import { FilterBusca } from '@/components/painel/FilterBusca';
 import { CsvExport, type CsvColumn } from '@/components/painel/CsvExport';
 import { EstadoCarga } from '@/components/painel/EstadoCarga';
 import { contagemPor, contar, media, percentual } from '@/lib/painel/agregacao';
@@ -21,6 +22,7 @@ export function ToqueView({ dados }: { dados: PacoteLeitura<RegToque> }) {
 
   const [data, setData] = useState('');
   const [fazenda, setFazenda] = useState('');
+  const [busca, setBusca] = useState('');
   const [status, setStatus] = useState('');
   const [diagnostico, setDiagnostico] = useState('');
   const [destino, setDestino] = useState('');
@@ -29,11 +31,12 @@ export function ToqueView({ dados }: { dados: PacoteLeitura<RegToque> }) {
   const condicoes = useMemo((): Condicao<RegToque>[] => [
     { key: 'data', test: (r) => !data || String(r.data) === data },
     { key: 'fazenda', test: (r) => !fazenda || r.fazenda === fazenda },
+    { key: 'busca', test: (r) => !busca || r.id.toLowerCase().includes(busca.toLowerCase()) },
     { key: 'status', test: (r) => !status || r.status === status },
     { key: 'diagnostico', test: (r) => !diagnostico || r.diagnostico === diagnostico },
     { key: 'destino', test: (r) => !destino || r.destino === destino },
     { key: 'ecc', test: (r) => !ecc || r.escore === ecc },
-  ], [data, fazenda, status, diagnostico, destino, ecc]);
+  ], [data, fazenda, busca, status, diagnostico, destino, ecc]);
 
   const datas = useMemo(
     () => opcoesExcluindo(itens, condicoes, 'data', (r) => (r.data != null ? String(r.data) : null), comparadorDataDesc),
@@ -118,6 +121,7 @@ export function ToqueView({ dados }: { dados: PacoteLeitura<RegToque> }) {
       <div className="flex flex-wrap items-end gap-3">
         <FilterSelect label="Data do toque" value={data} onChange={setData} options={datas} labelDe={(v) => formatDia(Number(v))} />
         <FilterSelect label="Fazenda" value={fazenda} onChange={setFazenda} options={fazendas} />
+        <FilterBusca label="ID animal" value={busca} onChange={setBusca} placeholder="Buscar ID..." />
         <FilterSelect label="Status" value={status} onChange={setStatus} options={statuses} />
         <FilterSelect label="Diagnóstico" value={diagnostico} onChange={setDiagnostico} options={diagnosticos} />
         <FilterSelect label="Destino" value={destino} onChange={setDestino} options={destinos} triggerClassName="w-full sm:w-48" />
