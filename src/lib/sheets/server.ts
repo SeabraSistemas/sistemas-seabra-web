@@ -235,6 +235,40 @@ export async function escreverCelulas(
   return { ok: true, escritos };
 }
 
+/**
+ * Acrescenta VÁRIAS linhas de uma vez (um `values:append` só). Existe porque
+ * um append por linha estoura a cota de escrita do Sheets (~60 req/min por
+ * usuário): ao iniciar o GMD de um lote de 71 animais, 71 appends seguidos
+ * deram 64 gravados e 7 perdidos em silêncio (achado ao vivo, 21/09/2026).
+ * Devolve quantas linhas foram aceitas — 0 com falha.
+ */
+export async function adicionarLinhas(
+  spreadsheetId: string,
+  aba: string,
+  linhas: string[][],
+  valueInputOption: 'RAW' | 'USER_ENTERED' = 'USER_ENTERED',
+): Promise<number> {
+  if (linhas.length === 0) return 0;
+  const t = await token();
+  if (!t) return 0;
+  try {
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(aba)}:append?valueInputOption=${valueInputOption}`;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${t}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ values: linhas }),
+    });
+    if (!res.ok) {
+      console.error('[sheets] falha ao acrescentar linhas', aba, res.status, await res.text());
+      return 0;
+    }
+    return linhas.length;
+  } catch (err) {
+    console.error('[sheets] falha ao acrescentar linhas', aba, err);
+    return 0;
+  }
+}
+
 /** Acrescenta uma linha no fim de `aba`. false se faltar config ou falhar. */
 export async function adicionarLinha(
   spreadsheetId: string,

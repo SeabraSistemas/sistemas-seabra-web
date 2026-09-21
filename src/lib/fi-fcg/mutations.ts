@@ -1,6 +1,7 @@
 import 'server-only';
 import {
   adicionarLinha,
+  adicionarLinhas,
   encontrarLinhaPorId,
   escreverCelulas,
   escreverLinha,
@@ -549,8 +550,18 @@ export async function aplicarInicioGmd(idsAnimais: string[], dataInicio: DiaComp
           '',
         ];
       });
-    for (const linha of novas) {
-      if (await adicionarLinha(sid, ABA_ENGORDA, linha, 'USER_ENTERED')) linhasEngordaCriadas++;
+    // Num append por linha, um lote de 71 animais estourava a cota de escrita do
+    // Sheets (~60 req/min) e perdia as últimas em silêncio — tudo numa requisição só.
+    linhasEngordaCriadas = await adicionarLinhas(sid, ABA_ENGORDA, novas, 'USER_ENTERED');
+    if (linhasEngordaCriadas < novas.length) {
+      return {
+        ok: false,
+        erro: `os valores foram gravados, mas só ${linhasEngordaCriadas} de ${novas.length} lançamento(s) entraram na aba Engorda`,
+        animaisAtualizados: recalculo.animais.length,
+        pesagensAtualizadas: recalculo.totalPesagens,
+        linhasEngordaCriadas,
+        semPesagemNoPeriodo: recalculo.semPesagemNoPeriodo,
+      };
     }
   }
 
