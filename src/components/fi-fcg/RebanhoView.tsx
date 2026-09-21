@@ -14,17 +14,35 @@ import { EstadoCarga } from '@/components/painel/EstadoCarga';
 import { contagemPor, contar } from '@/lib/painel/agregacao';
 import { dentroFaixa, filtrarPor, opcoesExcluindo, type Condicao } from '@/lib/painel/filters';
 import { formatNumber, numberBounds } from '@/lib/painel/format';
-import { desempacotar } from '@/lib/painel/pacote';
+import { desempacotar, type Pacote } from '@/lib/painel/pacote';
 import type { PacoteLeitura } from '@/lib/fi-fcg/pacotes';
+import type { ManejoAnimal } from '@/lib/fi-fcg/manejo';
 import type { RegRebanho } from '@/lib/fi-fcg/types';
+
+/** Acima disso, o card de "Sem manejo" conta o animal e a linha da tabela fica vermelha (ver DIAS_SEM_MANEJO_AVISO pro amarelo). */
+const DIAS_SEM_MANEJO_ALERTA = 90;
+/** Faixa intermediária — chama atenção sem ainda ser crítico. */
+const DIAS_SEM_MANEJO_AVISO = 30;
 
 /** Não está na venda/baixa da própria RebanhoProd — o "estoque" do rebanho (mesmo conceito de /katmandu, onde isto vinha de um campo `baixa` à parte). */
 function vivo(r: RegRebanho): boolean {
   return r.categoria !== 'Venda' && r.categoria !== 'Baixa';
 }
 
-export function RebanhoView({ dados }: { dados: PacoteLeitura<RegRebanho> }) {
+export function RebanhoView({
+  dados,
+  manejo,
+}: {
+  dados: PacoteLeitura<RegRebanho>;
+  /** Calculado no servidor (manejo.ts), não tem EstadoCarga próprio — reusa o de `dados`, do mesmo request. */
+  manejo: Pacote<ManejoAnimal>;
+}) {
   const itens = useMemo(() => desempacotar<RegRebanho>(dados.pacote), [dados.pacote]);
+  const manejoItens = useMemo(() => desempacotar<ManejoAnimal>(manejo), [manejo]);
+  const diasSemManejoPorId = useMemo(
+    () => new Map(manejoItens.map((m) => [m.id, m.diasSemManejo])),
+    [manejoItens],
+  );
 
   const [busca, setBusca] = useState('');
   const [fazenda, setFazenda] = useState('');
@@ -34,13 +52,20 @@ export function RebanhoView({ dados }: { dados: PacoteLeitura<RegRebanho> }) {
   const idadeBounds = useMemo(() => numberBounds(itens.map((r) => r.idadeMeses)), [itens]);
   const [idadeRange, setIdadeRange] = useState<[number, number] | null>(null);
 
+  const diasSemManejoBounds = useMemo(() => numberBounds(manejoItens.map((m) => m.diasSemManejo)), [manejoItens]);
+  const [diasSemManejoRange, setDiasSemManejoRange] = useState<[number, number] | null>(null);
+
   const condicoes = useMemo((): Condicao<RegRebanho>[] => [
     { key: 'busca', test: (r) => !busca || r.id.toLowerCase().includes(busca.toLowerCase()) },
     { key: 'fazenda', test: (r) => !fazenda || r.fazenda === fazenda },
     { key: 'categoria', test: (r) => !categoria || r.categoria === categoria },
     { key: 'causaBaixa', test: (r) => !causaBaixa || r.causaBaixa === causaBaixa },
     { key: 'idade', test: (r) => dentroFaixa(r.idadeMeses, idadeBounds, idadeRange) },
-  ], [busca, fazenda, categoria, causaBaixa, idadeBounds, idadeRange]);
+    {
+      key: 'diasSemManejo',
+      test: (r) => dentroFaixa(diasSemManejoPorId.get(r.id) ?? null, diasSemManejoBounds, diasSemManejoRange),
+    },
+  ], [busca, fazenda, categoria, causaBaixa, idadeBounds, idadeRange, diasSemManejoPorId, diasSemManejoBounds, diasSemManejoRange]);
 
   const fazendas = useMemo(() => opcoesExcluindo(itens, condicoes, 'fazenda', (r) => r.fazenda), [itens, condicoes]);
   const categorias = useMemo(() => opcoesExcluindo(itens, condicoes, 'categoria', (r) => r.categoria), [itens, condicoes]);
@@ -66,12 +91,32 @@ export function RebanhoView({ dados }: { dados: PacoteLeitura<RegRebanho> }) {
 
   const vivosPorFazenda = useMemo(() => contagemPor(vivos, (r) => r.fazenda), [vivos]);
   const porCategoria = useMemo(() => contagemPor(filtrados, (r) => r.categoria), [filtrados]);
+  const semManejoAlerta = useMemo(
+    () => contar(vivos, (r) => (diasSemManejoPorId.get(r.id) ?? -1) > DIAS_SEM_MANEJO_ALERTA),
+    [vivos, diasSemManejoPorId],
+  );
+
+  function corDiasSemManejo(dias: number | null): string | undefined {
+    if (dias == null) return undefined;
+    if (dias > DIAS_SEM_MANEJO_ALERTA) return 'text-destructive';
+    if (dias > DIAS_SEM_MANEJO_AVISO) return 'text-amber-400';
+    return undefined;
+  }
 
   const colunas: DataTableColumn<RegRebanho>[] = [
     { key: 'fazenda', header: 'Fazenda', cell: (r) => r.fazenda ?? '—', sortValue: (r) => r.fazenda },
     { key: 'id', header: 'ID animal', cell: (r) => r.id, sortValue: (r) => r.id },
     { key: 'categoria', header: 'Categoria', cell: (r) => r.categoria ?? '—', sortValue: (r) => r.categoria },
     { key: 'meses', header: 'Meses', cell: (r) => formatNumber(r.idadeMeses), sortValue: (r) => r.idadeMeses },
+    {
+      key: 'diasSemManejo',
+      header: 'Dias sem|manejo',
+      cell: (r) => {
+        const dias = diasSemManejoPorId.get(r.id) ?? null;
+        return <span className={corDiasSemManejo(dias)}>{dias != null ? formatNumber(dias) : '—'}</span>;
+      },
+      sortValue: (r) => diasSemManejoPorId.get(r.id) ?? null,
+    },
     { key: 'baixa', header: 'Baixa', cell: (r) => r.causaBaixa ?? '-', sortValue: (r) => r.causaBaixa },
   ];
 
@@ -84,6 +129,7 @@ export function RebanhoView({ dados }: { dados: PacoteLeitura<RegRebanho> }) {
     { key: 'meses', header: 'Idade (meses)', value: (r) => formatNumber(r.idadeMeses) },
     { key: 'lote', header: 'Lote', value: (r) => r.lote ?? '' },
     { key: 'status', header: 'Status', value: (r) => r.status ?? '' },
+    { key: 'diasSemManejo', header: 'Dias sem manejo', value: (r) => formatNumber(diasSemManejoPorId.get(r.id) ?? null) },
     { key: 'baixa', header: 'Causa da baixa', value: (r) => r.causaBaixa ?? '' },
   ];
 
@@ -104,6 +150,14 @@ export function RebanhoView({ dados }: { dados: PacoteLeitura<RegRebanho> }) {
         {idadeBounds && (
           <FilterRange label="Idade (meses)" bounds={idadeBounds} value={idadeRange ?? idadeBounds} onChange={setIdadeRange} />
         )}
+        {diasSemManejoBounds && (
+          <FilterRange
+            label="Dias sem manejo"
+            bounds={diasSemManejoBounds}
+            value={diasSemManejoRange ?? diasSemManejoBounds}
+            onChange={setDiasSemManejoRange}
+          />
+        )}
       </div>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -115,6 +169,12 @@ export function RebanhoView({ dados }: { dados: PacoteLeitura<RegRebanho> }) {
         <MetricCard id="garrotes" label="Garrotes" value={formatNumber(garrotes)} />
         <MetricCard id="bezerros" label="Bezerros" value={formatNumber(bezerros)} />
         <MetricCard id="bezerras" label="Bezerras" value={formatNumber(bezerras)} />
+        <MetricCard
+          id="semManejo"
+          label={`Sem manejo (${DIAS_SEM_MANEJO_ALERTA}+ dias)`}
+          value={formatNumber(semManejoAlerta)}
+          tom={semManejoAlerta > 0 ? 'ruim' : undefined}
+        />
       </div>
 
       <Tabs defaultValue="resumo">

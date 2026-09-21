@@ -8,6 +8,7 @@
  */
 import { empacotar, type Pacote } from '@/lib/painel/pacote';
 import type { Leitura } from './queries';
+import type { ManejoAnimal } from './manejo';
 import type {
   CategoriaCusto,
   ConsumoCategoria,
@@ -98,6 +99,9 @@ export const CAMPOS_REBANHO: (keyof RegRebanho & string)[] = [
   'ultimaPesagemKg',
   'dataUltimaPesagem',
 ];
+
+/** "Dias sem manejo" (21/09/2026) — calculado no servidor entre abas (manejo.ts), não é coluna de nenhuma aba própria. Ver CAMPOS_REBANHO pro resto do animal. */
+export const CAMPOS_MANEJO_ANIMAL: (keyof ManejoAnimal & string)[] = ['id', 'diasSemManejo'];
 
 export const CAMPOS_PARTO: (keyof RegParto & string)[] = [
   'id',
@@ -279,11 +283,25 @@ export interface PacoteFinanceiro {
   marcosIdade: Pacote<MarcoIdade>;
   funisPorFazenda: { fazenda: string | null; funis: FunilCalculado[] }[];
   retratoPorFazenda: { fazenda: string | null; retrato: RetratoCategoria[] }[];
-  /** Subconjunto reduzido (Prenha + 4 categorias-fonte), ver CAMPOS_REBANHO_PROJECAO — a "Projeção de rebanho" roda `projetarRebanho` no cliente com isto. */
+  configurado: boolean;
+  stale: boolean;
+  carregadoEm: number | null;
+}
+
+/**
+ * Dados da página "Projeção" (21/09/2026) — antes vivia dentro de Financeiro
+ * (Custo de formação), extraída pro próprio item de menu porque não tem
+ * relação com dinheiro. Bem mais leve que PacoteFinanceiro: não carrega
+ * Venda/Baixa/Aborto/Custos/Insumos/Dieta, só o que `projetarRebanho`
+ * precisa.
+ */
+export interface PacoteProjecao {
+  /** Subconjunto reduzido (Prenha + 4 categorias-fonte), ver CAMPOS_REBANHO_PROJECAO — roda `projetarRebanho` no cliente com isto. */
   rebanhoProjecao: Pacote<RegRebanho>;
   iatfProjecao: Pacote<RegIatf>;
   /** Toque de cada animal Prenha — usado como âncora de fallback quando o IATF é velho demais, ver projecaoRebanho.ts. */
   toqueProjecao: Pacote<RegToque>;
+  marcosIdade: Pacote<MarcoIdade>;
   configurado: boolean;
   stale: boolean;
   carregadoEm: number | null;
