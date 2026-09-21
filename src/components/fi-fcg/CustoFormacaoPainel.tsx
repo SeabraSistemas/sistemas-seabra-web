@@ -129,7 +129,7 @@ export function CustoFormacaoPainel({
   funisPorFazenda,
   retratoPorFazenda,
   gmdCategoria,
-  gmdSugerido,
+  gpdSugerido,
   marcosIdade,
   insumos,
   dieta,
@@ -139,7 +139,7 @@ export function CustoFormacaoPainel({
   funisPorFazenda: { fazenda: string | null; funis: FunilCalculado[] }[];
   retratoPorFazenda: { fazenda: string | null; retrato: RetratoCategoria[] }[];
   gmdCategoria: GmdCategoria[];
-  gmdSugerido: [string, number][];
+  gpdSugerido: [string, number][];
   marcosIdade: MarcoIdade[];
   insumos: Insumo[];
   dieta: ItemDieta[];
@@ -149,7 +149,7 @@ export function CustoFormacaoPainel({
   const [fazendaSelecionada, setFazendaSelecionada] = useState<string | null>(null);
   const funis = funisPorFazenda.find((f) => f.fazenda === fazendaSelecionada)?.funis ?? [];
   const retrato = retratoPorFazenda.find((f) => f.fazenda === fazendaSelecionada)?.retrato ?? [];
-  const sugestaoPorCategoria = useMemo(() => new Map(gmdSugerido), [gmdSugerido]);
+  const sugestaoPorCategoria = useMemo(() => new Map(gpdSugerido), [gpdSugerido]);
 
   return (
     <div className="flex flex-col gap-8">

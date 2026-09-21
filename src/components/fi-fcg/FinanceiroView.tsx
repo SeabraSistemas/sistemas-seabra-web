@@ -443,7 +443,7 @@ export function FinanceiroView({ dados }: { dados: PacoteFinanceiro }) {
             funisPorFazenda={dados.funisPorFazenda}
             retratoPorFazenda={dados.retratoPorFazenda}
             gmdCategoria={gmdCategoria}
-            gmdSugerido={dados.gmdSugerido}
+            gpdSugerido={dados.gpdSugerido}
             marcosIdade={marcosIdade}
             insumos={insumos}
             dieta={itensDieta}

@@ -8,11 +8,11 @@ import {
   custoFixoDiaPorCabeca,
   calcularFunis,
   efetivoVivo,
-  gmdSugeridoPorCategoria,
+  gpdSugeridoPorCategoria,
   montarRetratoMomento,
   percentualPorTipo,
 } from '@/lib/fi-fcg/custoFormacao';
-import type { CategoriaArroba, ConsumoCategoria, Custo, GmdCategoria, Insumo, ItemDieta, MarcoIdade, RegRebanho } from '@/lib/fi-fcg/types';
+import type { CategoriaArroba, ConsumoCategoria, Custo, GmdCategoria, Insumo, ItemDieta, MarcoIdade, RegPesagem, RegRebanho } from '@/lib/fi-fcg/types';
 
 function animal(p: Partial<RegRebanho> & { id: string }): RegRebanho {
   return {
@@ -20,6 +20,12 @@ function animal(p: Partial<RegRebanho> & { id: string }): RegRebanho {
     lote: null, status: null, reproducao: null, escore: null, destino: null, ultimaPesagemKg: null,
     dataUltimaPesagem: null, nascimento: null, entradaEngorda: null, diasEngordaAtual: null,
     pesoEntradaEngorda: null, gmdAtual: null, ...p,
+  };
+}
+function pesagem(p: Partial<RegPesagem> & { id: string }): RegPesagem {
+  return {
+    data: null, pesoKg: null, entradaKg: null, diasEngorda: null, gpd: null, gmd: null, pdi: null, gpdi: null,
+    fazenda: null, lote: null, sexo: null, destino: null, diferencaKg: null, ...p,
   };
 }
 function custo(p: Partial<Custo> & { id: string }): Custo {
@@ -175,19 +181,47 @@ describe('percentualPorTipo', () => {
   });
 });
 
-describe('gmdSugeridoPorCategoria', () => {
-  test('media do gmdAtual por categoria, ignora null e <=0', () => {
+describe('gpdSugeridoPorCategoria', () => {
+  test('media do GPD (Pesagem) mais recente de cada animal, agrupado pela Categoria (Rebanho) de hoje', () => {
     const rebanho = [
-      animal({ id: 'a1', categoria: 'Bezerro', gmdAtual: 1.0 }),
-      animal({ id: 'a2', categoria: 'Bezerro', gmdAtual: 0.6 }),
-      animal({ id: 'a3', categoria: 'Bezerro', gmdAtual: 0 }),
-      animal({ id: 'a4', categoria: 'Bezerro', gmdAtual: null }),
-      animal({ id: 'a5', categoria: 'Vaca', gmdAtual: 0.3 }),
+      animal({ id: 'a1', categoria: 'Bezerro' }),
+      animal({ id: 'a2', categoria: 'Bezerro' }),
+      animal({ id: 'a3', categoria: 'Vaca' }),
     ];
-    const sugerido = gmdSugeridoPorCategoria(rebanho);
-    assert.equal(sugerido.get('Bezerro'), 0.8);
+    const pesagens = [
+      pesagem({ id: 'a1', data: 20260101, gpd: 1.0 }),
+      pesagem({ id: 'a1', data: 20260301, gpd: 1.2 }), // mais recente — vale essa
+      pesagem({ id: 'a2', data: 20260101, gpd: 0.6 }),
+      pesagem({ id: 'a3', data: 20260101, gpd: 0.3 }),
+    ];
+    const sugerido = gpdSugeridoPorCategoria(rebanho, pesagens);
+    assert.ok(Math.abs(sugerido.get('Bezerro')! - 0.9) < 1e-9); // media(1.2, 0.6)
     assert.equal(sugerido.get('Vaca'), 0.3);
     assert.equal(sugerido.has('Garrote'), false); // nunca é Categoria real, sem sugestao
+  });
+
+  test('ignora pesagem com GPD null ou <=0', () => {
+    const rebanho = [animal({ id: 'a1', categoria: 'Bezerro' })];
+    const pesagens = [
+      pesagem({ id: 'a1', data: 20260101, gpd: null }),
+      pesagem({ id: 'a1', data: 20260201, gpd: 0 }),
+    ];
+    const sugerido = gpdSugeridoPorCategoria(rebanho, pesagens);
+    assert.equal(sugerido.has('Bezerro'), false);
+  });
+
+  test('animal sem Categoria (RebanhoProd) ou sem match no rebanho: nao entra em nenhuma categoria', () => {
+    const rebanho = [animal({ id: 'a1', categoria: null })];
+    const pesagens = [pesagem({ id: 'a1', data: 20260101, gpd: 1.0 }), pesagem({ id: 'a2', data: 20260101, gpd: 1.0 })];
+    const sugerido = gpdSugeridoPorCategoria(rebanho, pesagens);
+    assert.equal(sugerido.size, 0);
+  });
+
+  test('GMD (gmdAtual) NAO entra na conta — so GPD da Pesagem', () => {
+    const rebanho = [animal({ id: 'a1', categoria: 'Boi', gmdAtual: 5 })]; // gmdAtual alto, mas irrelevante aqui
+    const pesagens = [pesagem({ id: 'a1', data: 20260101, gpd: 0.4 })];
+    const sugerido = gpdSugeridoPorCategoria(rebanho, pesagens);
+    assert.equal(sugerido.get('Boi'), 0.4);
   });
 });
 

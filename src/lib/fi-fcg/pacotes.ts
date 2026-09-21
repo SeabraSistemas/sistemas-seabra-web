@@ -266,9 +266,10 @@ export const CAMPOS_EVENTO: (keyof EventoFin & string)[] = [
  * `calcularFunis` já roda no servidor (precisa de RebanhoProd inteiro pro
  * efetivo/rateio de custo fixo — não vale a pena mandar pro cliente), um
  * item por Fazenda (`null` = consolidado, todas) pra trocar sem re-buscar.
- * `gmdSugerido` é a sugestão de GMD por categoria (Pesagem/Lotes de
- * engorda) pra pré-preencher "GMD por Categoria" — pequeno, não precisa de
- * `Pacote<T>`.
+ * `gpdSugerido` é a sugestão de GPD por categoria (Pesagem, ganho desde o
+ * nascimento — não GMD, que só existe pra quem já entrou em engorda, ver
+ * `gpdSugeridoPorCategoria` em custoFormacao.ts) pra pré-preencher "GPD por
+ * Categoria" — pequeno, não precisa de `Pacote<T>`.
  */
 export interface PacoteFinanceiro {
   eventos: Pacote<EventoFin>;
@@ -279,7 +280,7 @@ export interface PacoteFinanceiro {
   dieta: Pacote<ItemDieta>;
   consumoCategoria: Pacote<ConsumoCategoria>;
   gmdCategoria: Pacote<GmdCategoria>;
-  gmdSugerido: [string, number][];
+  gpdSugerido: [string, number][];
   marcosIdade: Pacote<MarcoIdade>;
   funisPorFazenda: { fazenda: string | null; funis: FunilCalculado[] }[];
   retratoPorFazenda: { fazenda: string | null; retrato: RetratoCategoria[] }[];

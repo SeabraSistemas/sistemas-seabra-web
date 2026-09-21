@@ -39,6 +39,7 @@ import {
   type Insumo,
   type ItemDieta,
   type MarcoIdade,
+  type RegPesagem,
   type RegRebanho,
 } from '@/lib/fi-fcg/types';
 
@@ -179,14 +180,38 @@ export function custoDietaDia(
   return algumValido ? total : null;
 }
 
-/** GMD (kg/dia) real médio por categoria, a partir de RebanhoProd.GMD (Pesagem/Lotes de engorda) — sugestão pra pré-preencher "GMD por Categoria", nunca gravado sozinho. */
-export function gmdSugeridoPorCategoria(rebanho: RegRebanho[]): Map<string, number> {
-  const porCategoria = new Map<string, number[]>();
+/**
+ * GPD (kg/dia) real médio por categoria — sugestão pra pré-preencher "GPD por
+ * Categoria", nunca gravado sozinho. Pedido do Felipe (21/09/2026): usar GPD
+ * (ganho desde o NASCIMENTO, `RegPesagem.gpd`), não GMD (`RegRebanho.gmdAtual`,
+ * ganho só desde a entrada em engorda) — GMD é volátil (só existe pra quem já
+ * entrou no programa de engorda, a minoria do rebanho) e o Funil calcula a
+ * formação inteira desde o nascimento, não só a fase de engorda. Usa a
+ * pesagem MAIS RECENTE de cada animal (mesmo "atual" que `gmdAtual` media
+ * antes), agrupada pela Categoria de HOJE (RebanhoProd — Pesagem não tem
+ * Categoria própria).
+ */
+export function gpdSugeridoPorCategoria(rebanho: RegRebanho[], pesagem: RegPesagem[]): Map<string, number> {
+  const categoriaPorId = new Map<string, string>();
   for (const a of rebanho) {
-    if (a.categoria == null || a.gmdAtual == null || a.gmdAtual <= 0) continue;
-    if (!porCategoria.has(a.categoria)) porCategoria.set(a.categoria, []);
-    porCategoria.get(a.categoria)!.push(a.gmdAtual);
+    if (a.categoria != null) categoriaPorId.set(a.id, a.categoria);
   }
+
+  const ultimaPesagemPorId = new Map<string, RegPesagem>();
+  for (const p of pesagem) {
+    if (p.data == null || p.gpd == null || p.gpd <= 0) continue;
+    const atual = ultimaPesagemPorId.get(p.id);
+    if (atual == null || (atual.data ?? 0) < p.data) ultimaPesagemPorId.set(p.id, p);
+  }
+
+  const porCategoria = new Map<string, number[]>();
+  for (const [id, p] of ultimaPesagemPorId) {
+    const categoria = categoriaPorId.get(id);
+    if (categoria == null) continue;
+    if (!porCategoria.has(categoria)) porCategoria.set(categoria, []);
+    porCategoria.get(categoria)!.push(p.gpd as number);
+  }
+
   const resultado = new Map<string, number>();
   for (const [categoria, valores] of porCategoria) {
     const m = media(valores);

@@ -1,6 +1,6 @@
 import { FinanceiroView } from '@/components/fi-fcg/FinanceiroView';
 import { montarEventos } from '@/lib/fi-fcg/financeiro';
-import { FUNIS_BOVINO, calcularFunis, gmdSugeridoPorCategoria, montarRetratoMomento } from '@/lib/fi-fcg/custoFormacao';
+import { FUNIS_BOVINO, calcularFunis, gpdSugeridoPorCategoria, montarRetratoMomento } from '@/lib/fi-fcg/custoFormacao';
 import {
   CAMPOS_CATEGORIA_CUSTO,
   CAMPOS_CONSUMO_CATEGORIA,
@@ -13,28 +13,31 @@ import {
   CAMPOS_MARCO_IDADE,
   type PacoteFinanceiro,
 } from '@/lib/fi-fcg/pacotes';
-import { getDadosFinanceiro } from '@/lib/fi-fcg/queries';
+import { getDadosFinanceiro, getPesagem } from '@/lib/fi-fcg/queries';
 import { exigirSessao } from '@/lib/fi-fcg/sessao';
 import { empacotar } from '@/lib/painel/pacote';
 import { hojeCompacto } from '@/lib/painel/format';
 
 export default async function FinanceiroPage() {
   await exigirSessao();
-  const {
-    vendas,
-    baixas,
-    abortos,
-    lancamentos,
-    rebanho,
-    categoriaArroba,
-    custos,
-    categoriasCusto,
-    insumos,
-    dieta,
-    consumoCategoria,
-    gmdCategoria,
-    marcosIdade,
-  } = await getDadosFinanceiro();
+  const [
+    {
+      vendas,
+      baixas,
+      abortos,
+      lancamentos,
+      rebanho,
+      categoriaArroba,
+      custos,
+      categoriasCusto,
+      insumos,
+      dieta,
+      consumoCategoria,
+      gmdCategoria,
+      marcosIdade,
+    },
+    pesagem,
+  ] = await Promise.all([getDadosFinanceiro(), getPesagem()]);
   const { eventos, orfaos } = montarEventos(
     vendas.itens,
     baixas.itens,
@@ -61,7 +64,7 @@ export default async function FinanceiroPage() {
       hoje,
     ),
   }));
-  const gmdSugerido = Array.from(gmdSugeridoPorCategoria(rebanho.itens).entries());
+  const gpdSugerido = Array.from(gpdSugeridoPorCategoria(rebanho.itens, pesagem.itens).entries());
   const retratoPorFazenda = [null, ...fazendas].map((fazenda) => ({
     fazenda,
     retrato: montarRetratoMomento(
@@ -91,6 +94,7 @@ export default async function FinanceiroPage() {
     consumoCategoria,
     gmdCategoria,
     marcosIdade,
+    pesagem,
   ];
   const carregadoEm = todas
     .map((l) => l.carregadoEm)
@@ -106,7 +110,7 @@ export default async function FinanceiroPage() {
     dieta: empacotar(dieta.itens, CAMPOS_ITEM_DIETA),
     consumoCategoria: empacotar(consumoCategoria.itens, CAMPOS_CONSUMO_CATEGORIA),
     gmdCategoria: empacotar(gmdCategoria.itens, CAMPOS_GMD_CATEGORIA),
-    gmdSugerido,
+    gpdSugerido,
     marcosIdade: empacotar(marcosIdade.itens, CAMPOS_MARCO_IDADE),
     funisPorFazenda,
     retratoPorFazenda,
