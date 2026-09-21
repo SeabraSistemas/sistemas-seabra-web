@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, test } from 'node:test';
 
-import { calcularDiasSemManejo, ultimoManejoPorAnimal } from '@/lib/fi-fcg/manejo';
+import { animaisMonitorados, ultimoManejoPorAnimal } from '@/lib/fi-fcg/manejo';
 import type { RegIatf, RegParto, RegPesagem, RegRebanho, RegToque } from '@/lib/fi-fcg/types';
 
 function animal(p: Partial<RegRebanho> & { id: string }): RegRebanho {
@@ -67,50 +67,71 @@ describe('ultimoManejoPorAnimal', () => {
   });
 });
 
-describe('calcularDiasSemManejo', () => {
+describe('animaisMonitorados', () => {
   const HOJE = 20260916;
 
-  test('animal com manejo recente: dias baixo', () => {
-    const resultado = calcularDiasSemManejo(
-      [animal({ id: 'a1' })],
+  test('animal com manejo recente: dias baixo, carrega fazenda/categoria/sexo do rebanho', () => {
+    const resultado = animaisMonitorados(
+      [animal({ id: 'a1', fazenda: 'Inhumas', categoria: 'Vaca', sexo: 'Fêmea' })],
       [pesagem({ id: 'a1', data: 20260906 })],
       [],
       [],
       [],
       HOJE,
     );
-    assert.deepEqual(resultado, [{ id: 'a1', diasSemManejo: 10 }]);
+    assert.deepEqual(resultado, [
+      { id: 'a1', fazenda: 'Inhumas', categoria: 'Vaca', sexo: 'Fêmea', diasSemManejo: 10, ultimoManejo: 20260906 },
+    ]);
   });
 
-  test('animal sem nenhum evento conhecido: diasSemManejo null (nao vira 0 nem inventa numero)', () => {
-    const resultado = calcularDiasSemManejo([animal({ id: 'a1' })], [], [], [], [], HOJE);
-    assert.deepEqual(resultado, [{ id: 'a1', diasSemManejo: null }]);
+  test('animal sem nenhum evento conhecido: diasSemManejo e ultimoManejo null (nao vira 0 nem inventa numero)', () => {
+    const resultado = animaisMonitorados([animal({ id: 'a1', categoria: 'Vaca' })], [], [], [], [], HOJE);
+    assert.equal(resultado[0].diasSemManejo, null);
+    assert.equal(resultado[0].ultimoManejo, null);
   });
 
   test('usa o mais recente entre varias fontes pro mesmo animal', () => {
-    const resultado = calcularDiasSemManejo(
-      [animal({ id: 'a1' })],
+    const resultado = animaisMonitorados(
+      [animal({ id: 'a1', categoria: 'Vaca' })],
       [pesagem({ id: 'a1', data: 20260101 })],
       [toque({ id: 'a1', data: 20260901 })], // mais recente
       [iatf({ id: 'a1', data: 20260201 })],
       [],
       HOJE,
     );
-    assert.deepEqual(resultado, [{ id: 'a1', diasSemManejo: 15 }]);
+    assert.equal(resultado[0].diasSemManejo, 15);
+    assert.equal(resultado[0].ultimoManejo, 20260901);
   });
 
-  test('uma linha por animal do rebanho recebido, na mesma ordem', () => {
-    const resultado = calcularDiasSemManejo(
-      [animal({ id: 'a1' }), animal({ id: 'a2' })],
+  test('uma linha por animal ATIVO do rebanho recebido, na mesma ordem', () => {
+    const resultado = animaisMonitorados(
+      [animal({ id: 'a1', categoria: 'Vaca' }), animal({ id: 'a2', categoria: 'Bezerro' })],
       [pesagem({ id: 'a2', data: 20260816 })],
       [],
       [],
       [],
       HOJE,
     );
-    assert.deepEqual(resultado, [
-      { id: 'a1', diasSemManejo: null },
-      { id: 'a2', diasSemManejo: 31 },
-    ]);
+    assert.equal(resultado.length, 2);
+    assert.equal(resultado[0].id, 'a1');
+    assert.equal(resultado[0].diasSemManejo, null);
+    assert.equal(resultado[1].id, 'a2');
+    assert.equal(resultado[1].diasSemManejo, 31);
+  });
+
+  test('Venda/Baixa ficam de fora — so animal ATIVO precisa de monitoramento', () => {
+    const resultado = animaisMonitorados(
+      [
+        animal({ id: 'a1', categoria: 'Vaca' }),
+        animal({ id: 'a2', categoria: 'Venda' }),
+        animal({ id: 'a3', categoria: 'Baixa' }),
+      ],
+      [],
+      [],
+      [],
+      [],
+      HOJE,
+    );
+    assert.deepEqual(resultado.map((r) => r.id), ['a1']);
   });
 });

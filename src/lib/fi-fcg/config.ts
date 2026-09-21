@@ -16,6 +16,7 @@ export const LINKS: NavLink[] = [
   { href: '/FI_FCG/baixas', label: 'Baixas' },
   { href: '/FI_FCG/financeiro', label: 'Financeiro' },
   { href: '/FI_FCG/projecao', label: 'Projeção' },
+  { href: '/FI_FCG/monitorar', label: 'Monitorar' },
 ];
 
 export const LOGIN_HREF = '/FI_FCG';

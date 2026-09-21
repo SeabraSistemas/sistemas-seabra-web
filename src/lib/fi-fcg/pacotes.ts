@@ -8,7 +8,7 @@
  */
 import { empacotar, type Pacote } from '@/lib/painel/pacote';
 import type { Leitura } from './queries';
-import type { ManejoAnimal } from './manejo';
+import type { AnimalMonitorado } from './manejo';
 import type {
   CategoriaCusto,
   ConsumoCategoria,
@@ -100,8 +100,15 @@ export const CAMPOS_REBANHO: (keyof RegRebanho & string)[] = [
   'dataUltimaPesagem',
 ];
 
-/** "Dias sem manejo" (21/09/2026) — calculado no servidor entre abas (manejo.ts), não é coluna de nenhuma aba própria. Ver CAMPOS_REBANHO pro resto do animal. */
-export const CAMPOS_MANEJO_ANIMAL: (keyof ManejoAnimal & string)[] = ['id', 'diasSemManejo'];
+/** Página Monitorar (21/09/2026) — animal ATIVO + "dias sem manejo", calculado no servidor entre abas (manejo.ts), não é uma aba própria. */
+export const CAMPOS_ANIMAL_MONITORADO: (keyof AnimalMonitorado & string)[] = [
+  'id',
+  'fazenda',
+  'categoria',
+  'sexo',
+  'diasSemManejo',
+  'ultimoManejo',
+];
 
 export const CAMPOS_PARTO: (keyof RegParto & string)[] = [
   'id',
@@ -303,6 +310,19 @@ export interface PacoteProjecao {
   /** Toque de cada animal Prenha — usado como âncora de fallback quando o IATF é velho demais, ver projecaoRebanho.ts. */
   toqueProjecao: Pacote<RegToque>;
   marcosIdade: Pacote<MarcoIdade>;
+  configurado: boolean;
+  stale: boolean;
+  carregadoEm: number | null;
+}
+
+/**
+ * Página "Monitorar" (21/09/2026) — animais ATIVOS há muitos dias sem
+ * manejo (Pesagem/Toque/IATF/Parto). Lê as mesmas 5 fontes que a Projeção
+ * de rebanho fez ler o Rebanho, mas com Pesagem/Toque/IATF/Parto inteiros
+ * (ver manejo.ts) — pesado no servidor, leve no payload (só `AnimalMonitorado`).
+ */
+export interface PacoteMonitor {
+  animais: Pacote<AnimalMonitorado>;
   configurado: boolean;
   stale: boolean;
   carregadoEm: number | null;

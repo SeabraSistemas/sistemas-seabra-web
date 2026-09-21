@@ -1,6 +1,7 @@
 /**
- * "Dias sem manejo" (21/09/2026) — monitoramento de animais que ficaram
- * muitos dias sem nenhum evento registrado.
+ * "Dias sem manejo" (21/09/2026) — motor puro por trás da página
+ * `/FI_FCG/monitorar` (animais ativos há muitos dias sem nenhum evento
+ * registrado).
  *
  * A RebanhoProd tem colunas prontas (`ultimo_manejo`/`ultimo_manejo_dias`),
  * mas achadas ao vivo (21/09/2026) com dois problemas: cobertura baixa (só
@@ -57,24 +58,41 @@ export function ultimoManejoPorAnimal(
   ]);
 }
 
-export interface ManejoAnimal {
-  id: string;
-  /** null = nenhum evento conhecido (nunca apareceu em Pesagem/Toque/IATF/Parto-como-mãe) — não é "0 dias", é "sem dado". */
-  diasSemManejo: number | null;
+/** Não está na venda/baixa — mesmo critério de `vivo()` em RebanhoView.tsx / engorda.ts / custoFormacao.ts. Só animal ATIVO entra no monitoramento — vendido/baixado não precisa mais de manejo. */
+function vivo(a: RegRebanho): boolean {
+  return a.categoria !== 'Venda' && a.categoria !== 'Baixa';
 }
 
-/** Uma linha por animal do rebanho (mesmo universo de `getRebanho`), pronta pra empacotar e mandar pro cliente. */
-export function calcularDiasSemManejo(
+export interface AnimalMonitorado {
+  id: string;
+  fazenda: string | null;
+  categoria: string | null;
+  sexo: string | null;
+  /** null = nenhum evento conhecido (nunca apareceu em Pesagem/Toque/IATF/Parto-como-mãe) — "sem dado", nunca "0 dias". */
+  diasSemManejo: number | null;
+  /** Data do último evento em si (pra mostrar "Último manejo: dd/mm/aaaa" ao lado dos dias). */
+  ultimoManejo: DiaCompacto | null;
+}
+
+/** Só os animais ATIVOS (ver `vivo`), um por linha, pronto pra empacotar e mandar pro cliente da página Monitorar. */
+export function animaisMonitorados(
   rebanho: RegRebanho[],
   pesagem: RegPesagem[],
   toque: RegToque[],
   iatf: RegIatf[],
   partos: RegParto[],
   hoje: DiaCompacto,
-): ManejoAnimal[] {
+): AnimalMonitorado[] {
   const ultimoManejo = ultimoManejoPorAnimal(pesagem, toque, iatf, partos);
-  return rebanho.map((a) => ({
-    id: a.id,
-    diasSemManejo: diasEntre(ultimoManejo.get(a.id) ?? null, hoje),
-  }));
+  return rebanho.filter(vivo).map((a) => {
+    const ultimo = ultimoManejo.get(a.id) ?? null;
+    return {
+      id: a.id,
+      fazenda: a.fazenda,
+      categoria: a.categoria,
+      sexo: a.sexo,
+      diasSemManejo: diasEntre(ultimo, hoje),
+      ultimoManejo: ultimo,
+    };
+  });
 }
