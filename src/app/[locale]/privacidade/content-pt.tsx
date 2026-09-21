@@ -479,6 +479,15 @@ export function PrivacidadeContentPt() {
           gerada pelo app, <strong>quem decide para quem vai é você</strong>{' '}
           — e a partir daí o conteúdo está com quem você enviou.
         </li>
+        <li>
+          Quando você <strong>transfere um animal para outro produtor</strong>{' '}
+          (venda, doação), você gera um código de uso único e escolhe o que
+          vai junto: perfil, manejo, controle leiteiro, produção e
+          genealogia completa. Casos clínicos, abortos e o histórico de
+          reprodução linha a linha <strong>nunca</strong> são transferidos.
+          Nada acontece até o outro produtor digitar o código e confirmar —
+          e a partir daí os dados enviados passam a ser dele.
+        </li>
       </ul>
 
       <h3 className="text-xl font-semibold text-foreground mt-6 mb-3">

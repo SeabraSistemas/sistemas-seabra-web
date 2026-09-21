@@ -489,6 +489,16 @@ export function PrivacidadeContentEs() {
           <strong>quien decide a quién se la envía es usted</strong> — y a
           partir de ahí el contenido queda con quien usted se lo envió.
         </li>
+        <li>
+          Cuando usted <strong>transfiere un animal a otro productor</strong>{' '}
+          (venta, donación), genera un código de un solo uso y elige qué va
+          junto: perfil, manejo, control lechero, producción y genealogía
+          completa. Los casos clínicos, los abortos y el historial
+          reproductivo línea por línea <strong>nunca</strong> se
+          transfieren. No pasa nada hasta que el otro productor escribe el
+          código y confirma — y a partir de ahí los datos enviados pasan a
+          ser de él.
+        </li>
       </ul>
 
       <h3 className="text-xl font-semibold text-foreground mt-6 mb-3">

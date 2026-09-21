@@ -469,6 +469,16 @@ export function PrivacidadeContentEn() {
           <strong>you decide who it goes to</strong> — and from that point on, the
           content is with whomever you sent it to.
         </li>
+        <li>
+          When you <strong>transfer an animal to another producer</strong> (sale,
+          donation), you generate a single-use code and choose what goes
+          along with it: profile, management records, milk control,
+          production, and complete genealogy. Clinical cases, abortions, and
+          the line-by-line breeding history are <strong>never</strong>{' '}
+          transferred. Nothing happens until the other producer enters the
+          code and confirms — and from that point on, the data sent belongs
+          to them.
+        </li>
       </ul>
 
       <h3 className="text-xl font-semibold text-foreground mt-6 mb-3">
