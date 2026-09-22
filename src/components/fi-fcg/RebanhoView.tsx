@@ -68,12 +68,21 @@ export function RebanhoView({ dados }: { dados: PacoteLeitura<RegRebanho> }) {
   );
 
   const filtrados = useMemo(() => filtrarPor(itens, condicoes), [itens, condicoes]);
-  // As métricas de "rebanho vivo" (cards, donut de Fazenda, barras) sempre excluem
-  // Venda/Baixa — a TABELA continua mostrando o recorte filtrado inteiro (inclusive
-  // venda/baixa), pro usuário conseguir localizar um animal que já saiu do rebanho.
+  // As métricas de "rebanho vivo" (cards individuais, donut de Fazenda, barras) sempre
+  // excluem Venda/Baixa — a TABELA continua mostrando o recorte filtrado inteiro
+  // (inclusive venda/baixa), pro usuário conseguir localizar um animal que já saiu do
+  // rebanho.
   const vivos = useMemo(() => filtrados.filter(vivo), [filtrados]);
+  // "Ativos" é mais estreito que "vivos": só as 8 categorias reais do funil (ver
+  // CATEGORIAS_REBANHO) — pedido do Felipe (22/09/2026), o "Total de animais vivos" (e o
+  // que soma por fazenda) não pode incluir Sêmen/Histórico/Leiteira/IDs de teste, só quem
+  // está de fato numa fase de vida do rebanho de corte.
+  const ativos = useMemo(
+    () => filtrados.filter((r) => r.categoria != null && CATEGORIAS_REBANHO.has(r.categoria)),
+    [filtrados],
+  );
 
-  const totalVivos = vivos.length;
+  const totalVivos = ativos.length;
   const vacas = useMemo(() => contar(vivos, (r) => r.categoria === 'Vaca'), [vivos]);
   const leiteiras = useMemo(() => contar(vivos, (r) => r.categoria === 'Leiteira'), [vivos]);
   const novilhas = useMemo(() => contar(vivos, (r) => r.categoria === 'Novilha'), [vivos]);
@@ -82,11 +91,8 @@ export function RebanhoView({ dados }: { dados: PacoteLeitura<RegRebanho> }) {
   const bezerros = useMemo(() => contar(vivos, (r) => r.categoria === 'Bezerro'), [vivos]);
   const bezerras = useMemo(() => contar(vivos, (r) => r.categoria === 'Bezerra'), [vivos]);
 
-  const vivosPorFazenda = useMemo(() => contagemPor(vivos, (r) => r.fazenda), [vivos]);
-  const porCategoria = useMemo(
-    () => contagemPor(filtrados.filter((r) => r.categoria != null && CATEGORIAS_REBANHO.has(r.categoria)), (r) => r.categoria),
-    [filtrados],
-  );
+  const vivosPorFazenda = useMemo(() => contagemPor(ativos, (r) => r.fazenda), [ativos]);
+  const porCategoria = useMemo(() => contagemPor(ativos, (r) => r.categoria), [ativos]);
 
   const colunas: DataTableColumn<RegRebanho>[] = [
     { key: 'fazenda', header: 'Fazenda', cell: (r) => r.fazenda ?? '—', sortValue: (r) => r.fazenda },
