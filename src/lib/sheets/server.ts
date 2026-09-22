@@ -39,12 +39,28 @@ async function token(): Promise<string | null> {
   return token ?? null;
 }
 
+/**
+ * Aspas simples em volta do nome da aba antes de virar range A1 — sem isso,
+ * um nome de aba que TAMBÉM é uma referência de célula válida (ex.: "D8" =
+ * coluna D, linha 8) é lido como aquela célula solta na primeira aba da
+ * planilha, não como a aba inteira. Achado ao vivo, 22/09/2026: `getD8()`
+ * vinha lendo silenciosamente só 1 célula ("HelperQueries"!D8, valor "141")
+ * em vez das 6.172 linhas reais da aba "D8" — sem erro, sem aviso, só uma
+ * aba de manejo inteira ausente do "último manejo"/ficha do animal. Nome
+ * de aba com espaço (ex.: "Parto CG") não precisa disso pra funcionar, mas
+ * aspas não atrapalham — mais seguro citar sempre do que confiar que
+ * nenhuma aba futura vai colidir com notação A1.
+ */
+function citarAba(aba: string): string {
+  return `'${aba}'`;
+}
+
 /** Uma aba inteira ("Nome da aba", sem A:Z — evita truncar coluna). null se faltar config ou a leitura falhar. */
 export async function lerAba(spreadsheetId: string, aba: string): Promise<string[][] | null> {
   const t = await token();
   if (!t) return null;
   try {
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(aba)}`;
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(citarAba(aba))}`;
     const res = await fetch(url, { headers: { Authorization: `Bearer ${t}` }, cache: 'no-store' });
     if (!res.ok) {
       console.error('[sheets] falha ao ler planilha', aba, res.status, await res.text());
@@ -70,7 +86,7 @@ export async function lerAbas(spreadsheetId: string, abas: string[]): Promise<Re
   const t = await token();
   if (!t) return vazio;
   try {
-    const q = abas.map((a) => `ranges=${encodeURIComponent(a)}`).join('&');
+    const q = abas.map((a) => `ranges=${encodeURIComponent(citarAba(a))}`).join('&');
     const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values:batchGet?${q}`;
     const res = await fetch(url, { headers: { Authorization: `Bearer ${t}` }, cache: 'no-store' });
     if (!res.ok) {
@@ -252,7 +268,7 @@ export async function adicionarLinhas(
   const t = await token();
   if (!t) return 0;
   try {
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(aba)}:append?valueInputOption=${valueInputOption}`;
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(citarAba(aba))}:append?valueInputOption=${valueInputOption}`;
     const res = await fetch(url, {
       method: 'POST',
       headers: { Authorization: `Bearer ${t}`, 'Content-Type': 'application/json' },
@@ -279,7 +295,7 @@ export async function adicionarLinha(
   const t = await token();
   if (!t) return false;
   try {
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(aba)}:append?valueInputOption=${valueInputOption}`;
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(citarAba(aba))}:append?valueInputOption=${valueInputOption}`;
     const res = await fetch(url, {
       method: 'POST',
       headers: { Authorization: `Bearer ${t}`, 'Content-Type': 'application/json' },
