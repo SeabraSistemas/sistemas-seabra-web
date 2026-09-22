@@ -23,6 +23,24 @@ function vivo(r: RegRebanho): boolean {
   return r.categoria !== 'Venda' && r.categoria !== 'Baixa';
 }
 
+/**
+ * As 8 categorias reais do funil (fórmula de `Categoria` na RebanhoProd,
+ * corrigida ao vivo em 21/09/2026 — Bezerro/Garrote/Boi/Touro macho,
+ * Bezerra/Recria/Novilha/Vaca fêmea). O donut "Por categoria" mostra só
+ * essas — o resto (Venda, Baixa, Histórico, IDs de teste/legado tipo "vaca
+ * problema") não é estágio de vida do rebanho vivo, é ruído aqui.
+ */
+const CATEGORIAS_REBANHO = new Set([
+  'Bezerro',
+  'Bezerra',
+  'Garrote',
+  'Recria',
+  'Boi',
+  'Novilha',
+  'Touro',
+  'Vaca',
+]);
+
 export function RebanhoView({ dados }: { dados: PacoteLeitura<RegRebanho> }) {
   const itens = useMemo(() => desempacotar<RegRebanho>(dados.pacote), [dados.pacote]);
 
@@ -65,7 +83,10 @@ export function RebanhoView({ dados }: { dados: PacoteLeitura<RegRebanho> }) {
   const bezerras = useMemo(() => contar(vivos, (r) => r.categoria === 'Bezerra'), [vivos]);
 
   const vivosPorFazenda = useMemo(() => contagemPor(vivos, (r) => r.fazenda), [vivos]);
-  const porCategoria = useMemo(() => contagemPor(filtrados, (r) => r.categoria), [filtrados]);
+  const porCategoria = useMemo(
+    () => contagemPor(filtrados.filter((r) => r.categoria != null && CATEGORIAS_REBANHO.has(r.categoria)), (r) => r.categoria),
+    [filtrados],
+  );
 
   const colunas: DataTableColumn<RegRebanho>[] = [
     { key: 'fazenda', header: 'Fazenda', cell: (r) => r.fazenda ?? '—', sortValue: (r) => r.fazenda },
