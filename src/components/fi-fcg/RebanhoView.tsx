@@ -86,7 +86,9 @@ export function RebanhoView({ dados }: { dados: PacoteLeitura<RegRebanho> }) {
   const vacas = useMemo(() => contar(vivos, (r) => r.categoria === 'Vaca'), [vivos]);
   const leiteiras = useMemo(() => contar(vivos, (r) => r.categoria === 'Leiteira'), [vivos]);
   const novilhas = useMemo(() => contar(vivos, (r) => r.categoria === 'Novilha'), [vivos]);
+  const recrias = useMemo(() => contar(vivos, (r) => r.categoria === 'Recria'), [vivos]);
   const touros = useMemo(() => contar(vivos, (r) => r.categoria === 'Touro'), [vivos]);
+  const bois = useMemo(() => contar(vivos, (r) => r.categoria === 'Boi'), [vivos]);
   const garrotes = useMemo(() => contar(vivos, (r) => r.categoria === 'Garrote'), [vivos]);
   const bezerros = useMemo(() => contar(vivos, (r) => r.categoria === 'Bezerro'), [vivos]);
   const bezerras = useMemo(() => contar(vivos, (r) => r.categoria === 'Bezerra'), [vivos]);
@@ -138,7 +140,9 @@ export function RebanhoView({ dados }: { dados: PacoteLeitura<RegRebanho> }) {
         <MetricCard id="vacas" label="Vacas" value={formatNumber(vacas)} />
         <MetricCard id="leiteiras" label="Leiteiras" value={formatNumber(leiteiras)} />
         <MetricCard id="novilhas" label="Novilhas" value={formatNumber(novilhas)} />
+        <MetricCard id="recrias" label="Recria" value={formatNumber(recrias)} />
         <MetricCard id="touros" label="Touros" value={formatNumber(touros)} />
+        <MetricCard id="bois" label="Boi" value={formatNumber(bois)} />
         <MetricCard id="garrotes" label="Garrotes" value={formatNumber(garrotes)} />
         <MetricCard id="bezerros" label="Bezerros" value={formatNumber(bezerros)} />
         <MetricCard id="bezerras" label="Bezerras" value={formatNumber(bezerras)} />
