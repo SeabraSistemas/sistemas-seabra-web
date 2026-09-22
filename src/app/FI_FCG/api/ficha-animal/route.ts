@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { sessaoApi } from '@/lib/fi-fcg/sessao';
+import { resolverIdCanonico } from '@/lib/fi-fcg/manejo';
 import {
   getAbortos,
   getClinica,
@@ -11,6 +12,7 @@ import {
   getPartos,
   getPesagem,
   getProtocolo,
+  getRebanho,
   getToque,
   getTransferir,
 } from '@/lib/fi-fcg/queries';
@@ -53,25 +55,31 @@ export async function GET(request: Request) {
   const id = new URL(request.url).searchParams.get('id')?.trim();
   if (!id) return NextResponse.json({ erro: 'id ausente' }, { status: 400 });
 
-  const [pesagem, toque, iatf, partos, manejo, d8, protocolo, transferir, engorda, clinica, abortos, embarque] = await Promise.all([
-    getPesagem(),
-    getToque(),
-    getIatf(),
-    getPartos(),
-    getManejoSanitario(),
-    getD8(),
-    getProtocolo(),
-    getTransferir(),
-    getEngordaEventos(),
-    getClinica(),
-    getAbortos(),
-    getEmbarque(),
-  ]);
+  const [rebanho, pesagem, toque, iatf, partos, manejo, d8, protocolo, transferir, engorda, clinica, abortos, embarque] =
+    await Promise.all([
+      getRebanho(),
+      getPesagem(),
+      getToque(),
+      getIatf(),
+      getPartos(),
+      getManejoSanitario(),
+      getD8(),
+      getProtocolo(),
+      getTransferir(),
+      getEngordaEventos(),
+      getClinica(),
+      getAbortos(),
+      getEmbarque(),
+    ]);
+
+  // Mesma resolução de manejo.ts: um lançamento pode citar a "ID eletrônica"
+  // (chip) do animal em vez do "ID animal" — ver `resolverIdCanonico`.
+  const resolver = resolverIdCanonico(rebanho.itens);
 
   const eventos: EventoHistorico[] = [];
 
   for (const r of pesagem.itens) {
-    if (r.id !== id || r.data == null) continue;
+    if (resolver(r.id) !== id || r.data == null) continue;
     const partes = [`${formatNumber(r.pesoKg)}kg`];
     if (r.diferencaKg != null) partes.push(`${r.diferencaKg >= 0 ? '+' : ''}${formatNumber(r.diferencaKg)}kg`);
     if (r.gmd != null) partes.push(`GMD ${formatNumber(r.gmd)}`);
@@ -79,7 +87,7 @@ export async function GET(request: Request) {
   }
 
   for (const r of toque.itens) {
-    if (r.id !== id || r.data == null) continue;
+    if (resolver(r.id) !== id || r.data == null) continue;
     const partes = [r.diagnostico ?? '—'];
     if (r.status) partes.push(r.status);
     if (r.escore) partes.push(`Escore ${r.escore}`);
@@ -87,18 +95,18 @@ export async function GET(request: Request) {
   }
 
   for (const r of iatf.itens) {
-    if (r.id !== id || r.data == null) continue;
+    if (resolver(r.id) !== id || r.data == null) continue;
     const partes = [r.partida, r.inseminador].filter((v): v is string => Boolean(v));
     eventos.push({ tipo: 'IATF', data: r.data, resumo: partes.length > 0 ? partes.join(' · ') : '—' });
   }
 
   for (const r of partos.itens) {
-    if (r.idMae !== id || r.nascimento == null) continue;
+    if (resolver(r.idMae) !== id || r.nascimento == null) continue;
     eventos.push({ tipo: 'Parto', data: r.nascimento, resumo: r.sexo ?? '—' });
   }
 
   for (const r of manejo.itens) {
-    if (r.idAnimal !== id || r.data == null) continue;
+    if (resolver(r.idAnimal) !== id || r.data == null) continue;
     const aplicados = [
       r.brucelose === 'Sim' && 'Brucelose',
       r.carbunculo === 'Sim' && 'Carbúnculo',
@@ -110,38 +118,38 @@ export async function GET(request: Request) {
   }
 
   for (const r of d8.itens) {
-    if (r.idAnimal !== id || r.data == null) continue;
+    if (resolver(r.idAnimal) !== id || r.data == null) continue;
     eventos.push({ tipo: 'D8', data: r.data, resumo: r.produto ?? '—' });
   }
 
   for (const r of protocolo.itens) {
-    if (r.idAnimal !== id || r.data == null) continue;
+    if (resolver(r.idAnimal) !== id || r.data == null) continue;
     eventos.push({ tipo: 'Protocolo', data: r.data, resumo: r.produto ?? '—' });
   }
 
   for (const r of transferir.itens) {
-    if (r.idAnimal !== id || r.data == null) continue;
+    if (resolver(r.idAnimal) !== id || r.data == null) continue;
     eventos.push({ tipo: 'Transferência', data: r.data, resumo: r.fazenda ?? '—' });
   }
 
   for (const r of engorda.itens) {
-    if (r.idAnimal !== id || r.data == null) continue;
+    if (resolver(r.idAnimal) !== id || r.data == null) continue;
     eventos.push({ tipo: 'Engorda', data: r.data, resumo: r.pesoEntrada != null ? `${formatNumber(r.pesoEntrada)}kg` : '—' });
   }
 
   for (const r of clinica.itens) {
-    if (r.idAnimal !== id || r.data == null) continue;
+    if (resolver(r.idAnimal) !== id || r.data == null) continue;
     const partes = [r.caso, r.diagnostico].filter((v): v is string => Boolean(v));
     eventos.push({ tipo: 'Clínica', data: r.data, resumo: partes.length > 0 ? partes.join(' · ') : '—' });
   }
 
   for (const r of abortos.itens) {
-    if (r.idAnimal !== id || r.data == null) continue;
+    if (resolver(r.idAnimal) !== id || r.data == null) continue;
     eventos.push({ tipo: 'Aborto', data: r.data, resumo: r.suspeita ?? '—' });
   }
 
   for (const r of embarque.itens) {
-    if (r.idAnimal !== id || r.data == null) continue;
+    if (resolver(r.idAnimal) !== id || r.data == null) continue;
     eventos.push({ tipo: 'Embarque', data: r.data, resumo: r.embarcado ?? '—' });
   }
 

@@ -66,6 +66,31 @@ function combinar(mapas: Map<string, DiaCompacto>[]): Map<string, DiaCompacto> {
   return resultado;
 }
 
+/**
+ * Resolve um ID bruto (como foi lançado numa aba) pro "ID animal" canônico
+ * da RebanhoProd. Nem todo lançamento grava o mesmo campo: animal "da era
+ * do chip" nasce com "ID animal" = "ID eletrônica" (mesmo número de 15
+ * dígitos); quando o chip é trocado, só um dos dois lados acompanha, e o
+ * lançamento (que grava o que foi escaneado no brinco) pode citar
+ * qualquer um dos dois. Achado ao vivo, 22/09/2026, investigando com o
+ * Felipe: pra Manejo e Engorda, ~100% dos ID que não batiam com nenhum
+ * "ID animal" atual batiam com a "ID eletrônica" de algum animal — não é
+ * dado perdido, é só o campo errado. Sem bater com nenhum dos dois: volta
+ * o bruto sem mudar (mesmo comportamento de antes — vira órfão de novo).
+ */
+export function resolverIdCanonico(rebanho: RegRebanho[]): (idBruto: string | null) => string | null {
+  const porEletronica = new Map<string, string>();
+  const idsConhecidos = new Set<string>();
+  for (const a of rebanho) {
+    idsConhecidos.add(a.id);
+    if (a.eletronica) porEletronica.set(a.eletronica, a.id);
+  }
+  return (idBruto) => {
+    if (!idBruto || idsConhecidos.has(idBruto)) return idBruto;
+    return porEletronica.get(idBruto) ?? idBruto;
+  };
+}
+
 /** As 12 fontes de evento que contam como "manejo" — ver o comentário no topo do arquivo pro porquê de cada uma (e do que ficou de fora). */
 export interface FontesManejo {
   pesagem: RegPesagem[];
@@ -82,21 +107,22 @@ export interface FontesManejo {
   embarque: RegEmbarque[];
 }
 
-/** Data do último manejo conhecido de cada animal — o mais recente entre todas as `FontesManejo` (Parto conta pra MÃE, via `idMae`/nascimento do bezerro; o resto conta pro próprio `idAnimal`/`id`). */
-export function ultimoManejoPorAnimal(fontes: FontesManejo): Map<string, DiaCompacto> {
+/** Data do último manejo conhecido de cada animal — o mais recente entre todas as `FontesManejo` (Parto conta pra MÃE, via `idMae`/nascimento do bezerro; o resto conta pro próprio `idAnimal`/`id`). Todo ID passa por `resolverIdCanonico` antes de juntar. */
+export function ultimoManejoPorAnimal(rebanho: RegRebanho[], fontes: FontesManejo): Map<string, DiaCompacto> {
+  const resolver = resolverIdCanonico(rebanho);
   return combinar([
-    maisRecentePorId(fontes.pesagem, (r) => r.id, (r) => r.data),
-    maisRecentePorId(fontes.toque, (r) => r.id, (r) => r.data),
-    maisRecentePorId(fontes.iatf, (r) => r.id, (r) => r.data),
-    maisRecentePorId(fontes.partos, (r) => r.idMae, (r) => r.nascimento),
-    maisRecentePorId(fontes.manejoSanitario, (r) => r.idAnimal, (r) => r.data),
-    maisRecentePorId(fontes.d8, (r) => r.idAnimal, (r) => r.data),
-    maisRecentePorId(fontes.protocolo, (r) => r.idAnimal, (r) => r.data),
-    maisRecentePorId(fontes.transferir, (r) => r.idAnimal, (r) => r.data),
-    maisRecentePorId(fontes.engordaEventos, (r) => r.idAnimal, (r) => r.data),
-    maisRecentePorId(fontes.clinica, (r) => r.idAnimal, (r) => r.data),
-    maisRecentePorId(fontes.abortos, (r) => r.idAnimal, (r) => r.data),
-    maisRecentePorId(fontes.embarque, (r) => r.idAnimal, (r) => r.data),
+    maisRecentePorId(fontes.pesagem, (r) => resolver(r.id), (r) => r.data),
+    maisRecentePorId(fontes.toque, (r) => resolver(r.id), (r) => r.data),
+    maisRecentePorId(fontes.iatf, (r) => resolver(r.id), (r) => r.data),
+    maisRecentePorId(fontes.partos, (r) => resolver(r.idMae), (r) => r.nascimento),
+    maisRecentePorId(fontes.manejoSanitario, (r) => resolver(r.idAnimal), (r) => r.data),
+    maisRecentePorId(fontes.d8, (r) => resolver(r.idAnimal), (r) => r.data),
+    maisRecentePorId(fontes.protocolo, (r) => resolver(r.idAnimal), (r) => r.data),
+    maisRecentePorId(fontes.transferir, (r) => resolver(r.idAnimal), (r) => r.data),
+    maisRecentePorId(fontes.engordaEventos, (r) => resolver(r.idAnimal), (r) => r.data),
+    maisRecentePorId(fontes.clinica, (r) => resolver(r.idAnimal), (r) => r.data),
+    maisRecentePorId(fontes.abortos, (r) => resolver(r.idAnimal), (r) => r.data),
+    maisRecentePorId(fontes.embarque, (r) => resolver(r.idAnimal), (r) => r.data),
   ]);
 }
 
@@ -148,7 +174,7 @@ export function animaisMonitorados(
   fontes: FontesManejo,
   hoje: DiaCompacto,
 ): AnimalMonitorado[] {
-  const ultimoManejo = ultimoManejoPorAnimal(fontes);
+  const ultimoManejo = ultimoManejoPorAnimal(rebanho, fontes);
   return rebanho.filter(ativo).map((a) => {
     const ultimo = ultimoManejo.get(a.id) ?? null;
     return {

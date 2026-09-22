@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, test } from 'node:test';
 
-import { animaisMonitorados, ultimoManejoPorAnimal, type FontesManejo } from '@/lib/fi-fcg/manejo';
+import { animaisMonitorados, resolverIdCanonico, ultimoManejoPorAnimal, type FontesManejo } from '@/lib/fi-fcg/manejo';
 import type {
   RegAborto,
   RegClinica,
@@ -81,7 +81,7 @@ function fontesVazias(overrides: Partial<FontesManejo> = {}): FontesManejo {
 
 describe('ultimoManejoPorAnimal', () => {
   test('pega a data mais recente entre Pesagem/Toque/IATF/Parto (como mãe) de cada animal', () => {
-    const mapa = ultimoManejoPorAnimal(fontesVazias({
+    const mapa = ultimoManejoPorAnimal([], fontesVazias({
       pesagem: [pesagem({ id: 'a1', data: 20260101 }), pesagem({ id: 'a1', data: 20260301 })],
       toque: [toque({ id: 'a1', data: 20260201 })],
       iatf: [iatf({ id: 'a1', data: 20250101 })],
@@ -90,18 +90,18 @@ describe('ultimoManejoPorAnimal', () => {
   });
 
   test('Parto conta pra MAE (ID Mae), nao pro bezerro', () => {
-    const mapa = ultimoManejoPorAnimal(fontesVazias({ partos: [parto({ idMae: 'vaca1', nascimento: 20260315 })] }));
+    const mapa = ultimoManejoPorAnimal([], fontesVazias({ partos: [parto({ idMae: 'vaca1', nascimento: 20260315 })] }));
     assert.equal(mapa.get('vaca1'), 20260315);
     assert.equal(mapa.get('bezerro-vaca1'), undefined);
   });
 
   test('animal sem nenhum evento: nao aparece no mapa', () => {
-    const mapa = ultimoManejoPorAnimal(fontesVazias({ pesagem: [pesagem({ id: 'a1', data: 20260101 })] }));
+    const mapa = ultimoManejoPorAnimal([], fontesVazias({ pesagem: [pesagem({ id: 'a1', data: 20260101 })] }));
     assert.equal(mapa.has('a2'), false);
   });
 
   test('linhas sem data ou sem id sao ignoradas', () => {
-    const mapa = ultimoManejoPorAnimal(fontesVazias({
+    const mapa = ultimoManejoPorAnimal([], fontesVazias({
       pesagem: [pesagem({ id: 'a1', data: null as unknown as number }), pesagem({ id: '', data: 20260101 })],
     }));
     assert.equal(mapa.size, 0);
@@ -118,17 +118,48 @@ describe('ultimoManejoPorAnimal', () => {
       abortos: [aborto({ idAnimal: 'a1', data: 20260501 })],
       embarque: [embarque({ idAnimal: 'a1', data: 20260501 })],
     })) {
-      const mapa = ultimoManejoPorAnimal(fontesVazias({ [nome]: fontes } as Partial<FontesManejo>));
+      const mapa = ultimoManejoPorAnimal([], fontesVazias({ [nome]: fontes } as Partial<FontesManejo>));
       assert.equal(mapa.get('a1'), 20260501, `fonte ${nome} deveria contar como manejo`);
     }
   });
 
   test('a fonte mais recente vence mesmo vindo de uma aba nova (ex: Manejo depois da ultima Pesagem)', () => {
-    const mapa = ultimoManejoPorAnimal(fontesVazias({
+    const mapa = ultimoManejoPorAnimal([], fontesVazias({
       pesagem: [pesagem({ id: 'a1', data: 20260101 })],
       manejoSanitario: [manejoSanitario({ idAnimal: 'a1', data: 20260601 })],
     }));
     assert.equal(mapa.get('a1'), 20260601);
+  });
+
+  test('lancamento gravado com a ID eletronica (chip) ainda conta pro animal, via resolverIdCanonico', () => {
+    const rebanho = [animal({ id: 'G149', eletronica: '900215007821064' })];
+    const mapa = ultimoManejoPorAnimal(rebanho, fontesVazias({
+      manejoSanitario: [manejoSanitario({ idAnimal: '900215007821064', data: 20260601 })],
+    }));
+    assert.equal(mapa.get('G149'), 20260601);
+    assert.equal(mapa.has('900215007821064'), false);
+  });
+});
+
+describe('resolverIdCanonico', () => {
+  test('ID que ja bate com "ID animal" de algum animal: devolve sem mudar', () => {
+    const resolver = resolverIdCanonico([animal({ id: 'G149', eletronica: '900215007821064' })]);
+    assert.equal(resolver('G149'), 'G149');
+  });
+
+  test('ID que so bate com a "ID eletronica" (chip): resolve pro "ID animal" canonico', () => {
+    const resolver = resolverIdCanonico([animal({ id: 'G149', eletronica: '900215007821064' })]);
+    assert.equal(resolver('900215007821064'), 'G149');
+  });
+
+  test('ID que nao bate com nada: devolve o bruto sem mudar (continua orfao)', () => {
+    const resolver = resolverIdCanonico([animal({ id: 'G149', eletronica: '900215007821064' })]);
+    assert.equal(resolver('inexistente'), 'inexistente');
+  });
+
+  test('null/vazio passam direto', () => {
+    const resolver = resolverIdCanonico([animal({ id: 'G149' })]);
+    assert.equal(resolver(null), null);
   });
 });
 
