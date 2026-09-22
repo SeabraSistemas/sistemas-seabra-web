@@ -19,11 +19,18 @@ import type {
   MarcoIdade,
   RegAborto,
   RegBaixa,
+  RegClinica,
+  RegD8,
+  RegEmbarque,
+  RegEngordaEvento,
   RegIatf,
+  RegManejoSanitario,
   RegParto,
   RegPesagem,
+  RegProtocolo,
   RegRebanho,
   RegToque,
+  RegTransferir,
   RegVenda,
   TipoCusto,
 } from './types';
@@ -211,6 +218,81 @@ export function mapAbortos(rows: string[][] | null): RegAborto[] {
     data: diaDe(r['Data do aborto']),
     suspeita: parseText(r['Suspeita']),
     fazenda: parseText(r['Fazenda']),
+  }));
+}
+
+/** Aba "Manejo" — log sanitário (vacina/vermífugo/carrapato/mosca). Fonte de "último manejo" (manejo.ts). */
+export function mapManejoSanitario(rows: string[][] | null): RegManejoSanitario[] {
+  return toObjects(rows).map((r, i) => ({
+    id: parseText(r['id_manejo']) ?? `manejo-${i}`,
+    idAnimal: parseText(r['ID animal']),
+    data: diaDe(r['Data']),
+    brucelose: parseText(r['Brucelose']),
+    carbunculo: parseText(r['Carbúnculo']),
+    vermifugo: parseText(r['Vermífugo']),
+    carrapato: parseText(r['Carrapato']),
+    mosca: parseText(r['Mosca']),
+  }));
+}
+
+/** Aba "D8" — checkpoint do protocolo reprodutivo (dia 8). */
+export function mapD8(rows: string[][] | null): RegD8[] {
+  return toObjects(rows).map((r, i) => ({
+    id: parseText(r['ID protocolo']) ?? `d8-${i}`,
+    idAnimal: parseText(r['ID animal']),
+    data: diaDe(r['D8']),
+    produto: parseText(r['Produto']),
+  }));
+}
+
+/** Aba "Protocolo" — início do protocolo reprodutivo (D0). */
+export function mapProtocolo(rows: string[][] | null): RegProtocolo[] {
+  return toObjects(rows).map((r, i) => ({
+    id: parseText(r['ID protocolo']) ?? `protocolo-${i}`,
+    idAnimal: parseText(r['ID animal']),
+    data: diaDe(r['Início do protocolo']),
+    produto: parseText(r['Produto']),
+  }));
+}
+
+/** Aba "Transferir" — transferência de fazenda/lote. */
+export function mapTransferir(rows: string[][] | null): RegTransferir[] {
+  return toObjects(rows).map((r, i) => ({
+    id: parseText(r['ID Transferir']) ?? `transferir-${i}`,
+    idAnimal: parseText(r['ID animal']),
+    data: diaDe(r['Data da ida']),
+    fazenda: parseText(r['Fazenda']),
+  }));
+}
+
+/** Aba "Engorda" — o EVENTO de entrada no programa (não o espelho em RebanhoProd.entradaEngorda, que fica congelado). */
+export function mapEngordaEventos(rows: string[][] | null): RegEngordaEvento[] {
+  return toObjects(rows).map((r, i) => ({
+    id: parseText(r['ID engorda']) ?? `engorda-${i}`,
+    idAnimal: parseText(r['ID animal']),
+    data: diaDe(r['Entrada engorda']),
+    pesoEntrada: parseNumber(r['Peso entrada engorda']),
+  }));
+}
+
+/** Aba "Clínica". Nota: o header real tem o typo "Diangóstico" — alias cobre o dia em que for corrigido. */
+export function mapClinica(rows: string[][] | null): RegClinica[] {
+  return toObjects(rows).map((r, i) => ({
+    id: parseText(r['ID clinica']) ?? `clinica-${i}`,
+    idAnimal: parseText(r['ID animal']),
+    data: diaDe(r['Data do caso']),
+    caso: parseText(r['Caso']),
+    diagnostico: parseText(campo(r, 'Diangóstico', 'Diagnóstico')),
+  }));
+}
+
+/** Abas "Embarque" (Campina grande) + "Embarque FI" (Inhumas) — mesmo layout, embarque pro frigorífico/leilão. */
+export function mapEmbarque(rows: string[][] | null): RegEmbarque[] {
+  return toObjects(rows).map((r, i) => ({
+    id: parseText(r['ID embarque']) ?? `embarque-${i}`,
+    idAnimal: parseText(r['ID animal']),
+    data: diaDe(r['Entrada']),
+    embarcado: parseText(r['Embarcado']),
   }));
 }
 

@@ -6,13 +6,20 @@ import {
   mapBaixas,
   mapCategoriaArroba,
   mapCategoriasCusto,
+  mapClinica,
   mapCustos,
+  mapD8,
+  mapEmbarque,
+  mapEngordaEventos,
   mapFinanceiro,
   mapIatf,
+  mapManejoSanitario,
   mapPartos,
   mapPesagem,
+  mapProtocolo,
   mapRebanho,
   mapToque,
+  mapTransferir,
   mapVendas,
   toObjects,
 } from '@/lib/fi-fcg/mapeadores';
@@ -244,5 +251,106 @@ describe('mapCustos', () => {
       ['', 'sem id'],
     ];
     assert.deepEqual(mapCustos(rows), []);
+  });
+});
+
+describe('mapManejoSanitario (aba "Manejo", 22/09/2026 — fonte de "ultimo manejo")', () => {
+  test('mapeia os 5 flags Sim/vazio e a Data', () => {
+    const rows = [
+      ['id_manejo', 'ID animal', 'Brucelose', 'Carbúnculo', 'Vermífugo', 'Carrapato', 'Mosca', 'Data'],
+      ['m1', 'A1', '', 'Sim', '', '', '', '18/02/2025'],
+    ];
+    const [r] = mapManejoSanitario(rows);
+    assert.equal(r.idAnimal, 'A1');
+    assert.equal(r.carbunculo, 'Sim');
+    assert.equal(r.brucelose, null);
+    assert.equal(r.data, 20250218);
+  });
+  test('linha sem id_manejo ainda entra, com id posicional (nao tem ID animal proprio na aba)', () => {
+    const rows = [
+      ['id_manejo', 'ID animal', 'Data'],
+      ['', 'A1', '18/02/2025'],
+    ];
+    assert.equal(mapManejoSanitario(rows)[0].id, 'manejo-0');
+  });
+});
+
+describe('mapD8 (aba "D8" — checkpoint do protocolo reprodutivo)', () => {
+  test('a DATA vem da propria coluna "D8" (mesmo nome da aba)', () => {
+    const rows = [
+      ['ID protocolo', 'ID animal', 'Produto', 'D8'],
+      ['p1', 'A1', 'Croniben', '14/01/2025'],
+    ];
+    const [r] = mapD8(rows);
+    assert.equal(r.data, 20250114);
+    assert.equal(r.produto, 'Croniben');
+  });
+});
+
+describe('mapProtocolo (aba "Protocolo" — inicio do protocolo, D0)', () => {
+  test('le "Inicio do protocolo", nao a coluna "D8" que tambem existe nessa aba', () => {
+    const rows = [
+      ['ID protocolo', 'ID animal', 'Produto', 'Início do protocolo', 'D8'],
+      ['p1', 'A1', 'Progestar', '06/01/2025', '14/01/2025'],
+    ];
+    const [r] = mapProtocolo(rows);
+    assert.equal(r.data, 20250106);
+    assert.equal(r.produto, 'Progestar');
+  });
+});
+
+describe('mapTransferir (aba "Transferir")', () => {
+  test('mapeia Data da ida e Fazenda de destino', () => {
+    const rows = [
+      ['ID Transferir', 'ID animal', 'Fazenda', 'Data da ida'],
+      ['t1', 'A1', 'Campina grande', '10/03/2025'],
+    ];
+    const [r] = mapTransferir(rows);
+    assert.equal(r.data, 20250310);
+    assert.equal(r.fazenda, 'Campina grande');
+  });
+});
+
+describe('mapEngordaEventos (aba "Engorda" — evento em si, nao o espelho em RebanhoProd)', () => {
+  test('mapeia Entrada engorda (data) e Peso entrada engorda', () => {
+    const rows = [
+      ['ID engorda', 'ID animal', 'Peso entrada engorda', 'Entrada engorda'],
+      ['e1', 'A1', '334', '02/05/2025'],
+    ];
+    const [r] = mapEngordaEventos(rows);
+    assert.equal(r.data, 20250502);
+    assert.equal(r.pesoEntrada, 334);
+  });
+});
+
+describe('mapClinica (aba "Clínica")', () => {
+  test('aceita o typo real "Diangóstico" (header de origem) via alias', () => {
+    const rows = [
+      ['ID clinica', 'ID animal', 'Data do caso', 'Caso', 'Diangóstico'],
+      ['c1', 'A1', '11/06/2025', 'Coxeadura', 'Pododermatite'],
+    ];
+    const [r] = mapClinica(rows);
+    assert.equal(r.data, 20250611);
+    assert.equal(r.caso, 'Coxeadura');
+    assert.equal(r.diagnostico, 'Pododermatite');
+  });
+  test('aceita "Diagnóstico" (grafia corrigida) tambem', () => {
+    const rows = [
+      ['ID animal', 'Diagnóstico'],
+      ['A1', 'Mastite'],
+    ];
+    assert.equal(mapClinica(rows)[0].diagnostico, 'Mastite');
+  });
+});
+
+describe('mapEmbarque (abas "Embarque" e "Embarque FI" — mesmo layout)', () => {
+  test('a DATA vem de "Entrada", nao de "Embarcado" (que e Sim/Nao)', () => {
+    const rows = [
+      ['ID embarque', 'ID animal', 'Entrada', 'Embarcado'],
+      ['emb1', 'A1', '19/05/2025', 'Sim'],
+    ];
+    const [r] = mapEmbarque(rows);
+    assert.equal(r.data, 20250519);
+    assert.equal(r.embarcado, 'Sim');
   });
 });

@@ -14,6 +14,14 @@ const VARIANTE_TIPO: Record<EventoHistorico['tipo'], 'outline' | 'secondary'> = 
   Toque: 'secondary',
   IATF: 'outline',
   Parto: 'secondary',
+  Manejo: 'outline',
+  D8: 'secondary',
+  Protocolo: 'outline',
+  Transferência: 'secondary',
+  Engorda: 'outline',
+  Clínica: 'secondary',
+  Aborto: 'outline',
+  Embarque: 'secondary',
 };
 
 /**

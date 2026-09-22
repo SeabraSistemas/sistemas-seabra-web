@@ -9,12 +9,35 @@
  * congeladas — um animal com manejo em 03/11/2025 marcava "15 dias" quando
  * já eram ~322 (o AppSheet parou de recalcular essa coluna). Em vez de usar
  * essas colunas, este módulo deriva o último manejo diretamente dos eventos
- * que o dashboard já lê — Pesagem, Toque, IATF (Reprodução) e Parto (como
- * MÃE, via `ID Mãe`) — cobrindo qualquer animal que já apareceu em algum
- * desses, sempre recalculado contra `hoje`, nunca congelado.
+ * que o dashboard já lê, sempre recalculado contra `hoje`, nunca congelado.
+ *
+ * Fontes (22/09/2026, revisão de todas as abas de lançamento do AppSheet
+ * junto com o Felipe — ver `FontesManejo`): Pesagem, Toque, IATF
+ * (Reproduçao), Parto (como MÃE, via `ID Mãe`), Manejo (log sanitário),
+ * D8 e Protocolo (checkpoints reprodutivos), Transferir, Engorda (entrada
+ * no programa), Clínica, Aborto, Embarque. Ficaram de fora: Baixa/Venda
+ * (animal não-ativo não entra no monitoramento, ver `CATEGORIAS_ATIVAS`),
+ * Botijão (estoque de sêmen, não é evento de animal), Lotes (só nomes),
+ * Apartação/Apartação FI (0 linhas de dado ainda) e Indução (só 4 linhas,
+ * todas com ID animal "teste" — dado de teste, não produção).
  */
 import { diasEntre } from '@/lib/painel/format';
-import type { DiaCompacto, RegIatf, RegParto, RegPesagem, RegRebanho, RegToque } from './types';
+import type {
+  DiaCompacto,
+  RegAborto,
+  RegClinica,
+  RegD8,
+  RegEmbarque,
+  RegEngordaEvento,
+  RegIatf,
+  RegManejoSanitario,
+  RegParto,
+  RegPesagem,
+  RegProtocolo,
+  RegRebanho,
+  RegToque,
+  RegTransferir,
+} from './types';
 
 function maisRecentePorId<T>(
   linhas: T[],
@@ -43,18 +66,37 @@ function combinar(mapas: Map<string, DiaCompacto>[]): Map<string, DiaCompacto> {
   return resultado;
 }
 
-/** Data do último manejo conhecido de cada animal — o mais recente entre Pesagem, Toque, IATF e (se fêmea) o próprio Parto como mãe. */
-export function ultimoManejoPorAnimal(
-  pesagem: RegPesagem[],
-  toque: RegToque[],
-  iatf: RegIatf[],
-  partos: RegParto[],
-): Map<string, DiaCompacto> {
+/** As 12 fontes de evento que contam como "manejo" — ver o comentário no topo do arquivo pro porquê de cada uma (e do que ficou de fora). */
+export interface FontesManejo {
+  pesagem: RegPesagem[];
+  toque: RegToque[];
+  iatf: RegIatf[];
+  partos: RegParto[];
+  manejoSanitario: RegManejoSanitario[];
+  d8: RegD8[];
+  protocolo: RegProtocolo[];
+  transferir: RegTransferir[];
+  engordaEventos: RegEngordaEvento[];
+  clinica: RegClinica[];
+  abortos: RegAborto[];
+  embarque: RegEmbarque[];
+}
+
+/** Data do último manejo conhecido de cada animal — o mais recente entre todas as `FontesManejo` (Parto conta pra MÃE, via `idMae`/nascimento do bezerro; o resto conta pro próprio `idAnimal`/`id`). */
+export function ultimoManejoPorAnimal(fontes: FontesManejo): Map<string, DiaCompacto> {
   return combinar([
-    maisRecentePorId(pesagem, (r) => r.id, (r) => r.data),
-    maisRecentePorId(toque, (r) => r.id, (r) => r.data),
-    maisRecentePorId(iatf, (r) => r.id, (r) => r.data),
-    maisRecentePorId(partos, (r) => r.idMae, (r) => r.nascimento),
+    maisRecentePorId(fontes.pesagem, (r) => r.id, (r) => r.data),
+    maisRecentePorId(fontes.toque, (r) => r.id, (r) => r.data),
+    maisRecentePorId(fontes.iatf, (r) => r.id, (r) => r.data),
+    maisRecentePorId(fontes.partos, (r) => r.idMae, (r) => r.nascimento),
+    maisRecentePorId(fontes.manejoSanitario, (r) => r.idAnimal, (r) => r.data),
+    maisRecentePorId(fontes.d8, (r) => r.idAnimal, (r) => r.data),
+    maisRecentePorId(fontes.protocolo, (r) => r.idAnimal, (r) => r.data),
+    maisRecentePorId(fontes.transferir, (r) => r.idAnimal, (r) => r.data),
+    maisRecentePorId(fontes.engordaEventos, (r) => r.idAnimal, (r) => r.data),
+    maisRecentePorId(fontes.clinica, (r) => r.idAnimal, (r) => r.data),
+    maisRecentePorId(fontes.abortos, (r) => r.idAnimal, (r) => r.data),
+    maisRecentePorId(fontes.embarque, (r) => r.idAnimal, (r) => r.data),
   ]);
 }
 
@@ -94,7 +136,7 @@ export interface AnimalMonitorado {
   sexo: string | null;
   /** Data de nascimento (RebanhoProd) — pra idade exata em anos/meses/dias, ver idadeQuebrada em lib/painel/format.ts. */
   nascimento: DiaCompacto | null;
-  /** null = nenhum evento conhecido (nunca apareceu em Pesagem/Toque/IATF/Parto-como-mãe) — "sem dado", nunca "0 dias". */
+  /** null = nenhum evento conhecido em nenhuma FontesManejo — "sem dado", nunca "0 dias". */
   diasSemManejo: number | null;
   /** Data do último evento em si (pra mostrar "Último manejo: dd/mm/aaaa" ao lado dos dias). */
   ultimoManejo: DiaCompacto | null;
@@ -103,13 +145,10 @@ export interface AnimalMonitorado {
 /** Só os animais ATIVOS (ver `ativo`/`CATEGORIAS_ATIVAS`), um por linha, pronto pra empacotar e mandar pro cliente da página Monitorar. */
 export function animaisMonitorados(
   rebanho: RegRebanho[],
-  pesagem: RegPesagem[],
-  toque: RegToque[],
-  iatf: RegIatf[],
-  partos: RegParto[],
+  fontes: FontesManejo,
   hoje: DiaCompacto,
 ): AnimalMonitorado[] {
-  const ultimoManejo = ultimoManejoPorAnimal(pesagem, toque, iatf, partos);
+  const ultimoManejo = ultimoManejoPorAnimal(fontes);
   return rebanho.filter(ativo).map((a) => {
     const ultimo = ultimoManejo.get(a.id) ?? null;
     return {

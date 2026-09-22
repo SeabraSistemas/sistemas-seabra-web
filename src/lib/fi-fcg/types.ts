@@ -138,6 +138,75 @@ export interface RegAborto {
   fazenda: string | null;
 }
 
+/**
+ * Fontes de "manejo" adicionadas em 22/09/2026 (pedido do Felipe, revisão
+ * das abas do AppSheet) — cada uma alimenta `ultimoManejoPorAnimal`
+ * (manejo.ts) e a ficha de histórico da página Monitorar. Campos enxutos
+ * de propósito: só o que dá pra montar a data do evento + um resumo curto,
+ * nenhuma delas vira tela própria.
+ */
+
+/** Aba "Manejo" — log sanitário (vacina/vermífugo/carrapato/mosca), não confundir com o conceito genérico de "manejo" do Monitorar. */
+export interface RegManejoSanitario {
+  id: string;
+  idAnimal: string | null;
+  data: DiaCompacto | null;
+  brucelose: string | null;
+  carbunculo: string | null;
+  vermifugo: string | null;
+  carrapato: string | null;
+  mosca: string | null;
+}
+
+/** Aba "D8" — checkpoint do protocolo reprodutivo (dia 8 da sincronização). */
+export interface RegD8 {
+  id: string;
+  idAnimal: string | null;
+  data: DiaCompacto | null;
+  produto: string | null;
+}
+
+/** Aba "Protocolo" — início do protocolo reprodutivo (D0). */
+export interface RegProtocolo {
+  id: string;
+  idAnimal: string | null;
+  data: DiaCompacto | null;
+  produto: string | null;
+}
+
+/** Aba "Transferir" — transferência de fazenda/lote. */
+export interface RegTransferir {
+  id: string;
+  idAnimal: string | null;
+  data: DiaCompacto | null;
+  fazenda: string | null;
+}
+
+/** Aba "Engorda" — o EVENTO de entrada no programa (não o espelho congelado em RebanhoProd.entradaEngorda). */
+export interface RegEngordaEvento {
+  id: string;
+  idAnimal: string | null;
+  data: DiaCompacto | null;
+  pesoEntrada: number | null;
+}
+
+/** Aba "Clínica" — atendimento veterinário. */
+export interface RegClinica {
+  id: string;
+  idAnimal: string | null;
+  data: DiaCompacto | null;
+  caso: string | null;
+  diagnostico: string | null;
+}
+
+/** Abas "Embarque" + "Embarque FI" — embarque pro frigorífico/leilão. */
+export interface RegEmbarque {
+  id: string;
+  idAnimal: string | null;
+  data: DiaCompacto | null;
+  embarcado: string | null;
+}
+
 /** Uma linha do livro-caixa gerado pelo AppSheet (aba "Financeiro") — usado só pra conciliação, nunca como fonte de Fazenda/Cliente (ver financeiro.ts). */
 export interface LancamentoFinanceiro {
   id: string;

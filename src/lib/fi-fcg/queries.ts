@@ -7,19 +7,26 @@ import {
   mapBaixas,
   mapCategoriaArroba,
   mapCategoriasCusto,
+  mapClinica,
   mapConsumoCategoria,
   mapCustos,
+  mapD8,
   mapDieta,
+  mapEmbarque,
+  mapEngordaEventos,
   mapFinanceiro,
   mapGmdCategoria,
   mapIatf,
   mapInsumos,
   mapLotes,
+  mapManejoSanitario,
   mapMarcosIdade,
   mapPartos,
   mapPesagem,
+  mapProtocolo,
   mapRebanho,
   mapToque,
+  mapTransferir,
   mapVendas,
 } from './mapeadores';
 import type {
@@ -35,11 +42,18 @@ import type {
   MarcoIdade,
   RegAborto,
   RegBaixa,
+  RegClinica,
+  RegD8,
+  RegEmbarque,
+  RegEngordaEvento,
   RegIatf,
+  RegManejoSanitario,
   RegParto,
   RegPesagem,
+  RegProtocolo,
   RegRebanho,
   RegToque,
+  RegTransferir,
   RegVenda,
 } from './types';
 
@@ -175,6 +189,53 @@ export async function getVendas(): Promise<Leitura<RegVenda>> {
 export async function getAbortos(): Promise<Leitura<RegAborto>> {
   const { linhas, stale, carregadoEm } = await lerAbaCache('Aborto');
   return { itens: mapAbortos(linhas), configurado: spreadsheetId() != null, stale, carregadoEm };
+}
+
+/** Aba "Manejo" — log sanitário (vacina/vermífugo/carrapato/mosca). Fonte de "último manejo" (Monitorar). */
+export async function getManejoSanitario(): Promise<Leitura<RegManejoSanitario>> {
+  const { linhas, stale, carregadoEm } = await lerAbaCache('Manejo');
+  return { itens: mapManejoSanitario(linhas), configurado: spreadsheetId() != null, stale, carregadoEm };
+}
+
+/** Aba "D8" — checkpoint do protocolo reprodutivo. Fonte de "último manejo" (Monitorar). */
+export async function getD8(): Promise<Leitura<RegD8>> {
+  const { linhas, stale, carregadoEm } = await lerAbaCache('D8');
+  return { itens: mapD8(linhas), configurado: spreadsheetId() != null, stale, carregadoEm };
+}
+
+/** Aba "Protocolo" — início do protocolo reprodutivo. Fonte de "último manejo" (Monitorar). */
+export async function getProtocolo(): Promise<Leitura<RegProtocolo>> {
+  const { linhas, stale, carregadoEm } = await lerAbaCache('Protocolo');
+  return { itens: mapProtocolo(linhas), configurado: spreadsheetId() != null, stale, carregadoEm };
+}
+
+/** Aba "Transferir". Fonte de "último manejo" (Monitorar). */
+export async function getTransferir(): Promise<Leitura<RegTransferir>> {
+  const { linhas, stale, carregadoEm } = await lerAbaCache('Transferir');
+  return { itens: mapTransferir(linhas), configurado: spreadsheetId() != null, stale, carregadoEm };
+}
+
+/** Aba "Engorda" (o evento em si, não o espelho em RebanhoProd). Fonte de "último manejo" (Monitorar). */
+export async function getEngordaEventos(): Promise<Leitura<RegEngordaEvento>> {
+  const { linhas, stale, carregadoEm } = await lerAbaCache('Engorda');
+  return { itens: mapEngordaEventos(linhas), configurado: spreadsheetId() != null, stale, carregadoEm };
+}
+
+/** Aba "Clínica". Fonte de "último manejo" (Monitorar). */
+export async function getClinica(): Promise<Leitura<RegClinica>> {
+  const { linhas, stale, carregadoEm } = await lerAbaCache('Clínica');
+  return { itens: mapClinica(linhas), configurado: spreadsheetId() != null, stale, carregadoEm };
+}
+
+/** Abas "Embarque" (Campina grande) + "Embarque FI" (Inhumas) — mesmo padrão de Parto/Parto CG. Fonte de "último manejo" (Monitorar). */
+export async function getEmbarque(): Promise<Leitura<RegEmbarque>> {
+  const [cg, fi] = await Promise.all([lerAbaCache('Embarque'), lerAbaCache('Embarque FI')]);
+  return {
+    itens: [...mapEmbarque(cg.linhas), ...mapEmbarque(fi.linhas)],
+    configurado: spreadsheetId() != null,
+    stale: cg.stale || fi.stale,
+    carregadoEm: maisAntigo(cg.carregadoEm, fi.carregadoEm),
+  };
 }
 
 export async function getLancamentosFinanceiros(): Promise<Leitura<LancamentoFinanceiro>> {

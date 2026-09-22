@@ -1,8 +1,22 @@
 import assert from 'node:assert/strict';
 import { describe, test } from 'node:test';
 
-import { animaisMonitorados, ultimoManejoPorAnimal } from '@/lib/fi-fcg/manejo';
-import type { RegIatf, RegParto, RegPesagem, RegRebanho, RegToque } from '@/lib/fi-fcg/types';
+import { animaisMonitorados, ultimoManejoPorAnimal, type FontesManejo } from '@/lib/fi-fcg/manejo';
+import type {
+  RegAborto,
+  RegClinica,
+  RegD8,
+  RegEmbarque,
+  RegEngordaEvento,
+  RegIatf,
+  RegManejoSanitario,
+  RegParto,
+  RegPesagem,
+  RegProtocolo,
+  RegRebanho,
+  RegToque,
+  RegTransferir,
+} from '@/lib/fi-fcg/types';
 
 function animal(p: Partial<RegRebanho> & { id: string }): RegRebanho {
   return {
@@ -33,37 +47,88 @@ function parto(p: Partial<RegParto> & { idMae: string; nascimento: number }): Re
     pesoNascimento: null, fazenda: null, categoria: null, ...p,
   };
 }
+function manejoSanitario(p: Partial<RegManejoSanitario> & { idAnimal: string; data: number }): RegManejoSanitario {
+  return { id: 'm1', brucelose: null, carbunculo: null, vermifugo: null, carrapato: null, mosca: null, ...p };
+}
+function d8(p: Partial<RegD8> & { idAnimal: string; data: number }): RegD8 {
+  return { id: 'd8-1', produto: null, ...p };
+}
+function protocolo(p: Partial<RegProtocolo> & { idAnimal: string; data: number }): RegProtocolo {
+  return { id: 'proto-1', produto: null, ...p };
+}
+function transferir(p: Partial<RegTransferir> & { idAnimal: string; data: number }): RegTransferir {
+  return { id: 't1', fazenda: null, ...p };
+}
+function engordaEvento(p: Partial<RegEngordaEvento> & { idAnimal: string; data: number }): RegEngordaEvento {
+  return { id: 'e1', pesoEntrada: null, ...p };
+}
+function clinica(p: Partial<RegClinica> & { idAnimal: string; data: number }): RegClinica {
+  return { id: 'c1', caso: null, diagnostico: null, ...p };
+}
+function aborto(p: Partial<RegAborto> & { idAnimal: string; data: number }): RegAborto {
+  return { id: 'ab1', suspeita: null, fazenda: null, ...p };
+}
+function embarque(p: Partial<RegEmbarque> & { idAnimal: string; data: number }): RegEmbarque {
+  return { id: 'emb1', embarcado: null, ...p };
+}
+
+function fontesVazias(overrides: Partial<FontesManejo> = {}): FontesManejo {
+  return {
+    pesagem: [], toque: [], iatf: [], partos: [], manejoSanitario: [], d8: [], protocolo: [],
+    transferir: [], engordaEventos: [], clinica: [], abortos: [], embarque: [], ...overrides,
+  };
+}
 
 describe('ultimoManejoPorAnimal', () => {
   test('pega a data mais recente entre Pesagem/Toque/IATF/Parto (como mãe) de cada animal', () => {
-    const mapa = ultimoManejoPorAnimal(
-      [pesagem({ id: 'a1', data: 20260101 }), pesagem({ id: 'a1', data: 20260301 })],
-      [toque({ id: 'a1', data: 20260201 })],
-      [iatf({ id: 'a1', data: 20250101 })],
-      [],
-    );
+    const mapa = ultimoManejoPorAnimal(fontesVazias({
+      pesagem: [pesagem({ id: 'a1', data: 20260101 }), pesagem({ id: 'a1', data: 20260301 })],
+      toque: [toque({ id: 'a1', data: 20260201 })],
+      iatf: [iatf({ id: 'a1', data: 20250101 })],
+    }));
     assert.equal(mapa.get('a1'), 20260301); // a pesagem de marco e a mais recente das 3
   });
 
   test('Parto conta pra MAE (ID Mae), nao pro bezerro', () => {
-    const mapa = ultimoManejoPorAnimal([], [], [], [parto({ idMae: 'vaca1', nascimento: 20260315 })]);
+    const mapa = ultimoManejoPorAnimal(fontesVazias({ partos: [parto({ idMae: 'vaca1', nascimento: 20260315 })] }));
     assert.equal(mapa.get('vaca1'), 20260315);
     assert.equal(mapa.get('bezerro-vaca1'), undefined);
   });
 
   test('animal sem nenhum evento: nao aparece no mapa', () => {
-    const mapa = ultimoManejoPorAnimal([pesagem({ id: 'a1', data: 20260101 })], [], [], []);
+    const mapa = ultimoManejoPorAnimal(fontesVazias({ pesagem: [pesagem({ id: 'a1', data: 20260101 })] }));
     assert.equal(mapa.has('a2'), false);
   });
 
   test('linhas sem data ou sem id sao ignoradas', () => {
-    const mapa = ultimoManejoPorAnimal(
-      [pesagem({ id: 'a1', data: null as unknown as number }), pesagem({ id: '', data: 20260101 })],
-      [],
-      [],
-      [],
-    );
+    const mapa = ultimoManejoPorAnimal(fontesVazias({
+      pesagem: [pesagem({ id: 'a1', data: null as unknown as number }), pesagem({ id: '', data: 20260101 })],
+    }));
     assert.equal(mapa.size, 0);
+  });
+
+  test('as 8 fontes novas (Manejo/D8/Protocolo/Transferir/Engorda/Clinica/Aborto/Embarque) contam pro idAnimal', () => {
+    for (const [nome, fontes] of Object.entries({
+      manejoSanitario: [manejoSanitario({ idAnimal: 'a1', data: 20260501 })],
+      d8: [d8({ idAnimal: 'a1', data: 20260501 })],
+      protocolo: [protocolo({ idAnimal: 'a1', data: 20260501 })],
+      transferir: [transferir({ idAnimal: 'a1', data: 20260501 })],
+      engordaEventos: [engordaEvento({ idAnimal: 'a1', data: 20260501 })],
+      clinica: [clinica({ idAnimal: 'a1', data: 20260501 })],
+      abortos: [aborto({ idAnimal: 'a1', data: 20260501 })],
+      embarque: [embarque({ idAnimal: 'a1', data: 20260501 })],
+    })) {
+      const mapa = ultimoManejoPorAnimal(fontesVazias({ [nome]: fontes } as Partial<FontesManejo>));
+      assert.equal(mapa.get('a1'), 20260501, `fonte ${nome} deveria contar como manejo`);
+    }
+  });
+
+  test('a fonte mais recente vence mesmo vindo de uma aba nova (ex: Manejo depois da ultima Pesagem)', () => {
+    const mapa = ultimoManejoPorAnimal(fontesVazias({
+      pesagem: [pesagem({ id: 'a1', data: 20260101 })],
+      manejoSanitario: [manejoSanitario({ idAnimal: 'a1', data: 20260601 })],
+    }));
+    assert.equal(mapa.get('a1'), 20260601);
   });
 });
 
@@ -73,10 +138,7 @@ describe('animaisMonitorados', () => {
   test('animal com manejo recente: dias baixo, carrega fazenda/categoria/sexo/nascimento do rebanho', () => {
     const resultado = animaisMonitorados(
       [animal({ id: 'a1', fazenda: 'Inhumas', categoria: 'Vaca', sexo: 'Fêmea', nascimento: 20200101 })],
-      [pesagem({ id: 'a1', data: 20260906 })],
-      [],
-      [],
-      [],
+      fontesVazias({ pesagem: [pesagem({ id: 'a1', data: 20260906 })] }),
       HOJE,
     );
     assert.deepEqual(resultado, [
@@ -93,18 +155,20 @@ describe('animaisMonitorados', () => {
   });
 
   test('animal sem nenhum evento conhecido: diasSemManejo e ultimoManejo null (nao vira 0 nem inventa numero)', () => {
-    const resultado = animaisMonitorados([animal({ id: 'a1', categoria: 'Vaca' })], [], [], [], [], HOJE);
+    const resultado = animaisMonitorados([animal({ id: 'a1', categoria: 'Vaca' })], fontesVazias(), HOJE);
     assert.equal(resultado[0].diasSemManejo, null);
     assert.equal(resultado[0].ultimoManejo, null);
   });
 
-  test('usa o mais recente entre varias fontes pro mesmo animal', () => {
+  test('usa o mais recente entre varias fontes pro mesmo animal, incluindo as novas', () => {
     const resultado = animaisMonitorados(
       [animal({ id: 'a1', categoria: 'Vaca' })],
-      [pesagem({ id: 'a1', data: 20260101 })],
-      [toque({ id: 'a1', data: 20260901 })], // mais recente
-      [iatf({ id: 'a1', data: 20260201 })],
-      [],
+      fontesVazias({
+        pesagem: [pesagem({ id: 'a1', data: 20260101 })],
+        toque: [toque({ id: 'a1', data: 20260201 })],
+        iatf: [iatf({ id: 'a1', data: 20260301 })],
+        transferir: [transferir({ idAnimal: 'a1', data: 20260901 })], // mais recente
+      }),
       HOJE,
     );
     assert.equal(resultado[0].diasSemManejo, 15);
@@ -114,10 +178,7 @@ describe('animaisMonitorados', () => {
   test('uma linha por animal ATIVO do rebanho recebido, na mesma ordem', () => {
     const resultado = animaisMonitorados(
       [animal({ id: 'a1', categoria: 'Vaca' }), animal({ id: 'a2', categoria: 'Bezerro' })],
-      [pesagem({ id: 'a2', data: 20260816 })],
-      [],
-      [],
-      [],
+      fontesVazias({ pesagem: [pesagem({ id: 'a2', data: 20260816 })] }),
       HOJE,
     );
     assert.equal(resultado.length, 2);
@@ -134,10 +195,7 @@ describe('animaisMonitorados', () => {
         animal({ id: 'a2', categoria: 'Venda' }),
         animal({ id: 'a3', categoria: 'Baixa' }),
       ],
-      [],
-      [],
-      [],
-      [],
+      fontesVazias(),
       HOJE,
     );
     assert.deepEqual(resultado.map((r) => r.id), ['a1']);
@@ -150,10 +208,7 @@ describe('animaisMonitorados', () => {
         animal({ id: 'a2', categoria: 'Histórico' }),
         animal({ id: 'a3', categoria: 'Sêmen' }),
       ],
-      [],
-      [],
-      [],
-      [],
+      fontesVazias(),
       HOJE,
     );
     assert.deepEqual(resultado.map((r) => r.id), ['a1']);
