@@ -62,6 +62,11 @@ export function MonitorarView({ dados, hoje }: { dados: PacoteMonitor; hoje: Dia
 
   const filtrados = useMemo(() => filtrarPor(itens, condicoes), [itens, condicoes]);
 
+  // Base pra "Animais ativos monitorados": mesmos filtros de Fazenda/Categoria/ID,
+  // mas SEM o corte de "Dias sem manejo" — é o rebanho de onde `filtrados` é um recorte.
+  const condicoesSemDias = useMemo(() => condicoes.filter((c) => c.key !== 'dias'), [condicoes]);
+  const totalAtivos = useMemo(() => filtrarPor(itens, condicoesSemDias).length, [itens, condicoesSemDias]);
+
   // Pior caso primeiro: nunca manejado (null) antes de qualquer número, depois do maior pro menor.
   const ordenados = useMemo(
     () =>
@@ -139,8 +144,15 @@ export function MonitorarView({ dados, hoje }: { dados: PacoteMonitor; hoje: Dia
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <MetricCard id="total" label="Animais ativos monitorados" value={formatNumber(filtrados.length)} />
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+        <MetricCard id="total" label="Animais ativos monitorados" value={formatNumber(totalAtivos)} />
+        <MetricCard
+          id="semManejo"
+          label={diasMin != null ? `Sem manejo há mais de ${formatNumber(diasMin)} dias` : 'Sem manejo'}
+          value={formatNumber(filtrados.length)}
+          detalhe={`de ${formatNumber(totalAtivos)}`}
+          tom={filtrados.length > 0 ? 'ruim' : undefined}
+        />
         <MetricCard
           id="nunca"
           label="Nunca teve manejo registrado"
