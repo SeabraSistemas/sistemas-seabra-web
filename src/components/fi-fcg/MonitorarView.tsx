@@ -41,7 +41,7 @@ export function MonitorarView({ dados, hoje }: { dados: PacoteMonitor; hoje: Dia
   const [busca, setBusca] = useState('');
   const [fazenda, setFazenda] = useState('');
   const [categoria, setCategoria] = useState('');
-  const [diasMin, setDiasMin] = useState<number | null>(null);
+  const [diasMin, setDiasMin] = useState<number | null>(150);
   const [animalAberto, setAnimalAberto] = useState<AnimalMonitorado | null>(null);
 
   const condicoes = useMemo((): Condicao<AnimalMonitorado>[] => [
@@ -128,7 +128,16 @@ export function MonitorarView({ dados, hoje }: { dados: PacoteMonitor; hoje: Dia
         <FilterSelect label="Fazenda" value={fazenda} onChange={setFazenda} options={fazendas} />
         <FilterSelect label="Categoria" value={categoria} onChange={setCategoria} options={categorias} />
         <FilterBusca label="ID animal" value={busca} onChange={setBusca} placeholder="Buscar ID..." />
-        <FilterMaiorQue label="Dias sem manejo" value={diasMin} onChange={setDiasMin} />
+        <FilterMaiorQue
+          label="Dias sem manejo"
+          value={diasMin}
+          onChange={setDiasMin}
+          info={{
+            oQue: 'Quantos dias sem nenhum lançamento um animal precisa ter pra entrar nessa lista.',
+            ajuda: 'A partir do número de dias que você colocar, o sistema busca os animais que não têm nenhum lançamento registrado de lá pra cá.',
+            como: 'Digite os dias e clique em Salvar. Já vem com 150 preenchido — pode editar quando quiser.',
+          }}
+        />
       </div>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
