@@ -28,11 +28,15 @@ function ProductCard({ product, wide = false }: { product: RFIDProduct; wide?: b
 
   const name = t(`items.${product.slug}.name`);
   const tiered = !!product.priceTiers?.length;
-  const step = tiered ? 10 : 1;
+  const step = product.qtyStep ?? (tiered ? 10 : 1);
   const unit = tiered
     ? unitPriceForQty(product.priceTiers as NonNullable<typeof product.priceTiers>, qty)
     : product.priceBRL ?? 0;
   const lineTotal = unit * qty;
+
+  /** Trava a quantidade digitada em minQty + múltiplos de step (ex.: 100, 200, 300...). */
+  const snapQty = (value: number) =>
+    value <= minQty ? minQty : minQty + Math.round((value - minQty) / step) * step;
 
   const image = (
     <div
@@ -99,7 +103,7 @@ function ProductCard({ product, wide = false }: { product: RFIDProduct; wide?: b
         {qty > 1 && <span className="text-sm text-muted-foreground">{formatBRL(lineTotal)}</span>}
       </div>
 
-      {tiered && <p className="text-[11px] text-muted-foreground">{t('minQtyNote', { min: minQty })}</p>}
+      {minQty > 1 && <p className="text-[11px] text-muted-foreground">{t('minQtyNote', { min: minQty })}</p>}
 
       <div className="flex items-center gap-2">
         <div className="flex items-center rounded-full border border-border shrink-0">
@@ -114,8 +118,9 @@ function ProductCard({ product, wide = false }: { product: RFIDProduct; wide?: b
           <input
             type="number"
             min={minQty}
+            step={step}
             value={qty}
-            onChange={(e) => setQty(Math.max(minQty, Number(e.target.value) || minQty))}
+            onChange={(e) => setQty(snapQty(Number(e.target.value) || minQty))}
             className="w-12 text-center bg-transparent text-sm text-foreground focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
           />
           <button
@@ -136,6 +141,7 @@ function ProductCard({ product, wide = false }: { product: RFIDProduct; wide?: b
                 flatPriceBRL: product.priceBRL,
                 tiers: product.priceTiers ?? null,
                 minQty,
+                qtyStep: step,
               },
               qty
             )
@@ -157,7 +163,7 @@ function ProductCard({ product, wide = false }: { product: RFIDProduct; wide?: b
           <div className="flex-1 min-w-0">
             <h3 className="text-lg font-semibold text-foreground">{name}</h3>
             <p className="text-sm text-muted-foreground mt-1 mb-4">{t(`items.${product.slug}.desc`)}</p>
-            <div className="grid sm:grid-cols-2 gap-x-8">
+            <div className={priceTable ? 'grid sm:grid-cols-2 gap-x-8' : ''}>
               {specs}
               {priceTable}
             </div>
@@ -183,7 +189,7 @@ function ProductCard({ product, wide = false }: { product: RFIDProduct; wide?: b
 }
 
 export function RFIDCatalog() {
-  const microchip = rfidProducts.find((p) => p.priceTiers?.length);
+  const microchip = rfidProducts.find((p) => p.category === 'microchip');
   const readers = rfidProducts.filter((p) => p !== microchip);
 
   return (

@@ -1,6 +1,7 @@
 // Catálogo de microchips + leitores RFID vendidos em /vendas/produtos.
-// Preços reais (valores PJ). Microchip usa preço por FAIXA de quantidade;
-// leitores usam preço fixo. Nome/descrição traduzíveis ficam em messages
+// Preços reais (valores PJ). Microchip usa preço fixo, mas só vende em lotes
+// de 100 (minQty/qtyStep = 100); leitores usam preço fixo, unidade a unidade.
+// Nome/descrição traduzíveis ficam em messages
 // (`vendas.produtos.items.<slug>.{name,desc}`); fatos/preços ficam aqui.
 
 export type RFIDCategory = 'microchip' | 'leitor';
@@ -22,8 +23,10 @@ export interface RFIDProduct {
   priceBRL: number | null;
   /** faixas de preço por quantidade (microchip). Ordenar por minQty asc. */
   priceTiers?: PriceTier[];
-  /** quantidade mínima de pedido (microchip = 10). default 1. */
+  /** quantidade mínima de pedido (microchip = 100). default 1. */
   minQty?: number;
+  /** incremento permitido de quantidade (microchip = 100, só compra de 100 em 100). default 1. */
+  qtyStep?: number;
   unit?: string;
   highlighted?: boolean;
 }
@@ -51,16 +54,9 @@ export const rfidProducts: RFIDProduct[] = [
       { labelKey: 'size', value: '2,12 × 12 mm' },
       { labelKey: 'application', value: 'com seringa aplicadora' },
     ],
-    priceBRL: null,
-    priceTiers: [
-      { minQty: 10, unitBRL: 11.6 },
-      { minQty: 20, unitBRL: 10.9 },
-      { minQty: 60, unitBRL: 10.4 },
-      { minQty: 100, unitBRL: 9.8 },
-      { minQty: 200, unitBRL: 9.2 },
-      { minQty: 1000, unitBRL: 8.6 },
-    ],
-    minQty: 10,
+    priceBRL: 8.6,
+    minQty: 100,
+    qtyStep: 100,
     unit: 'unidade',
     highlighted: true,
   },

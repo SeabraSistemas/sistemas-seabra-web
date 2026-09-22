@@ -74,7 +74,7 @@ export function CartDrawer() {
                       <button
                         type="button"
                         aria-label="-"
-                        onClick={() => setQty(i.slug, i.qty - (i.tiers ? 10 : 1))}
+                        onClick={() => setQty(i.slug, i.qty - i.qtyStep)}
                         className="h-8 w-8 flex items-center justify-center text-muted-foreground hover:text-foreground"
                       >
                         <Minus className="h-3.5 w-3.5" />
@@ -83,7 +83,7 @@ export function CartDrawer() {
                       <button
                         type="button"
                         aria-label="+"
-                        onClick={() => setQty(i.slug, i.qty + (i.tiers ? 10 : 1))}
+                        onClick={() => setQty(i.slug, i.qty + i.qtyStep)}
                         className="h-8 w-8 flex items-center justify-center text-muted-foreground hover:text-foreground"
                       >
                         <Plus className="h-3.5 w-3.5" />

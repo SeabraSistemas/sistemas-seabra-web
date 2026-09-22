@@ -20,6 +20,8 @@ export interface CartItem {
   tiers: PriceTier[] | null;
   /** quantidade mínima do produto */
   minQty: number;
+  /** incremento permitido de quantidade (ex.: microchip só vende de 100 em 100) */
+  qtyStep: number;
 }
 
 /** Preço unitário do item considerando a quantidade atual (faixa de volume). */
