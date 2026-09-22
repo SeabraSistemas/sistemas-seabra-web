@@ -24,11 +24,13 @@ function vivo(r: RegRebanho): boolean {
 }
 
 /**
- * As 8 categorias reais do funil (fórmula de `Categoria` na RebanhoProd,
- * corrigida ao vivo em 21/09/2026 — Bezerro/Garrote/Boi/Touro macho,
- * Bezerra/Recria/Novilha/Vaca fêmea). O donut "Por categoria" mostra só
- * essas — o resto (Venda, Baixa, Histórico, IDs de teste/legado tipo "vaca
- * problema") não é estágio de vida do rebanho vivo, é ruído aqui.
+ * As categorias de animal ATIVO no rebanho: as 8 do funil de corte (fórmula
+ * de `Categoria` na RebanhoProd, corrigida ao vivo em 21/09/2026 —
+ * Bezerro/Garrote/Boi/Touro macho, Bezerra/Recria/Novilha/Vaca fêmea) mais
+ * Leiteira (gado de leite, fora do funil de corte mas igualmente vivo —
+ * pedido do Felipe, 22/09/2026, pra bater com o "Total de animais vivos"
+ * do Looker). O resto (Venda, Baixa, Histórico, IDs de teste/legado tipo
+ * "vaca problema") não é estágio de vida do rebanho vivo, é ruído aqui.
  */
 const CATEGORIAS_REBANHO = new Set([
   'Bezerro',
@@ -39,6 +41,7 @@ const CATEGORIAS_REBANHO = new Set([
   'Novilha',
   'Touro',
   'Vaca',
+  'Leiteira',
 ]);
 
 export function RebanhoView({ dados }: { dados: PacoteLeitura<RegRebanho> }) {
