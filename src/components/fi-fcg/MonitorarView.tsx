@@ -74,7 +74,6 @@ export function MonitorarView({ dados, hoje }: { dados: PacoteMonitor; hoje: Dia
     [filtrados],
   );
 
-  const totalAlerta = useMemo(() => filtrados.filter((a) => (a.diasSemManejo ?? Infinity) > DIAS_ALERTA).length, [filtrados]);
   const totalNuncaManejado = useMemo(() => filtrados.filter((a) => a.diasSemManejo == null).length, [filtrados]);
 
   const colunas: DataTableColumn<AnimalMonitorado>[] = [
@@ -140,18 +139,13 @@ export function MonitorarView({ dados, hoje }: { dados: PacoteMonitor; hoje: Dia
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+      <div className="grid grid-cols-2 gap-3">
         <MetricCard id="total" label="Animais ativos monitorados" value={formatNumber(filtrados.length)} />
-        <MetricCard
-          id="alerta"
-          label="Sem manejo"
-          value={formatNumber(totalAlerta)}
-          tom={totalAlerta > 0 ? 'ruim' : undefined}
-        />
         <MetricCard
           id="nunca"
           label="Nunca teve manejo registrado"
           value={formatNumber(totalNuncaManejado)}
+          detalhe={`de ${formatNumber(filtrados.length)}`}
           tom={totalNuncaManejado > 0 ? 'ruim' : undefined}
         />
       </div>
