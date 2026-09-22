@@ -68,6 +68,8 @@ export interface AnimalMonitorado {
   fazenda: string | null;
   categoria: string | null;
   sexo: string | null;
+  /** Data de nascimento (RebanhoProd) — pra idade exata em anos/meses/dias, ver idadeQuebrada em lib/painel/format.ts. */
+  nascimento: DiaCompacto | null;
   /** null = nenhum evento conhecido (nunca apareceu em Pesagem/Toque/IATF/Parto-como-mãe) — "sem dado", nunca "0 dias". */
   diasSemManejo: number | null;
   /** Data do último evento em si (pra mostrar "Último manejo: dd/mm/aaaa" ao lado dos dias). */
@@ -91,6 +93,7 @@ export function animaisMonitorados(
       fazenda: a.fazenda,
       categoria: a.categoria,
       sexo: a.sexo,
+      nascimento: a.nascimento,
       diasSemManejo: diasEntre(ultimo, hoje),
       ultimoManejo: ultimo,
     };

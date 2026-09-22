@@ -10,10 +10,11 @@ import { CsvExport, type CsvColumn } from '@/components/painel/CsvExport';
 import { EstadoCarga } from '@/components/painel/EstadoCarga';
 import { FichaAnimalHistorico } from '@/components/fi-fcg/FichaAnimalHistorico';
 import { filtrarPor, opcoesExcluindo, type Condicao } from '@/lib/painel/filters';
-import { formatDia, formatNumber } from '@/lib/painel/format';
+import { diasEntre, formatDia, formatIdadeQuebrada, formatNumber, idadeQuebrada } from '@/lib/painel/format';
 import { desempacotar } from '@/lib/painel/pacote';
 import type { PacoteMonitor } from '@/lib/fi-fcg/pacotes';
 import type { AnimalMonitorado } from '@/lib/fi-fcg/manejo';
+import type { DiaCompacto } from '@/lib/fi-fcg/types';
 
 /** Mesmos limiares de cor do achado original (Bloco D) — acima disso a linha fica vermelha/âmbar. */
 const DIAS_ALERTA = 90;
@@ -34,7 +35,7 @@ function corDias(dias: number | null): string | undefined {
  * está há mais dias) — clicar num cabeçalho de coluna assume o controle do
  * sort a partir daí (mesmo `DataTable` de sempre).
  */
-export function MonitorarView({ dados }: { dados: PacoteMonitor }) {
+export function MonitorarView({ dados, hoje }: { dados: PacoteMonitor; hoje: DiaCompacto }) {
   const itens = useMemo(() => desempacotar<AnimalMonitorado>(dados.animais), [dados.animais]);
 
   const [busca, setBusca] = useState('');
@@ -82,6 +83,12 @@ export function MonitorarView({ dados }: { dados: PacoteMonitor }) {
     { key: 'categoria', header: 'Categoria', cell: (a) => a.categoria ?? '—', sortValue: (a) => a.categoria },
     { key: 'sexo', header: 'Sexo', cell: (a) => a.sexo ?? '—', sortValue: (a) => a.sexo },
     {
+      key: 'idade',
+      header: 'Idade',
+      cell: (a) => formatIdadeQuebrada(idadeQuebrada(a.nascimento, hoje)),
+      sortValue: (a) => diasEntre(a.nascimento, hoje),
+    },
+    {
       key: 'ultimoManejo',
       header: 'Último|manejo',
       cell: (a) => (a.ultimoManejo != null ? formatDia(a.ultimoManejo) : '—'),
@@ -102,6 +109,8 @@ export function MonitorarView({ dados }: { dados: PacoteMonitor }) {
     { key: 'id', header: 'ID animal', value: (a) => a.id },
     { key: 'categoria', header: 'Categoria', value: (a) => a.categoria ?? '' },
     { key: 'sexo', header: 'Sexo', value: (a) => a.sexo ?? '' },
+    { key: 'nascimento', header: 'Data de nascimento', value: (a) => (a.nascimento != null ? formatDia(a.nascimento) : '') },
+    { key: 'idade', header: 'Idade', value: (a) => formatIdadeQuebrada(idadeQuebrada(a.nascimento, hoje)) },
     { key: 'ultimoManejo', header: 'Último manejo', value: (a) => (a.ultimoManejo != null ? formatDia(a.ultimoManejo) : '') },
     { key: 'diasSemManejo', header: 'Dias sem manejo', value: (a) => formatNumber(a.diasSemManejo) },
   ];
@@ -146,7 +155,7 @@ export function MonitorarView({ dados }: { dados: PacoteMonitor }) {
       </div>
       <DataTable columns={colunas} rows={ordenados} rowKey={(a) => a.id} onRowClick={(a) => setAnimalAberto(a)} />
 
-      <FichaAnimalHistorico animal={animalAberto} onFechar={() => setAnimalAberto(null)} />
+      <FichaAnimalHistorico animal={animalAberto} hoje={hoje} onFechar={() => setAnimalAberto(null)} />
     </div>
   );
 }

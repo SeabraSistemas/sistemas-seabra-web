@@ -40,5 +40,5 @@ export default async function MonitorarPage() {
     carregadoEm,
   };
 
-  return <MonitorarView dados={dados} />;
+  return <MonitorarView dados={dados} hoje={hoje} />;
 }

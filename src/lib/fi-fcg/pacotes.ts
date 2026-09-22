@@ -106,6 +106,7 @@ export const CAMPOS_ANIMAL_MONITORADO: (keyof AnimalMonitorado & string)[] = [
   'fazenda',
   'categoria',
   'sexo',
+  'nascimento',
   'diasSemManejo',
   'ultimoManejo',
 ];

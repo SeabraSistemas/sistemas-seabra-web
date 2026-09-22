@@ -3,8 +3,9 @@
 import { useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { formatDia, formatNumber } from '@/lib/painel/format';
+import { formatDia, formatIdadeQuebrada, formatNumber, idadeQuebrada } from '@/lib/painel/format';
 import type { AnimalMonitorado } from '@/lib/fi-fcg/manejo';
+import type { DiaCompacto } from '@/lib/fi-fcg/types';
 import type { EventoHistorico } from '@/app/FI_FCG/api/ficha-animal/route';
 
 /** Cor por tipo de evento — só pra escanear rápido a lista, sem virar semáforo de status. */
@@ -22,7 +23,15 @@ const VARIANTE_TIPO: Record<EventoHistorico['tipo'], 'outline' | 'secondary'> = 
  * inteiros no cliente (custaria caro pra cada linha da lista) — busca sob
  * demanda em `/FI_FCG/api/ficha-animal` só quando o painel abre.
  */
-export function FichaAnimalHistorico({ animal, onFechar }: { animal: AnimalMonitorado | null; onFechar: () => void }) {
+export function FichaAnimalHistorico({
+  animal,
+  hoje,
+  onFechar,
+}: {
+  animal: AnimalMonitorado | null;
+  hoje: DiaCompacto;
+  onFechar: () => void;
+}) {
   const [eventos, setEventos] = useState<EventoHistorico[]>([]);
   // Id do animal a que `eventos`/`erro` se referem — carregando/pronto/erro são
   // DERIVADOS comparando com `animal?.id`, nenhum setState roda de forma
@@ -66,6 +75,9 @@ export function FichaAnimalHistorico({ animal, onFechar }: { animal: AnimalMonit
               {animal.fazenda && <Badge variant="outline">{animal.fazenda}</Badge>}
               {animal.categoria && <Badge variant="outline">{animal.categoria}</Badge>}
               {animal.sexo && <Badge variant="outline">{animal.sexo}</Badge>}
+              {animal.nascimento != null && (
+                <Badge variant="outline">{formatIdadeQuebrada(idadeQuebrada(animal.nascimento, hoje))}</Badge>
+              )}
               <span className="text-xs text-muted-foreground">
                 {animal.ultimoManejo != null
                   ? `Último manejo: ${formatDia(animal.ultimoManejo)} (${formatNumber(animal.diasSemManejo)} dias atrás)`

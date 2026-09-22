@@ -70,9 +70,9 @@ describe('ultimoManejoPorAnimal', () => {
 describe('animaisMonitorados', () => {
   const HOJE = 20260916;
 
-  test('animal com manejo recente: dias baixo, carrega fazenda/categoria/sexo do rebanho', () => {
+  test('animal com manejo recente: dias baixo, carrega fazenda/categoria/sexo/nascimento do rebanho', () => {
     const resultado = animaisMonitorados(
-      [animal({ id: 'a1', fazenda: 'Inhumas', categoria: 'Vaca', sexo: 'Fêmea' })],
+      [animal({ id: 'a1', fazenda: 'Inhumas', categoria: 'Vaca', sexo: 'Fêmea', nascimento: 20200101 })],
       [pesagem({ id: 'a1', data: 20260906 })],
       [],
       [],
@@ -80,7 +80,15 @@ describe('animaisMonitorados', () => {
       HOJE,
     );
     assert.deepEqual(resultado, [
-      { id: 'a1', fazenda: 'Inhumas', categoria: 'Vaca', sexo: 'Fêmea', diasSemManejo: 10, ultimoManejo: 20260906 },
+      {
+        id: 'a1',
+        fazenda: 'Inhumas',
+        categoria: 'Vaca',
+        sexo: 'Fêmea',
+        nascimento: 20200101,
+        diasSemManejo: 10,
+        ultimoManejo: 20260906,
+      },
     ]);
   });
 

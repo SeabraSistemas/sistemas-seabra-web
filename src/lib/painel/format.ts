@@ -135,6 +135,49 @@ export function somarDias(dia: number | null, dias: number): number | null {
   return data.getFullYear() * 10000 + (data.getMonth() + 1) * 100 + data.getDate();
 }
 
+export interface IdadeQuebrada {
+  anos: number;
+  meses: number;
+  dias: number;
+}
+
+/**
+ * Idade exata (anos, meses, dias) entre nascimento e hoje — mesmo cálculo de
+ * "quantos aniversários já passaram" (não é dias totais ÷ 365/30, que
+ * arredonda errado perto de fim de mês/ano). null se nascimento faltar ou
+ * vier depois de hoje.
+ */
+export function idadeQuebrada(nascimento: number | null, hoje: number): IdadeQuebrada | null {
+  if (nascimento == null || nascimento > hoje) return null;
+  const n = dataDeCompacto(nascimento);
+  const h = dataDeCompacto(hoje);
+
+  let anos = h.getFullYear() - n.getFullYear();
+  let meses = h.getMonth() - n.getMonth();
+  let dias = h.getDate() - n.getDate();
+
+  if (dias < 0) {
+    meses -= 1;
+    const mesAnterior = new Date(h.getFullYear(), h.getMonth(), 0); // último dia do mês anterior a `h`
+    dias += mesAnterior.getDate();
+  }
+  if (meses < 0) {
+    anos -= 1;
+    meses += 12;
+  }
+  return { anos, meses, dias };
+}
+
+/** "2a 3m 10d" — formato compacto pra coluna de tabela. Omite unidades zeradas à esquerda (ex.: 0 ano vira "3m 10d"), mas sempre mostra os dias. */
+export function formatIdadeQuebrada(idade: IdadeQuebrada | null): string {
+  if (idade == null) return '—';
+  const partes: string[] = [];
+  if (idade.anos > 0) partes.push(`${idade.anos}a`);
+  if (idade.anos > 0 || idade.meses > 0) partes.push(`${idade.meses}m`);
+  partes.push(`${idade.dias}d`);
+  return partes.join(' ');
+}
+
 /**
  * Unidade escolhível pra campos de "idade em dias" (Projeção, Idades por
  * Marco) — o dado sempre fica em dias por baixo, isto só converte o que o

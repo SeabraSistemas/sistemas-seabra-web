@@ -10,9 +10,11 @@ import {
   somarDias,
   formatCompacto,
   formatDia,
+  formatIdadeQuebrada,
   formatMoeda,
   formatPct,
   hojeCompacto,
+  idadeQuebrada,
   numberBounds,
   parseDateBR,
   parseMoeda,
@@ -101,6 +103,41 @@ describe('somarDias', () => {
   });
   test('data null vira null', () => {
     assert.equal(somarDias(null, 10), null);
+  });
+});
+
+describe('idadeQuebrada', () => {
+  test('anos, meses e dias exatos entre nascimento e hoje', () => {
+    assert.deepEqual(idadeQuebrada(20240315, 20260921), { anos: 2, meses: 6, dias: 6 });
+  });
+  test('dia negativo pede emprestado do mes anterior (usa os dias do mes anterior a hoje)', () => {
+    // nasceu dia 25, hoje e dia 10 do mes seguinte -> "dias" ficaria negativo sem o ajuste
+    assert.deepEqual(idadeQuebrada(20260125, 20260210), { anos: 0, meses: 0, dias: 16 }); // jan tem 31 dias: 31-25+10=16
+  });
+  test('mes negativo pede emprestado do ano anterior', () => {
+    assert.deepEqual(idadeQuebrada(20241115, 20260210), { anos: 1, meses: 2, dias: 26 });
+  });
+  test('exatamente na data de nascimento: 0 anos 0 meses 0 dias', () => {
+    assert.deepEqual(idadeQuebrada(20260921, 20260921), { anos: 0, meses: 0, dias: 0 });
+  });
+  test('nascimento null ou no futuro: null', () => {
+    assert.equal(idadeQuebrada(null, 20260921), null);
+    assert.equal(idadeQuebrada(20270101, 20260921), null);
+  });
+});
+
+describe('formatIdadeQuebrada', () => {
+  test('anos, meses e dias todos presentes', () => {
+    assert.equal(formatIdadeQuebrada({ anos: 2, meses: 6, dias: 6 }), '2a 6m 6d');
+  });
+  test('sem anos: omite a unidade, comeca em meses', () => {
+    assert.equal(formatIdadeQuebrada({ anos: 0, meses: 3, dias: 10 }), '3m 10d');
+  });
+  test('sem anos nem meses: so dias', () => {
+    assert.equal(formatIdadeQuebrada({ anos: 0, meses: 0, dias: 5 }), '5d');
+  });
+  test('null vira travessao', () => {
+    assert.equal(formatIdadeQuebrada(null), '—');
   });
 });
 
