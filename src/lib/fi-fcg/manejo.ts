@@ -58,9 +58,33 @@ export function ultimoManejoPorAnimal(
   ]);
 }
 
-/** Não está na venda/baixa — mesmo critério de `vivo()` em RebanhoView.tsx / engorda.ts / custoFormacao.ts. Só animal ATIVO entra no monitoramento — vendido/baixado não precisa mais de manejo. */
-function vivo(a: RegRebanho): boolean {
-  return a.categoria !== 'Venda' && a.categoria !== 'Baixa';
+/**
+ * As categorias de animal ATIVO no rebanho — as 8 do funil de corte (fórmula
+ * de `Categoria` na RebanhoProd, corrigida ao vivo em 21/09/2026 —
+ * Bezerro/Garrote/Boi/Touro macho, Bezerra/Recria/Novilha/Vaca fêmea) mais
+ * Leiteira (gado de leite, fora do funil de corte mas igualmente vivo).
+ * Fonte única — RebanhoView.tsx (Total de animais vivos) importa daqui em
+ * vez de duplicar, depois de um desalinhamento real (22/09/2026: Rebanho
+ * mudou pra esse critério, Monitorar ficou pra trás com o `vivo()` antigo
+ * — categoria != Venda/Baixa — e os dois passaram a mostrar totais
+ * diferentes pro mesmo rebanho). O resto (Venda, Baixa, Histórico, Sêmen,
+ * IDs de teste/legado tipo "vaca problema") não é estágio de vida do
+ * rebanho vivo.
+ */
+export const CATEGORIAS_ATIVAS = new Set([
+  'Bezerro',
+  'Bezerra',
+  'Garrote',
+  'Recria',
+  'Boi',
+  'Novilha',
+  'Touro',
+  'Vaca',
+  'Leiteira',
+]);
+
+function ativo(a: RegRebanho): boolean {
+  return a.categoria != null && CATEGORIAS_ATIVAS.has(a.categoria);
 }
 
 export interface AnimalMonitorado {
@@ -76,7 +100,7 @@ export interface AnimalMonitorado {
   ultimoManejo: DiaCompacto | null;
 }
 
-/** Só os animais ATIVOS (ver `vivo`), um por linha, pronto pra empacotar e mandar pro cliente da página Monitorar. */
+/** Só os animais ATIVOS (ver `ativo`/`CATEGORIAS_ATIVAS`), um por linha, pronto pra empacotar e mandar pro cliente da página Monitorar. */
 export function animaisMonitorados(
   rebanho: RegRebanho[],
   pesagem: RegPesagem[],
@@ -86,7 +110,7 @@ export function animaisMonitorados(
   hoje: DiaCompacto,
 ): AnimalMonitorado[] {
   const ultimoManejo = ultimoManejoPorAnimal(pesagem, toque, iatf, partos);
-  return rebanho.filter(vivo).map((a) => {
+  return rebanho.filter(ativo).map((a) => {
     const ultimo = ultimoManejo.get(a.id) ?? null;
     return {
       id: a.id,

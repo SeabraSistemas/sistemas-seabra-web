@@ -142,4 +142,20 @@ describe('animaisMonitorados', () => {
     );
     assert.deepEqual(resultado.map((r) => r.id), ['a1']);
   });
+
+  test('Leiteira entra (mesmo criterio de CATEGORIAS_ATIVAS do Rebanho); Historico/Semen ficam de fora', () => {
+    const resultado = animaisMonitorados(
+      [
+        animal({ id: 'a1', categoria: 'Leiteira' }),
+        animal({ id: 'a2', categoria: 'Histórico' }),
+        animal({ id: 'a3', categoria: 'Sêmen' }),
+      ],
+      [],
+      [],
+      [],
+      [],
+      HOJE,
+    );
+    assert.deepEqual(resultado.map((r) => r.id), ['a1']);
+  });
 });

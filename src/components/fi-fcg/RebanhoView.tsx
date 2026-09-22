@@ -15,34 +15,14 @@ import { contagemPor, contar } from '@/lib/painel/agregacao';
 import { dentroFaixa, filtrarPor, opcoesExcluindo, type Condicao } from '@/lib/painel/filters';
 import { formatNumber, numberBounds } from '@/lib/painel/format';
 import { desempacotar } from '@/lib/painel/pacote';
+import { CATEGORIAS_ATIVAS } from '@/lib/fi-fcg/manejo';
 import type { PacoteLeitura } from '@/lib/fi-fcg/pacotes';
 import type { RegRebanho } from '@/lib/fi-fcg/types';
 
-/** Não está na venda/baixa da própria RebanhoProd — o "estoque" do rebanho (mesmo conceito de /katmandu, onde isto vinha de um campo `baixa` à parte). */
+/** Não está na venda/baixa da própria RebanhoProd — o "estoque" do rebanho (mesmo conceito de /katmandu, onde isto vinha de um campo `baixa` à parte). Usado só pra restringir os 7 cards por categoria exata (Vacas, Leiteiras etc.) — o "Total de animais vivos" usa `CATEGORIAS_ATIVAS` (manejo.ts), a mesma fonte que a página Monitorar. */
 function vivo(r: RegRebanho): boolean {
   return r.categoria !== 'Venda' && r.categoria !== 'Baixa';
 }
-
-/**
- * As categorias de animal ATIVO no rebanho: as 8 do funil de corte (fórmula
- * de `Categoria` na RebanhoProd, corrigida ao vivo em 21/09/2026 —
- * Bezerro/Garrote/Boi/Touro macho, Bezerra/Recria/Novilha/Vaca fêmea) mais
- * Leiteira (gado de leite, fora do funil de corte mas igualmente vivo —
- * pedido do Felipe, 22/09/2026, pra bater com o "Total de animais vivos"
- * do Looker). O resto (Venda, Baixa, Histórico, IDs de teste/legado tipo
- * "vaca problema") não é estágio de vida do rebanho vivo, é ruído aqui.
- */
-const CATEGORIAS_REBANHO = new Set([
-  'Bezerro',
-  'Bezerra',
-  'Garrote',
-  'Recria',
-  'Boi',
-  'Novilha',
-  'Touro',
-  'Vaca',
-  'Leiteira',
-]);
 
 export function RebanhoView({ dados }: { dados: PacoteLeitura<RegRebanho> }) {
   const itens = useMemo(() => desempacotar<RegRebanho>(dados.pacote), [dados.pacote]);
@@ -76,12 +56,13 @@ export function RebanhoView({ dados }: { dados: PacoteLeitura<RegRebanho> }) {
   // (inclusive venda/baixa), pro usuário conseguir localizar um animal que já saiu do
   // rebanho.
   const vivos = useMemo(() => filtrados.filter(vivo), [filtrados]);
-  // "Ativos" é mais estreito que "vivos": só as 8 categorias reais do funil (ver
-  // CATEGORIAS_REBANHO) — pedido do Felipe (22/09/2026), o "Total de animais vivos" (e o
-  // que soma por fazenda) não pode incluir Sêmen/Histórico/Leiteira/IDs de teste, só quem
-  // está de fato numa fase de vida do rebanho de corte.
+  // "Ativos" é mais estreito que "vivos": só as categorias reais do rebanho (ver
+  // CATEGORIAS_ATIVAS, manejo.ts — MESMA fonte que a página Monitorar usa) — pedido do
+  // Felipe (22/09/2026), o "Total de animais vivos" (e o que soma por fazenda) não pode
+  // incluir Sêmen/Histórico/IDs de teste, só quem está de fato numa fase de vida do
+  // rebanho.
   const ativos = useMemo(
-    () => filtrados.filter((r) => r.categoria != null && CATEGORIAS_REBANHO.has(r.categoria)),
+    () => filtrados.filter((r) => r.categoria != null && CATEGORIAS_ATIVAS.has(r.categoria)),
     [filtrados],
   );
 
