@@ -144,7 +144,7 @@ export function MonitorarView({ dados, hoje }: { dados: PacoteMonitor; hoje: Dia
         <MetricCard id="total" label="Animais ativos monitorados" value={formatNumber(filtrados.length)} />
         <MetricCard
           id="alerta"
-          label={`Sem manejo (${DIAS_ALERTA}+ dias)`}
+          label="Sem manejo"
           value={formatNumber(totalAlerta)}
           tom={totalAlerta > 0 ? 'ruim' : undefined}
         />
