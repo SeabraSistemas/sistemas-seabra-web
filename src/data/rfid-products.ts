@@ -61,16 +61,6 @@ export const rfidProducts: RFIDProduct[] = [
     highlighted: true,
   },
   {
-    slug: 'leitor-rfid',
-    category: 'leitor',
-    nameKey: 'leitor-rfid',
-    descKey: 'leitor-rfid',
-    image: '/images/produtos/leitor_portatil_sem_bt.png',
-    specs: [{ labelKey: 'protocol', value: 'FDX-B · 132,2 kHz' }],
-    priceBRL: 180,
-    unit: 'unidade',
-  },
-  {
     slug: 'leitor-rfid-bluetooth',
     category: 'leitor',
     nameKey: 'leitor-rfid-bluetooth',

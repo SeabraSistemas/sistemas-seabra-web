@@ -13,14 +13,8 @@ function formatBRL(value: number): string {
   return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
-/**
- * `wide`: o microchip é o único produto com tabela de faixa de preço — isso
- * o deixa bem mais alto que os leitores. Numa grade comum ele estica a
- * linha inteira, deixando espaço vazio embaixo dos cards de leitor ao lado.
- * Em vez de conviver na mesma grade, ele vira um card largo horizontal
- * abaixo dos leitores: grande de propósito, não alto por acidente.
- */
-function ProductCard({ product, wide = false }: { product: RFIDProduct; wide?: boolean }) {
+/** Card único do catálogo: microchip e leitores usam exatamente o mesmo formato. */
+function ProductCard({ product }: { product: RFIDProduct }) {
   const t = useTranslations('vendas.produtos');
   const { add } = useCart();
   const minQty = product.minQty ?? 1;
@@ -39,18 +33,12 @@ function ProductCard({ product, wide = false }: { product: RFIDProduct; wide?: b
     value <= minQty ? minQty : minQty + Math.round((value - minQty) / step) * step;
 
   const image = (
-    <div
-      className={
-        wide
-          ? 'relative w-full md:w-64 aspect-square shrink-0 rounded-xl overflow-hidden border border-border bg-card'
-          : 'relative aspect-square rounded-xl overflow-hidden border border-border bg-card mb-4'
-      }
-    >
+    <div className="relative aspect-square rounded-xl overflow-hidden border border-border bg-card mb-4">
       <Image
         src={product.image}
         alt={name}
         fill
-        sizes={wide ? '(max-width: 768px) 100vw, 256px' : '(max-width: 640px) 100vw, 300px'}
+        sizes="(max-width: 640px) 100vw, 300px"
         className="object-contain p-4"
       />
     </div>
@@ -94,7 +82,7 @@ function ProductCard({ product, wide = false }: { product: RFIDProduct; wide?: b
   );
 
   const actions = (
-    <div className={wide ? 'space-y-3 md:w-64 shrink-0' : 'mt-auto space-y-3'}>
+    <div className="mt-auto space-y-3">
       <div className="flex items-baseline justify-between">
         <div>
           <span className="text-xl font-bold text-foreground">{formatBRL(unit)}</span>
@@ -155,25 +143,6 @@ function ProductCard({ product, wide = false }: { product: RFIDProduct; wide?: b
     </div>
   );
 
-  if (wide) {
-    return (
-      <Card className="border-border bg-card">
-        <CardContent className="p-6 md:p-8 flex flex-col md:flex-row gap-6 md:gap-8">
-          {image}
-          <div className="flex-1 min-w-0">
-            <h3 className="text-lg font-semibold text-foreground">{name}</h3>
-            <p className="text-sm text-muted-foreground mt-1 mb-4">{t(`items.${product.slug}.desc`)}</p>
-            <div className={priceTable ? 'grid sm:grid-cols-2 gap-x-8' : ''}>
-              {specs}
-              {priceTable}
-            </div>
-          </div>
-          {actions}
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
     <Card className="border-border bg-card h-full flex flex-col">
       <CardContent className="p-6 flex flex-col h-full">
@@ -189,22 +158,15 @@ function ProductCard({ product, wide = false }: { product: RFIDProduct; wide?: b
 }
 
 export function RFIDCatalog() {
-  const microchip = rfidProducts.find((p) => p.category === 'microchip');
-  const readers = rfidProducts.filter((p) => p !== microchip);
-
   return (
     <section className="section-padding bg-muted border-t border-border">
-      <div className="container-wide space-y-6">
-        {/* Os 3 leitores têm altura parecida entre si — ficam juntos numa
-            grade pareada. O microchip, bem mais alto por causa da tabela de
-            faixas de preço, vem depois como card largo (ver `wide` acima). */}
+      <div className="container-wide">
+        {/* Grade única, na ordem de `rfidProducts` — o microchip abre a lista. */}
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {readers.map((p) => (
+          {rfidProducts.map((p) => (
             <ProductCard key={p.slug} product={p} />
           ))}
         </div>
-
-        {microchip && <ProductCard product={microchip} wide />}
       </div>
     </section>
   );

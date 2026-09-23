@@ -594,10 +594,6 @@
           "name": "Microchip w/ syringe — ICAR",
           "desc": "2.12×12mm electronic ID microchip, ICAR-certified, with applicator syringe."
         },
-        "leitor-rfid": {
-          "name": "FDX-B RFID Reader",
-          "desc": "Handheld reader for FDX-B microchips, without Bluetooth."
-        },
         "leitor-rfid-bluetooth": {
           "name": "FDX-B RFID Reader w/ Bluetooth",
           "desc": "Handheld FDX-B reader with Bluetooth for use with phone/app."

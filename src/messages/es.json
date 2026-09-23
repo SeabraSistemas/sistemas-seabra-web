@@ -594,10 +594,6 @@
           "name": "Microchip c/ jeringa — ICAR",
           "desc": "Microchip de identificación electrónica 2,12×12mm, certificado ICAR, con jeringa aplicadora."
         },
-        "leitor-rfid": {
-          "name": "Lector RFID FDX-B",
-          "desc": "Lector de mano para microchips FDX-B, sin Bluetooth."
-        },
         "leitor-rfid-bluetooth": {
           "name": "Lector RFID FDX-B c/ Bluetooth",
           "desc": "Lector de mano FDX-B con Bluetooth para usar con celular/app."

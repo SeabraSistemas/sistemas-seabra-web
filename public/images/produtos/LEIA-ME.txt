@@ -7,7 +7,6 @@ substitua o arquivo correspondente mantendo o MESMO nome:
 Arquivo                          Produto                          Preco
 -------------------------------  -------------------------------  ----------------------------
 microchip_c_seringa.png          Microchip c/ seringa (ICAR)      a partir de R$ 8,50/un (faixas)
-leitor_portatil_sem_bt.png       Leitor RFID FDX-B                R$ 180,00
 leitor_portatil_bt.png           Leitor RFID FDX-B c/ Bluetooth   R$ 280,00
 leitor_bastao.png                Leitor bastao RFID               R$ 4.950,00
 
