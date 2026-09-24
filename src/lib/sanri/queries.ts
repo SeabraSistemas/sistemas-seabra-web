@@ -1,7 +1,8 @@
 import 'server-only';
-import { lerAba } from '@/lib/sheets/server';
+import { lerAba, listarAbas } from '@/lib/sheets/server';
 import { criarCache } from '@/lib/sheets/cache';
-import { ABA_PRODUCAO, ABA_TANQUE_REGUA, ABA_USUARIOS, spreadsheetId } from './config';
+import { ABA_BAIAS, ABA_BAIA_CATEGORIA, ABA_DIETA, ABA_PRODUCAO, ABA_TANQUE_REGUA, ABA_USUARIOS, spreadsheetId } from './config';
+import { mapBaias, mapDieta, type Baia, type DietaBaia } from './dieta';
 import { mapProducao, mapTabelaRegua, mapUsuarios, type Leitura, type Saida, type TabelaRegua, type Usuario } from './producao';
 
 const TTL_MS = 5 * 60 * 1000;
@@ -9,9 +10,10 @@ const cache = criarCache<string[][]>(TTL_MS);
 
 /**
  * Só abas que o site NÃO escreve passam pelo cache (User Manager,
- * tanque_regua). producao_diaria é lida sempre fresca: `invalidarCache()`
+ * tanque_regua, Baias, Baia_categoria). producao_diaria e dieta_baia são
+ * lidas sempre frescas: `invalidarCache()`
  * chamado numa rota de API não limpa o cache que o render da página vê
- * (módulos separados por rota no Next — ver src/lib/fi-fcg/queries.ts).
+ * (módulos separados por rota no Next).
  */
 async function lerAbaCache(aba: string): Promise<{ linhas: string[][] | null; stale: boolean; carregadoEm: number | null }> {
   const id = spreadsheetId();
@@ -61,4 +63,34 @@ export async function getProducao(): Promise<LeituraProducao> {
   const linhas = await lerAba(id, ABA_PRODUCAO);
   const { leituras, saidas } = mapProducao(linhas);
   return { configurado: true, ok: linhas != null, carregadoEm: Date.now(), leituras, saidas };
+}
+
+/** Baias do curral (abas Baias + Baia_categoria, do AppSheet). null se a leitura falhar. */
+export async function getBaias(): Promise<Baia[] | null> {
+  const [baias, categorias] = await Promise.all([lerAbaCache(ABA_BAIAS), lerAbaCache(ABA_BAIA_CATEGORIA)]);
+  if (baias.linhas == null) return null;
+  return mapBaias(baias.linhas, categorias.linhas);
+}
+
+export interface LeituraDieta {
+  configurado: boolean;
+  ok: boolean;
+  carregadoEm: number | null;
+  /** Todas as alterações, na ordem da planilha. */
+  historico: DietaBaia[];
+}
+
+/**
+ * dieta_baia só existe depois do 1º salvamento. Se a leitura falha, confere
+ * se é porque a aba ainda não foi criada (normal, lista vazia) ou erro de
+ * verdade — a API do Sheets responde igual aos dois casos.
+ */
+export async function getDieta(): Promise<LeituraDieta> {
+  const id = spreadsheetId();
+  if (!id) return { configurado: false, ok: false, carregadoEm: null, historico: [] };
+  const linhas = await lerAba(id, ABA_DIETA);
+  if (linhas != null) return { configurado: true, ok: true, carregadoEm: Date.now(), historico: mapDieta(linhas) };
+  const abas = await listarAbas(id);
+  const aindaNaoExiste = abas != null && !abas.includes(ABA_DIETA);
+  return { configurado: true, ok: aindaNaoExiste, carregadoEm: Date.now(), historico: [] };
 }

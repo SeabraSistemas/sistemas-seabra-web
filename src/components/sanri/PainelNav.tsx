@@ -23,7 +23,7 @@ export function PainelNav({ links, usuario, logoutHref }: { links: NavLink[]; us
       <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-x-6 gap-y-3 px-4 pt-3 sm:px-6">
         <div className="flex items-center gap-3">
           <Image src={SELO_FAZENDA.src} alt={SELO_FAZENDA.alt} width={SELO_FAZENDA.width} height={SELO_FAZENDA.height} className="h-9 w-auto" priority />
-          <span className="text-sm font-semibold text-ink">Produção de leite</span>
+          <span className="text-sm font-semibold text-ink">Capril Sanri</span>
         </div>
         <div className="flex min-w-0 items-center gap-3 text-sm text-ink-2">
           <span className="truncate">{usuario}</span>

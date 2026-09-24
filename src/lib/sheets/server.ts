@@ -337,6 +337,25 @@ export async function limparLinha(spreadsheetId: string, range: string): Promise
   }
 }
 
+/** Nomes de todas as abas da planilha. null se a leitura falhar — usado para distinguir "aba ainda não existe" de erro de leitura (a API responde 400 igual aos dois). */
+export async function listarAbas(spreadsheetId: string): Promise<string[] | null> {
+  const t = await token();
+  if (!t) return null;
+  try {
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}?fields=sheets.properties.title`;
+    const res = await fetch(url, { headers: { Authorization: `Bearer ${t}` }, cache: 'no-store' });
+    if (!res.ok) {
+      console.error('[sheets] falha ao listar abas', res.status, await res.text());
+      return null;
+    }
+    const data = (await res.json()) as { sheets?: { properties?: { title?: string } }[] };
+    return (data.sheets ?? []).map((s) => s.properties?.title ?? '').filter(Boolean);
+  } catch (err) {
+    console.error('[sheets] falha ao listar abas', err);
+    return null;
+  }
+}
+
 /**
  * Cria uma aba nova (vazia) na planilha, via `spreadsheets:batchUpdate`
  * (`addSheet`) — usado só uma vez por aba nova do /FI_FCG que ainda não

@@ -17,16 +17,16 @@ const CAMPOS_LEITURA = ['data', 'tanque', 'regua', 'regua_litros', 'extra', 'tan
 
 export type Resultado = { ok: true; id?: string } | { ok: false; status: number; erro: string };
 
-function falha(status: number, erro: string): { ok: false; status: number; erro: string } {
+export function falha(status: number, erro: string): { ok: false; status: number; erro: string } {
   return { ok: false, status, erro };
 }
 
-function gerarId(): string {
+export function gerarId(): string {
   return Math.random().toString(36).slice(2, 10);
 }
 
 /** 0 -> "A", 25 -> "Z", 26 -> "AA". */
-function letraDaColuna(indice: number): string {
+export function letraDaColuna(indice: number): string {
   let letras = '';
   let n = indice;
   while (n >= 0) {
@@ -37,7 +37,7 @@ function letraDaColuna(indice: number): string {
 }
 
 /** Vírgula decimal, sem milhar — a planilha é pt-BR e lê isso como número no USER_ENTERED. */
-function numeroPlanilha(n: number): string {
+export function numeroPlanilha(n: number): string {
   return n.toLocaleString('pt-BR', { maximumFractionDigits: 2, useGrouping: false });
 }
 

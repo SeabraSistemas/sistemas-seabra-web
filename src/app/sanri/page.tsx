@@ -25,8 +25,7 @@ export default async function PainelLoginPage({ searchParams }: { searchParams: 
     <main className="flex min-h-svh items-center justify-center px-4 py-10">
       <div className="w-full max-w-sm rounded-card border border-rule bg-paper p-6 shadow-card sm:p-8">
         <Image src={SELO_FAZENDA.src} alt={SELO_FAZENDA.alt} width={SELO_FAZENDA.width} height={SELO_FAZENDA.height} className="h-11 w-auto" priority />
-        <h1 className="mt-6 text-xl font-semibold text-ink">Produção de leite</h1>
-        <p className="mt-1 text-sm text-ink-2">Régua do tanque e saídas do Capril Sanri.</p>
+        <h1 className="mt-6 text-xl font-semibold text-ink">Capril Sanri</h1>
 
         <form action="/sanri/api/login" method="POST" className="mt-6 flex flex-col gap-3">
           <label htmlFor="email" className="text-sm font-medium text-ink-1">

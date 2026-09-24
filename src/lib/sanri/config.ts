@@ -9,11 +9,16 @@ export function spreadsheetId(): string | null {
 export const ABA_USUARIOS = 'User Manager';
 export const ABA_PRODUCAO = 'producao_diaria';
 export const ABA_TANQUE_REGUA = 'tanque_regua';
+export const ABA_BAIAS = 'Baias';
+export const ABA_BAIA_CATEGORIA = 'Baia_categoria';
+/** Criada pelo painel no 1º salvamento — não existe no AppSheet. */
+export const ABA_DIETA = 'dieta_baia';
 
 export const LINKS: NavLink[] = [
   { href: '/sanri/producao', label: 'Produção' },
   { href: '/sanri/regua', label: 'Régua' },
   { href: '/sanri/saidas', label: 'Saídas' },
+  { href: '/sanri/dieta', label: 'Dieta' },
 ];
 
 export const LOGIN_HREF = '/sanri';
