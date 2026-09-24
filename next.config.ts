@@ -36,6 +36,16 @@ const nextConfig: NextConfig = {
         ],
       },
       {
+        // /tokens: cota diária de uso do Claude, dados só no localStorage de
+        // quem abre. Nada sensível — só fica fora de busca, como o /cursoidiomas.
+        source: '/tokens/:path*',
+        headers: [
+          { key: 'X-Robots-Tag', value: 'noindex, nofollow, noarchive, nosnippet' },
+          { key: 'X-Frame-Options', value: 'DENY' },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+        ],
+      },
+      {
         // O /adm lê a base inteira de clientes. Estes headers são a camada que
         // não depende de nenhum código nosso rodar certo: valem inclusive numa
         // rota que esqueça o gate.
