@@ -115,3 +115,10 @@ export function destinosPresentes<T>(
   );
   return DESTINO_ORDEM.filter((d) => presentes.has(d));
 }
+
+/** Quantas vezes cada valor aparece — base das contagens "(N)" dos selects do Movimentar. */
+export function contar(valores: string[]): Record<string, number> {
+  const mapa: Record<string, number> = {};
+  for (const v of valores) mapa[v] = (mapa[v] ?? 0) + 1;
+  return mapa;
+}

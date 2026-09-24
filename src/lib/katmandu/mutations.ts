@@ -10,8 +10,8 @@ import { SEM_LOCAL, SEM_LOCAL_LABEL, SEM_LOTE, SEM_LOTE_LABEL } from './types';
  * jeito que a leitura resolve, senão a checagem de origem abaixo erra pra
  * qualquer linha gravada com o ID em vez do nome).
  *
- * Duas movimentações, mesma mecânica: mover um conjunto de animais ativos de
- * um local pro outro, ou de um lote pro outro.
+ * Movimentação: mudar local e/ou lote de um conjunto de animais ativos —
+ * por recorte (tudo de uma origem) ou animal a animal, mesma mecânica.
  */
 
 /** Lê a aba "local" (lookup), devolve os nomes da coluna B ("Local"), pulando o header. */
@@ -63,11 +63,33 @@ function hojeMenosDiasBR(dias: number): string {
   return `${dd}/${mm}/${alvo.getUTCFullYear()}`;
 }
 
+export type CampoMovimentacao = 'local' | 'lote';
+
+/** Coluna da RebanhoProd, lookup de ID cru x nome e sentinela de vazio de cada campo movível. */
+const CAMPOS: Record<
+  CampoMovimentacao,
+  { coluna: string; mapa: () => Promise<Map<string, string>>; sentinela: string; sentinelaLabel: string }
+> = {
+  local: { coluna: 'local', mapa: getLocalMap, sentinela: SEM_LOCAL, sentinelaLabel: SEM_LOCAL_LABEL },
+  lote: { coluna: 'Lote', mapa: getLoteMap, sentinela: SEM_LOTE, sentinelaLabel: SEM_LOTE_LABEL },
+};
+
+export interface Mudanca {
+  campo: CampoMovimentacao;
+  destino: string;
+  /**
+   * Com origem (movimentação por recorte), só move quem ainda está nela. Sem
+   * origem (seleção animal a animal), move de onde o animal estiver — quem o
+   * usuário marcou é o próprio alvo, não um recorte que pode ter mudado.
+   */
+  origem?: string;
+}
+
 /**
- * Move os animais de `ids` que ainda estão ATIVOS em `origem` pra `destino`:
- * atualiza a coluna `local` de cada linha casada em RebanhoProd e loga uma
- * linha agregada em `movimentacao` (não por animal — a origem é a mesma pra
- * todos, então uma linha `de → para` descreve o lote inteiro).
+ * Move os animais de `ids` que ainda estão ATIVOS: grava cada mudança
+ * (local e/ou lote) na linha deles em RebanhoProd e loga uma linha agregada
+ * por mudança em `movimentacao` (não por animal — decisão do Felipe; sem
+ * origem fixa, o "de" junta as origens distintas: "Baia 03, Sem local").
  *
  * A seleção vem em IDs, não em filtros (lote/destino são resolvidos na tela):
  * o que o usuário viu na conferência é exatamente o que se move, e um animal
@@ -77,91 +99,54 @@ function hojeMenosDiasBR(dias: number): string {
  * pra minimizar — não eliminar — a janela de corrida com o AppSheet do
  * cliente, que pode editar a mesma planilha a qualquer momento. `origem` e a
  * ausência de baixa são reconferidos nessa leitura fresca; quem não bate mais
- * volta em `ignorados` em vez de ser movido às cegas. Não há
- * compare-and-swap por célula na Sheets API; risco aceito pro volume de uso
- * interno atual.
+ * (ou já está no destino) volta em `ignorados` em vez de ser movido às cegas.
+ * Não há compare-and-swap por célula na Sheets API; risco aceito pro volume
+ * de uso interno atual.
  */
 export async function moverAnimais(
-  origem: string,
-  destino: string,
   ids: string[],
+  mudancas: Mudanca[],
 ): Promise<{ movidos: number; ignorados: number; logFalhou?: boolean }> {
   const alvo = new Set(ids);
-  if (alvo.size === 0) return { movidos: 0, ignorados: 0 };
+  if (alvo.size === 0 || mudancas.length === 0) return { movidos: 0, ignorados: alvo.size };
 
-  const [rows, localMap] = await Promise.all([getSheetValues('RebanhoProd'), getLocalMap()]);
+  const [rows, ...mapas] = await Promise.all([
+    getSheetValues('RebanhoProd'),
+    ...mudancas.map((m) => CAMPOS[m.campo].mapa()),
+  ]);
   if (!rows || rows.length === 0) return { movidos: 0, ignorados: alvo.size };
 
   const header = rows[0];
   const idxId = header.indexOf('ID animal');
-  const idxLocal = header.indexOf('local');
   const idxBaixa = header.indexOf('Causa da baixa');
-  if (idxId === -1 || idxLocal === -1 || idxBaixa === -1) return { movidos: 0, ignorados: alvo.size };
+  const idxCampos = mudancas.map((m) => header.indexOf(CAMPOS[m.campo].coluna));
+  if (idxId === -1 || idxBaixa === -1 || idxCampos.includes(-1)) return { movidos: 0, ignorados: alvo.size };
 
-  const letraLocal = colunaParaLetra(idxLocal);
   const updates: { range: string; value: string }[] = [];
   const casados = new Set<string>();
+  const origensVistas = mudancas.map(() => new Set<string>());
+  let linhasMovidas = 0;
 
   rows.slice(1).forEach((row, i) => {
     const idAnimal = parseText(row[idxId]);
+    if (!idAnimal || !alvo.has(idAnimal) || parseText(row[idxBaixa]) != null) return;
     // Resolvido do mesmo jeito que a leitura (queries.ts): a célula pode
-    // trazer o nome direto ou o ID cru da aba `local` — comparar cru contra
+    // trazer o nome direto ou o ID cru da aba lookup — comparar cru contra
     // `origem` (que é sempre o nome, vindo do <select>) erraria pra metade
     // dos formatos gravados na planilha.
-    const local = resolverComMapa(row[idxLocal], localMap) ?? SEM_LOCAL;
-    const baixa = parseText(row[idxBaixa]);
-    if (!idAnimal || !alvo.has(idAnimal) || baixa != null || local !== origem) return;
-    casados.add(idAnimal);
+    const atuais = mudancas.map((m, k) => resolverComMapa(row[idxCampos[k]], mapas[k]) ?? CAMPOS[m.campo].sentinela);
+    if (mudancas.some((m, k) => m.origem != null && atuais[k] !== m.origem)) return;
     const numeroDaLinha = i + 2; // linha 1 é header, dados começam na 2
-    updates.push({ range: `RebanhoProd!${letraLocal}${numeroDaLinha}`, value: destino });
-  });
-
-  const ignorados = alvo.size - casados.size;
-  if (updates.length === 0) return { movidos: 0, ignorados };
-
-  const ok = await batchUpdateCells(updates);
-  if (!ok) return { movidos: 0, ignorados: alvo.size };
-
-  const origemLog = origem === SEM_LOCAL ? SEM_LOCAL_LABEL : origem;
-  const logOk = await appendRow('movimentacao', [crypto.randomUUID(), origemLog, destino, dataHojeBR()]);
-  return { movidos: updates.length, ignorados, logFalhou: !logOk };
-}
-
-/**
- * Mesma mecânica de `moverAnimais`, trocando o eixo `local` pelo `Lote`:
- * move os animais de `ids` que ainda estão ATIVOS no lote `origem` pra
- * `destino`. Ver os comentários de `moverAnimais` pra racional completo
- * (releitura fresca, resolução de ID cru, log agregado em `movimentacao`).
- */
-export async function moverAnimaisPorLote(
-  origem: string,
-  destino: string,
-  ids: string[],
-): Promise<{ movidos: number; ignorados: number; logFalhou?: boolean }> {
-  const alvo = new Set(ids);
-  if (alvo.size === 0) return { movidos: 0, ignorados: 0 };
-
-  const [rows, loteMap] = await Promise.all([getSheetValues('RebanhoProd'), getLoteMap()]);
-  if (!rows || rows.length === 0) return { movidos: 0, ignorados: alvo.size };
-
-  const header = rows[0];
-  const idxId = header.indexOf('ID animal');
-  const idxLote = header.indexOf('Lote');
-  const idxBaixa = header.indexOf('Causa da baixa');
-  if (idxId === -1 || idxLote === -1 || idxBaixa === -1) return { movidos: 0, ignorados: alvo.size };
-
-  const letraLote = colunaParaLetra(idxLote);
-  const updates: { range: string; value: string }[] = [];
-  const casados = new Set<string>();
-
-  rows.slice(1).forEach((row, i) => {
-    const idAnimal = parseText(row[idxId]);
-    const lote = resolverComMapa(row[idxLote], loteMap) ?? SEM_LOTE;
-    const baixa = parseText(row[idxBaixa]);
-    if (!idAnimal || !alvo.has(idAnimal) || baixa != null || lote !== origem) return;
+    let mexeu = false;
+    mudancas.forEach((m, k) => {
+      if (atuais[k] === m.destino) return;
+      updates.push({ range: `RebanhoProd!${colunaParaLetra(idxCampos[k])}${numeroDaLinha}`, value: m.destino });
+      origensVistas[k].add(atuais[k]);
+      mexeu = true;
+    });
+    if (!mexeu) return;
     casados.add(idAnimal);
-    const numeroDaLinha = i + 2;
-    updates.push({ range: `RebanhoProd!${letraLote}${numeroDaLinha}`, value: destino });
+    linhasMovidas += 1;
   });
 
   const ignorados = alvo.size - casados.size;
@@ -170,9 +155,15 @@ export async function moverAnimaisPorLote(
   const ok = await batchUpdateCells(updates);
   if (!ok) return { movidos: 0, ignorados: alvo.size };
 
-  const origemLog = origem === SEM_LOTE ? SEM_LOTE_LABEL : origem;
-  const logOk = await appendRow('movimentacao', [crypto.randomUUID(), origemLog, destino, dataHojeBR()]);
-  return { movidos: updates.length, ignorados, logFalhou: !logOk };
+  let logFalhou = false;
+  for (const [k, m] of mudancas.entries()) {
+    if (origensVistas[k].size === 0) continue;
+    const { sentinela, sentinelaLabel } = CAMPOS[m.campo];
+    const de = [...origensVistas[k]].map((o) => (o === sentinela ? sentinelaLabel : o)).join(', ');
+    const logOk = await appendRow('movimentacao', [crypto.randomUUID(), de, m.destino, dataHojeBR()]);
+    if (!logOk) logFalhou = true;
+  }
+  return { movidos: linhasMovidas, ignorados, logFalhou };
 }
 
 /**

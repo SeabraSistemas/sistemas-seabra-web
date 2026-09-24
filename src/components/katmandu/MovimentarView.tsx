@@ -1,7 +1,6 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -9,10 +8,11 @@ import { FilterSelect } from './FilterSelect';
 import { FilterMultiSelect } from './FilterMultiSelect';
 import { MetricCard } from './MetricCard';
 import { DataTable, type DataTableColumn } from './DataTable';
-import { DESTINO_LABEL, DESTINO_ORDEM, destinoOrdinal, opcoesDeOrigem } from '@/lib/katmandu/filters';
+import { AcaoMovimentacao, useMovimentacao } from './MovimentarAcao';
+import { MovimentarAnimais } from './MovimentarAnimais';
+import { DESTINO_LABEL, DESTINO_ORDEM, contar, destinoOrdinal, opcoesDeOrigem } from '@/lib/katmandu/filters';
 import { SEM_LOCAL, SEM_LOCAL_LABEL, SEM_LOTE, SEM_LOTE_LABEL, type AnimalRebanho } from '@/lib/katmandu/types';
 
-type Estado = 'ideia' | 'confirmando' | 'enviando' | 'feito' | 'erro';
 type Modo = 'local' | 'lote';
 
 /** Sentinela só desta tela: marca explicitamente "os que não têm destino preenchido" (server recebe IDs, não filtros). */
@@ -58,10 +58,50 @@ function comSentinela(reais: string[], sentinela: string, temVazios: boolean): s
   return reais.length > 0 && temVazios ? [...reais, sentinela] : reais;
 }
 
-function contar(valores: string[]): Record<string, number> {
-  const mapa: Record<string, number> = {};
-  for (const v of valores) mapa[v] = (mapa[v] ?? 0) + 1;
-  return mapa;
+/**
+ * Três jeitos de movimentar: por local e por lote levam tudo de uma origem
+ * (ou uma fatia dela), por animal é marcação um a um. Trocar de aba remonta
+ * o modo (`key`), então nenhuma seleção vaza de um pro outro.
+ */
+export function MovimentarView({
+  animais,
+  locais,
+  lotes,
+}: {
+  animais: AnimalRebanho[];
+  locais: string[];
+  lotes: string[];
+}) {
+  const [modo, setModo] = useState<Modo | 'animal'>('local');
+
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="rounded-xl border border-border bg-card p-4 sm:p-6">
+        <Tabs
+          value={modo}
+          onValueChange={(v) => setModo(v === 'lote' || v === 'animal' ? v : 'local')}
+          className="mb-4"
+        >
+          <TabsList>
+            <TabsTrigger value="local">Por local</TabsTrigger>
+            <TabsTrigger value="lote">Por lote</TabsTrigger>
+            <TabsTrigger value="animal">Por animal</TabsTrigger>
+          </TabsList>
+        </Tabs>
+
+        {modo === 'animal' ? (
+          <MovimentarAnimais animais={animais} locais={locais} lotes={lotes} />
+        ) : (
+          <MovimentarRecorte
+            key={modo}
+            modo={modo}
+            animais={animais}
+            opcoesPrincipais={modo === 'local' ? locais : lotes}
+          />
+        )}
+      </div>
+    </div>
+  );
 }
 
 /**
@@ -73,28 +113,24 @@ function contar(valores: string[]): Record<string, number> {
  * Filtro vazio = "todos" (convenção dos outros filtros do dashboard), então
  * escolher só a origem reproduz o comportamento de mover tudo que está nela.
  */
-export function MovimentarView({
+function MovimentarRecorte({
+  modo,
   animais,
-  locais,
-  lotes: lotesDisponiveis,
+  opcoesPrincipais,
 }: {
+  modo: Modo;
   animais: AnimalRebanho[];
-  locais: string[];
-  lotes: string[];
+  /** Cadastro do eixo principal (aba local ou Lotes) — o "Para" só oferece daqui. */
+  opcoesPrincipais: string[];
 }) {
-  const router = useRouter();
-  const [modo, setModo] = useState<Modo>('local');
+  const mov = useMovimentacao();
   const [origem, setOrigem] = useState('');
   const [secundarios, setSecundarios] = useState<string[]>([]);
   const [destinos, setDestinos] = useState<string[]>([]);
   const [para, setPara] = useState('');
   const [verAnimais, setVerAnimais] = useState(false);
-  const [estado, setEstado] = useState<Estado>('ideia');
-  const [resultado, setResultado] = useState<{ movidos: number; ignorados: number; logFalhou?: boolean } | null>(null);
-  const [erro, setErro] = useState<string | null>(null);
 
   const cfg = useMemo(() => config(modo), [modo]);
-  const opcoesPrincipais = modo === 'local' ? locais : lotesDisponiveis;
 
   const ativos = useMemo(() => animais.filter((a) => a.baixa == null), [animais]);
 
@@ -166,24 +202,12 @@ export function MovimentarView({
     return partes.join(' · ');
   }, [secundarios, destinos, cfg]);
 
-  function trocarModo(v: string) {
-    setModo(v === 'lote' ? 'lote' : 'local');
-    setOrigem('');
-    setSecundarios([]);
-    setDestinos([]);
-    setPara('');
-    setVerAnimais(false);
-    setEstado('ideia');
-    setResultado(null);
-    setErro(null);
-  }
-
   function trocarOrigem(v: string) {
     setOrigem(v);
     setSecundarios([]);
     setDestinos([]);
     if (v === para) setPara('');
-    setEstado('ideia');
+    mov.editou();
   }
 
   function trocarSecundarios(v: string[]) {
@@ -196,7 +220,7 @@ export function MovimentarView({
         .map((a) => a.destino ?? SEM_DESTINO),
     );
     setDestinos((atual) => atual.filter((d) => permitidos.has(d)));
-    setEstado('ideia');
+    mov.editou();
   }
 
   function reiniciar() {
@@ -205,39 +229,6 @@ export function MovimentarView({
     setDestinos([]);
     setPara('');
     setVerAnimais(false);
-    setEstado('ideia');
-    setResultado(null);
-    setErro(null);
-  }
-
-  async function confirmar() {
-    setEstado('enviando');
-    setErro(null);
-    try {
-      const res = await fetch('/api/katmandu/movimentar', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ campo: cfg.campo, origem, destino: para, ids: selecionados.map((a) => a.idAnimal) }),
-      });
-      const data = (await res.json()) as {
-        ok: boolean;
-        movidos?: number;
-        ignorados?: number;
-        logFalhou?: boolean;
-        erro?: string;
-      };
-      if (!res.ok || !data.ok) {
-        setErro(data.erro ?? 'Não foi possível mover os animais.');
-        setEstado('erro');
-        return;
-      }
-      setResultado({ movidos: data.movidos ?? 0, ignorados: data.ignorados ?? 0, logFalhou: data.logFalhou });
-      setEstado('feito');
-      router.refresh();
-    } catch {
-      setErro('Falha de conexão. Tente de novo.');
-      setEstado('erro');
-    }
   }
 
   const colunas: DataTableColumn<AnimalRebanho>[] = [
@@ -258,162 +249,105 @@ export function MovimentarView({
   ];
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="rounded-xl border border-border bg-card p-4 sm:p-6">
-        <Tabs value={modo} onValueChange={trocarModo} className="mb-4">
-          <TabsList>
-            <TabsTrigger value="local">Por local</TabsTrigger>
-            <TabsTrigger value="lote">Por lote</TabsTrigger>
-          </TabsList>
-        </Tabs>
+    <>
+      <p className="mb-4 text-sm text-muted-foreground">
+        Move os animais ativos de um {cfg.labelPrincipal.toLowerCase()} pra outro. Sem marcar{' '}
+        {cfg.labelSecundario.toLowerCase()} ou destino, vai o {cfg.labelPrincipal.toLowerCase()} inteiro; marcando,
+        vão só os animais do recorte. Animais com baixa não são afetados.
+      </p>
 
-        <p className="mb-4 text-sm text-muted-foreground">
-          Move os animais ativos de um {cfg.labelPrincipal.toLowerCase()} pra outro. Sem marcar{' '}
-          {cfg.labelSecundario.toLowerCase()} ou destino, vai o {cfg.labelPrincipal.toLowerCase()} inteiro; marcando,
-          vão só os animais do recorte. Animais com baixa não são afetados.
-        </p>
+      <div className="flex flex-wrap items-end gap-4">
+        <FilterSelect
+          label="De"
+          value={origem}
+          onChange={trocarOrigem}
+          options={opcoesOrigem}
+          labelDe={(l) => `${nomePrincipal(l)} (${contagemPrincipal[l] ?? 0})`}
+          placeholder="Selecione"
+          triggerClassName="w-full sm:w-56"
+        />
+      </div>
 
-        <div className="flex flex-wrap items-end gap-4">
-          <FilterSelect
-            label="De"
-            value={origem}
-            onChange={trocarOrigem}
-            options={opcoesOrigem}
-            labelDe={(l) => `${nomePrincipal(l)} (${contagemPrincipal[l] ?? 0})`}
-            placeholder="Selecione"
-            triggerClassName="w-full sm:w-56"
-          />
-        </div>
+      {!origem && (
+        <p className="mt-3 text-sm text-muted-foreground">Selecione um {cfg.labelPrincipal} pra continuar.</p>
+      )}
 
-        {!origem && (
-          <p className="mt-3 text-sm text-muted-foreground">Selecione um {cfg.labelPrincipal} pra continuar.</p>
-        )}
+      {origem && (
+        <>
+          <div className="mt-4 flex flex-wrap items-end gap-4">
+            <FilterMultiSelect
+              label={cfg.labelSecundario}
+              values={secundarios}
+              onChange={trocarSecundarios}
+              options={opcoesSecundarias}
+              labelDe={(l) => `${nomeSecundario(l)} (${contagemSecundaria[l] ?? 0})`}
+              triggerClassName="w-full sm:w-44"
+            />
+            <FilterMultiSelect
+              label="Destino"
+              values={destinos}
+              onChange={(v) => {
+                setDestinos(v);
+                mov.editou();
+              }}
+              options={opcoesDestino}
+              labelDe={(d) => `${nomeDestino(d)} (${contagemDestino[d] ?? 0})`}
+              triggerClassName="w-full sm:w-44"
+            />
+          </div>
 
-        {origem && (
+          <div className="mt-4 flex flex-wrap items-end gap-4">
+            <div className="sm:w-44">
+              <MetricCard id="selecionados" label="Selecionados" value={String(selecionados.length)} />
+            </div>
+            <ArrowRight className="mb-2.5 size-4 shrink-0 text-muted-foreground" />
+            <FilterSelect
+              label="Para"
+              value={para}
+              onChange={(v) => {
+                setPara(v);
+                mov.editou();
+              }}
+              options={opcoesPara}
+              placeholder="Selecione"
+              triggerClassName="w-full sm:w-56"
+            />
+          </div>
+
+          {selecionados.length > 0 && (
+            <div className="mt-4">
+              <Button type="button" size="sm" variant="outline" onClick={() => setVerAnimais((v) => !v)}>
+                {verAnimais ? 'Esconder animais' : `Ver os ${selecionados.length} animais`}
+              </Button>
+              {verAnimais && (
+                <div className="mt-3">
+                  <DataTable columns={colunas} rows={selecionados} rowKey={(a) => a.idAnimal} />
+                </div>
+              )}
+            </div>
+          )}
+        </>
+      )}
+
+      <AcaoMovimentacao
+        mov={mov}
+        body={{ campo: cfg.campo, origem, destino: para, ids: selecionados.map((a) => a.idAnimal) }}
+        podeMover={Boolean(origem && para && selecionados.length > 0)}
+        pergunta={
           <>
-            <div className="mt-4 flex flex-wrap items-end gap-4">
-              <FilterMultiSelect
-                label={cfg.labelSecundario}
-                values={secundarios}
-                onChange={trocarSecundarios}
-                options={opcoesSecundarias}
-                labelDe={(l) => `${nomeSecundario(l)} (${contagemSecundaria[l] ?? 0})`}
-                triggerClassName="w-full sm:w-44"
-              />
-              <FilterMultiSelect
-                label="Destino"
-                values={destinos}
-                onChange={(v) => {
-                  setDestinos(v);
-                  setEstado('ideia');
-                }}
-                options={opcoesDestino}
-                labelDe={(d) => `${nomeDestino(d)} (${contagemDestino[d] ?? 0})`}
-                triggerClassName="w-full sm:w-44"
-              />
-            </div>
-
-            <div className="mt-4 flex flex-wrap items-end gap-4">
-              <div className="sm:w-44">
-                <MetricCard id="selecionados" label="Selecionados" value={String(selecionados.length)} />
-              </div>
-              <ArrowRight className="mb-2.5 size-4 shrink-0 text-muted-foreground" />
-              <FilterSelect
-                label="Para"
-                value={para}
-                onChange={(v) => {
-                  setPara(v);
-                  setEstado('ideia');
-                }}
-                options={opcoesPara}
-                placeholder="Selecione"
-                triggerClassName="w-full sm:w-56"
-              />
-            </div>
-
-            {selecionados.length > 0 && (
-              <div className="mt-4">
-                <Button type="button" size="sm" variant="outline" onClick={() => setVerAnimais((v) => !v)}>
-                  {verAnimais ? 'Esconder animais' : `Ver os ${selecionados.length} animais`}
-                </Button>
-                {verAnimais && (
-                  <div className="mt-3">
-                    <DataTable columns={colunas} rows={selecionados} rowKey={(a) => a.idAnimal} />
-                  </div>
-                )}
-              </div>
-            )}
+            Mover <strong className="tabular-nums">{selecionados.length}</strong> animais ativos de{' '}
+            <strong>{nomePrincipal(origem)}</strong>
+            {recorte && <> ({recorte})</>} pra <strong>{para}</strong>?
+          </>
+        }
+        feito={(r) => (
+          <>
+            {r.movidos} animais movidos de <strong>{nomePrincipal(origem)}</strong> pra <strong>{para}</strong>.
           </>
         )}
-
-        <div className="mt-6 flex flex-col gap-3">
-          {estado === 'ideia' && (
-            <Button
-              type="button"
-              className="w-fit"
-              disabled={!origem || !para || selecionados.length === 0}
-              onClick={() => setEstado('confirmando')}
-            >
-              Movimentar
-            </Button>
-          )}
-
-          {(estado === 'confirmando' || estado === 'enviando') && (
-            <div className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-background p-3 text-sm">
-              <span>
-                Mover <strong className="tabular-nums">{selecionados.length}</strong> animais ativos de{' '}
-                <strong>{nomePrincipal(origem)}</strong>
-                {recorte && <> ({recorte})</>} pra <strong>{para}</strong>?
-              </span>
-              <div className="flex gap-2">
-                <Button type="button" size="sm" disabled={estado === 'enviando'} onClick={confirmar}>
-                  {estado === 'enviando' ? 'Movimentando…' : 'Confirmar'}
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  disabled={estado === 'enviando'}
-                  onClick={() => setEstado('ideia')}
-                >
-                  Cancelar
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {estado === 'feito' && resultado && (
-            <div className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-background p-3 text-sm">
-              <span>
-                {resultado.movidos} animais movidos de <strong>{nomePrincipal(origem)}</strong> pra <strong>{para}</strong>.
-                {resultado.ignorados > 0 && (
-                  <span className="ml-1 text-muted-foreground">
-                    {resultado.ignorados} ficaram de fora — mudaram de {cfg.labelPrincipal.toLowerCase()} ou receberam
-                    baixa na planilha depois que esta tela carregou.
-                  </span>
-                )}
-                {resultado.logFalhou && (
-                  <span className="ml-1 text-destructive">
-                    A movimentação valeu, mas o registro em &quot;movimentacao&quot; falhou — confira depois.
-                  </span>
-                )}
-              </span>
-              <Button type="button" size="sm" variant="outline" onClick={reiniciar}>
-                Nova movimentação
-              </Button>
-            </div>
-          )}
-
-          {estado === 'erro' && (
-            <div className="flex flex-wrap items-center gap-3 rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">
-              <span>{erro}</span>
-              <Button type="button" size="sm" variant="outline" onClick={() => setEstado('ideia')}>
-                Tentar de novo
-              </Button>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
+        motivoIgnorados={`mudaram de ${cfg.labelPrincipal.toLowerCase()} ou receberam baixa na planilha depois que esta tela carregou.`}
+        onNova={reiniciar}
+      />
+    </>
   );
 }
