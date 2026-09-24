@@ -3,7 +3,8 @@ import type { Apresentacao, Logo } from '@/components/apresentacao/tipos';
 /**
  * Palestra de Geraldo Jonas da Silva (M.Sc.) sobre manejo na ovinocultura de
  * corte, com o Sistema Seabra entrando como ferramenta no fim de cada bloco.
- * Rota: /apresentacao/ovinos-corte (noindex, fora do [locale], só pt). 1 hora.
+ * Rotas: /ppt_geraldo (projeção) e /ppt_geraldo/apresentador (notas e
+ * cronômetro). noindex, fora do [locale], só pt. 1 hora.
  *
  * FOTOS
  * Coloque o arquivo em public/images/apresentacao-ovinos/ com o nome exato do

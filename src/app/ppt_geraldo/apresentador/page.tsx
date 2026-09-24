@@ -19,7 +19,7 @@ export default function ApresentadorOvinosCorte() {
       titulo={ovinosCorte.titulo}
       slides={montarSlides(ovinosCorte)}
       canal="deck:ovinos-corte"
-      rotaProjecao="/apresentacao/ovinos-corte"
+      rotaProjecao="/ppt_geraldo"
       duracaoMinutos={60}
     />
   );

@@ -20,7 +20,7 @@ export default function ApresentacaoOvinosCorte() {
       titulo={ovinosCorte.titulo}
       slides={montarSlidesProjecao(ovinosCorte)}
       canal="deck:ovinos-corte"
-      rotaApresentador="/apresentacao/ovinos-corte/apresentador"
+      rotaApresentador="/ppt_geraldo/apresentador"
     />
   );
 }
