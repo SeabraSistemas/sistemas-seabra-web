@@ -2,14 +2,12 @@
 
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Pencil, Trash2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { DataTable, type DataTableColumn } from '@/components/painel/DataTable';
 import { diaDeInput, diaParaInput, formatDia, formatNumber } from '@/lib/painel/format';
 import { leituraPorDia, litrosDaRegua, normalizarRegua, volumeDaLeitura, type Leitura, type TabelaRegua } from '@/lib/sanri/producao';
-import { EstadoPlanilha } from './EstadoPlanilha';
+import { Aviso, PainelBotao, PainelCampo, Rotulo } from './Controles';
+import { DataTable, type DataTableColumn } from './DataTable';
 import { Escolha } from './Escolha';
+import { EstadoPlanilha } from './EstadoPlanilha';
 
 function numeroDoTanque(t: string): number {
   return Number(t.replace(/\D/g, '')) || 0;
@@ -24,10 +22,10 @@ function faixa(tabela: TabelaRegua, tanque: string): string | null {
 function ResultadoRegua({ tabela, tanque, regua }: { tabela: TabelaRegua; tanque: string; regua: string }) {
   if (!tanque || !regua.trim()) return null;
   const litros = litrosDaRegua(tabela, tanque, regua);
-  if (litros != null) return <p className="text-sm text-emerald-400">= {formatNumber(litros)} litros</p>;
+  if (litros != null) return <p className="text-sm font-semibold text-sage">= {formatNumber(litros)} litros</p>;
   const f = faixa(tabela, tanque);
   return (
-    <p className="text-sm text-destructive">
+    <p className="text-sm text-erro">
       {normalizarRegua(regua) == null ? 'Régua inválida' : 'Régua não está na tabela'}
       {f ? ` — ${tanque} vai de ${f}` : ''}
     </p>
@@ -176,24 +174,24 @@ export function ReguaPainel({
       header: 'Litros',
       cell: (l) => {
         const v = volumeDaLeitura(l);
-        return v == null ? <span className="text-destructive">sem litros</span> : formatNumber(v);
+        return v == null ? <span className="text-erro">sem litros</span> : formatNumber(v);
       },
       sortValue: (l) => volumeDaLeitura(l),
       className: 'text-right',
     },
     { key: 'animais', header: 'Cabras', cell: (l) => formatNumber(l.totalAnimais), className: 'text-right' },
-    { key: 'obs', header: 'Obs', cell: (l) => <span className="text-muted-foreground">{l.obs ?? ''}</span> },
+    { key: 'obs', header: 'Obs', cell: (l) => <span className="text-ink-2">{l.obs ?? ''}</span> },
     {
       key: 'acoes',
       header: '',
       cell: (l) => (
         <div className="flex justify-end gap-1">
-          <Button type="button" variant="ghost" size="icon" className="size-7" onClick={() => editar(l)} aria-label="Editar">
-            <Pencil className="size-3.5" />
-          </Button>
-          <Button type="button" variant="ghost" size="icon" className="size-7 text-destructive" onClick={() => excluir(l)} aria-label="Apagar">
-            <Trash2 className="size-3.5" />
-          </Button>
+          <PainelBotao variante="discreto" onClick={() => editar(l)}>
+            Editar
+          </PainelBotao>
+          <PainelBotao variante="perigo" onClick={() => excluir(l)}>
+            Apagar
+          </PainelBotao>
         </div>
       ),
     },
@@ -205,18 +203,16 @@ export function ReguaPainel({
     <div className="flex flex-col gap-6">
       <EstadoPlanilha configurado={configurado} ok={ok && tabela != null} carregadoEm={carregadoEm} />
 
-      <div className="rounded-xl border border-border bg-card p-5">
-        <h2 className="text-base font-semibold">{editandoId ? 'Editar régua' : 'Lançar régua'}</h2>
-        <p className="mb-5 mt-1 text-sm text-muted-foreground">Medida uma vez por dia, antes da 1ª ordenha. As saídas de leite vão na aba Saídas.</p>
+      <section className="rounded-card border border-rule bg-paper p-4 shadow-card sm:p-6">
+        <h2 className="text-lg font-semibold text-ink">{editandoId ? 'Editar régua' : 'Lançar régua'}</h2>
+        <p className="mb-5 mt-1 text-sm text-ink-2">Medida uma vez por dia, antes da 1ª ordenha. As saídas de leite vão na aba Saídas.</p>
 
         <div className="grid gap-5 sm:grid-cols-2">
-          <label className="flex flex-col gap-1.5 text-sm">
-            <span className="text-muted-foreground">Data</span>
-            <Input type="date" value={form.data} max={diaParaInput(hoje)} onChange={(e) => setForm({ ...form, data: e.target.value })} />
-          </label>
-          <label className="flex flex-col gap-1.5 text-sm">
-            <span className="text-muted-foreground">Total de cabras em lactação</span>
-            <Input
+          <Rotulo texto="Data">
+            <PainelCampo type="date" value={form.data} max={diaParaInput(hoje)} onChange={(e) => setForm({ ...form, data: e.target.value })} />
+          </Rotulo>
+          <Rotulo texto="Total de cabras em lactação">
+            <PainelCampo
               type="number"
               inputMode="numeric"
               min={1}
@@ -224,26 +220,30 @@ export function ReguaPainel({
               value={form.totalAnimais}
               onChange={(e) => setForm({ ...form, totalAnimais: e.target.value })}
             />
-          </label>
+          </Rotulo>
 
-          <div className="flex flex-col gap-1.5 text-sm sm:col-span-2">
-            <span className="text-muted-foreground">Tanque</span>
-            <Escolha opcoes={opcoesTanque} valor={form.tanque} onChange={(v) => setForm({ ...form, tanque: v })} />
+          <Escolha
+            rotulo="Tanque"
+            opcoes={opcoesTanque}
+            valor={form.tanque}
+            onChange={(v) => setForm({ ...form, tanque: v })}
+            className="sm:col-span-2"
+          />
+
+          <div className="flex flex-col gap-1.5">
+            <Rotulo texto="Régua">
+              <PainelCampo
+                inputMode="decimal"
+                placeholder="ex: 24.7"
+                value={form.regua}
+                onChange={(e) => setForm({ ...form, regua: e.target.value })}
+                className="text-lg"
+              />
+            </Rotulo>
+            {tabela && <ResultadoRegua tabela={tabela} tanque={form.tanque} regua={form.regua} />}
           </div>
 
-          <label className="flex flex-col gap-1.5 text-sm">
-            <span className="text-muted-foreground">Régua</span>
-            <Input
-              inputMode="decimal"
-              placeholder="ex: 24.7"
-              value={form.regua}
-              onChange={(e) => setForm({ ...form, regua: e.target.value })}
-              className="text-lg"
-            />
-            {tabela && <ResultadoRegua tabela={tabela} tanque={form.tanque} regua={form.regua} />}
-          </label>
-
-          <label className="flex items-center gap-2 self-end pb-2 text-sm text-muted-foreground">
+          <label className="flex items-center gap-2.5 self-end pb-3 text-sm text-ink-1">
             <input
               type="checkbox"
               checked={form.extra}
@@ -255,72 +255,78 @@ export function ReguaPainel({
                   reguaExtra: '',
                 })
               }
-              className="size-4 rounded border-input accent-primary"
+              className="size-5 accent-ink"
             />
             Leite em 2 tanques neste dia
           </label>
 
           {form.extra && (
             <>
-              <div className="flex flex-col gap-1.5 text-sm sm:col-span-2">
-                <span className="text-muted-foreground">Tanque extra</span>
-                <Escolha
-                  opcoes={opcoesTanque.filter((o) => o.valor !== form.tanque)}
-                  valor={form.tanqueExtra}
-                  onChange={(v) => setForm({ ...form, tanqueExtra: v })}
-                />
-              </div>
-              <label className="flex flex-col gap-1.5 text-sm">
-                <span className="text-muted-foreground">Régua do tanque extra</span>
-                <Input
-                  inputMode="decimal"
-                  placeholder="ex: 2.0"
-                  value={form.reguaExtra}
-                  onChange={(e) => setForm({ ...form, reguaExtra: e.target.value })}
-                  className="text-lg"
-                />
+              <Escolha
+                rotulo="Tanque extra"
+                opcoes={opcoesTanque.filter((o) => o.valor !== form.tanque)}
+                valor={form.tanqueExtra}
+                onChange={(v) => setForm({ ...form, tanqueExtra: v })}
+                className="sm:col-span-2"
+              />
+              <div className="flex flex-col gap-1.5">
+                <Rotulo texto="Régua do tanque extra">
+                  <PainelCampo
+                    inputMode="decimal"
+                    placeholder="ex: 2.0"
+                    value={form.reguaExtra}
+                    onChange={(e) => setForm({ ...form, reguaExtra: e.target.value })}
+                    className="text-lg"
+                  />
+                </Rotulo>
                 {tabela && <ResultadoRegua tabela={tabela} tanque={form.tanqueExtra} regua={form.reguaExtra} />}
-              </label>
+              </div>
             </>
           )}
 
-          <label className="flex flex-col gap-1.5 text-sm sm:col-span-2">
-            <span className="text-muted-foreground">Observação</span>
-            <Input value={form.obs} onChange={(e) => setForm({ ...form, obs: e.target.value })} />
-          </label>
+          <Rotulo texto="Observação" className="sm:col-span-2">
+            <PainelCampo value={form.obs} onChange={(e) => setForm({ ...form, obs: e.target.value })} />
+          </Rotulo>
         </div>
 
         {litros != null && (
-          <p className="mt-5 text-sm">
-            Volume no tanque: <span className="font-semibold tabular-nums">{formatNumber(litros + (form.extra ? (litrosExtra ?? 0) : 0))} L</span>
+          <p className="mt-5 text-sm text-ink-1">
+            Volume no tanque:{' '}
+            <span className="font-semibold text-ink">{formatNumber(litros + (form.extra ? (litrosExtra ?? 0) : 0))} L</span>
           </p>
         )}
         {conflito && (
-          <p className="mt-3 text-sm text-amber-400">
-            Já existe régua em {formatDia(conflito.data)}.{' '}
-            <button type="button" className="underline underline-offset-2" onClick={() => editar(conflito)}>
-              Editar a existente
-            </button>
-          </p>
+          <div className="mt-3">
+            <Aviso tom="aviso">
+              Já existe régua em {formatDia(conflito.data)}.{' '}
+              <button type="button" className="font-semibold underline underline-offset-2" onClick={() => editar(conflito)}>
+                Editar a existente
+              </button>
+            </Aviso>
+          </div>
         )}
-        {erro && <p className="mt-3 text-sm text-destructive">{erro}</p>}
+        {erro && (
+          <div className="mt-3">
+            <Aviso tom="erro">{erro}</Aviso>
+          </div>
+        )}
 
-        <div className="mt-5 flex gap-2">
-          <Button type="button" onClick={salvar} disabled={!valido || salvando} className="min-w-32">
+        <div className="mt-5 flex flex-wrap gap-2">
+          <PainelBotao onClick={salvar} disabled={!valido || salvando} className="min-w-40">
             {salvando ? 'Salvando…' : editandoId ? 'Salvar alteração' : 'Lançar régua'}
-          </Button>
+          </PainelBotao>
           {editandoId && (
-            <Button type="button" variant="ghost" onClick={cancelar}>
+            <PainelBotao variante="contorno" onClick={cancelar}>
               Cancelar
-            </Button>
+            </PainelBotao>
           )}
         </div>
-      </div>
+      </section>
 
-      <div className="flex flex-col gap-3">
-        <h3 className="text-sm font-medium text-muted-foreground">Réguas lançadas</h3>
+      <section className="flex flex-col gap-3">
+        <h2 className="text-base font-semibold text-ink">Réguas lançadas</h2>
         <DataTable columns={colunas} rows={ordenadas} rowKey={(l) => l.id} pageSize={15} />
-      </div>
+      </section>
     </div>
   );
 }

@@ -1,7 +1,8 @@
+import Image from 'next/image';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
+import { Aviso, PainelCampo, botao } from '@/components/sanri/Controles';
+import { SELO_FAZENDA } from '@/components/sanri/selo';
 import { SANRI_COOKIE, verificarSessao } from '@/lib/sanri/auth';
 import { HOME_HREF } from '@/lib/sanri/config';
 
@@ -13,7 +14,7 @@ const ERROS: Record<string, string> = {
 };
 
 /** Form puro (sem JS) — POST pra /sanri/api/login, que confere o e-mail na aba User Manager. */
-export default async function SanriLoginPage({ searchParams }: { searchParams: Promise<{ erro?: string }> }) {
+export default async function PainelLoginPage({ searchParams }: { searchParams: Promise<{ erro?: string }> }) {
   const cookieStore = await cookies();
   if (verificarSessao(cookieStore.get(SANRI_COOKIE)?.value)) redirect(HOME_HREF);
 
@@ -21,29 +22,30 @@ export default async function SanriLoginPage({ searchParams }: { searchParams: P
   const mensagemErro = erro ? (ERROS[erro] ?? 'Não foi possível entrar.') : null;
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-4">
-      <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-8">
-        <h1 className="text-2xl font-semibold">Capril Sanri</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Produção de leite — régua do tanque e saídas.</p>
+    <main className="flex min-h-svh items-center justify-center px-4 py-10">
+      <div className="w-full max-w-sm rounded-card border border-rule bg-paper p-6 shadow-card sm:p-8">
+        <Image src={SELO_FAZENDA.src} alt={SELO_FAZENDA.alt} width={SELO_FAZENDA.width} height={SELO_FAZENDA.height} className="h-11 w-auto" priority />
+        <h1 className="mt-6 text-xl font-semibold text-ink">Produção de leite</h1>
+        <p className="mt-1 text-sm text-ink-2">Régua do tanque e saídas do Capril Sanri.</p>
 
         <form action="/sanri/api/login" method="POST" className="mt-6 flex flex-col gap-3">
-          <label htmlFor="email" className="text-sm text-muted-foreground">
+          <label htmlFor="email" className="text-sm font-medium text-ink-1">
             E-mail
           </label>
-          <Input id="email" name="email" type="email" autoComplete="username" autoFocus required />
+          <PainelCampo id="email" name="email" type="email" autoComplete="username" autoFocus required />
 
-          <label className="flex items-center gap-2 text-sm text-muted-foreground">
-            <input type="checkbox" name="manter" value="1" defaultChecked className="size-4 rounded border-input accent-primary" />
+          <label className="flex items-center gap-2.5 text-sm text-ink-1">
+            <input type="checkbox" name="manter" value="1" defaultChecked className="size-5 accent-ink" />
             Manter conectado
           </label>
 
-          {mensagemErro && <p className="text-sm text-destructive">{mensagemErro}</p>}
+          {mensagemErro && <Aviso tom="erro">{mensagemErro}</Aviso>}
 
-          <Button type="submit" className="mt-2">
+          <button type="submit" className={`${botao.solido} mt-2 w-full`}>
             Entrar
-          </Button>
+          </button>
         </form>
       </div>
-    </div>
+    </main>
   );
 }

@@ -1,4 +1,4 @@
-import type { NavLink } from '@/components/painel/PainelNav';
+import type { NavLink } from '@/components/sanri/PainelNav';
 
 /** Id da planilha "Producao - Sanri (atual)". null se a env não estiver configurada. */
 export function spreadsheetId(): string | null {

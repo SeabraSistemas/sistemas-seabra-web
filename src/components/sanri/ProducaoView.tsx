@@ -1,13 +1,13 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { MetricCard, type MetricDef } from '@/components/painel/MetricCard';
-import { DataTable, type DataTableColumn } from '@/components/painel/DataTable';
-import { CsvExport, type CsvColumn } from '@/components/painel/CsvExport';
 import { formatDia, formatNumber, somarDias } from '@/lib/painel/format';
 import { calcularProducao, type DiaProducao, type Leitura, type Saida, type StatusDia } from '@/lib/sanri/producao';
 import { cn } from '@/lib/utils';
+import { DataTable, type DataTableColumn } from './DataTable';
 import { EstadoPlanilha } from './EstadoPlanilha';
+import { Exportar, type CsvColumn } from './Exportar';
+import { MetricCard, type MetricDef } from './MetricCard';
 import { ProducaoChart } from './ProducaoChart';
 
 const PERIODOS = [
@@ -45,9 +45,10 @@ const COLUNAS: DataTableColumn<DiaProducao>[] = [
     header: 'Produção',
     cell: (d) =>
       d.producao != null ? (
-        <span className={cn('font-medium', d.producao < 0 && 'text-destructive')}>{litros(d.producao)}</span>
+        <span className={cn('font-semibold', d.producao < 0 && 'text-erro')}>{litros(d.producao)}</span>
       ) : (
-        <span className="text-xs text-muted-foreground">{STATUS[d.status]}</span>
+        // Quebra em 2 linhas: numa linha só, "Aguardando régua do dia seguinte" empurra a última coluna pra fora da tela.
+        <span className="inline-block max-w-36 whitespace-normal text-xs leading-snug text-ink-2">{STATUS[d.status]}</span>
       ),
     sortValue: (d) => d.producao,
     className: 'text-right',
@@ -134,15 +135,16 @@ export function ProducaoView({
     <div className="flex flex-col gap-5">
       <EstadoPlanilha configurado={configurado} ok={ok} carregadoEm={carregadoEm} />
 
-      <div className="flex flex-wrap gap-1">
+      <div role="group" aria-label="Período" className="flex flex-wrap gap-1.5">
         {PERIODOS.map((p) => (
           <button
             key={p.dias}
             type="button"
+            aria-pressed={periodo === p.dias}
             onClick={() => setPeriodo(p.dias)}
             className={cn(
-              'rounded-full border px-3 py-1 text-sm transition-colors',
-              periodo === p.dias ? 'border-primary text-foreground' : 'border-border text-muted-foreground hover:text-foreground',
+              'rounded-pill border px-4 py-1.5 text-sm font-medium transition-colors',
+              periodo === p.dias ? 'border-ink bg-ink text-paper' : 'border-rule-strong bg-paper text-ink-1 hover:bg-paper-2 hover:text-ink',
             )}
           >
             {p.label}
@@ -150,25 +152,27 @@ export function ProducaoView({
         ))}
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {metricas.map((m) => (
           <MetricCard key={m.id} {...m} />
         ))}
       </div>
 
-      <div className="rounded-xl border border-border bg-card p-5">
-        <h3 className="mb-1 text-sm font-medium text-muted-foreground">Produção por dia de ordenha (litros)</h3>
-        <p className="mb-4 text-xs text-muted-foreground">
+      <section className="rounded-card border border-rule bg-paper p-4 shadow-card sm:p-5">
+        <h2 className="text-base font-semibold text-ink">Produção por dia de ordenha (litros)</h2>
+        <p className="mb-4 mt-1 text-sm text-ink-2">
           Régua do dia seguinte − régua do dia + saídas do dia. O dia de hoje só fecha quando a régua de amanhã for lançada.
         </p>
         <ProducaoChart dias={dias} />
-      </div>
+      </section>
 
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm font-medium text-muted-foreground">Dia a dia</h3>
-        <CsvExport columns={CSV} rows={dias} requiredKeys={['data']} filename="sanri-producao" />
-      </div>
-      <DataTable columns={COLUNAS} rows={dias} rowKey={(d) => String(d.data)} pageSize={31} />
+      <section className="flex flex-col gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="text-base font-semibold text-ink">Dia a dia</h2>
+          <Exportar columns={CSV} rows={dias} filename="sanri-producao" />
+        </div>
+        <DataTable columns={COLUNAS} rows={dias} rowKey={(d) => String(d.data)} pageSize={31} />
+      </section>
     </div>
   );
 }

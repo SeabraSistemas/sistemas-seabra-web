@@ -2,14 +2,12 @@
 
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Trash2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { DataTable, type DataTableColumn } from '@/components/painel/DataTable';
 import { diaDeInput, diaParaInput, formatDia, formatNumber } from '@/lib/painel/format';
 import { DESTINOS, destinoPorChave, type ChaveDestino, type Saida } from '@/lib/sanri/producao';
-import { EstadoPlanilha } from './EstadoPlanilha';
+import { Aviso, PainelBotao, PainelCampo, Rotulo } from './Controles';
+import { DataTable, type DataTableColumn } from './DataTable';
 import { Escolha } from './Escolha';
+import { EstadoPlanilha } from './EstadoPlanilha';
 
 const FORM_VAZIO = { destino: '' as ChaveDestino | '', litros: '', obs: '' };
 
@@ -81,15 +79,15 @@ export function SaidasPainel({
     { key: 'data', header: 'Data', cell: (s) => formatDia(s.data), sortValue: (s) => s.data },
     { key: 'destino', header: 'Destino', cell: (s) => destinoPorChave(s.destino)?.nome ?? s.destino, sortValue: (s) => s.destino },
     { key: 'litros', header: 'Litros', cell: (s) => formatNumber(s.litros), sortValue: (s) => s.litros, className: 'text-right' },
-    { key: 'obs', header: 'Obs', cell: (s) => <span className="text-muted-foreground">{s.obs ?? ''}</span> },
+    { key: 'obs', header: 'Obs', cell: (s) => <span className="text-ink-2">{s.obs ?? ''}</span> },
     {
       key: 'acoes',
       header: '',
       cell: (s) => (
         <div className="flex justify-end">
-          <Button type="button" variant="ghost" size="icon" className="size-7 text-destructive" onClick={() => excluir(s)} aria-label="Apagar">
-            <Trash2 className="size-3.5" />
-          </Button>
+          <PainelBotao variante="perigo" onClick={() => excluir(s)}>
+            Apagar
+          </PainelBotao>
         </div>
       ),
     },
@@ -99,66 +97,66 @@ export function SaidasPainel({
     <div className="flex flex-col gap-6">
       <EstadoPlanilha configurado={configurado} ok={ok} carregadoEm={carregadoEm} />
 
-      <div className="rounded-xl border border-border bg-card p-5">
-        <h2 className="text-base font-semibold">Lançar saída de leite</h2>
-        <p className="mb-5 mt-1 text-sm text-muted-foreground">Cada vez que sair leite do tanque durante as ordenhas. Pode lançar quantas precisar no dia.</p>
+      <section className="rounded-card border border-rule bg-paper p-4 shadow-card sm:p-6">
+        <h2 className="text-lg font-semibold text-ink">Lançar saída de leite</h2>
+        <p className="mb-5 mt-1 text-sm text-ink-2">Cada vez que sair leite do tanque durante as ordenhas. Pode lançar quantas precisar no dia.</p>
 
         <div className="grid gap-5 sm:grid-cols-2">
-          <label className="flex flex-col gap-1.5 text-sm">
-            <span className="text-muted-foreground">Data</span>
-            <Input type="date" value={data} max={diaParaInput(hoje)} onChange={(e) => setData(e.target.value)} />
-          </label>
+          <Rotulo texto="Data">
+            <PainelCampo type="date" value={data} max={diaParaInput(hoje)} onChange={(e) => setData(e.target.value)} />
+          </Rotulo>
           <div className="hidden sm:block" />
 
-          <div className="flex flex-col gap-1.5 text-sm sm:col-span-2">
-            <span className="text-muted-foreground">Destino</span>
-            <Escolha
-              opcoes={DESTINOS.map((d) => ({ valor: d.chave, label: d.nome }))}
-              valor={form.destino}
-              onChange={(v) => setForm({ ...form, destino: v as ChaveDestino })}
-            />
-          </div>
+          <Escolha
+            rotulo="Destino"
+            opcoes={DESTINOS.map((d) => ({ valor: d.chave, label: d.nome }))}
+            valor={form.destino}
+            onChange={(v) => setForm({ ...form, destino: v as ChaveDestino })}
+            className="sm:col-span-2"
+          />
 
-          <label className="flex flex-col gap-1.5 text-sm">
-            <span className="text-muted-foreground">Litros</span>
-            <Input
+          <Rotulo texto="Litros">
+            <PainelCampo
               inputMode="decimal"
               placeholder="ex: 60"
               value={form.litros}
               onChange={(e) => setForm({ ...form, litros: e.target.value })}
               className="text-lg"
             />
-          </label>
-          <label className="flex flex-col gap-1.5 text-sm">
-            <span className="text-muted-foreground">Observação</span>
-            <Input value={form.obs} onChange={(e) => setForm({ ...form, obs: e.target.value })} />
-          </label>
+          </Rotulo>
+          <Rotulo texto="Observação">
+            <PainelCampo value={form.obs} onChange={(e) => setForm({ ...form, obs: e.target.value })} />
+          </Rotulo>
         </div>
 
-        {erro && <p className="mt-3 text-sm text-destructive">{erro}</p>}
-        <Button type="button" onClick={salvar} disabled={!valido || salvando} className="mt-5 min-w-32">
+        {erro && (
+          <div className="mt-3">
+            <Aviso tom="erro">{erro}</Aviso>
+          </div>
+        )}
+        <PainelBotao onClick={salvar} disabled={!valido || salvando} className="mt-5 min-w-40">
           {salvando ? 'Salvando…' : 'Lançar saída'}
-        </Button>
-      </div>
+        </PainelBotao>
+      </section>
 
       {dia != null && (
-        <div className="flex flex-col gap-3">
-          <h3 className="text-sm font-medium text-muted-foreground">Total de saídas em {formatDia(dia)}</h3>
+        <section className="flex flex-col gap-3">
+          <h2 className="text-base font-semibold text-ink">Total de saídas em {formatDia(dia)}</h2>
           <div className="grid grid-cols-3 gap-3">
             {totaisDoDia.map((t) => (
-              <div key={t.chave} className="rounded-xl border border-border bg-card px-4 py-3">
-                <p className="truncate text-xs text-muted-foreground">{t.nome}</p>
-                <p className="mt-0.5 text-xl font-semibold tabular-nums">{formatNumber(t.litros)} L</p>
+              <div key={t.chave} className="min-w-0 rounded-card border border-rule bg-paper px-4 py-3 shadow-card">
+                <p className="truncate text-xs text-ink-2">{t.nome}</p>
+                <p className="mt-0.5 text-xl font-semibold text-ink">{formatNumber(t.litros)} L</p>
               </div>
             ))}
           </div>
-        </div>
+        </section>
       )}
 
-      <div className="flex flex-col gap-3">
-        <h3 className="text-sm font-medium text-muted-foreground">Saídas lançadas</h3>
+      <section className="flex flex-col gap-3">
+        <h2 className="text-base font-semibold text-ink">Saídas lançadas</h2>
         <DataTable columns={colunas} rows={ordenadas} rowKey={(s) => `${s.id}:${s.destino}`} pageSize={20} />
-      </div>
+      </section>
     </div>
   );
 }
