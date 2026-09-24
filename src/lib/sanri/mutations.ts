@@ -1,5 +1,5 @@
 import 'server-only';
-import { adicionarLinha, escreverCelulas, lerAba, limparLinha, type CelulasParaEscrever } from '@/lib/sheets/server';
+import { adicionarLinha, escreverCelulas, garantirColunasNaGrade, lerAba, limparLinha, type CelulasParaEscrever } from '@/lib/sheets/server';
 import { formatDia } from '@/lib/painel/format';
 import { ABA_PRODUCAO, spreadsheetId } from './config';
 import { getTabelaRegua } from './queries';
@@ -64,6 +64,7 @@ async function lerProducao(): Promise<Aba | null> {
 async function garantirColunaUsuario(aba: Aba): Promise<void> {
   if (aba.header.includes(COLUNA_USUARIO)) return;
   const i = aba.header.length;
+  if (!(await garantirColunasNaGrade(aba.sid, ABA_PRODUCAO, i + 1))) return;
   const { ok } = await escreverCelulas(aba.sid, [{ range: `'${ABA_PRODUCAO}'!${letraDaColuna(i)}1`, valores: [[COLUNA_USUARIO]] }], 'RAW');
   if (ok) aba.header.push(COLUNA_USUARIO);
 }

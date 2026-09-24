@@ -1,5 +1,5 @@
 import 'server-only';
-import { adicionarLinha, criarAba, escreverCelulas, lerAba, listarAbas } from '@/lib/sheets/server';
+import { adicionarLinha, criarAba, escreverCelulas, garantirColunasNaGrade, lerAba, listarAbas } from '@/lib/sheets/server';
 import { formatDia, hojeCompacto } from '@/lib/painel/format';
 import { ABA_DIETA, spreadsheetId } from './config';
 import { ALIMENTOS, COLUNAS_DIETA, TURNOS, colunaDe, type Quantidades } from './dieta';
@@ -34,6 +34,7 @@ async function garantirAba(sid: string): Promise<string[] | null> {
 
   // Colunas novas entram no fim — quem mexeu na aba à mão não perde a ordem dela.
   const inicio = header.length;
+  if (!(await garantirColunasNaGrade(sid, ABA_DIETA, inicio + faltando.length))) return null;
   const { ok } = await escreverCelulas(
     sid,
     [{ range: `'${ABA_DIETA}'!${letraDaColuna(inicio)}1:${letraDaColuna(inicio + faltando.length - 1)}1`, valores: [faltando] }],

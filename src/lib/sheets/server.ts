@@ -357,6 +357,44 @@ export async function listarAbas(spreadsheetId: string): Promise<string[] | null
 }
 
 /**
+ * Garante que a GRADE da aba tenha pelo menos `colunas` colunas. Escrever
+ * célula fora da grade falha ("exceeds grid limits"): o `values:append`
+ * cresce a grade sozinho, o `batchUpdate` de valores não. A producao_diaria
+ * do AppSheet tem a grade do tamanho exato do header — por isso a coluna
+ * `lancado_por` nunca foi criada até 24/09/2026 e as linhas saíam sem autor.
+ */
+export async function garantirColunasNaGrade(spreadsheetId: string, aba: string, colunas: number): Promise<boolean> {
+  const t = await token();
+  if (!t) return false;
+  try {
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}?fields=sheets.properties(sheetId,title,gridProperties.columnCount)`;
+    const meta = await fetch(url, { headers: { Authorization: `Bearer ${t}` }, cache: 'no-store' });
+    if (!meta.ok) {
+      console.error('[sheets] falha ao ler a grade', aba, meta.status, await meta.text());
+      return false;
+    }
+    const data = (await meta.json()) as { sheets?: { properties?: { sheetId?: number; title?: string; gridProperties?: { columnCount?: number } } }[] };
+    const props = data.sheets?.find((s) => s.properties?.title === aba)?.properties;
+    if (props?.sheetId == null) return false;
+    const atual = props.gridProperties?.columnCount ?? 0;
+    if (atual >= colunas) return true;
+    const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}:batchUpdate`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${t}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ requests: [{ appendDimension: { sheetId: props.sheetId, dimension: 'COLUMNS', length: colunas - atual } }] }),
+    });
+    if (!res.ok) {
+      console.error('[sheets] falha ao aumentar a grade', aba, res.status, await res.text());
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error('[sheets] falha ao aumentar a grade', aba, err);
+    return false;
+  }
+}
+
+/**
  * Cria uma aba nova (vazia) na planilha, via `spreadsheets:batchUpdate`
  * (`addSheet`) — usado só uma vez por aba nova do /FI_FCG que ainda não
  * existe na planilha do cliente (ex: "Categorias de Custo", "Custos",
