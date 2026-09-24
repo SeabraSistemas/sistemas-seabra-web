@@ -54,8 +54,7 @@ function Painel({ estado, agora }: { estado: Estado; agora: number }) {
       </div>
 
       <p className="mt-8 text-xs leading-relaxed text-muted-foreground">
-        O % é o do limite semanal: <code className="text-foreground">/usage</code> no Claude Code ou claude.ai → Configurações → Uso.
-        As leituras ficam só neste navegador.
+        O % é o do <span className="text-foreground">Weekly (7 day)</span>, em Usage no Claude. As leituras ficam só neste navegador.
       </p>
     </main>
   );
@@ -104,7 +103,7 @@ function Registrar({ plano, agora }: { plano: Plano; agora: number }) {
     <section className={cartao}>
       <form onSubmit={registrar} className="flex items-end gap-3">
         <label className="flex-1">
-          <span className={rotulo}>Medidor da semana agora</span>
+          <span className={rotulo}>Weekly (7 day) agora</span>
           <span className="relative mt-2 block">
             <Input
               value={texto}
@@ -180,57 +179,56 @@ const SITUACAO = {
 } as const;
 
 function Hoje({ plano, estado }: { plano: Plano; estado: Estado }) {
-  const { situacao, hoje } = plano;
+  const { situacao, hoje, atual, limiteHoje } = plano;
   const s = SITUACAO[situacao];
   const semLeitura = plano.leituras.length === 0;
   const virada = `${String(estado.resetHora).padStart(2, '0')}:00`;
   const fimDoDia =
-    hoje.fim === plano.ciclo.fim ? `hoje é o último dia, até o reset (${quando(hoje.fim)})` : `o dia vira às ${hora(hoje.fim)} de ${SEMANA_LONGA[new Date(hoje.fim).getDay()]}`;
-  const barra = plano.cotaHoje > 0 ? Math.min(100, Math.max(0, (plano.usadoHoje / plano.cotaHoje) * 100)) : 100;
+    hoje.fim === plano.ciclo.fim ? `Hoje é o último dia, até o reset (${quando(hoje.fim)}).` : `O dia vira às ${hora(hoje.fim)} de ${SEMANA_LONGA[new Date(hoje.fim).getDay()]}.`;
+  const passou = situacao === 'estourou' || situacao === 'esgotado';
+  const base = hoje.base ?? 0;
+  const noLimite = (v: number) => `${Math.min(100, Math.max(0, v))}%`;
 
   return (
     <section className={cartao}>
-      <p className={rotulo}>
-        Hoje · {SEMANA_LONGA[new Date(hoje.rotulo).getDay()]}
+      <p className={rotulo}>Hoje · {SEMANA_LONGA[new Date(hoje.rotulo).getDay()]}</p>
+
+      {/* Tudo na escala do Claude: o Weekly sobe de 0 a 100%, então o número
+          principal é até onde ele pode chegar hoje, não quanto falta. */}
+      <p className="mt-3 text-sm text-muted-foreground">{situacao === 'estourou' ? 'O limite de hoje era' : 'Hoje o Weekly pode ir até'}</p>
+      <p className="text-6xl font-semibold tracking-tight">{formatPct(limiteHoje)}</p>
+      <p className="mt-2 text-sm text-muted-foreground">
+        {situacao === 'esgotado' ? (
+          <>Weekly em 100%: não sobra nada até {quando(plano.ciclo.fim)}.</>
+        ) : situacao === 'estourou' ? (
+          <>
+            Você está em <strong className="text-foreground">{formatPct(atual)}</strong>, {formatPct(-plano.restaHoje)} acima. Parando agora, dá{' '}
+            <strong className="text-foreground">{formatPct(plano.ritmoAmanha)}/dia</strong> daqui em diante.
+          </>
+        ) : (
+          fimDoDia
+        )}
       </p>
 
-      {situacao === 'esgotado' ? (
-        <>
-          <p className="mt-3 text-6xl font-semibold tracking-tight">0%</p>
-          <p className="mt-2 text-sm text-muted-foreground">Não sobra nada até {quando(plano.ciclo.fim)}.</p>
-        </>
-      ) : situacao === 'estourou' ? (
-        <>
-          <p className="mt-3 text-sm text-muted-foreground">Passou da cota de hoje em</p>
-          <p className="text-6xl font-semibold tracking-tight">{formatPct(-plano.restaHoje)}</p>
-          <p className="mt-2 text-sm text-muted-foreground">
-            O limite era o medidor em <strong className="text-foreground">{formatPct(plano.limiteHoje)}</strong>. Parando agora, sobra{' '}
-            <strong className="text-foreground">{formatPct(plano.ritmoAmanha)}/dia</strong> daqui em diante.
-          </p>
-        </>
-      ) : (
-        <>
-          <p className="mt-3 text-sm text-muted-foreground">Ainda pode usar hoje</p>
-          <p className="text-6xl font-semibold tracking-tight">{formatPct(plano.restaHoje)}</p>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Pare quando o medidor chegar em <strong className="text-foreground">{formatPct(plano.limiteHoje)}</strong> — {fimDoDia}.
-          </p>
-        </>
-      )}
-
       <div className="mt-6">
-        <div className="flex items-baseline justify-between text-sm">
-          <span className="text-muted-foreground">Usado hoje</span>
-          <span className="tabular-nums">
-            {formatPct(plano.usadoHoje)} <span className="text-muted-foreground">de {formatPct(plano.cotaHoje)}</span>
+        <div className="relative h-2.5 rounded-full bg-secondary">
+          <div className="absolute inset-y-0 rounded-full bg-muted-foreground/25" style={{ left: noLimite(base), width: noLimite(limiteHoje - base) }} />
+          <div className={cn('absolute inset-y-0 left-0 rounded-full', passou ? 'bg-destructive' : 'bg-primary')} style={{ width: noLimite(atual) }} />
+          <div className="absolute -top-1 h-[18px] w-0.5 -translate-x-1/2 rounded-full bg-foreground" style={{ left: noLimite(limiteHoje) }} />
+        </div>
+        <div className="mt-2 flex items-baseline justify-between text-sm tabular-nums">
+          <span>
+            <span className="text-muted-foreground">Agora </span>
+            {formatPct(atual)}
+          </span>
+          <span>
+            <span className="text-muted-foreground">Limite de hoje </span>
+            {formatPct(limiteHoje)}
           </span>
         </div>
-        <div className="mt-2 h-2 overflow-hidden rounded-full bg-secondary">
-          <div
-            className={cn('h-full rounded-full', situacao === 'estourou' || situacao === 'esgotado' ? 'bg-destructive' : 'bg-primary')}
-            style={{ width: `${barra}%` }}
-          />
-        </div>
+        <p className="mt-1 text-xs text-muted-foreground tabular-nums">
+          Usou {formatPct(plano.usadoHoje)} hoje, de uma cota de {formatPct(plano.cotaHoje)} (começou o dia em {formatPct(base)}).
+        </p>
       </div>
 
       {!semLeitura && (
@@ -238,10 +236,10 @@ function Hoje({ plano, estado }: { plano: Plano; estado: Estado }) {
           <s.Icone className="size-4 shrink-0" /> {s.texto}
         </p>
       )}
-      {semLeitura && <p className="mt-4 text-sm text-muted-foreground">Registre o medidor acima para as contas valerem.</p>}
+      {semLeitura && <p className="mt-4 text-sm text-muted-foreground">Registre o Weekly acima para as contas valerem.</p>}
       {plano.baseEstimada && !semLeitura && (
         <p className="mt-2 text-xs text-muted-foreground">
-          Sem leitura antes das {virada} de hoje: o uso no início do dia foi estimado. Para acertar, registre em “outro horário” quanto estava à noite.
+          Sem leitura antes das {virada} de hoje: o início do dia foi estimado. Para acertar, registre em “outro horário” quanto estava à noite.
         </p>
       )}
     </section>
@@ -252,18 +250,18 @@ function Hoje({ plano, estado }: { plano: Plano; estado: Estado }) {
 
 function Numeros({ plano }: { plano: Plano }) {
   const base = (100 * DIA_MS) / (plano.ciclo.fim - plano.ciclo.inicio);
-  const ultimoDia = plano.hoje === plano.dias.at(-1);
+  const amanha = plano.dias[plano.dias.indexOf(plano.hoje) + 1];
   const recalculada = Math.abs(plano.ritmoDia - base) >= 0.05;
 
   return (
     <div className="grid grid-cols-3 gap-3">
       <Numero rotuloTexto="Cota por dia" valor={formatPct(plano.ritmoDia)} nota={recalculada ? `era ${formatPct(base)} no reset` : `100% ÷ ${formatNum(100 / base)} dias`} />
-      <Numero rotuloTexto="Saldo da semana" valor={formatPct(100 - plano.atual)} nota={`${formatNum(plano.diasRestantes)} dias até zerar`} />
       <Numero
-        rotuloTexto="Amanhã em diante"
-        valor={ultimoDia ? '—' : formatPct(plano.ritmoAmanha)}
-        nota={ultimoDia ? 'hoje é o último dia' : plano.situacao === 'estourou' ? 'por dia, com o que passou' : 'por dia, fechando hoje no limite'}
+        rotuloTexto="Amanhã, até"
+        valor={amanha ? formatPct(amanha.meta) : '—'}
+        nota={!amanha ? 'hoje é o último dia' : plano.situacao === 'estourou' ? 'parando agora' : 'se hoje fechar no limite'}
       />
+      <Numero rotuloTexto="Ritmo linear" valor={formatPct(plano.linearAgora)} nota="gastando por igual até agora" />
     </div>
   );
 }
@@ -299,7 +297,7 @@ function Semana({ plano }: { plano: Plano }) {
       <h2 className="text-2xl">Semana</h2>
       <p className="mt-1 text-sm text-muted-foreground">{resumo}</p>
       <ul className="mt-4 flex flex-wrap gap-x-5 gap-y-1 text-xs text-muted-foreground">
-        <Legenda cor="var(--primary)">Medidor registrado</Legenda>
+        <Legenda cor="var(--primary)">Weekly registrado</Legenda>
         <Legenda cor="var(--ink-2)">Ritmo linear</Legenda>
         <Legenda cor="var(--foreground)">Limite de hoje ({formatPct(plano.limiteHoje)})</Legenda>
       </ul>
@@ -332,7 +330,7 @@ function Dias({ plano }: { plano: Plano }) {
             <th className="py-2 font-normal">Dia</th>
             <th className="py-2 text-right font-normal">Cota</th>
             <th className="py-2 text-right font-normal">Usado</th>
-            <th className="py-2 text-right font-normal">Medidor ao fim</th>
+            <th className="py-2 text-right font-normal">Weekly ao fim</th>
           </tr>
         </thead>
         <tbody>

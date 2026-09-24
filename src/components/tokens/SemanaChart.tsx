@@ -59,7 +59,7 @@ export function SemanaChart({ plano }: { plano: Plano }) {
           onPointerDown={mover}
           onPointerLeave={() => setFoco(null)}
           role="img"
-          aria-label={`Medidor em ${formatPct(plano.atual)} de 100%; limite de hoje ${formatPct(plano.limiteHoje)}.`}
+          aria-label={`Weekly em ${formatPct(plano.atual)} de 100%; limite de hoje ${formatPct(plano.limiteHoje)}.`}
         >
           <rect x={x(hoje.inicio)} y={M.top} width={x(hoje.fim) - x(hoje.inicio)} height={ih} fill="var(--secondary)" />
 
@@ -126,7 +126,7 @@ export function SemanaChart({ plano }: { plano: Plano }) {
         >
           <p className="text-muted-foreground">{quando(lf.t)}</p>
           <p className="mt-1 tabular-nums">
-            Medidor <span className="font-semibold">{formatPct(lf.pct)}</span>
+            Weekly <span className="font-semibold">{formatPct(lf.pct)}</span>
           </p>
           <p className="tabular-nums text-muted-foreground">Ritmo linear {formatPct(linearEm(lf.t))}</p>
         </div>
