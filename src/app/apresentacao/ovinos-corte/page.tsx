@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { Deck } from '@/components/apresentacao/Deck';
 import { SlideView } from '@/components/apresentacao/SlideView';
-import { tituloDoSlide } from '@/components/apresentacao/tipos';
+import { contextosDosSlides, tituloDoSlide } from '@/components/apresentacao/tipos';
 import { ovinosCorte } from '@/data/apresentacoes/ovinos-corte';
 
 export const metadata: Metadata = {
@@ -16,14 +16,15 @@ export const metadata: Metadata = {
  * impressão. Conteúdo: src/data/apresentacoes/ovinos-corte.ts.
  */
 export default function ApresentacaoOvinosCorte() {
+  const contextos = contextosDosSlides(ovinosCorte.slides);
   return (
     <Deck
       titulo={ovinosCorte.titulo}
-      slides={ovinosCorte.slides.map((slide) => ({
+      slides={ovinosCorte.slides.map((slide, i) => ({
         id: slide.id,
         titulo: tituloDoSlide(slide),
         notas: slide.notas,
-        conteudo: <SlideView slide={slide} />,
+        conteudo: <SlideView slide={slide} contexto={contextos[i]} />,
       }))}
     />
   );

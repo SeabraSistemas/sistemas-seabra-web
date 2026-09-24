@@ -1,5 +1,5 @@
 import { Foto } from '../Foto';
-import { MarcaSeabra } from '../MarcaSeabra';
+import { FichaLogo } from '../partes';
 import type { SlideCapa } from '../tipos';
 
 export function Capa({ slide }: { slide: SlideCapa }) {
@@ -19,7 +19,7 @@ export function Capa({ slide }: { slide: SlideCapa }) {
           )}
         </div>
 
-        <MarcaSeabra />
+        {slide.logo ? <FichaLogo logo={slide.logo} altura={76} className="w-fit" /> : <span />}
       </div>
 
       {slide.foto ? (

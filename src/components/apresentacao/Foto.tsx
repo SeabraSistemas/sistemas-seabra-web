@@ -52,7 +52,7 @@ export function Foto({ foto, sizes, className, preload }: FotoProps) {
         quality={90}
         preload={preload}
         loading={preload ? undefined : 'eager'}
-        className="object-cover"
+        className={foto.ajuste === 'conter' ? 'object-contain' : 'object-cover'}
         style={foto.posicao ? { objectPosition: foto.posicao } : undefined}
       />
     </div>
