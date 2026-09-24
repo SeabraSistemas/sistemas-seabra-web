@@ -193,6 +193,7 @@ function Bloco({ bloco }: { bloco: BlocoSistema }) {
             referencia={bloco.referencia?.valor}
             destacarAbaixo
             tema={TEMA_CLARO}
+            atraso={250}
           />
         </div>
       );

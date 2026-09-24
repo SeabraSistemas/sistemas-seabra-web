@@ -53,7 +53,7 @@ export type NomeIcone =
 interface SlideBase {
   /** Estável e único — vira key do React e referência nas notas. */
   id: string;
-  /** Texto do apresentador. Aparece com a tecla N, nunca na projeção. */
+  /** Roteiro do apresentador. Aparece só na janela do apresentador (tecla P): a projeção mostra só o slide. */
   notas?: string;
   /** Sobrescreve a seção herdada do último `divisor`. */
   secao?: string;
@@ -356,7 +356,7 @@ export interface Apresentacao {
   slides: Slide[];
 }
 
-/** Título curto do slide — usado nas notas ("Próximo: …") e no aria-label. */
+/** Título curto do slide — aria-label e janela do apresentador ("Próximo"). */
 export function tituloDoSlide(slide: Slide): string {
   switch (slide.tipo) {
     case 'bio':

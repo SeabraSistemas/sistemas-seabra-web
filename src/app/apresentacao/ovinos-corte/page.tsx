@@ -1,31 +1,26 @@
 import type { Metadata } from 'next';
 import { Deck } from '@/components/apresentacao/Deck';
-import { SlideView } from '@/components/apresentacao/SlideView';
-import { contextosDosSlides, tituloDoSlide } from '@/components/apresentacao/tipos';
+import { montarSlidesProjecao } from '@/components/apresentacao/montarSlides';
 import { ovinosCorte } from '@/data/apresentacoes/ovinos-corte';
 
 export const metadata: Metadata = {
-  title: 'Ovinos de corte — Dr. Geraldo Jonas da Silva',
+  title: 'Ovinos de corte — M.Sc. Geraldo Jonas da Silva',
   description: 'Produção contínua e tecnificada de ovinos de corte.',
   robots: { index: false, follow: false },
 };
 
 /**
- * Os slides são renderizados aqui, no servidor (fotos conferidas em disco,
- * sem JS de layout no navegador); o Deck só cuida de navegação, escala e
- * impressão. Conteúdo: src/data/apresentacoes/ovinos-corte.ts.
+ * Tela de projeção. O Deck só cuida de navegação, escala e impressão; os
+ * slides chegam prontos do servidor. Conteúdo: src/data/apresentacoes/ovinos-corte.ts.
+ * Tecla P abre a janela do apresentador (./apresentador), sincronizada.
  */
 export default function ApresentacaoOvinosCorte() {
-  const contextos = contextosDosSlides(ovinosCorte.slides);
   return (
     <Deck
       titulo={ovinosCorte.titulo}
-      slides={ovinosCorte.slides.map((slide, i) => ({
-        id: slide.id,
-        titulo: tituloDoSlide(slide),
-        notas: slide.notas,
-        conteudo: <SlideView slide={slide} contexto={contextos[i]} />,
-      }))}
+      slides={montarSlidesProjecao(ovinosCorte)}
+      canal="deck:ovinos-corte"
+      rotaApresentador="/apresentacao/ovinos-corte/apresentador"
     />
   );
 }

@@ -12,6 +12,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
+import type { CSSProperties } from 'react';
 import type { TemaGrafico } from './graficos';
 
 /**
@@ -38,6 +39,8 @@ interface Props {
   /** Colunas abaixo da referência ganham a cor de alerta. */
   destacarAbaixo?: boolean;
   tema: TemaGrafico;
+  /** Atraso da animação de entrada, em ms (painéis lado a lado entram em sequência). */
+  atraso?: number;
 }
 
 export function GraficoBarras({
@@ -52,6 +55,7 @@ export function GraficoBarras({
   referencia,
   destacarAbaixo,
   tema,
+  atraso = 0,
 }: Props) {
   const dados = rotulos.map((rotulo, i) => ({ rotulo, valor: valores[i] }));
   const formato = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 1 });
@@ -96,33 +100,38 @@ export function GraficoBarras({
   );
 
   const margem = { top: 12, right: 12, bottom: 0, left: 0 };
+  const animacao = { '--atraso': `${atraso}ms` } as CSSProperties;
 
   if (forma === 'linha') {
     return (
-      <LineChart width={largura} height={altura} data={dados} margin={margem}>
-        {eixos}
-        <Line
-          dataKey="valor"
-          stroke={tema.serie}
-          strokeWidth={2}
-          dot={{ r: 5, fill: tema.serie, stroke: tema.fundoDica, strokeWidth: 2 }}
-          isAnimationActive={false}
-        />
-      </LineChart>
+      <div className="anim-grafico" style={animacao}>
+        <LineChart width={largura} height={altura} data={dados} margin={margem}>
+          {eixos}
+          <Line
+            dataKey="valor"
+            stroke={tema.serie}
+            strokeWidth={2}
+            dot={{ r: 5, fill: tema.serie, stroke: tema.fundoDica, strokeWidth: 2 }}
+            isAnimationActive={false}
+          />
+        </LineChart>
+      </div>
     );
   }
 
   return (
-    <BarChart width={largura} height={altura} data={dados} margin={margem} barCategoryGap="30%">
-      {eixos}
-      <Bar dataKey="valor" maxBarSize={24} radius={[4, 4, 0, 0]} isAnimationActive={false}>
-        {dados.map((d) => (
-          <Cell
-            key={d.rotulo}
-            fill={destacarAbaixo && referencia !== undefined && d.valor < referencia ? tema.abaixo : tema.serie}
-          />
-        ))}
-      </Bar>
-    </BarChart>
+    <div className="anim-grafico" style={animacao}>
+      <BarChart width={largura} height={altura} data={dados} margin={margem} barCategoryGap="30%">
+        {eixos}
+        <Bar dataKey="valor" maxBarSize={24} radius={[4, 4, 0, 0]} isAnimationActive={false}>
+          {dados.map((d) => (
+            <Cell
+              key={d.rotulo}
+              fill={destacarAbaixo && referencia !== undefined && d.valor < referencia ? tema.abaixo : tema.serie}
+            />
+          ))}
+        </Bar>
+      </BarChart>
+    </div>
   );
 }

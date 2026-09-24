@@ -33,7 +33,7 @@ export function Grafico({ slide, secao }: { slide: SlideGrafico; secao?: string 
           </p>
         )}
         <div className="flex" style={{ gap: VAO }}>
-          {slide.paineis.map((painel) => (
+          {slide.paineis.map((painel, p) => (
             <figure key={painel.titulo} style={{ width: largura }}>
               <figcaption className="mb-[18px] text-[30px] font-semibold text-foreground">
                 {painel.titulo}
@@ -48,6 +48,7 @@ export function Grafico({ slide, secao }: { slide: SlideGrafico; secao?: string 
                 ticks={ticksRedondos(dominio[1])}
                 referencia={slide.referencia?.valor}
                 tema={TEMA_ESCURO}
+                atraso={p * 1300}
               />
             </figure>
           ))}

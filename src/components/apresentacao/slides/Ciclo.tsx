@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react';
 import { Cabecalho, ListaTopicos } from '../partes';
 import type { SlideCiclo } from '../tipos';
 
@@ -10,6 +11,11 @@ const VAO = 2 / R;
 /** Fases sem destaque: cinzas próximos, separados pelo vão. */
 const CINZAS = ['#4a4a4a', '#333333', '#5c5c5c', '#3d3d3d'];
 
+/** Animação: cada fase desenha depois da anterior; marcos no fim. */
+const INICIO_MS = 250;
+const PASSO_MS = 500;
+const atraso = (ms: number) => ({ '--atraso': `${ms}ms` }) as CSSProperties;
+
 function ponto(angulo: number, raio: number) {
   return { x: C + raio * Math.cos(angulo), y: C + raio * Math.sin(angulo) };
 }
@@ -20,6 +26,7 @@ function ponto(angulo: number, raio: number) {
  */
 export function Ciclo({ slide, secao }: { slide: SlideCiclo; secao?: string }) {
   const angulo = (dia: number) => -Math.PI / 2 + (dia / slide.dias) * 2 * Math.PI;
+  const fimDasFases = INICIO_MS + slide.fases.length * PASSO_MS;
   let cinza = 0;
 
   return (
@@ -37,14 +44,16 @@ export function Ciclo({ slide, secao }: { slide: SlideCiclo; secao?: string }) {
         <div className="relative" style={{ width: TAM, height: TAM }}>
           <svg aria-hidden width={TAM} height={TAM} viewBox={`0 0 ${TAM} ${TAM}`} className="absolute inset-0">
             {/* Um traço por dia, por fora do anel */}
-            {Array.from({ length: slide.dias }, (_, d) => {
-              const a = angulo(d);
-              const p1 = ponto(a, R + ESPESSURA / 2 + 10);
-              const p2 = ponto(a, R + ESPESSURA / 2 + 22);
-              return <line key={d} x1={p1.x} y1={p1.y} x2={p2.x} y2={p2.y} stroke="#555" strokeWidth={2} />;
-            })}
+            <g className="anim-aparecer">
+              {Array.from({ length: slide.dias }, (_, d) => {
+                const a = angulo(d);
+                const p1 = ponto(a, R + ESPESSURA / 2 + 10);
+                const p2 = ponto(a, R + ESPESSURA / 2 + 22);
+                return <line key={d} x1={p1.x} y1={p1.y} x2={p2.x} y2={p2.y} stroke="#555" strokeWidth={2} />;
+              })}
+            </g>
 
-            {slide.fases.map((fase) => {
+            {slide.fases.map((fase, i) => {
               const a1 = angulo(fase.inicio) + VAO;
               const a2 = angulo(fase.fim) - VAO;
               const p1 = ponto(a1, R);
@@ -58,6 +67,9 @@ export function Ciclo({ slide, secao }: { slide: SlideCiclo; secao?: string }) {
                   fill="none"
                   stroke={cor}
                   strokeWidth={ESPESSURA}
+                  pathLength={100}
+                  className="anim-desenhar"
+                  style={atraso(INICIO_MS + i * PASSO_MS)}
                 />
               );
             })}
@@ -73,19 +85,21 @@ export function Ciclo({ slide, secao }: { slide: SlideCiclo; secao?: string }) {
                   fill="#f5f5f5"
                   stroke="#000"
                   strokeWidth={3}
+                  className="anim-pop"
+                  style={atraso(fimDasFases + 150)}
                 />
               );
             })}
           </svg>
 
           {/* Centro */}
-          <div className="absolute inset-0 flex flex-col items-center justify-center pt-[56px]">
+          <div className="anim-aparecer absolute inset-0 flex flex-col items-center justify-center pt-[56px]">
             <p className="deck-titulo text-[176px] leading-none text-foreground">{slide.dias}</p>
             <p className="mt-[6px] text-[34px] text-foreground/70">dias</p>
           </div>
 
           {/* Nome e dias de cada fase, por fora do anel */}
-          {slide.fases.map((fase) => {
+          {slide.fases.map((fase, i) => {
             const meio = angulo((fase.inicio + fase.fim) / 2);
             const p = ponto(meio, R + ESPESSURA / 2 + 58);
             const cos = Math.cos(meio);
@@ -93,8 +107,9 @@ export function Ciclo({ slide, secao }: { slide: SlideCiclo; secao?: string }) {
             return (
               <div
                 key={fase.nome}
-                className="absolute w-[240px]"
+                className="anim-aparecer absolute w-[240px]"
                 style={{
+                  ...atraso(INICIO_MS + i * PASSO_MS + 400),
                   left: p.x,
                   top: p.y,
                   transform:
@@ -126,8 +141,9 @@ export function Ciclo({ slide, secao }: { slide: SlideCiclo; secao?: string }) {
             return (
               <p
                 key={marco.rotulo}
-                className="absolute w-[220px] text-[22px] leading-tight text-foreground/85"
+                className="anim-aparecer absolute w-[220px] text-[22px] leading-tight text-foreground/85"
                 style={{
+                  ...atraso(fimDasFases + 250),
                   left: p.x,
                   top: p.y,
                   transform: cos >= 0 ? 'translate(-100%, -50%)' : 'translate(0, -50%)',

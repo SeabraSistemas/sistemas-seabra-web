@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react';
 import Image from 'next/image';
 import { CheckCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -35,11 +36,13 @@ export function Whatsapp({ slide, secao }: { slide: SlideWhatsapp; secao?: strin
           </div>
 
           <div className="flex flex-1 flex-col justify-end gap-[14px] px-[22px] py-[24px]">
-            {slide.mensagens.map((m) => (
+            {slide.mensagens.map((m, i) => (
               <div
                 key={`${m.hora}-${m.texto}`}
+                // Uma mensagem a cada 1,1 s: dá tempo de ler em voz alta.
+                style={{ '--atraso': `${600 + i * 1100}ms` } as CSSProperties}
                 className={cn(
-                  'max-w-[86%] rounded-[16px] px-[18px] pb-[10px] pt-[12px]',
+                  'anim-mensagem max-w-[86%] rounded-[16px] px-[18px] pb-[10px] pt-[12px]',
                   m.de === 'sistema' ? 'self-start rounded-tl-[4px] bg-[#202c33]' : 'self-end rounded-tr-[4px] bg-[#005c4b]'
                 )}
               >

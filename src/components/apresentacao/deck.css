@@ -17,7 +17,8 @@
 @media screen {
   /* O globals.css reserva a calha da barra de rolagem (scrollbar-gutter:
      stable). No Windows isso vira uma faixa vazia na lateral da projeção. */
-  html:has(.deck-raiz) {
+  html:has(.deck-raiz),
+  html:has(.deck-apresentador) {
     overflow: hidden;
     scrollbar-gutter: auto;
   }
@@ -126,7 +127,7 @@
 
 @layer components {
   /* Caixa alta condensada: a mesma Archivo do site, estreitada pelo eixo de
-     largura — o eco do título em Oswald dos slides do Dr. Geraldo. */
+     largura — o eco do título em Oswald dos slides do Geraldo. */
   .deck-titulo {
     font-family: var(--font-sans), system-ui, sans-serif;
     font-stretch: 72%;
@@ -163,6 +164,103 @@
       transparent 2px 28px
     );
     box-shadow: inset 0 0 0 1px var(--border);
+  }
+}
+
+/* ── Animações de entrada ────────────────────────────────────────────────
+   Disparam quando o slide vira o ativo ([data-ativo]) — e recomeçam a cada
+   volta, porque o atributo sai e entra. Só depois do primeiro quadro
+   ([data-animar]), só para quem não pediu menos movimento, e nunca na
+   impressão (lá vale o estado final, que é o estilo normal do elemento).
+   Atrasos por elemento: --i (posição na sequência) e --atraso (ms). */
+
+@keyframes deck-desenhar {
+  from { stroke-dashoffset: 100; }
+  to { stroke-dashoffset: 0; }
+}
+@keyframes deck-aparecer {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes deck-subir {
+  from { opacity: 0; translate: 0 18px; }
+  to { opacity: 1; translate: 0 0; }
+}
+@keyframes deck-pop {
+  from { opacity: 0; scale: 0.4; }
+  to { opacity: 1; scale: 1; }
+}
+@keyframes deck-crescer-x {
+  from { scale: 0 1; }
+  to { scale: 1 1; }
+}
+@keyframes deck-crescer-y {
+  from { scale: 1 0; }
+  to { scale: 1 1; }
+}
+@keyframes deck-revelar {
+  from { clip-path: inset(0 100% 0 0); }
+  to { clip-path: inset(0 0 0 0); }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  [data-animar] [data-ativo] .anim-aparecer {
+    animation: deck-aparecer 450ms ease both;
+    animation-delay: var(--atraso, 0ms);
+  }
+  [data-animar] [data-ativo] .anim-pop {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: deck-pop 380ms cubic-bezier(0.3, 1.4, 0.5, 1) both;
+    animation-delay: var(--atraso, 0ms);
+  }
+  /* Arco do ciclo estral: o path tem pathLength=100. */
+  [data-animar] [data-ativo] .anim-desenhar {
+    stroke-dasharray: 100;
+    animation: deck-desenhar 650ms cubic-bezier(0.45, 0, 0.2, 1) both;
+    animation-delay: var(--atraso, 0ms);
+  }
+  /* Faixas do calendário crescem da esquerda. */
+  [data-animar] [data-ativo] .anim-crescer-x {
+    transform-origin: left center;
+    animation: deck-crescer-x 520ms cubic-bezier(0.3, 0.7, 0.2, 1) both;
+    animation-delay: var(--atraso, 0ms);
+  }
+  /* Mensagens do WhatsApp, uma de cada vez. */
+  [data-animar] [data-ativo] .anim-mensagem {
+    animation: deck-subir 420ms cubic-bezier(0.2, 0.7, 0.3, 1) both;
+    animation-delay: var(--atraso, 0ms);
+  }
+
+  /* Gráficos (Recharts): colunas sobem da base uma a uma, depois a linha de
+     referência; a linha de dados se revela da esquerda para a direita. */
+  [data-animar] [data-ativo] .anim-grafico .recharts-bar-rectangle path {
+    transform-box: fill-box;
+    transform-origin: 50% 100%;
+    animation: deck-crescer-y 560ms cubic-bezier(0.3, 0.7, 0.2, 1) both;
+    animation-delay: var(--atraso, 0ms);
+  }
+  [data-animar] [data-ativo] .anim-grafico .recharts-bar-rectangle:nth-child(2) path { animation-delay: calc(var(--atraso, 0ms) + 55ms); }
+  [data-animar] [data-ativo] .anim-grafico .recharts-bar-rectangle:nth-child(3) path { animation-delay: calc(var(--atraso, 0ms) + 110ms); }
+  [data-animar] [data-ativo] .anim-grafico .recharts-bar-rectangle:nth-child(4) path { animation-delay: calc(var(--atraso, 0ms) + 165ms); }
+  [data-animar] [data-ativo] .anim-grafico .recharts-bar-rectangle:nth-child(5) path { animation-delay: calc(var(--atraso, 0ms) + 220ms); }
+  [data-animar] [data-ativo] .anim-grafico .recharts-bar-rectangle:nth-child(6) path { animation-delay: calc(var(--atraso, 0ms) + 275ms); }
+  [data-animar] [data-ativo] .anim-grafico .recharts-bar-rectangle:nth-child(7) path { animation-delay: calc(var(--atraso, 0ms) + 330ms); }
+  [data-animar] [data-ativo] .anim-grafico .recharts-bar-rectangle:nth-child(8) path { animation-delay: calc(var(--atraso, 0ms) + 385ms); }
+  [data-animar] [data-ativo] .anim-grafico .recharts-bar-rectangle:nth-child(9) path { animation-delay: calc(var(--atraso, 0ms) + 440ms); }
+  [data-animar] [data-ativo] .anim-grafico .recharts-bar-rectangle:nth-child(10) path { animation-delay: calc(var(--atraso, 0ms) + 495ms); }
+  [data-animar] [data-ativo] .anim-grafico .recharts-bar-rectangle:nth-child(11) path { animation-delay: calc(var(--atraso, 0ms) + 550ms); }
+  [data-animar] [data-ativo] .anim-grafico .recharts-bar-rectangle:nth-child(12) path { animation-delay: calc(var(--atraso, 0ms) + 605ms); }
+  [data-animar] [data-ativo] .anim-grafico .recharts-reference-line {
+    animation: deck-aparecer 500ms ease both;
+    animation-delay: calc(var(--atraso, 0ms) + 900ms);
+  }
+  /* Os pontos ficam numa camada à parte (z-index do Recharts 3): revelam
+     junto com a linha, no mesmo ritmo. */
+  [data-animar] [data-ativo] .anim-grafico .recharts-line,
+  [data-animar] [data-ativo] .anim-grafico .recharts-line-dots {
+    animation: deck-revelar 1100ms cubic-bezier(0.4, 0, 0.2, 1) both;
+    animation-delay: var(--atraso, 0ms);
   }
 }
 

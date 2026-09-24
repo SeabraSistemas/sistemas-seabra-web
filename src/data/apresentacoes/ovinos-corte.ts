@@ -1,7 +1,7 @@
 import type { Apresentacao, Logo } from '@/components/apresentacao/tipos';
 
 /**
- * Palestra do Dr. Geraldo Jonas da Silva sobre manejo na ovinocultura de
+ * Palestra de Geraldo Jonas da Silva (M.Sc.) sobre manejo na ovinocultura de
  * corte, com o Sistema Seabra entrando como ferramenta no fim de cada bloco.
  * Rota: /apresentacao/ovinos-corte (noindex, fora do [locale], só pt). 1 hora.
  *
@@ -47,7 +47,7 @@ export const ovinosCorte: Apresentacao = {
       id: 'capa',
       tipo: 'capa',
       titulo: 'Produção contínua e tecnificada de ovinos de corte',
-      apresentador: 'Dr. Geraldo Jonas da Silva',
+      apresentador: 'M.Sc. Geraldo Jonas da Silva',
       cargo: 'Médico-veterinário',
       logo: BRIMUS,
       foto: {
@@ -63,7 +63,7 @@ export const ovinosCorte: Apresentacao = {
       id: 'bio',
       tipo: 'bio',
       rotulo: 'Formação',
-      nome: 'Dr. Geraldo Jonas da Silva',
+      nome: 'M.Sc. Geraldo Jonas da Silva',
       itens: [
         { texto: 'Medicina Veterinária', instituicao: 'UFMG' },
         { texto: 'Mestrado em Microbiologia/Micologia', instituicao: 'ICB · UFMG' },
@@ -81,9 +81,9 @@ export const ovinosCorte: Apresentacao = {
       ],
       foto: {
         src: `${PASTA}/02-geraldo.jpg`,
-        alt: 'Dr. Geraldo Jonas da Silva',
+        alt: 'Geraldo Jonas da Silva',
         briefing:
-          'Retrato do Dr. Geraldo no curral ou no campo, meio corpo, olhando para a câmera. Vertical funciona.',
+          'Retrato de Geraldo no curral ou no campo, meio corpo, olhando para a câmera. Vertical funciona.',
         posicao: '50% 25%',
       },
       notas:
@@ -901,7 +901,7 @@ export const ovinosCorte: Apresentacao = {
       tipo: 'fechamento',
       titulo: 'Obrigado',
       subtitulo: 'Perguntas?',
-      apresentador: 'Dr. Geraldo Jonas da Silva',
+      apresentador: 'M.Sc. Geraldo Jonas da Silva',
       logoApresentador: BRIMUS,
       site: 'sistemaseabra.com.br',
       qr: `${PASTA}/qr-site.svg`,

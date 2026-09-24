@@ -11,15 +11,21 @@ import {
   type ReactNode,
   type TouchEvent,
 } from 'react';
-import { ChevronLeft, ChevronRight, Maximize, Minimize, NotebookText } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Maximize, Minimize } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import {
+  abrirApresentador,
+  alternarTelaCheia,
+  useNavegacao,
+  useTecladoDeck,
+  useTelaCheia,
+} from './navegacao';
 import './deck.css';
 
 export interface DeckSlide {
   id: string;
-  /** Título curto — aparece nas notas e no leitor de tela. */
+  /** Título curto — vai para o leitor de tela. */
   titulo: string;
-  notas?: string;
   /** O slide já renderizado no servidor. */
   conteudo: ReactNode;
 }
@@ -27,6 +33,10 @@ export interface DeckSlide {
 interface DeckProps {
   titulo: string;
   slides: DeckSlide[];
+  /** Nome do BroadcastChannel compartilhado com a janela do apresentador. */
+  canal: string;
+  /** Rota da janela do apresentador (tecla P). */
+  rotaApresentador?: string;
 }
 
 const LARGURA = 1920;
@@ -35,28 +45,6 @@ const ALTURA = 1080;
 const OCIOSO_MS = 2500;
 /** Deslocamento mínimo, em px, para um arrasto no celular virar troca de slide. */
 const SWIPE_MIN = 50;
-
-/* ── Estado que mora fora do React ────────────────────────────────────────
-   A posição vive no hash da URL (#12): o link já abre no slide certo e o
-   refresh não perde o lugar. useSyncExternalStore lê o hash sem divergir do
-   HTML do servidor, que sempre desenha o slide 1. */
-
-const EVENTO_HASH = 'deck:hash';
-
-function assinarHash(avisar: () => void) {
-  window.addEventListener('hashchange', avisar);
-  window.addEventListener(EVENTO_HASH, avisar);
-  return () => {
-    window.removeEventListener('hashchange', avisar);
-    window.removeEventListener(EVENTO_HASH, avisar);
-  };
-}
-
-/** Índice (base 0) pedido pelo hash, ainda sem limitar ao total de slides. */
-function lerHash(): number {
-  const n = Number.parseInt(window.location.hash.slice(1), 10);
-  return Number.isFinite(n) ? n - 1 : 0;
-}
 
 function assinarResize(avisar: () => void) {
   window.addEventListener('resize', avisar);
@@ -67,136 +55,62 @@ function lerEscala(): number {
   return Math.min(window.innerWidth / LARGURA, window.innerHeight / ALTURA);
 }
 
-type DocumentoWebkit = Document & {
-  webkitFullscreenElement?: Element | null;
-  webkitExitFullscreen?: () => void;
-};
-type ElementoWebkit = HTMLElement & { webkitRequestFullscreen?: () => void };
-
-function assinarTelaCheia(avisar: () => void) {
-  document.addEventListener('fullscreenchange', avisar);
-  document.addEventListener('webkitfullscreenchange', avisar);
-  return () => {
-    document.removeEventListener('fullscreenchange', avisar);
-    document.removeEventListener('webkitfullscreenchange', avisar);
-  };
-}
-
-function lerTelaCheia(): boolean {
-  const doc = document as DocumentoWebkit;
-  return Boolean(doc.fullscreenElement ?? doc.webkitFullscreenElement);
-}
-
-function alternarTelaCheia() {
-  const doc = document as DocumentoWebkit;
-  if (lerTelaCheia()) {
-    if (doc.exitFullscreen) doc.exitFullscreen().catch(() => {});
-    else doc.webkitExitFullscreen?.();
-    return;
-  }
-  const raiz = document.documentElement as ElementoWebkit;
-  if (raiz.requestFullscreen) raiz.requestFullscreen().catch(() => {});
-  else raiz.webkitRequestFullscreen?.();
-}
-
 const semAssinatura = () => () => {};
 
 /** Clique nestes elementos é do próprio elemento — não avança o slide. */
 const INTERATIVO = 'button, a, input, select, textarea, label, [data-deck-interativo]';
 
-export function Deck({ titulo, slides }: DeckProps) {
+/**
+ * A tela de projeção: só o slide, as setas (somem com o mouse parado) e o
+ * botão de tela cheia. Notas e cronômetro ficam na janela do apresentador
+ * (tecla P), que o público não vê.
+ */
+export function Deck({ titulo, slides, canal, rotaApresentador }: DeckProps) {
   const total = slides.length;
-  const limitar = useCallback(
-    (n: number) => Math.max(0, Math.min(total - 1, n)),
-    [total]
-  );
-
-  const indice = limitar(useSyncExternalStore(assinarHash, lerHash, () => 0));
+  const { indice, irPara, proximo, anterior, apagada, setApagada } = useNavegacao(total, canal);
   const escala = useSyncExternalStore(assinarResize, lerEscala, () => 1);
-  const telaCheia = useSyncExternalStore(assinarTelaCheia, lerTelaCheia, () => false);
+  const telaCheia = useTelaCheia();
   const montado = useSyncExternalStore(semAssinatura, () => true, () => false);
-
-  const [notasAbertas, setNotasAbertas] = useState(false);
-  /** Tela preta (tecla B ou "."), como no PowerPoint — o botão de apagar do passador. */
-  const [apagada, setApagada] = useState(false);
+  /** O navegador barrou a janela do apresentador: oferece um botão (gesto novo). */
+  const [bloqueada, setBloqueada] = useState(false);
 
   const raizRef = useRef<HTMLDivElement>(null);
   const toqueRef = useRef<{ x: number; y: number } | null>(null);
 
-  const irPara = useCallback(
-    (n: number) => {
-      window.history.replaceState(null, '', `#${limitar(n) + 1}`);
-      window.dispatchEvent(new Event(EVENTO_HASH));
-    },
-    [limitar]
+  const urlApresentador = useCallback(
+    () => `${rotaApresentador}#${window.location.hash.slice(1) || '1'}`,
+    [rotaApresentador]
   );
-  const proximo = useCallback(() => irPara(limitar(lerHash()) + 1), [irPara, limitar]);
-  const anterior = useCallback(() => irPara(limitar(lerHash()) - 1), [irPara, limitar]);
 
-  // Teclado e passador de slides. Passadores mandam PageDown/PageUp (alguns,
-  // setas), "." ou B para apagar a tela e F5 para "iniciar apresentação" —
-  // que aqui vira tela cheia em vez de recarregar a página.
-  useEffect(() => {
-    function aoTeclar(e: KeyboardEvent) {
-      if (e.metaKey || e.ctrlKey || e.altKey) return;
-      const alvo = e.target instanceof HTMLElement ? e.target : null;
-      if (alvo?.closest('input, textarea, select, [contenteditable="true"]')) return;
-      // Espaço e Enter num botão focado são do botão.
-      if ((e.key === ' ' || e.key === 'Enter') && alvo?.closest('button, a')) return;
+  const iniciarApresentador = useCallback(async () => {
+    if (!rotaApresentador) return;
+    const abriu = await abrirApresentador(urlApresentador());
+    setBloqueada(!abriu);
+  }, [rotaApresentador, urlApresentador]);
 
-      const navegar = (acao: () => void) => {
-        e.preventDefault();
-        // Com a tela apagada, a primeira tecla só acende — não pula slide.
-        if (apagada) setApagada(false);
-        else acao();
-      };
+  const teclaExtra = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.key !== 'p' && e.key !== 'P') return false;
+      e.preventDefault();
+      void iniciarApresentador();
+      return true;
+    },
+    [iniciarApresentador]
+  );
 
-      switch (e.key) {
-        case 'ArrowRight':
-        case 'ArrowDown':
-        case 'PageDown':
-        case 'Enter':
-          navegar(proximo);
-          break;
-        case ' ':
-          navegar(e.shiftKey ? anterior : proximo);
-          break;
-        case 'ArrowLeft':
-        case 'ArrowUp':
-        case 'PageUp':
-        case 'Backspace':
-          navegar(anterior);
-          break;
-        case 'Home':
-          navegar(() => irPara(0));
-          break;
-        case 'End':
-          navegar(() => irPara(total - 1));
-          break;
-        case 'f':
-        case 'F':
-        case 'F5':
-          e.preventDefault();
-          alternarTelaCheia();
-          break;
-        case 'n':
-        case 'N':
-          setNotasAbertas((v) => !v);
-          break;
-        case 'b':
-        case 'B':
-        case '.':
-          setApagada((v) => !v);
-          break;
-        case 'Escape':
-          setNotasAbertas(false);
-          setApagada(false);
-          break;
-      }
-    }
-    window.addEventListener('keydown', aoTeclar);
-    return () => window.removeEventListener('keydown', aoTeclar);
-  }, [apagada, anterior, irPara, proximo, total]);
+  const primeiro = useCallback(() => irPara(0), [irPara]);
+  const ultimo = useCallback(() => irPara(total - 1), [irPara, total]);
+
+  useTecladoDeck({
+    proximo,
+    anterior,
+    primeiro,
+    ultimo,
+    apagada,
+    setApagada,
+    telaCheia: alternarTelaCheia,
+    extra: teclaExtra,
+  });
 
   // Cursor e setas somem com o mouse parado. Direto no DOM, sem estado do
   // React: re-renderizar o deck inteiro a cada mousemove seria desperdício.
@@ -220,8 +134,8 @@ export function Deck({ titulo, slides }: DeckProps) {
     };
   }, []);
 
-  // Liga a transição dois quadros depois de montar — já com o slide do hash
-  // na tela.
+  // Liga transições e animações dois quadros depois de montar — já com o
+  // slide do hash na tela.
   useEffect(() => {
     let segundo = 0;
     const primeiro = requestAnimationFrame(() => {
@@ -235,7 +149,7 @@ export function Deck({ titulo, slides }: DeckProps) {
 
   function aoClicar(e: MouseEvent<HTMLDivElement>) {
     if (e.button !== 0) return;
-    if (e.target instanceof Element && e.target.closest(`${INTERATIVO}, .deck-notas`)) return;
+    if (e.target instanceof Element && e.target.closest(INTERATIVO)) return;
     if (apagada) setApagada(false);
     else proximo();
   }
@@ -259,7 +173,6 @@ export function Deck({ titulo, slides }: DeckProps) {
   }
 
   const atual = slides[indice];
-  const seguinte = slides[indice + 1];
 
   return (
     <div
@@ -309,13 +222,6 @@ export function Deck({ titulo, slides }: DeckProps) {
 
       <div className="deck-so-tela deck-controle fixed right-4 top-4 z-30 flex gap-2">
         <BotaoRedondo
-          rotulo={notasAbertas ? 'Ocultar notas (N)' : 'Mostrar notas (N)'}
-          ativo={notasAbertas}
-          onClick={() => setNotasAbertas((v) => !v)}
-        >
-          <NotebookText className="size-5" />
-        </BotaoRedondo>
-        <BotaoRedondo
           rotulo={telaCheia ? 'Sair da tela cheia (F)' : 'Tela cheia (F)'}
           onClick={alternarTelaCheia}
         >
@@ -323,28 +229,27 @@ export function Deck({ titulo, slides }: DeckProps) {
         </BotaoRedondo>
       </div>
 
-      {notasAbertas && atual && (
-        <aside
-          className="deck-so-tela deck-notas fixed inset-x-0 bottom-0 z-40 max-h-[42vh] select-text overflow-y-auto border-t border-border bg-card/95 px-8 py-6 backdrop-blur"
-          aria-label="Notas do apresentador"
-        >
-          <div className="flex items-baseline justify-between gap-6 text-sm text-muted-foreground">
-            <span>
-              <strong className="font-semibold text-foreground tabular-nums">
-                {indice + 1} / {total}
-              </strong>
-              <span className="mx-2">·</span>
-              {atual.titulo}
-            </span>
-            <span>N fecha</span>
-          </div>
-          <p className="mt-3 max-w-5xl whitespace-pre-line text-xl leading-relaxed text-foreground">
-            {atual.notas ?? 'Sem notas para este slide.'}
-          </p>
-          {seguinte && (
-            <p className="mt-4 text-sm text-muted-foreground">Próximo: {seguinte.titulo}</p>
-          )}
-        </aside>
+      {bloqueada && (
+        <div className="deck-so-tela fixed left-1/2 top-6 z-40 flex -translate-x-1/2 items-center gap-4 rounded-full border border-white/15 bg-card/95 py-2 pl-6 pr-2 text-sm text-foreground backdrop-blur">
+          O navegador bloqueou a janela do apresentador.
+          <button
+            type="button"
+            onClick={() => {
+              setBloqueada(!window.open(urlApresentador(), 'deck-apresentador', 'popup,width=1440,height=900'));
+            }}
+            className="rounded-full bg-primary px-4 py-2 font-semibold text-primary-foreground"
+          >
+            Abrir
+          </button>
+          <button
+            type="button"
+            onClick={() => setBloqueada(false)}
+            aria-label="Fechar aviso"
+            className="rounded-full px-3 py-2 text-muted-foreground hover:text-foreground"
+          >
+            ✕
+          </button>
+        </div>
       )}
 
       {apagada && <div className="deck-so-tela fixed inset-0 z-50 bg-black" aria-hidden />}
@@ -385,12 +290,10 @@ function BotaoSeta({
 
 function BotaoRedondo({
   rotulo,
-  ativo,
   onClick,
   children,
 }: {
   rotulo: string;
-  ativo?: boolean;
   onClick: () => void;
   children: ReactNode;
 }) {
@@ -400,12 +303,10 @@ function BotaoRedondo({
       onClick={onClick}
       onMouseDown={(e) => e.preventDefault()}
       aria-label={rotulo}
-      aria-pressed={ativo}
       title={rotulo}
       className={cn(
         'flex size-11 items-center justify-center rounded-full border border-white/10 bg-black/55 backdrop-blur',
-        'text-foreground/80 hover:bg-black/75 hover:text-foreground',
-        ativo && 'border-primary/60 text-primary'
+        'text-foreground/80 hover:bg-black/75 hover:text-foreground'
       )}
     >
       {children}
