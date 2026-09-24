@@ -1,5 +1,5 @@
 import { useMemo, useSyncExternalStore } from 'react';
-import { DIA_MS, ESTADO_INICIAL, type Estado, type Leitura } from './ciclo';
+import { ESTADO_INICIAL, type Estado } from './ciclo';
 
 /*
  * O /tokens guarda tudo no localStorage deste navegador — é ferramenta de uma
@@ -7,10 +7,9 @@ import { DIA_MS, ESTADO_INICIAL, type Estado, type Leitura } from './ciclo';
  * sincronizar entre aparelhos. Sem localStorage (aba privada), segue na memória.
  */
 
-const CHAVE = 'seabra:tokens:v1';
+/** v2: escada fixa com uma leitura só (a v1 guardava o histórico de leituras). */
+const CHAVE = 'seabra:tokens:v2';
 const EVENTO = 'seabra:tokens';
-/** Leituras mais velhas que isto saem na próxima gravação — o painel só olha o ciclo atual. */
-const GUARDAR_MS = 42 * DIA_MS;
 
 let memoria: string | null = null;
 
@@ -37,15 +36,14 @@ function interpretar(bruto: string | null): Estado {
   if (!bruto) return ESTADO_INICIAL;
   try {
     const o = JSON.parse(bruto) as Record<string, unknown>;
-    const leituras = Array.isArray(o.leituras) ? (o.leituras as Record<string, unknown>[]) : [];
+    const l = (o.leitura ?? null) as Record<string, unknown> | null;
+    const t = numero(l?.t);
+    const pct = numero(l?.pct);
     return {
       resetDiaSemana: numero(o.resetDiaSemana) ?? ESTADO_INICIAL.resetDiaSemana,
       resetHora: numero(o.resetHora) ?? ESTADO_INICIAL.resetHora,
       resetExtra: numero(o.resetExtra),
-      proximoManual: numero(o.proximoManual),
-      leituras: leituras
-        .filter((l) => numero(l?.t) != null && numero(l?.pct) != null)
-        .map((l) => ({ t: l.t as number, pct: l.pct as number })),
+      leitura: t != null && pct != null ? { t, pct } : null,
     };
   } catch {
     return ESTADO_INICIAL;
@@ -53,12 +51,11 @@ function interpretar(bruto: string | null): Estado {
 }
 
 function gravar(estado: Estado) {
-  const corte = Date.now() - GUARDAR_MS;
-  const leituras: Leitura[] = estado.leituras.filter((l) => l.t >= corte).sort((a, b) => a.t - b.t);
-  const texto = JSON.stringify({ ...estado, leituras });
+  const texto = JSON.stringify(estado);
   memoria = texto;
   try {
     window.localStorage.setItem(CHAVE, texto);
+    window.localStorage.removeItem('seabra:tokens:v1');
   } catch {
     // Sem armazenamento: fica só na memória desta aba.
   }
