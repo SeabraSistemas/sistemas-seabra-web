@@ -32,5 +32,15 @@ export const LINKS: NavLink[] = [
   { href: '/sanri/reproducao', label: 'Reprodução' },
 ];
 
+/**
+ * Propriedade do Capril Sanri no SeabraApp (Supabase). O painel lê o banco do
+ * app com a chave de serviço, que ignora a RLS — por isso TODA consulta filtra
+ * por esta propriedade, nunca por "tudo que a chave enxerga".
+ */
+export function propriedadeApp(): number {
+  const n = Number(process.env.SANRI_APP_PROPRIEDADE_ID);
+  return Number.isInteger(n) && n > 0 ? n : 244;
+}
+
 export const LOGIN_HREF = '/sanri';
 export const HOME_HREF = '/sanri/producao';
