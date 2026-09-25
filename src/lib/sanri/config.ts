@@ -24,9 +24,8 @@ export const ABA_ESTACOES = 'estacao_monta';
 export const ABA_CONFERENCIA = 'conferencia_baia';
 
 export const LINKS: NavLink[] = [
-  { href: '/sanri/producao', label: 'Produção' },
-  { href: '/sanri/regua', label: 'Régua' },
-  { href: '/sanri/saidas', label: 'Saídas' },
+  // Régua e Saídas moram dentro de Produção (sub-abas); as rotas continuam as mesmas.
+  { href: '/sanri/producao', label: 'Produção', tambem: ['/sanri/regua', '/sanri/saidas'] },
   { href: '/sanri/dieta', label: 'Dieta' },
   { href: '/sanri/conferencia', label: 'Conferência' },
   { href: '/sanri/reproducao', label: 'Reprodução' },
@@ -42,6 +41,13 @@ export function propriedadeApp(): number {
   const n = Number(process.env.SANRI_APP_PROPRIEDADE_ID);
   return Number.isInteger(n) && n > 0 ? n : 244;
 }
+
+/** Sub-abas da Produção: o resumo do dia a dia, a régua do tanque e as saídas de leite. */
+export const LINKS_PRODUCAO: NavLink[] = [
+  { href: '/sanri/producao', label: 'Resumo' },
+  { href: '/sanri/regua', label: 'Régua' },
+  { href: '/sanri/saidas', label: 'Saídas' },
+];
 
 export const LOGIN_HREF = '/sanri';
 export const HOME_HREF = '/sanri/producao';

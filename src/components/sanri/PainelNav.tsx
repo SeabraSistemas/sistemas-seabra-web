@@ -9,6 +9,8 @@ import { cn } from '@/lib/utils';
 export interface NavLink {
   href: string;
   label: string;
+  /** Outras rotas que também deixam esta aba acesa (ex.: Régua e Saídas dentro de Produção). */
+  tambem?: string[];
 }
 
 /**
@@ -36,8 +38,8 @@ export function PainelNav({ links, usuario, logoutHref }: { links: NavLink[]; us
       </div>
       <nav className="mx-auto flex max-w-5xl gap-1 overflow-x-auto px-4 py-3 sm:px-6">
         {links.map((link) => {
-          // Aba "Reprodução" continua acesa dentro de /sanri/reproducao/<estação>.
-          const ativo = pathname === link.href || pathname.startsWith(`${link.href}/`);
+          // Aba "Reprodução" continua acesa dentro de /painel/reproducao/<estação>.
+          const ativo = [link.href, ...(link.tambem ?? [])].some((h) => pathname === h || pathname.startsWith(`${h}/`));
           return (
           <Link
             key={link.href}
