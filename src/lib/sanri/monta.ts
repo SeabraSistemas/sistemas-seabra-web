@@ -60,7 +60,7 @@ function normalizarChip(raw: string | null | undefined): string | null {
   return t && /^\d{10,}$/.test(t) ? t : null;
 }
 
-function toObjects(rows: string[][] | null): Record<string, string>[] {
+export function toObjects(rows: string[][] | null): Record<string, string>[] {
   if (!rows || rows.length === 0) return [];
   const [header, ...body] = rows;
   return body.map((row) => {

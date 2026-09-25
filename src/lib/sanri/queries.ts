@@ -4,6 +4,7 @@ import { criarCache } from '@/lib/sheets/cache';
 import {
   ABA_BAIAS,
   ABA_BAIA_CATEGORIA,
+  ABA_CONFERENCIA,
   ABA_DIAGNOSTICO,
   ABA_DIETA,
   ABA_ESTACOES,
@@ -16,7 +17,8 @@ import {
   ABA_USUARIOS,
   spreadsheetId,
 } from './config';
-import { mapBaias, mapDieta, type Baia, type DietaBaia } from './dieta';
+import { mapConferencias, type Conferencia } from './conferencia';
+import { galpaoDe, mapBaias, mapDieta, normalizarBaia, compararBaias, type Baia, type DietaBaia } from './dieta';
 import { hojeCompacto, somarDias } from '@/lib/painel/format';
 import {
   criarIndice,
@@ -182,3 +184,48 @@ export async function getReproducao(): Promise<LeituraReproducao> {
   return { configurado: true, ok, carregadoEm, animais, dados, estacoes: lista };
 }
 
+
+export interface LeituraConferencia {
+  configurado: boolean;
+  ok: boolean;
+  carregadoEm: number | null;
+  baias: Baia[];
+  /** Todo animal com número e (baia ou categoria): a referência da conferência e a busca do "animal a mais". */
+  animais: Animal[];
+  /** Todas as conferências, na ordem da planilha. */
+  historico: Conferencia[];
+}
+
+/**
+ * Referência da Conferência de baia. O RebanhoProd vem FRESCO (a equipe acabou
+ * de trocar animal de baia no AppSheet e quer conferir agora); Baias e
+ * Baia_categoria passam pelo cache. Baia que aparece num animal vivo mas não
+ * está na aba Baias também vira baia conferível.
+ */
+export async function getConferencia(): Promise<LeituraConferencia> {
+  const vazio = { baias: [], animais: [], historico: [] };
+  const id = spreadsheetId();
+  if (!id) return { configurado: false, ok: false, carregadoEm: null, ...vazio };
+
+  const [rebanho, baiasAba, categorias, conferencias] = await Promise.all([
+    lerAba(id, ABA_REBANHO),
+    lerAbaCache(ABA_BAIAS),
+    lerAbaCache(ABA_BAIA_CATEGORIA),
+    lerAbaDoPainel(id, ABA_CONFERENCIA),
+  ]);
+  const ok = rebanho != null && baiasAba.linhas != null && conferencias != null;
+  const animais = mapAnimais(rebanho).filter((a) => a.baia != null || a.categoria != null);
+
+  const baias = baiasAba.linhas == null ? [] : mapBaias(baiasAba.linhas, categorias.linhas);
+  const conhecidas = new Set(baias.map((b) => b.nome));
+  for (const a of animais) {
+    const nome = a.vivo ? normalizarBaia(a.baia) : null;
+    if (nome && !conhecidas.has(nome)) {
+      conhecidas.add(nome);
+      baias.push({ nome, galpao: galpaoDe(nome), categoria: null });
+    }
+  }
+  baias.sort((a, b) => compararBaias(a.nome, b.nome));
+
+  return { configurado: true, ok, carregadoEm: Date.now(), baias, animais, historico: mapConferencias(conferencias) };
+}

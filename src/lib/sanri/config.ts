@@ -20,12 +20,15 @@ export const ABA_PARTOS = 'Partos';
 export const ABA_IA = 'IA';
 /** A "view" das estações de monta — criada pelo painel no 1º salvamento, o AppSheet não usa. */
 export const ABA_ESTACOES = 'estacao_monta';
+/** Resultado de cada conferência de baia — criada pelo painel no 1º salvamento, o AppSheet não usa. */
+export const ABA_CONFERENCIA = 'conferencia_baia';
 
 export const LINKS: NavLink[] = [
   { href: '/sanri/producao', label: 'Produção' },
   { href: '/sanri/regua', label: 'Régua' },
   { href: '/sanri/saidas', label: 'Saídas' },
   { href: '/sanri/dieta', label: 'Dieta' },
+  { href: '/sanri/conferencia', label: 'Conferência' },
   { href: '/sanri/reproducao', label: 'Reprodução' },
 ];
 

@@ -1,7 +1,7 @@
 import { cn } from '@/lib/utils';
 
 /**
- * Botão e campo do painel. Pill como o botão do site do Sanri (`shared/Botao` de lá), mas em
+ * Botão e campo do painel. Pill como o botão do site (`shared/Botao`), mas em
  * sans e com altura de toque (44px) — é usado de pé, no celular, na sala de
  * ordenha. Borda de campo sempre `rule-strong`: `rule` não passa 3:1.
  */
@@ -48,13 +48,13 @@ export function Rotulo({ texto, className, children }: { texto: string; classNam
 }
 
 /** Caixa de mensagem de estado. Sempre com texto — a cor nunca carrega o recado sozinha. */
-export function Aviso({ tom, children }: { tom: 'erro' | 'aviso'; children: React.ReactNode }) {
+export function Aviso({ tom, children }: { tom: 'erro' | 'aviso' | 'ok'; children: React.ReactNode }) {
   return (
     <div
       role={tom === 'erro' ? 'alert' : 'status'}
       className={cn(
         'rounded-campo px-3 py-2 text-sm',
-        tom === 'erro' ? 'bg-erro-fundo text-erro' : 'bg-aviso-fundo text-aviso',
+        tom === 'erro' ? 'bg-erro-fundo text-erro' : tom === 'ok' ? 'bg-sage-100 text-sage' : 'bg-aviso-fundo text-aviso',
       )}
     >
       {children}
