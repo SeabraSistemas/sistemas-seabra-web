@@ -13,12 +13,20 @@ export const ABA_BAIAS = 'Baias';
 export const ABA_BAIA_CATEGORIA = 'Baia_categoria';
 /** Criada pelo painel no 1º salvamento — não existe no AppSheet. */
 export const ABA_DIETA = 'dieta_baia';
+export const ABA_REBANHO = 'RebanhoProd';
+export const ABA_REPRODUCAO = 'Reproduçao';
+export const ABA_DIAGNOSTICO = 'DiagnosticoGestaçao';
+export const ABA_PARTOS = 'Partos';
+export const ABA_IA = 'IA';
+/** A "view" das estações de monta — criada pelo painel no 1º salvamento, o AppSheet não usa. */
+export const ABA_ESTACOES = 'estacao_monta';
 
 export const LINKS: NavLink[] = [
   { href: '/sanri/producao', label: 'Produção' },
   { href: '/sanri/regua', label: 'Régua' },
   { href: '/sanri/saidas', label: 'Saídas' },
   { href: '/sanri/dieta', label: 'Dieta' },
+  { href: '/sanri/reproducao', label: 'Reprodução' },
 ];
 
 export const LOGIN_HREF = '/sanri';

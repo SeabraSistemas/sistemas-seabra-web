@@ -1,5 +1,5 @@
 import 'server-only';
-import { adicionarLinha, escreverCelulas, garantirColunasNaGrade, lerAba, limparLinha, type CelulasParaEscrever } from '@/lib/sheets/server';
+import { adicionarLinha, criarAba, escreverCelulas, garantirColunasNaGrade, lerAba, limparLinha, listarAbas, type CelulasParaEscrever } from '@/lib/sheets/server';
 import { formatDia } from '@/lib/painel/format';
 import { ABA_PRODUCAO, spreadsheetId } from './config';
 import { getTabelaRegua } from './queries';
@@ -9,8 +9,7 @@ import { DESTINOS, destinoPorChave, litrosDaRegua, mapProducao, normalizarRegua,
  * Escrita em producao_diaria. Uma linha por lançamento: a régua (entrada) e
  * cada saída viram linhas separadas. Tudo é escrito pelo NOME do header, não
  * pela letra da coluna — a aba é do AppSheet e pode ganhar/perder colunas.
- * Data sempre em USER_ENTERED (RAW grava a data como texto — incidente do
- * Katmandu, 09/09/2026).
+ * Data sempre em USER_ENTERED (RAW grava a data como texto, não como data).
  */
 const COLUNA_USUARIO = 'lancado_por';
 const CAMPOS_LEITURA = ['data', 'tanque', 'regua', 'regua_litros', 'extra', 'tanque_extra', 'regua_extra', 'regua_extra_litros', 'total_animais', 'obs'];
@@ -44,6 +43,36 @@ export function numeroPlanilha(n: number): string {
 /** Apóstrofo força texto: sem ele "24.7" numa planilha pt-BR pode virar data (24/07). */
 function textoPlanilha(s: string): string {
   return `'${s}`;
+}
+
+/**
+ * Aba que o PAINEL inventou (dieta_baia, estacao_monta): cria a aba no 1º
+ * salvamento e as colunas que faltarem no header, sempre no fim — quem
+ * mexeu na aba à mão não perde a ordem dela. Devolve header + linhas atuais.
+ * Nunca usar em aba do AppSheet.
+ */
+export async function garantirAbaDoPainel(sid: string, aba: string, colunas: string[]): Promise<{ header: string[]; linhas: string[][] } | null> {
+  let linhas = await lerAba(sid, aba);
+  if (linhas == null) {
+    const abas = await listarAbas(sid);
+    if (abas == null || abas.includes(aba)) return null; // erro de leitura, não aba ausente
+    if (!(await criarAba(sid, aba))) return null;
+    linhas = [];
+  }
+  const header = (linhas[0] ?? []).map((h) => h.trim());
+  const faltando = colunas.filter((c) => !header.includes(c));
+  if (faltando.length === 0) return { header, linhas };
+
+  const inicio = header.length;
+  if (!(await garantirColunasNaGrade(sid, aba, inicio + faltando.length))) return null;
+  const { ok } = await escreverCelulas(
+    sid,
+    [{ range: `'${aba}'!${letraDaColuna(inicio)}1:${letraDaColuna(inicio + faltando.length - 1)}1`, valores: [faltando] }],
+    'RAW',
+  );
+  if (!ok) return null;
+  const novoHeader = [...header, ...faltando];
+  return { header: novoHeader, linhas: [novoHeader, ...linhas.slice(1)] };
 }
 
 interface Aba {
@@ -92,7 +121,7 @@ function celulas(aba: Aba, linha: number, valores: Record<string, string>): Celu
 async function acrescentar(aba: Aba, valores: Record<string, string>): Promise<boolean> {
   const faltando = Object.keys(valores).filter((c) => c !== COLUNA_USUARIO && !aba.header.includes(c));
   if (faltando.length > 0) {
-    console.error('[sanri] colunas ausentes em producao_diaria', faltando);
+    console.error('[painel] colunas ausentes em producao_diaria', faltando);
     return false;
   }
   return adicionarLinha(aba.sid, ABA_PRODUCAO, aba.header.map((h) => valores[h] ?? ''), 'USER_ENTERED');

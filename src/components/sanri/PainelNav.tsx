@@ -35,19 +35,23 @@ export function PainelNav({ links, usuario, logoutHref }: { links: NavLink[]; us
         </div>
       </div>
       <nav className="mx-auto flex max-w-5xl gap-1 overflow-x-auto px-4 py-3 sm:px-6">
-        {links.map((link) => (
+        {links.map((link) => {
+          // Aba "Reprodução" continua acesa dentro de /sanri/reproducao/<estação>.
+          const ativo = pathname === link.href || pathname.startsWith(`${link.href}/`);
+          return (
           <Link
             key={link.href}
             href={link.href}
-            aria-current={pathname === link.href ? 'page' : undefined}
+            aria-current={ativo ? 'page' : undefined}
             className={cn(
               'shrink-0 rounded-pill px-5 py-2 text-sm font-semibold transition-colors',
-              pathname === link.href ? 'bg-ink text-paper' : 'text-ink-1 hover:bg-paper-2 hover:text-ink',
+              ativo ? 'bg-ink text-paper' : 'text-ink-1 hover:bg-paper-2 hover:text-ink',
             )}
           >
             {link.label}
           </Link>
-        ))}
+          );
+        })}
       </nav>
     </header>
   );

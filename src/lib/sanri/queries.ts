@@ -1,8 +1,35 @@
 import 'server-only';
 import { lerAba, listarAbas } from '@/lib/sheets/server';
 import { criarCache } from '@/lib/sheets/cache';
-import { ABA_BAIAS, ABA_BAIA_CATEGORIA, ABA_DIETA, ABA_PRODUCAO, ABA_TANQUE_REGUA, ABA_USUARIOS, spreadsheetId } from './config';
+import {
+  ABA_BAIAS,
+  ABA_BAIA_CATEGORIA,
+  ABA_DIAGNOSTICO,
+  ABA_DIETA,
+  ABA_ESTACOES,
+  ABA_IA,
+  ABA_PARTOS,
+  ABA_PRODUCAO,
+  ABA_REBANHO,
+  ABA_REPRODUCAO,
+  ABA_TANQUE_REGUA,
+  ABA_USUARIOS,
+  spreadsheetId,
+} from './config';
 import { mapBaias, mapDieta, type Baia, type DietaBaia } from './dieta';
+import { hojeCompacto, somarDias } from '@/lib/painel/format';
+import {
+  criarIndice,
+  mapAnimais,
+  mapCoberturas,
+  mapCrias,
+  mapDiagnosticos,
+  mapEstacoes,
+  mapIA,
+  type Animal,
+  type DadosReproducao,
+  type Estacao,
+} from './monta';
 import { mapProducao, mapTabelaRegua, mapUsuarios, type Leitura, type Saida, type TabelaRegua, type Usuario } from './producao';
 
 const TTL_MS = 5 * 60 * 1000;
@@ -10,8 +37,8 @@ const cache = criarCache<string[][]>(TTL_MS);
 
 /**
  * Só abas que o site NÃO escreve passam pelo cache (User Manager,
- * tanque_regua, Baias, Baia_categoria). producao_diaria e dieta_baia são
- * lidas sempre frescas: `invalidarCache()`
+ * tanque_regua, Baias, Baia_categoria e as abas de reprodução do app).
+ * producao_diaria, dieta_baia e estacao_monta são lidas sempre frescas: `invalidarCache()`
  * chamado numa rota de API não limpa o cache que o render da página vê
  * (módulos separados por rota no Next).
  */
@@ -94,3 +121,64 @@ export async function getDieta(): Promise<LeituraDieta> {
   const aindaNaoExiste = abas != null && !abas.includes(ABA_DIETA);
   return { configurado: true, ok: aindaNaoExiste, carregadoEm: Date.now(), historico: [] };
 }
+
+/** Só o último ano e pouco interessa: estação é formada com cobertura recente, e o parto cai até ~165 dias depois. */
+const JANELA_REPRODUCAO_DIAS = 400;
+
+export interface LeituraReproducao {
+  configurado: boolean;
+  ok: boolean;
+  carregadoEm: number | null;
+  /** Só os animais citados nos eventos da janela e nas estações, mais os reprodutores. */
+  animais: Animal[];
+  dados: DadosReproducao;
+  estacoes: Estacao[];
+}
+
+/** Aba que o painel cria no 1º salvamento: ausente = lista vazia, não erro. */
+async function lerAbaDoPainel(id: string, aba: string): Promise<string[][] | null> {
+  const linhas = await lerAba(id, aba);
+  if (linhas != null) return linhas;
+  const abas = await listarAbas(id);
+  return abas != null && !abas.includes(aba) ? [] : null;
+}
+
+/**
+ * Tudo que a Reprodução precisa. As abas do app passam pelo cache de 5 min
+ * (o painel não escreve nelas; "Atualizar" relê); estacao_monta vem fresca.
+ */
+export async function getReproducao(): Promise<LeituraReproducao> {
+  const vazio = { animais: [], dados: { coberturas: [], diagnosticos: [], crias: [], ia: [] }, estacoes: [] };
+  const id = spreadsheetId();
+  if (!id) return { configurado: false, ok: false, carregadoEm: null, ...vazio };
+
+  const [rebanho, reproducao, dg, partos, ia, estacoes] = await Promise.all([
+    lerAbaCache(ABA_REBANHO),
+    lerAbaCache(ABA_REPRODUCAO),
+    lerAbaCache(ABA_DIAGNOSTICO),
+    lerAbaCache(ABA_PARTOS),
+    lerAbaCache(ABA_IA),
+    lerAbaDoPainel(id, ABA_ESTACOES),
+  ]);
+  const ok = [rebanho, reproducao, dg, partos, ia].every((l) => l.linhas != null) && estacoes != null;
+  const carregadoEm = Math.min(...[rebanho, reproducao, dg, partos, ia].map((l) => l.carregadoEm ?? Date.now()));
+
+  const todos = mapAnimais(rebanho.linhas);
+  const indice = criarIndice(todos);
+  const corte = somarDias(hojeCompacto(), -JANELA_REPRODUCAO_DIAS)!;
+  const dados: DadosReproducao = {
+    coberturas: mapCoberturas(reproducao.linhas, indice).filter((c) => c.data >= corte),
+    diagnosticos: mapDiagnosticos(dg.linhas, indice).filter((d) => d.data >= corte),
+    crias: mapCrias(partos.linhas, indice).filter((c) => c.nascimento >= corte),
+    ia: mapIA(ia.linhas, indice).filter((s) => s.data >= corte),
+  };
+  const lista = mapEstacoes(estacoes);
+
+  const citados = new Set<string>();
+  for (const c of dados.coberturas) citados.add(c.femea).add(c.reprodutor);
+  for (const e of lista) [e.reprodutor, ...e.femeas].forEach((k) => citados.add(k));
+  const animais = todos.filter((a) => citados.has(a.chave) || (a.categoria === 'Reprodutor' && a.vivo));
+
+  return { configurado: true, ok, carregadoEm, animais, dados, estacoes: lista };
+}
+
