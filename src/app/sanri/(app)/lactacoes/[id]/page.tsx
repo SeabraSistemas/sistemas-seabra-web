@@ -14,8 +14,8 @@ export default async function ReprodutorPage({ params }: { params: Promise<{ id:
     return (
       <p className="text-sm text-ink-2">
         {ok ? 'Reprodutor não encontrado, ou sem filha com lactação encerrada.' : 'Não foi possível ler os dados do app agora.'}{' '}
-        <Link href="/sanri/reproducao/reprodutores" className="font-semibold text-bay underline underline-offset-2">
-          Voltar para Reprodutores
+        <Link href="/sanri/lactacoes" className="font-semibold text-bay underline underline-offset-2">
+          Voltar para Lactações
         </Link>
       </p>
     );

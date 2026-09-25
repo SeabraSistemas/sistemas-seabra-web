@@ -30,6 +30,7 @@ export const LINKS: NavLink[] = [
   { href: '/sanri/dieta', label: 'Dieta' },
   { href: '/sanri/conferencia', label: 'Conferência' },
   { href: '/sanri/reproducao', label: 'Reprodução' },
+  { href: '/sanri/lactacoes', label: 'Lactações' },
 ];
 
 /**

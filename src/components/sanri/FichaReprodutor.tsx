@@ -146,8 +146,8 @@ export function FichaReprodutor({
       <EstadoApp configurado={configurado} ok={ok} carregadoEm={carregadoEm} />
 
       <div>
-        <Link href="/sanri/reproducao/reprodutores" className="text-sm font-medium text-bay underline underline-offset-2">
-          ← Reprodutores
+        <Link href="/sanri/lactacoes" className="text-sm font-medium text-bay underline underline-offset-2">
+          ← Lactações
         </Link>
         <div className="mt-2 flex flex-wrap items-center gap-2">
           <h2 className="text-xl font-bold text-ink">{rotulo(reprodutor, 'Sem nome cadastrado')}</h2>

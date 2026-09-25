@@ -93,7 +93,7 @@ export function ReprodutoresView({
       key: 'reprodutor',
       header: 'Reprodutor',
       cell: (r) => (
-        <Link href={`/sanri/reproducao/reprodutores/${r.paiId}`} className="flex flex-col leading-tight hover:underline">
+        <Link href={`/sanri/lactacoes/${r.paiId}`} className="flex flex-col leading-tight hover:underline">
           <span className="flex items-center gap-2 font-semibold text-ink">
             {rotuloReprodutor(r)}
             {r.noPlantel && <Selo className="bg-sage-100 text-sage">Plantel</Selo>}
@@ -174,9 +174,10 @@ export function ReprodutoresView({
       <EstadoApp configurado={configurado} ok={ok} carregadoEm={carregadoEm} />
 
       <div>
-        <h2 className="text-lg font-semibold text-ink">Reprodutores</h2>
+        <p className="t-mono">Lactações</p>
+        <h2 className="mt-1 text-lg font-semibold text-ink">Por reprodutor</h2>
         <p className="mt-1 max-w-2xl text-sm text-ink-2">
-          Desempenho leiteiro das filhas, por reprodutor, a partir das lactações encerradas no app. O painel só lê.
+          Lactações encerradas no app, agrupadas pelo reprodutor (pai) das filhas. O painel só lê.
         </p>
       </div>
 
