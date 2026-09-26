@@ -378,6 +378,63 @@ export async function lerRanges(
   }
 }
 
+export interface MetaAba {
+  titulo: string;
+  /** Id numérico da aba (o "gid" da URL) — exigido por copyPaste/deleteDimension. */
+  sheetId: number;
+}
+
+/** Título e id numérico de cada aba. null se a leitura falhar. */
+export async function metadadosAbas(spreadsheetId: string): Promise<MetaAba[] | null> {
+  const t = await token();
+  if (!t) return null;
+  try {
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}?fields=sheets.properties(title,sheetId)`;
+    const res = await fetch(url, { headers: { Authorization: `Bearer ${t}` }, cache: 'no-store' });
+    if (!res.ok) {
+      console.error('[sheets] falha ao ler metadados', res.status, await res.text());
+      return null;
+    }
+    const data = (await res.json()) as { sheets?: { properties?: { title?: string; sheetId?: number } }[] };
+    return (data.sheets ?? [])
+      .map((s) => ({ titulo: s.properties?.title ?? '', sheetId: s.properties?.sheetId ?? -1 }))
+      .filter((s) => s.titulo && s.sheetId >= 0);
+  } catch (err) {
+    console.error('[sheets] falha ao ler metadados', err);
+    return null;
+  }
+}
+
+/**
+ * `spreadsheets:batchUpdate` cru — uma chamada ATÔMICA (ou aplica todos os
+ * requests, ou nenhum). É a base das correções do /bovinos: trocar valores
+ * (updateCells), copiar fórmula da linha de cima (copyPaste PASTE_FORMULA,
+ * que ajusta as referências relativas) e excluir linha (deleteDimension)
+ * — coisas que `values:batchUpdate` não faz. Nunca lança.
+ */
+export async function batchUpdatePlanilha(spreadsheetId: string, requests: object[]): Promise<{ ok: boolean; erro: string | null }> {
+  if (requests.length === 0) return { ok: true, erro: null };
+  const t = await token();
+  if (!t) return { ok: false, erro: 'Credenciais do Google não configuradas.' };
+  try {
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}:batchUpdate`;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${t}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ requests }),
+    });
+    if (!res.ok) {
+      const txt = await res.text();
+      console.error('[sheets] falha no batchUpdate da planilha', res.status, txt);
+      return { ok: false, erro: `Google Sheets respondeu ${res.status}${res.status === 403 ? ' (a conta de serviço precisa ser Editor da planilha)' : ''}.` };
+    }
+    return { ok: true, erro: null };
+  } catch (err) {
+    console.error('[sheets] falha no batchUpdate da planilha', err);
+    return { ok: false, erro: 'Falha de rede ao gravar.' };
+  }
+}
+
 /** Nomes de todas as abas da planilha. null se a leitura falhar — usado para distinguir "aba ainda não existe" de erro de leitura (a API responde 400 igual aos dois). */
 export async function listarAbas(spreadsheetId: string): Promise<string[] | null> {
   const t = await token();

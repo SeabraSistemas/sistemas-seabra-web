@@ -5,6 +5,7 @@ import { ProblemasView } from '@/components/bovinos/ProblemasView';
 import { exigirSessao } from '@/lib/bovinos/sessao';
 import { clientePorSlug } from '@/lib/bovinos/clientes';
 import { obterRelatorio } from '@/lib/bovinos/leitura';
+import { escritaHabilitada } from '@/lib/bovinos/correcao';
 import { formatNumber } from '@/lib/painel/format';
 
 export const maxDuration = 60;
@@ -65,7 +66,7 @@ export default async function ClientePage({
           detalhe={`${formatNumber(relatorio.totais.partos)} partos · ${formatNumber(relatorio.totais.iatfs)} IATFs`}
         />
       </div>
-      <ProblemasView problemas={relatorio.problemas} nomeCliente={cliente.slug} regraInicial={regra} />
+      <ProblemasView problemas={relatorio.problemas} nomeCliente={cliente.slug} regraInicial={regra} podeCorrigir={escritaHabilitada()} />
     </div>
   );
 }

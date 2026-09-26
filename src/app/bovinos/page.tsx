@@ -6,12 +6,12 @@ import { BOVINOS_COOKIE, verificarSessao } from '@/lib/bovinos/auth';
 import { HOME_HREF } from '@/lib/bovinos/config';
 
 const ERROS: Record<string, string> = {
-  vazio: 'Digite um e-mail.',
-  'nao-encontrado': 'E-mail não encontrado.',
-  config: 'Login indisponível: falta configurar o segredo de sessão.',
+  credenciais: 'E-mail ou senha incorretos.',
+  bloqueado: 'Muitas tentativas. Espere alguns minutos e tente de novo.',
+  config: 'Login indisponível: falta configuração no servidor.',
 };
 
-/** Form puro (sem JS) — POST para /bovinos/api/login. Mesmo padrão de /FI_FCG. */
+/** Form puro (sem JS) — POST para /bovinos/api/login. E-mail da allowlist + a mesma senha do /adm. */
 export default async function BovinosLoginPage({ searchParams }: { searchParams: Promise<{ erro?: string }> }) {
   const cookieStore = await cookies();
   if (verificarSessao(cookieStore.get(BOVINOS_COOKIE)?.value)) redirect(HOME_HREF);
@@ -30,6 +30,11 @@ export default async function BovinosLoginPage({ searchParams }: { searchParams:
             E-mail
           </label>
           <Input id="email" name="email" type="email" autoComplete="username" autoFocus required />
+
+          <label htmlFor="senha" className="text-sm text-muted-foreground">
+            Senha <span className="text-xs">(a mesma do /adm)</span>
+          </label>
+          <Input id="senha" name="senha" type="password" autoComplete="current-password" required />
 
           <label className="flex items-center gap-2 text-sm text-muted-foreground">
             <input type="checkbox" name="manter" value="1" defaultChecked className="size-4 rounded border-input accent-primary" />

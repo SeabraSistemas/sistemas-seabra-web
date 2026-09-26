@@ -6,7 +6,8 @@ import { createHmac, timingSafeEqual } from 'node:crypto';
  * revogar este painel não derruba os outros.
  */
 export const SESSAO_DIAS = 30;
-export const BOVINOS_COOKIE = 'bovinos_session';
+// v2 (26/09): com senha. O nome novo invalida as sessões abertas só com e-mail.
+export const BOVINOS_COOKIE = 'bovinos_sessao';
 export const BOVINOS_COOKIE_PATH = '/bovinos';
 
 function segredo(): string | null {

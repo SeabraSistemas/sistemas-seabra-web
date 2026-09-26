@@ -6,6 +6,7 @@ export type RegraId =
   | 'linha-sem-identificacao'
   | 'formula-ausente'
   | 'formula-sobrescrita'
+  | 'formula-versoes'
   | 'sem-chave'
   | 'chave-duplicada'
   | 'data-placeholder'

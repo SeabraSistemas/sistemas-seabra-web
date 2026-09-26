@@ -75,17 +75,44 @@ export function regrasEstrutura(e: EntradaEstrutura): Problema[] {
   // 2) Fórmula que parou / foi sobrescrita.
   const vazias = new Set(candidatasLinhaVazia(rebanho));
   const colsFormula = cliente.colunasFormula.filter((c) => e.formulas.has(c));
-  // Fórmula "modelo" de cada coluna: a forma normalizada mais comum.
+  // Fórmula "modelo" de cada coluna: a da ÚLTIMA linha com fórmula — é a que o
+  // app copia para o próximo animal. (Não a mais comum: na Santo Antônio a
+  // Categoria tem duas versões e a mais comum é a antiga.)
   const modeloCol = new Map<string, string>();
   for (const c of colsFormula) {
-    const cont = new Map<string, number>();
-    e.formulas.get(c)!.forEach((v, i) => {
+    const vals = e.formulas.get(c)!;
+    const versoes = new Map<string, { n: number; de: number; ate: number }>();
+    let ultima = '';
+    vals.forEach((v, i) => {
       if (i === 0 || !ehFormula(v)) return;
       const n = normalizarFormula(v, i + 1);
-      cont.set(n, (cont.get(n) ?? 0) + 1);
+      ultima = n;
+      const x = versoes.get(n) ?? { n: 0, de: i + 1, ate: i + 1 };
+      x.n++;
+      x.ate = i + 1;
+      versoes.set(n, x);
     });
-    const top = [...cont].sort((a, b) => b[1] - a[1])[0];
-    if (top) modeloCol.set(c, top[0]);
+    if (ultima) modeloCol.set(c, ultima);
+    if (versoes.size > 1) {
+      const outras = [...versoes].filter(([f]) => f !== ultima);
+      const atual = versoes.get(ultima)!;
+      out.push({
+        id: `formula-versoes|${c}`,
+        regra: 'formula-versoes',
+        severidade: 'info',
+        aba: 'RebanhoProd',
+        linha: null,
+        animal: '',
+        resumo: `${c}: ${versoes.size} versões de fórmula — ${outras.reduce((s, [, x]) => s + x.n, 0)} linhas com versão diferente da atual (${atual.n} linhas).`,
+        prova: [
+          `Atual (a da última linha, L${atual.ate}): ${ultima.slice(0, 160)}`,
+          ...outras.map(([f, x]) => `Outra (${x.n} linhas, L${x.de}–L${x.ate}): ${f.slice(0, 160)}`),
+          'Animais com versões diferentes podem cair em categorias diferentes na mesma idade.',
+        ],
+        bloqueios: [],
+        correcao: null,
+      });
+    }
   }
   const ultimaComDado = Math.max(1, ...modelo.rebanho.filter((r) => r.A || r.id).map((r) => r.linha));
   const faltas: Problema[] = [];

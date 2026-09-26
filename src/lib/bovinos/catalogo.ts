@@ -30,6 +30,11 @@ export const CATALOGO: Record<RegraId, InfoRegra> = {
     grupo: 'Estrutura',
     descricao: 'Coluna que deveria ter fórmula tem um valor digitado no lugar.',
   },
+  'formula-versoes': {
+    titulo: 'Fórmula com versões diferentes',
+    grupo: 'Estrutura',
+    descricao: 'A mesma coluna tem fórmulas diferentes em linhas diferentes — animais da mesma idade podem cair em categorias diferentes.',
+  },
   'sem-chave': {
     titulo: 'Animal sem chave',
     grupo: 'Estrutura',

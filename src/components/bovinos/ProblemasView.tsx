@@ -7,6 +7,9 @@ import { FilterSelect } from '@/components/painel/FilterSelect';
 import { FilterBusca } from '@/components/painel/FilterBusca';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { SeveridadeBadge } from '@/components/bovinos/Severidade';
+import { PreviaCorrecao, type EstadoPrevia } from '@/components/bovinos/PreviaCorrecao';
+import { Button } from '@/components/ui/button';
+import { Loader2, Wrench } from 'lucide-react';
 import { CATALOGO, ROTULO_SEVERIDADE, type GrupoRegra } from '@/lib/bovinos/catalogo';
 import type { Correcao, Problema, RegraId, Severidade } from '@/lib/bovinos/tipos';
 
@@ -31,12 +34,56 @@ function descreverCorrecao(c: Correcao): string[] {
   }
 }
 
-export function ProblemasView({ problemas, nomeCliente, regraInicial }: { problemas: Problema[]; nomeCliente: string; regraInicial?: string }) {
+export function ProblemasView({
+  problemas,
+  nomeCliente,
+  regraInicial,
+  podeCorrigir,
+}: {
+  problemas: Problema[];
+  /** Slug do cliente (vai para a prévia). */
+  nomeCliente: string;
+  regraInicial?: string;
+  /** BOVINOS_ESCRITA_HABILITADA ligada no servidor. */
+  podeCorrigir: boolean;
+}) {
   const [grupo, setGrupo] = useState('');
   const [regra, setRegra] = useState(regraInicial && regraInicial in CATALOGO ? regraInicial : '');
   const [severidade, setSeveridade] = useState('');
   const [busca, setBusca] = useState('');
   const [aberto, setAberto] = useState<Problema | null>(null);
+  const [selecionados, setSelecionados] = useState<Set<string>>(() => new Set());
+  const [previa, setPrevia] = useState<EstadoPrevia | null>(null);
+  const [gerando, setGerando] = useState(false);
+  const [erroPrevia, setErroPrevia] = useState<string | null>(null);
+
+  function alternar(id: string) {
+    setSelecionados((s) => {
+      const n = new Set(s);
+      if (n.has(id)) n.delete(id);
+      else n.add(id);
+      return n;
+    });
+  }
+
+  async function gerarPrevia() {
+    setGerando(true);
+    setErroPrevia(null);
+    try {
+      const r = await fetch('/bovinos/api/previa', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cliente: nomeCliente, ids: [...selecionados] }),
+      });
+      const j = await r.json();
+      if (!r.ok) setErroPrevia(j?.erro ?? `Falha (${r.status}).`);
+      else setPrevia({ token: j.token, recusados: j.recusados ?? [] });
+    } catch {
+      setErroPrevia('Falha de rede ao gerar a prévia.');
+    } finally {
+      setGerando(false);
+    }
+  }
 
   const filtrados = useMemo(() => {
     const q = busca.trim().toLowerCase();
@@ -55,7 +102,27 @@ export function ProblemasView({ problemas, nomeCliente, regraInicial }: { proble
     [problemas, grupo],
   );
 
+  const corrigiveisFiltrados = filtrados.filter((p) => p.severidade === 'corrigivel' && p.correcao);
   const columns: DataTableColumn<Problema>[] = [
+    ...(podeCorrigir
+      ? [
+          {
+            key: 'sel',
+            header: '',
+            cell: (p: Problema) =>
+              p.severidade === 'corrigivel' && p.correcao ? (
+                <input
+                  type="checkbox"
+                  aria-label="Selecionar para corrigir"
+                  checked={selecionados.has(p.id)}
+                  onClick={(e) => e.stopPropagation()}
+                  onChange={() => alternar(p.id)}
+                  className="size-4 rounded border-input accent-primary"
+                />
+              ) : null,
+          } satisfies DataTableColumn<Problema>,
+        ]
+      : []),
     { key: 'sev', header: 'Tipo', cell: (p) => <SeveridadeBadge severidade={p.severidade} />, sortValue: (p) => SEVERIDADES.indexOf(p.severidade) },
     { key: 'regra', header: 'Problema', cell: (p) => <span className="whitespace-nowrap">{CATALOGO[p.regra].titulo}</span>, sortValue: (p) => CATALOGO[p.regra].titulo },
     { key: 'animal', header: 'Animal', cell: (p) => <span className="font-mono text-xs">{p.animal || '—'}</span>, sortValue: (p) => p.animal },
@@ -87,6 +154,32 @@ export function ProblemasView({ problemas, nomeCliente, regraInicial }: { proble
           <CsvExport columns={csv} rows={filtrados} requiredKeys={['problema', 'animal']} filename={`bovinos-${nomeCliente}`} />
         </div>
       </div>
+
+      {podeCorrigir && (
+        <div className="flex flex-wrap items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm">
+          <Wrench className="size-4 text-muted-foreground" />
+          <span className="text-muted-foreground">{selecionados.size} selecionado(s)</span>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            disabled={corrigiveisFiltrados.length === 0}
+            onClick={() => setSelecionados(new Set([...selecionados, ...corrigiveisFiltrados.map((p) => p.id)]))}
+          >
+            Selecionar os {corrigiveisFiltrados.length} corrigíveis do filtro
+          </Button>
+          {selecionados.size > 0 && (
+            <Button type="button" size="sm" variant="ghost" onClick={() => setSelecionados(new Set())}>
+              Limpar
+            </Button>
+          )}
+          <Button type="button" size="sm" className="ml-auto gap-1.5" disabled={selecionados.size === 0 || gerando} onClick={gerarPrevia}>
+            {gerando && <Loader2 className="size-3.5 animate-spin" />}
+            {gerando ? 'Relendo a planilha…' : `Revisar correção (${selecionados.size})`}
+          </Button>
+          {erroPrevia && <p className="w-full text-destructive">{erroPrevia}</p>}
+        </div>
+      )}
 
       {regra && <p className="text-sm text-muted-foreground">{CATALOGO[regra as RegraId].descricao}</p>}
       <p className="text-xs text-muted-foreground">
@@ -147,7 +240,7 @@ export function ProblemasView({ problemas, nomeCliente, regraInicial }: { proble
                         <li key={i}>{x}</li>
                       ))}
                     </ul>
-                    <p className="mt-2 text-xs text-muted-foreground">O botão de corrigir (com prévia) chega na próxima fase.</p>
+                    {!podeCorrigir && <p className="mt-2 text-xs text-muted-foreground">Correção desligada neste ambiente.</p>}
                   </section>
                 )}
               </div>
@@ -155,6 +248,14 @@ export function ProblemasView({ problemas, nomeCliente, regraInicial }: { proble
           )}
         </SheetContent>
       </Sheet>
+
+      <PreviaCorrecao
+        previa={previa}
+        onFechar={() => {
+          setPrevia(null);
+          setSelecionados(new Set());
+        }}
+      />
     </div>
   );
 }

@@ -220,3 +220,27 @@ describe('bovinos/relatorio — identidade da mãe (casos reais da Bonito)', () 
     assert.equal(achar(P, 'pai-preencher', '68 26M'), undefined);
   });
 });
+
+describe('bovinos/relatorio — fórmula com duas versões (caso real da Santo Antônio)', () => {
+  const ANTIGA = (l: number) => `=IF(BK${l}<=365;"Bezerra";"Recria")`;
+  const ATUAL = (l: number) => `=IF(BK${l}<365;"Bezerra";"Novilha")`;
+  // L2–L6 antiga (mais comum), L7 atual, L8 sem fórmula, L9 atual (última linha).
+  const col = ['Categoria', ANTIGA(2), ANTIGA(3), ANTIGA(4), ANTIGA(5), ANTIGA(6), ATUAL(7), '', ATUAL(9)];
+  const reb = aba(['ID rebanho', 'ID A', 'ID animal', 'ID Mãe', 'ID Pai', 'Data de nascimento', 'Sexo'], Array.from({ length: 8 }, (_, k) => ({ 'ID rebanho': `r${k}`, 'ID A': `K${k + 2}`, 'ID animal': `V${k + 2}`, Sexo: 'Fêmea' })));
+  const P = montarRelatorio(
+    { rebanho: reb, partos: [], reproducao: null, formulas: [{ col: 'Categoria', valores: col }], linhasCompletas: [], fazendas: [] },
+    { ...cliente, colunasFormula: ['Categoria'] },
+    HOJE,
+  ).problemas;
+
+  test('a doadora é a versão ATUAL (da última linha), não a mais comum', () => {
+    const p = achar(P, 'formula-ausente', 'V8')!;
+    assert.deepEqual(p.correcao?.tipo === 'formula' && p.correcao.colunas, [{ col: 'Categoria', linhaDoadora: 7 }]);
+  });
+
+  test('avisa que a coluna tem duas versões', () => {
+    const p = achar(P, 'formula-versoes')!;
+    assert.equal(p.severidade, 'info');
+    assert.ok(p.resumo.includes('5 linhas com versão diferente da atual (2 linhas)'));
+  });
+});

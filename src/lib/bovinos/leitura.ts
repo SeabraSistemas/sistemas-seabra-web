@@ -31,7 +31,7 @@ export interface LeituraRelatorio {
 
 const cache = criarCache<Relatorio>(5 * 60 * 1000);
 
-async function lerEntrada(spreadsheetId: string, slug: SlugCliente): Promise<EntradaRelatorio> {
+export async function lerEntrada(spreadsheetId: string, slug: SlugCliente): Promise<EntradaRelatorio> {
   const cliente = clientePorSlug(slug)!;
   const abas = await listarAbas(spreadsheetId);
   if (!abas) throw new Error('Não foi possível listar as abas da planilha.');
