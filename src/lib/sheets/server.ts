@@ -337,6 +337,47 @@ export async function limparLinha(spreadsheetId: string, range: string): Promise
   }
 }
 
+/** Como a API devolve cada célula: o valor exibido (padrão) ou a fórmula crua ("=IF(...)"). */
+export type RenderValor = 'FORMATTED_VALUE' | 'FORMULA';
+
+/** Range A1 com a aba citada — mesmo cuidado de `citarAba` ("D8" é nome de aba e também célula). */
+export function rangeA1(aba: string, a1?: string): string {
+  return a1 ? `${citarAba(aba)}!${a1}` : citarAba(aba);
+}
+
+/**
+ * Vários ranges A1 JÁ montados (use `rangeA1`) numa requisição só, com o
+ * render escolhido. Existe para o /bovinos, que precisa ler as fórmulas cruas
+ * de algumas colunas do RebanhoProd (FORMULA) para saber onde a Categoria
+ * parou de ser copiada — `lerAbas` só lê o valor exibido e aba inteira.
+ * Devolve uma matriz por range, na mesma ordem; null se faltar config ou a
+ * leitura falhar (nunca lança).
+ */
+export async function lerRanges(
+  spreadsheetId: string,
+  ranges: string[],
+  render: RenderValor = 'FORMATTED_VALUE',
+): Promise<string[][][] | null> {
+  if (ranges.length === 0) return [];
+  const t = await token();
+  if (!t) return null;
+  try {
+    const q = ranges.map((r) => `ranges=${encodeURIComponent(r)}`).join('&');
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values:batchGet?${q}&valueRenderOption=${render}`;
+    const res = await fetch(url, { headers: { Authorization: `Bearer ${t}` }, cache: 'no-store' });
+    if (!res.ok) {
+      console.error('[sheets] falha ao ler ranges', ranges.length, render, res.status, await res.text());
+      return null;
+    }
+    const data = (await res.json()) as { valueRanges?: { values?: unknown[][] }[] };
+    const vr = data.valueRanges ?? [];
+    return ranges.map((_, i) => (vr[i]?.values ?? []).map((linha) => linha.map((c) => (c == null ? '' : String(c)))));
+  } catch (err) {
+    console.error('[sheets] falha ao ler ranges', ranges.length, render, err);
+    return null;
+  }
+}
+
 /** Nomes de todas as abas da planilha. null se a leitura falhar — usado para distinguir "aba ainda não existe" de erro de leitura (a API responde 400 igual aos dois). */
 export async function listarAbas(spreadsheetId: string): Promise<string[] | null> {
   const t = await token();
