@@ -3,19 +3,76 @@ import type { Comprador } from '@/lib/tres-irmaos/projecao';
 
 /**
  * O realizado, semana a semana (terça a segunda, a semana da Rose): quanto o
- * tanque recebeu e quanto cada comprador levou. Uma linha de
- * `leite_acompanhamento` é ou produção (tipo 'producao', pode ser do dia ou
- * um total de vários dias — soma na semana da data) ou uma coleta.
+ * tanque recebeu e quanto cada comprador levou.
+ *
+ * Duas origens, somadas: o que o Lucas já lança no APP (Produção Diária e
+ * Saída de Leite — lidas, nunca escritas daqui) e o que for lançado no site
+ * (`leite_acompanhamento`), para o que não passa pelo app. Uma linha é ou
+ * produção (pode ser do dia ou um total de vários dias — soma na semana da
+ * data) ou uma coleta.
  */
 
 export interface Lancamento {
+  /** Positivo: linha do site (apagável). Negativo: linha do app (só leitura). */
   id: number;
+  origem: 'site' | 'app';
   data: string;
   tipo: 'producao' | 'coleta';
   comprador: string | null;
   litros: number;
   observacao: string | null;
   criado_por: string | null;
+}
+
+export interface ProducaoDoApp {
+  id: number;
+  data: string;
+  lactantes: number | null;
+  litros: number;
+}
+
+export interface SaidaDoApp {
+  id: number;
+  data: string;
+  litros: number;
+  destinos: string[];
+  observacao: string | null;
+}
+
+/** Comprador de uma saída do app: o primeiro destino que casar com `destinosApp`; senão, o próprio nome do destino. */
+export function compradorDaSaida(destinos: string[], compradores: Comprador[]): string {
+  const norm = (t: string) => t.trim().toLowerCase();
+  for (const d of destinos) {
+    const c = compradores.find((x) => x.destinosApp.some((a) => norm(a) === norm(d)));
+    if (c) return c.id;
+  }
+  return destinos[0]?.trim() || 'sem destino';
+}
+
+/** Converte a Produção Diária e a Saída de Leite do app em lançamentos (ids negativos, origem 'app'). */
+export function lancamentosDoApp(producoes: ProducaoDoApp[], saidas: SaidaDoApp[], compradores: Comprador[]): Lancamento[] {
+  return [
+    ...producoes.map<Lancamento>((p) => ({
+      id: -p.id,
+      origem: 'app',
+      data: p.data,
+      tipo: 'producao',
+      comprador: null,
+      litros: p.litros,
+      observacao: p.lactantes ? `${p.lactantes} lactantes` : null,
+      criado_por: null,
+    })),
+    ...saidas.map<Lancamento>((s) => ({
+      id: -(1_000_000_000 + s.id),
+      origem: 'app',
+      data: s.data,
+      tipo: 'coleta',
+      comprador: compradorDaSaida(s.destinos, compradores),
+      litros: s.litros,
+      observacao: s.observacao,
+      criado_por: null,
+    })),
+  ];
 }
 
 export interface ColetaDaSemana {
@@ -31,8 +88,10 @@ export interface SemanaRealizada {
   producao: number;
   diasComProducao: number;
   coletas: ColetaDaSemana[];
-  /** Coletas de comprador que não está mais na lista (renomeado/removido): não somem da conta. */
+  /** Coletas de destino que não é de nenhum comprador da lista: não somem da conta. */
   coletasOutros: number;
+  /** Nomes desses destinos, para mostrar. */
+  destinosOutros: string[];
   vendido: number;
   /** Produção − vendido. Positivo: ficou no tanque/sem comprador. */
   saldo: number;
@@ -72,7 +131,12 @@ export function agruparPorSemana(lancamentos: Lancamento[], compradores: Comprad
         };
       });
       let coletasOutros = 0;
-      for (const [id, litros] of s.coletas) if (!ids.has(id)) coletasOutros += litros;
+      const destinosOutros: string[] = [];
+      for (const [id, litros] of s.coletas) {
+        if (ids.has(id)) continue;
+        coletasOutros += litros;
+        destinosOutros.push(id);
+      }
       const vendido = coletas.reduce((t, c) => t + c.litros, 0) + coletasOutros;
       return {
         inicio,
@@ -81,6 +145,7 @@ export function agruparPorSemana(lancamentos: Lancamento[], compradores: Comprad
         diasComProducao: s.dias.size,
         coletas,
         coletasOutros,
+        destinosOutros,
         vendido,
         saldo: s.producao - vendido,
         vendidoAcimaDoTeto: Math.max(0, vendido - teto),

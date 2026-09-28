@@ -61,7 +61,15 @@ export function ProjecaoPainel({ hoje, rebanho, salvos }: { hoje: string; rebanh
     }
   }
 
-  const outrasCategorias = rebanho.categorias.filter((c) => c.nome !== 'lactante');
+  // Categorias do app + as que já estavam salvas (uma categoria pode ter zerado no app).
+  const categorias = ordenarCategorias([...new Set([...Object.keys(rebanho.efetivo), ...Object.keys(p.efetivoInicial)])].filter((c) => c !== 'lactante'));
+  const totalEfetivo = p.lactantesIniciais + categorias.reduce((t, c) => t + (p.efetivoInicial[c] ?? 0), 0);
+  const efetivoDoApp = Object.fromEntries(Object.entries(rebanho.efetivo).filter(([c]) => c !== 'lactante'));
+  const difereDoApp =
+    p.lactantesIniciais !== rebanho.lactantes || categorias.some((c) => (p.efetivoInicial[c] ?? 0) !== (rebanho.efetivo[c] ?? 0));
+  const trazerDoApp = () => mudar({ lactantesIniciais: rebanho.lactantes, efetivoInicial: efetivoDoApp });
+  const usarMedia = (m: number) => mudar({ mediaLitros: arred(m), mediaRecemParida: arred(m) });
+  const semMae = proj.semanas.reduce((t, s) => t + s.partosSemMae, 0);
 
   return (
     <div className="flex flex-col gap-6">
@@ -87,16 +95,35 @@ export function ProjecaoPainel({ hoje, rebanho, salvos }: { hoje: string; rebanh
       <div className="grid gap-6 lg:grid-cols-[22rem_1fr]">
         <aside className="order-2 flex flex-col gap-4 lg:order-1">
           <div className="painel flex flex-col gap-3">
-            <h2 className="font-sans text-sm font-semibold">Rebanho hoje</h2>
-            <p className="text-xs text-muted-foreground">
-              No app: <strong className="text-foreground">{rebanho.lactantes} lactantes</strong>
-              {rebanho.dataUltimoControle && (
-                <>
-                  , {rebanho.lactantesMedidas} medidas no controle de {dataCurta(rebanho.dataUltimoControle)} (média {rebanho.mediaUltimoControle != null ? media(rebanho.mediaUltimoControle) : '—'} L)
-                </>
+            <div className="flex items-baseline justify-between gap-2">
+              <h2 className="font-sans text-sm font-semibold">Efetivo hoje</h2>
+              {difereDoApp && (
+                <button type="button" onClick={trazerDoApp} className="text-xs text-primary underline-offset-2 hover:underline">
+                  trazer os números do app
+                </button>
               )}
-              {outrasCategorias.length > 0 && <>; {outrasCategorias.map((c) => `${c.quantidade} ${c.nome}`).join(', ')}</>}.
-            </p>
+            </div>
+            <p className="text-xs text-muted-foreground">Vem do app; dá para corrigir aqui sem mexer no app. Os partos saem de seca + pré-parto, e as secagens voltam para lá.</p>
+            <div className="grid grid-cols-2 gap-x-3 gap-y-2">
+              <Campo rotulo="Lactantes" id="efetivo-lactante" dica={p.lactantesIniciais !== rebanho.lactantes ? `app: ${rebanho.lactantes}` : undefined}>
+                <CampoNumero id="efetivo-lactante" valor={p.lactantesIniciais} aoMudar={(n) => mudar({ lactantesIniciais: Math.round(n) })} />
+              </Campo>
+              {categorias.map((nome) => (
+                <Campo
+                  key={nome}
+                  rotulo={NOME_CATEGORIA[nome] ?? nome}
+                  id={`efetivo-${nome}`}
+                  dica={(p.efetivoInicial[nome] ?? 0) !== (rebanho.efetivo[nome] ?? 0) ? `app: ${rebanho.efetivo[nome] ?? 0}` : undefined}
+                >
+                  <CampoNumero
+                    id={`efetivo-${nome}`}
+                    valor={p.efetivoInicial[nome] ?? 0}
+                    aoMudar={(n) => mudar({ efetivoInicial: { ...p.efetivoInicial, [nome]: Math.round(n) } })}
+                  />
+                </Campo>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground tabular-nums">Total: {totalEfetivo} animais.</p>
             {rebanho.lactantesAcimaDe305 > 0 && (
               <p className="flex gap-2 rounded-md bg-accent px-2.5 py-2 text-xs text-muted-foreground">
                 <AlertTriangle className="mt-0.5 size-3.5 shrink-0 text-primary" aria-hidden />
@@ -105,11 +132,33 @@ export function ProjecaoPainel({ hoje, rebanho, salvos }: { hoje: string; rebanh
                 </span>
               </p>
             )}
-            <Campo rotulo="Lactantes hoje" id="lact">
-              <CampoNumero id="lact" valor={p.lactantesIniciais} aoMudar={(n) => mudar({ lactantesIniciais: Math.round(n) })} sufixo="cabras" />
-            </Campo>
+          </div>
+
+          <div className="painel flex flex-col gap-3">
+            <h2 className="font-sans text-sm font-semibold">Produção por cabra</h2>
+            <div className="flex flex-col gap-1.5 text-xs">
+              {rebanho.producaoRecente && (
+                <FonteMedia
+                  titulo={`Tanque — Produção Diária (${rebanho.producaoRecente.dias === 1 ? `dia ${diaMes(rebanho.producaoRecente.ate)}` : `${rebanho.producaoRecente.dias} dias até ${diaMes(rebanho.producaoRecente.ate)}`})`}
+                  detalhe={`${litros(rebanho.producaoRecente.litrosDia)}/dia ÷ ${animais(rebanho.producaoRecente.lactantesDia)} lactantes`}
+                  valor={rebanho.producaoRecente.media}
+                  ativa={Math.abs(p.mediaLitros - arred(rebanho.producaoRecente.media)) < 0.005}
+                  usar={() => usarMedia(rebanho.producaoRecente!.media)}
+                />
+              )}
+              {rebanho.mediaUltimoControle != null && rebanho.dataUltimoControle && (
+                <FonteMedia
+                  titulo={`Controle leiteiro de ${dataCurta(rebanho.dataUltimoControle)}`}
+                  detalhe={`${rebanho.lactantesMedidas} de ${rebanho.lactantes} lactantes medidas`}
+                  valor={rebanho.mediaUltimoControle}
+                  ativa={Math.abs(p.mediaLitros - arred(rebanho.mediaUltimoControle)) < 0.005}
+                  usar={() => usarMedia(rebanho.mediaUltimoControle!)}
+                />
+              )}
+              {!rebanho.producaoRecente && rebanho.mediaUltimoControle == null && <p className="text-muted-foreground">Sem Produção Diária nem controle leiteiro no app: informe a média.</p>}
+            </div>
             <div className="grid grid-cols-2 gap-3">
-              <Campo rotulo="Média delas" id="media">
+              <Campo rotulo="Média das lactantes" id="media">
                 <CampoNumero id="media" valor={p.mediaLitros} aoMudar={(n) => mudar({ mediaLitros: n })} sufixo="L/dia" max={20} />
               </Campo>
               <Campo rotulo="Média das que parirem" id="media-nova">
@@ -225,12 +274,22 @@ export function ProjecaoPainel({ hoje, rebanho, salvos }: { hoje: string; rebanh
                     <CampoNumero id={`max-${c.id}`} valor={c.maxSemanal} aoMudar={(n) => mudarComprador(i, { maxSemanal: n })} sufixo="L" />
                   </Campo>
                 </div>
+                <Campo rotulo="Destino na Saída de Leite do app" id={`destino-${c.id}`}>
+                  <Input
+                    key={c.destinosApp.join('|')}
+                    id={`destino-${c.id}`}
+                    defaultValue={c.destinosApp.join(', ')}
+                    onBlur={(e) => mudarComprador(i, { destinosApp: e.target.value.split(',').map((d) => d.trim()).filter(Boolean) })}
+                    placeholder="ex.: Leite Rose"
+                    className="h-8"
+                  />
+                </Campo>
               </div>
             ))}
             {p.compradores.length < COR_SERIES.length && (
               <button
                 type="button"
-                onClick={() => mudar({ compradores: [...p.compradores, { id: `c${Date.now()}`, nome: 'Novo comprador', diaColeta: 5, minSemanal: 0, maxSemanal: 0 }] })}
+                onClick={() => mudar({ compradores: [...p.compradores, { id: `c${Date.now()}`, nome: 'Novo comprador', diaColeta: 5, minSemanal: 0, maxSemanal: 0, destinosApp: [] }] })}
                 className="flex w-fit items-center gap-1.5 rounded-full px-3 py-1 text-sm text-primary hover:bg-accent"
               >
                 <Plus className="size-4" /> Comprador
@@ -269,12 +328,21 @@ export function ProjecaoPainel({ hoje, rebanho, salvos }: { hoje: string; rebanh
 
           <section className="painel overflow-x-auto">
             <h2 className="mb-1 font-sans text-sm font-semibold">Por mês — para o laticínio</h2>
-            <p className="mb-3 text-xs text-muted-foreground">O primeiro mês conta de hoje em diante.</p>
+            <p className="mb-3 text-xs text-muted-foreground">O primeiro mês conta de hoje em diante. Lactantes e secas são a média do mês.</p>
+            {semMae > 0.5 && (
+              <p className="mb-3 flex gap-2 rounded-md bg-accent px-2.5 py-2 text-xs text-muted-foreground">
+                <AlertTriangle className="mt-0.5 size-3.5 shrink-0 text-destructive" aria-hidden />
+                <span>
+                  Há <strong className="text-foreground">{animais(semMae)} partos previstos a mais</strong> do que secas + pré-parto no efetivo. Se forem primíparas (recria), está certo; senão, confira os partos ou o efetivo.
+                </span>
+              </p>
+            )}
             <table className="w-full min-w-[36rem] text-sm whitespace-nowrap tabular-nums">
               <thead className="text-xs text-muted-foreground">
                 <tr className="border-b border-border">
                   <th className="py-2 pr-3 text-left font-medium">Mês</th>
                   <th className="px-2 text-right font-medium">Lactantes</th>
+                  <th className="px-2 text-right font-medium">Secas + pré</th>
                   <th className="px-2 text-right font-medium">L/dia</th>
                   <th className="px-2 text-right font-medium">L no mês</th>
                   <th className="px-2 text-right font-medium">Partos</th>
@@ -290,6 +358,7 @@ export function ProjecaoPainel({ hoje, rebanho, salvos }: { hoje: string; rebanh
                       {m.dias < diasNoMes(m.mes) && <span className="ml-1 text-xs text-muted-foreground">({m.dias} dias)</span>}
                     </td>
                     <td className="px-2 text-right">{animais(m.lactantesMedias)}</td>
+                    <td className="px-2 text-right text-muted-foreground">{animais(m.secasEPrePartoMedias)}</td>
                     <td className="px-2 text-right">{litros(m.litrosDiaMedio)}</td>
                     <td className="px-2 text-right font-medium">{litros(m.litrosMes)}</td>
                     <td className="px-2 text-right">{m.partos ? animais(m.partos) : '—'}</td>
@@ -355,6 +424,44 @@ export function ProjecaoPainel({ hoje, rebanho, salvos }: { hoje: string; rebanh
   );
 }
 
+const NOME_CATEGORIA: Record<string, string> = {
+  'pre-parto': 'Pré-parto',
+  seca: 'Secas',
+  recriada: 'Recriadas',
+  recria: 'Recria',
+  reprodutor: 'Reprodutores',
+  cria: 'Crias',
+};
+const ORDEM_CATEGORIA = ['pre-parto', 'seca', 'recriada', 'recria', 'cria', 'reprodutor'];
+
+function ordenarCategorias(nomes: string[]): string[] {
+  const pos = (n: string) => (ORDEM_CATEGORIA.includes(n) ? ORDEM_CATEGORIA.indexOf(n) : ORDEM_CATEGORIA.length);
+  return [...nomes].sort((a, b) => pos(a) - pos(b) || a.localeCompare(b));
+}
+
+function arred(n: number): number {
+  return Math.round(n * 100) / 100;
+}
+
+function FonteMedia({ titulo, detalhe, valor, ativa, usar }: { titulo: string; detalhe: string; valor: number; ativa: boolean; usar: () => void }) {
+  return (
+    <div className={`flex items-center gap-2 rounded-md border px-2.5 py-1.5 ${ativa ? 'border-primary' : 'border-border'}`}>
+      <div className="flex-1">
+        <p className="text-foreground">{titulo}</p>
+        <p className="text-muted-foreground">{detalhe}</p>
+      </div>
+      <span className="font-semibold tabular-nums text-foreground">{media(valor)} L</span>
+      {ativa ? (
+        <span className="w-10 text-center text-muted-foreground">em uso</span>
+      ) : (
+        <button type="button" onClick={usar} className="w-10 rounded text-primary hover:underline">
+          usar
+        </button>
+      )}
+    </div>
+  );
+}
+
 function diasNoMes(aaaamm: string): number {
   const [a, m] = aaaamm.split('-').map(Number);
   return new Date(Date.UTC(a, m, 0)).getUTCDate();
@@ -373,11 +480,12 @@ function Tile({ rotulo, valor, detalhe, alerta = false }: { rotulo: string; valo
   );
 }
 
-function Campo({ rotulo, id, children }: { rotulo: string; id: string; children: React.ReactNode }) {
+function Campo({ rotulo, id, dica, children }: { rotulo: string; id: string; dica?: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-1">
-      <label htmlFor={id} className="text-xs text-muted-foreground">
-        {rotulo}
+      <label htmlFor={id} className="flex justify-between gap-2 text-xs text-muted-foreground">
+        <span>{rotulo}</span>
+        {dica && <span className="text-primary">{dica}</span>}
       </label>
       {children}
     </div>

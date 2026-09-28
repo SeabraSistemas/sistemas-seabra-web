@@ -24,7 +24,7 @@ export async function POST(request: Request) {
 
   // Normaliza contra os valores iniciais: o que chegar torto vira o padrão, nunca vai cru para o jsonb.
   const rebanho = await lerRebanho(hojeBrasilia());
-  const iniciais = parametrosIniciais(rebanho.ok ? rebanho.dados : { lactantes: 0, mediaUltimoControle: null });
+  const iniciais = parametrosIniciais(rebanho.ok ? rebanho.dados : { lactantes: 0, mediaInicial: null, efetivo: {} });
   const parametros = normalizarParametros(corpo, iniciais);
 
   const r = await salvarParametros(parametros, email);

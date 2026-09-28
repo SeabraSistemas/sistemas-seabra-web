@@ -23,6 +23,8 @@ export interface Comprador {
   diaColeta: number;
   minSemanal: number;
   maxSemanal: number;
+  /** Nomes de destino da Saída de Leite do app que são deste comprador (ex.: "Leite Rose"). */
+  destinosApp: string[];
 }
 
 /** Uma quantidade de animais numa data (partos ou secagens previstos). */
@@ -39,6 +41,13 @@ export interface Parametros {
   /** Em ordem de prioridade: o primeiro enche antes do segundo receber. */
   compradores: Comprador[];
   lactantesIniciais: number;
+  /**
+   * Efetivo das OUTRAS categorias no início (seca, pré-parto, recria…),
+   * editável. Seca + pré-parto é de onde saem os partos e para onde vão as
+   * secagens — a projeção acompanha esse estoque para mostrar o rebanho
+   * mudando e avisar quando se prevê mais partos do que cabras para parir.
+   */
+  efetivoInicial: Record<string, number>;
   /** L/cabra/dia das lactantes de hoje. */
   mediaLitros: number;
   /** L/cabra/dia de quem pare dentro da projeção. */
@@ -70,6 +79,10 @@ export interface SemanaProjetada {
   partos: number;
   secagens: number;
   lactantes: number;
+  /** Secas + pré-parto: as adultas fora da ordenha. */
+  secasEPreParto: number;
+  /** Partos previstos acima das secas + pré-parto disponíveis (conta furada). */
+  partosSemMae: number;
   litrosDia: number;
   litrosSemana: number;
   entregas: Entrega[];
@@ -86,6 +99,7 @@ export interface MesProjetado {
   partos: number;
   secagens: number;
   lactantesMedias: number;
+  secasEPrePartoMedias: number;
   litrosDiaMedio: number;
   litrosMes: number;
   vendido: number;
@@ -103,6 +117,8 @@ export interface Projecao {
 
 export const HORIZONTE_MIN = 1;
 export const HORIZONTE_MAX = 12;
+/** Categorias do app de onde saem os partos e para onde vão as secagens. */
+export const CATEGORIAS_FORA_DA_ORDENHA = ['seca', 'pre-parto'];
 
 function limitar(n: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, n));
@@ -162,11 +178,14 @@ export function projetar(p: Parametros, hoje: string, partosDoApp: Previsao[] = 
   const partosPorIndice: number[] = [];
   let base = positivo(p.lactantesIniciais); // as lactantes de hoje
   let novas = 0; // quem pariu dentro da projeção
+  let foraDaOrdenha = CATEGORIAS_FORA_DA_ORDENHA.reduce((t, c) => t + positivo(p.efetivoInicial?.[c]), 0);
 
   for (let i = 0, semana = inicio; semana < fim; i++, semana = somarDias(semana, 7)) {
     const partos = (partosManuais.get(semana) ?? 0) + (partosCobertura.get(semana) ?? 0) + (partosApp.get(semana) ?? 0);
     partosPorIndice.push(partos);
     novas += partos;
+    const partosSemMae = Math.max(0, partos - foraDaOrdenha);
+    foraDaOrdenha = Math.max(0, foraDaOrdenha - partos);
 
     // Secagem manual tira primeiro das lactantes de hoje (as mais adiantadas);
     // se pedir mais do que elas, o resto sai das recém-paridas.
@@ -183,6 +202,7 @@ export function projetar(p: Parametros, hoje: string, partosDoApp: Previsao[] = 
       novas -= secaAgora;
       secagens += secaAgora;
     }
+    foraDaOrdenha += secagens;
 
     const ultimoDia = somarDias(semana, 6);
     const fimSemana = ultimoDia < fim ? ultimoDia : somarDias(fim, -1);
@@ -200,6 +220,8 @@ export function projetar(p: Parametros, hoje: string, partosDoApp: Previsao[] = 
       partos,
       secagens,
       lactantes: base + novas,
+      secasEPreParto: foraDaOrdenha,
+      partosSemMae,
       litrosDia,
       litrosSemana,
       entregas,
@@ -225,7 +247,7 @@ export function projetar(p: Parametros, hoje: string, partosDoApp: Previsao[] = 
  * frente".
  */
 function agruparPorMes(semanas: SemanaProjetada[], hoje: string): MesProjetado[] {
-  const meses = new Map<string, MesProjetado & { somaLactantes: number }>();
+  const meses = new Map<string, MesProjetado & { somaLactantes: number; somaFora: number }>();
   for (const s of semanas) {
     for (let d = 0; d < s.dias; d++) {
       const dia = somarDias(s.inicio, d);
@@ -233,11 +255,12 @@ function agruparPorMes(semanas: SemanaProjetada[], hoje: string): MesProjetado[]
       const chave = mesDe(dia);
       let m = meses.get(chave);
       if (!m) {
-        m = { mes: chave, dias: 0, partos: 0, secagens: 0, lactantesMedias: 0, litrosDiaMedio: 0, litrosMes: 0, vendido: 0, excedente: 0, somaLactantes: 0 };
+        m = { mes: chave, dias: 0, partos: 0, secagens: 0, lactantesMedias: 0, secasEPrePartoMedias: 0, litrosDiaMedio: 0, litrosMes: 0, vendido: 0, excedente: 0, somaLactantes: 0, somaFora: 0 };
         meses.set(chave, m);
       }
       m.dias++;
       m.somaLactantes += s.lactantes;
+      m.somaFora += s.secasEPreParto;
       m.litrosMes += s.litrosDia;
       m.vendido += s.vendido / s.dias;
       m.excedente += s.excedente / s.dias;
@@ -249,31 +272,37 @@ function agruparPorMes(semanas: SemanaProjetada[], hoje: string): MesProjetado[]
       m.secagens += s.secagens;
     }
   }
-  return [...meses.values()].map(({ somaLactantes, ...m }) => ({
+  return [...meses.values()].map(({ somaLactantes, somaFora, ...m }) => ({
     ...m,
     lactantesMedias: somaLactantes / m.dias,
+    secasEPrePartoMedias: somaFora / m.dias,
     litrosDiaMedio: m.litrosMes / m.dias,
   }));
 }
 
 export interface DadosDoApp {
   lactantes: number;
-  /** Média do último controle leiteiro, L/cabra/dia. null se nunca houve controle. */
-  mediaUltimoControle: number | null;
+  /** Média inicial em L/cabra/dia (Produção Diária, ou o controle leiteiro na falta dela). null = sem nenhuma. */
+  mediaInicial: number | null;
+  /** Efetivo ativo por categoria do app (nome da categoria → cabeças). */
+  efetivo: Record<string, number>;
 }
 
 /** Ponto de partida quando a fazenda ainda não salvou parâmetros. */
 export function parametrosIniciais(app: DadosDoApp): Parametros {
-  const media = app.mediaUltimoControle != null ? Math.round(app.mediaUltimoControle * 100) / 100 : 2.7;
+  const media = app.mediaInicial != null ? Math.round(app.mediaInicial * 100) / 100 : 2.7;
+  const efetivoInicial = Object.fromEntries(Object.entries(app.efetivo).filter(([nome]) => nome !== 'lactante'));
   return {
     versao: 1,
     horizonteMeses: 12,
     tetoSemanal: 1300,
     compradores: [
-      { id: 'rose', nome: 'Rose', diaColeta: 2, minSemanal: 600, maxSemanal: 800 },
-      { id: 'marina', nome: 'Marina', diaColeta: 4, minSemanal: 100, maxSemanal: 500 },
+      { id: 'rose', nome: 'Rose', diaColeta: 2, minSemanal: 600, maxSemanal: 800, destinosApp: ['Leite Rose'] },
+      // A Marina é do Capril Chaparral: no app do Lucas a saída dela é "Leite Chaparral".
+      { id: 'marina', nome: 'Marina', diaColeta: 4, minSemanal: 100, maxSemanal: 500, destinosApp: ['Leite Chaparral'] },
     ],
     lactantesIniciais: app.lactantes,
+    efetivoInicial,
     mediaLitros: media,
     mediaRecemParida: media,
     diasLactacaoNovas: 300,
@@ -305,6 +334,11 @@ export function normalizarParametros(bruto: unknown, iniciais: Parametros): Para
           .filter((x): x is Previsao => !!x && typeof x === 'object' && typeof (x as Previsao).data === 'string' && /^\d{4}-\d{2}-\d{2}$/.test((x as Previsao).data))
           .map((x) => ({ data: x.data, quantidade: num(x.quantidade, 0) }))
       : padrao;
+  const efetivo = (v: unknown): Record<string, number> =>
+    v && typeof v === 'object' && !Array.isArray(v)
+      ? Object.fromEntries(Object.entries(v as Record<string, unknown>).map(([k, n]) => [k, Math.max(0, num(n, 0))]))
+      : iniciais.efetivoInicial;
+  const padraoComprador = new Map(iniciais.compradores.map((c) => [c.id, c]));
   const compradores = Array.isArray(b.compradores)
     ? (b.compradores as Comprador[])
         .filter((c) => c && typeof c.id === 'string' && typeof c.nome === 'string')
@@ -314,6 +348,9 @@ export function normalizarParametros(bruto: unknown, iniciais: Parametros): Para
           diaColeta: limitar(Math.round(num(c.diaColeta, 2)), 0, 6),
           minSemanal: num(c.minSemanal, 0),
           maxSemanal: num(c.maxSemanal, 0),
+          destinosApp: Array.isArray(c.destinosApp)
+            ? c.destinosApp.filter((d): d is string => typeof d === 'string')
+            : (padraoComprador.get(c.id)?.destinosApp ?? []),
         }))
     : iniciais.compradores;
 
@@ -323,6 +360,7 @@ export function normalizarParametros(bruto: unknown, iniciais: Parametros): Para
     tetoSemanal: num(b.tetoSemanal, iniciais.tetoSemanal),
     compradores,
     lactantesIniciais: num(b.lactantesIniciais, iniciais.lactantesIniciais),
+    efetivoInicial: efetivo(b.efetivoInicial),
     mediaLitros: num(b.mediaLitros, iniciais.mediaLitros),
     mediaRecemParida: num(b.mediaRecemParida, iniciais.mediaRecemParida),
     diasLactacaoNovas: b.diasLactacaoNovas === null ? null : num(b.diasLactacaoNovas, iniciais.diasLactacaoNovas ?? 300),

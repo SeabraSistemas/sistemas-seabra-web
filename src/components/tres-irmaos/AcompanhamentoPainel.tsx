@@ -8,8 +8,8 @@ import { Input } from '@/components/ui/input';
 import { CampoNumero } from '@/components/tres-irmaos/CampoNumero';
 import { COR_EXCEDENTE, COR_SERIES, GraficoSemanal } from '@/components/tres-irmaos/GraficoSemanal';
 import { DIAS_SEMANA, litros } from '@/components/tres-irmaos/formato';
-import { agruparPorSemana, type Lancamento, type SemanaRealizada } from '@/lib/tres-irmaos/acompanhamento';
-import type { RebanhoDoApp } from '@/lib/tres-irmaos/dados';
+import { agruparPorSemana, lancamentosDoApp, type Lancamento, type SemanaRealizada } from '@/lib/tres-irmaos/acompanhamento';
+import type { DoApp, RebanhoDoApp } from '@/lib/tres-irmaos/dados';
 import { dataCurta, diaMes, inicioDaSemana, somarDias } from '@/lib/tres-irmaos/datas';
 import type { Parametros } from '@/lib/tres-irmaos/projecao';
 
@@ -20,11 +20,13 @@ export function AcompanhamentoPainel({
   rebanho,
   parametros,
   lancamentos: iniciais,
+  doApp,
 }: {
   hoje: string;
   rebanho: RebanhoDoApp;
   parametros: Parametros;
   lancamentos: Lancamento[];
+  doApp: DoApp;
 }) {
   const router = useRouter();
   const { compradores, tetoSemanal } = parametros;
@@ -37,20 +39,31 @@ export function AcompanhamentoPainel({
   const [erro, setErro] = useState<string | null>(null);
   const [aberta, setAberta] = useState<string | null>(null);
 
-  const semanas = useMemo(() => agruparPorSemana(lancamentos, compradores, tetoSemanal), [lancamentos, compradores, tetoSemanal]);
+  const doAppComoLancamentos = useMemo(() => lancamentosDoApp(doApp.producoes, doApp.saidas, compradores), [doApp, compradores]);
+  const todos = useMemo(() => [...doAppComoLancamentos, ...lancamentos], [doAppComoLancamentos, lancamentos]);
+  const semanas = useMemo(() => agruparPorSemana(todos, compradores, tetoSemanal), [todos, compradores, tetoSemanal]);
+  const temOutros = semanas.some((s) => s.coletasOutros > 0);
+  const ultimaProducao = doApp.producoes.at(-1)?.data ?? null;
+  const ultimaSaida = doApp.saidas.at(-1)?.data ?? null;
   const semanaAtual = inicioDaSemana(hoje);
   const atual = semanas.find((s) => s.inicio === semanaAtual) ?? semanaVazia(semanaAtual, compradores.map((c) => c.id));
   const nomeDe = (id: string | null) => compradores.find((c) => c.id === id)?.nome ?? id ?? '';
 
-  const linhasGrafico = [...semanas]
-    .reverse()
-    .slice(-16)
-    .map((s) => {
-      const linha: Record<string, number | string> = { inicio: s.inicio };
-      s.coletas.forEach((c) => (linha[c.compradorId] = Math.round(c.litros)));
-      linha.saldo = Math.max(0, Math.round(s.saldo));
-      return linha;
-    });
+  // Últimas 16 semanas, com as semanas sem nada lançado aparecendo vazias —
+  // pular a semana esconderia justamente o buraco nos lançamentos.
+  const porInicio = new Map(semanas.map((s) => [s.inicio, s]));
+  const linhasGrafico: Array<Record<string, number | string>> = [];
+  if (semanas.length) {
+    const primeira = semanas[semanas.length - 1].inicio;
+    for (let i = 15, inicio = somarDias(semanaAtual, -7 * 15); i >= 0; i--, inicio = somarDias(inicio, 7)) {
+      if (inicio < primeira) continue;
+      const s = porInicio.get(inicio);
+      const linha: Record<string, number | string> = { inicio };
+      compradores.forEach((c) => (linha[c.id] = Math.round(s?.coletas.find((x) => x.compradorId === c.id)?.litros ?? 0)));
+      linha.saldo = Math.max(0, Math.round(s?.saldo ?? 0));
+      linhasGrafico.push(linha);
+    }
+  }
 
   async function lancar(e: React.FormEvent) {
     e.preventDefault();
@@ -99,6 +112,10 @@ export function AcompanhamentoPainel({
         <p className="text-sm text-muted-foreground">
           O que o tanque produziu e o que cada comprador levou, de terça a segunda. Teto de venda: {litros(tetoSemanal)} por semana. {compradores.map((c) => `${c.nome}: ${DIAS_SEMANA[c.diaColeta]}, até ${litros(c.maxSemanal)}`).join(' · ')}.
         </p>
+        <p className="text-sm text-muted-foreground">
+          A <strong className="text-foreground">Produção Diária</strong> e a <strong className="text-foreground">Saída de Leite</strong> lançadas no app aparecem aqui sozinhas
+          {' '}(última produção: {ultimaProducao ? dataCurta(ultimaProducao) : 'nenhuma'}; última saída: {ultimaSaida ? dataCurta(ultimaSaida) : 'nenhuma'}).
+        </p>
       </header>
 
       <section className="painel flex flex-col gap-3">
@@ -119,8 +136,9 @@ export function AcompanhamentoPainel({
       </section>
 
       <div className="grid gap-6 lg:grid-cols-[22rem_1fr]">
-        <form onSubmit={lancar} className="painel flex h-fit flex-col gap-3">
-          <h2 className="font-sans text-sm font-semibold">Lançar</h2>
+        <form onSubmit={lancar} className="painel order-2 flex h-fit flex-col gap-3 lg:order-1">
+          <h2 className="font-sans text-sm font-semibold">Lançar aqui</h2>
+          <p className="text-xs text-muted-foreground">Só o que não foi lançado no app — o que está lá já entra na conta.</p>
           <fieldset className="flex flex-col gap-1.5">
             <legend className="mb-1 text-xs text-muted-foreground">O quê</legend>
             <Opcao nome="tipo" valor="producao" atual={tipo} aoEscolher={setTipo} rotulo="Produção do tanque" ajuda="do dia, ou o total de vários dias" />
@@ -154,7 +172,7 @@ export function AcompanhamentoPainel({
           </Button>
         </form>
 
-        <div className="flex min-w-0 flex-col gap-6">
+        <div className="order-1 flex min-w-0 flex-col gap-6 lg:order-2">
           <section className="painel">
             <h2 className="mb-3 font-sans text-sm font-semibold">Vendido por semana (últimas 16)</h2>
             <GraficoSemanal
@@ -171,7 +189,7 @@ export function AcompanhamentoPainel({
           <section className="painel overflow-x-auto">
             <h2 className="mb-3 font-sans text-sm font-semibold">Semanas</h2>
             {semanas.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Nenhum lançamento ainda. Comece pela produção do tanque e pelas coletas desta semana.</p>
+              <p className="text-sm text-muted-foreground">Nada lançado ainda, nem no app nem aqui.</p>
             ) : (
               <table className="w-full min-w-[36rem] text-sm whitespace-nowrap tabular-nums">
                 <thead className="text-xs text-muted-foreground">
@@ -183,6 +201,7 @@ export function AcompanhamentoPainel({
                         {c.nome}
                       </th>
                     ))}
+                    {temOutros && <th className="px-2 text-right font-medium">Outros destinos</th>}
                     <th className="px-2 text-right font-medium">Vendido</th>
                     <th className="pl-2 text-right font-medium">Não vendido</th>
                   </tr>
@@ -195,8 +214,9 @@ export function AcompanhamentoPainel({
                       teto={tetoSemanal}
                       aberta={aberta === s.inicio}
                       alternar={() => setAberta((a) => (a === s.inicio ? null : s.inicio))}
-                      lancamentos={lancamentos.filter((l) => inicioDaSemana(l.data) === s.inicio)}
-                      colunas={compradores.length + 4}
+                      lancamentos={todos.filter((l) => inicioDaSemana(l.data) === s.inicio).sort((a, b) => (a.data < b.data ? -1 : a.data > b.data ? 1 : 0))}
+                      colunas={compradores.length + 4 + (temOutros ? 1 : 0)}
+                      temOutros={temOutros}
                       nomeDe={nomeDe}
                       apagar={apagar}
                     />
@@ -219,6 +239,7 @@ function semanaVazia(inicio: string, ids: string[]): SemanaRealizada {
     diasComProducao: 0,
     coletas: ids.map((compradorId) => ({ compradorId, litros: 0, abaixoDoMinimo: true, acimaDoMaximo: false })),
     coletasOutros: 0,
+    destinosOutros: [],
     vendido: 0,
     saldo: 0,
     vendidoAcimaDoTeto: 0,
@@ -233,6 +254,7 @@ function LinhaSemana({
   alternar,
   lancamentos,
   colunas,
+  temOutros,
   nomeDe,
   apagar,
 }: {
@@ -242,6 +264,7 @@ function LinhaSemana({
   alternar: () => void;
   lancamentos: Lancamento[];
   colunas: number;
+  temOutros: boolean;
   nomeDe: (id: string | null) => string;
   apagar: (l: Lancamento) => void;
 }) {
@@ -253,18 +276,28 @@ function LinhaSemana({
             {aberta ? '▾' : '▸'} {diaMes(s.inicio)}–{diaMes(s.fim)}
           </button>
         </td>
-        <td className={`px-2 text-right ${s.producaoAcimaDoTeto > 0 ? 'text-destructive' : ''}`}>{s.producao ? litros(s.producao) : '—'}</td>
+        <td className={`px-2 text-right ${s.producaoAcimaDoTeto > 0 ? 'text-destructive' : ''}`}>
+          {s.producao ? litros(s.producao) : '—'}
+          {s.producao > 0 && s.diasComProducao < 7 && <span className="ml-1 text-xs text-muted-foreground" title="dias com produção lançada">{s.diasComProducao}/7d</span>}
+        </td>
         {s.coletas.map((c) => (
           <td key={c.compradorId} className={`px-2 text-right ${c.acimaDoMaximo ? 'text-destructive' : ''}`}>
             {c.litros ? litros(c.litros) : '—'}
             {c.litros > 0 && c.abaixoDoMinimo && <span className="ml-1 text-xs text-primary" title="abaixo do mínimo combinado">↓mín</span>}
           </td>
         ))}
+        {temOutros && (
+          <td className="px-2 text-right text-muted-foreground" title={s.destinosOutros.join(', ')}>
+            {s.coletasOutros ? litros(s.coletasOutros) : '—'}
+          </td>
+        )}
         <td className={`px-2 text-right font-medium ${s.vendido > teto ? 'text-destructive' : ''}`}>
           {s.vendido > teto && <AlertTriangle className="mr-1 inline size-3.5" aria-label="acima do teto" />}
           {litros(s.vendido)}
         </td>
-        <td className={`pl-2 text-right ${s.saldo > 0.5 ? '' : 'text-muted-foreground'}`}>{s.producao ? litros(s.saldo) : '—'}</td>
+        <td className={`pl-2 text-right ${s.saldo > 0.5 ? '' : 'text-muted-foreground'}`} title={s.saldo < 0 ? 'vendeu mais do que a produção lançada: faltam dias de produção no app' : undefined}>
+          {s.producao && s.saldo >= 0 ? litros(s.saldo) : s.producao ? 'faltam dias' : '—'}
+        </td>
       </tr>
       {aberta && (
         <tr className="border-b border-border/60 bg-accent/40">
@@ -274,14 +307,19 @@ function LinhaSemana({
                 <li key={l.id} className="flex items-center gap-3">
                   <span className="w-12 tabular-nums text-muted-foreground">{diaMes(l.data)}</span>
                   <span className="flex-1">
+                    <span className={`mr-1.5 rounded px-1 py-px text-[10px] uppercase ${l.origem === 'app' ? 'bg-accent text-muted-foreground' : 'bg-primary/20 text-primary'}`}>{l.origem}</span>
                     {l.tipo === 'producao' ? 'Produção' : `Coleta · ${nomeDe(l.comprador)}`}
                     {l.observacao && <span className="text-muted-foreground"> — {l.observacao}</span>}
                   </span>
                   <span className="tabular-nums">{litros(l.litros)}</span>
                   <span className="hidden text-muted-foreground sm:inline">{l.criado_por?.split('@')[0]}</span>
-                  <button type="button" onClick={() => apagar(l)} className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground" aria-label="Apagar lançamento">
-                    <Trash2 className="size-3.5" />
-                  </button>
+                  {l.origem === 'site' ? (
+                    <button type="button" onClick={() => apagar(l)} className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground" aria-label="Apagar lançamento">
+                      <Trash2 className="size-3.5" />
+                    </button>
+                  ) : (
+                    <span className="w-[1.375rem]" title="lançado no app — corrija no app" />
+                  )}
                 </li>
               ))}
             </ul>
