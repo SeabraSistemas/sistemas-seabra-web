@@ -1,6 +1,6 @@
 import 'server-only';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
-import type { Lancamento, ProducaoDoApp, SaidaDoApp } from '@/lib/tres-irmaos/acompanhamento';
+import type { ProducaoDoApp, SaidaDoApp } from '@/lib/tres-irmaos/acompanhamento';
 import { PROPRIEDADE_ID } from '@/lib/tres-irmaos/config';
 import { diasEntre, somarDias } from '@/lib/tres-irmaos/datas';
 import {
@@ -17,7 +17,8 @@ import {
  * em src/lib/adm/supabase-admin.ts). Ela ignora a RLS, então a trava é este
  * módulo: TODA query filtra por PROPRIEDADE_ID, fixo no código, e nenhuma
  * recebe propriedade de fora. As tabelas leite_* têm RLS ligada e nenhuma
- * policy — só este caminho as alcança.
+ * policy — só este caminho as alcança. Do app, só LÊ (rebanho, Produção
+ * Diária, Saída de Leite); a única escrita é a dos parâmetros da projeção.
  *
  * Nunca lança: sem env ou com erro, devolve { ok: false } e a página mostra
  * o motivo em vez de um 500.
@@ -135,7 +136,10 @@ export async function lerRebanho(hoje: string): Promise<Resultado<RebanhoDoApp>>
     // Contar a partir de hoje misturaria dias antigos quando o produtor pula
     // lançamentos — em 28/09 o Lucas tinha 28/09 (67 cabras) e depois só
     // 29–31/08 (44 cabras), e a média saía de dois rebanhos diferentes.
-    const producoes = (await lerProducoesDiarias(somarDias(hoje, -30))).filter((p) => p.lactantes && p.lactantes > 0 && p.data <= hoje);
+    // Só dias com as DUAS ordenhas: um dia só com a manhã lançada puxaria a média para baixo.
+    const producoes = (await lerProducoesDiarias(somarDias(hoje, -30)))
+      .filter((p) => p.lactantes && p.lactantes > 0 && p.data <= hoje && p.litros1 != null && p.litros2 != null)
+      .map((p) => ({ data: p.data, lactantes: p.lactantes!, litros: p.litros1! + p.litros2! }));
     const ultimoDia = producoes.at(-1)?.data;
     const recentes = ultimoDia ? producoes.filter((p) => p.data > somarDias(ultimoDia, -7)) : [];
     const producaoRecente: ProducaoRecente | null = recentes.length
@@ -144,8 +148,8 @@ export async function lerRebanho(hoje: string): Promise<Resultado<RebanhoDoApp>>
           de: recentes[0].data,
           ate: recentes[recentes.length - 1].data,
           litrosDia: recentes.reduce((t, p) => t + p.litros, 0) / recentes.length,
-          lactantesDia: recentes.reduce((t, p) => t + (p.lactantes ?? 0), 0) / recentes.length,
-          media: recentes.reduce((t, p) => t + p.litros, 0) / recentes.reduce((t, p) => t + (p.lactantes ?? 0), 0),
+          lactantesDia: recentes.reduce((t, p) => t + p.lactantes, 0) / recentes.length,
+          media: recentes.reduce((t, p) => t + p.litros, 0) / recentes.reduce((t, p) => t + p.lactantes, 0),
         }
       : null;
 
@@ -218,16 +222,18 @@ export async function salvarParametros(parametros: Parametros, email: string): P
 }
 
 interface LinhaProducao {
-  id: number;
   data_producao: string;
   total_lactantes: number | null;
-  total_producao: number | null;
+  litros_1_ordenha: number | null;
+  litros_2_ordenha: number | null;
 }
 
 /**
- * Produção Diária do app, do dia `desde` em diante (null = tudo). O total do
- * dia é `total_producao`, que um gatilho do banco mantém = 1ª + 2ª ordenha +
- * extras — o mesmo número que o app mostra. Só o segmento leiteiro caprino.
+ * Produção Diária do app, do dia `desde` em diante (null = tudo), com as
+ * duas ordenhas separadas — o acompanhamento precisa saber a manhã e a
+ * tarde, porque os compradores recolhem depois da 1ª ordenha. Ordenha não
+ * lançada vem null (dia com modo 'ordenha_1' só tem a manhã). Só o
+ * segmento leiteiro caprino.
  */
 async function lerProducoesDiarias(desde: string | null): Promise<ProducaoDoApp[]> {
   const s = supa();
@@ -235,23 +241,24 @@ async function lerProducoesDiarias(desde: string | null): Promise<ProducaoDoApp[
   const linhas = await paginado<LinhaProducao>((de, ate) => {
     let q = s
       .from('producao_diaria')
-      .select('id, data_producao, total_lactantes, total_producao')
+      .select('data_producao, total_lactantes, litros_1_ordenha, litros_2_ordenha')
       .eq('propriedade_id', PROPRIEDADE_ID)
       .or('segmento.is.null,segmento.eq.caprino_leiteiro');
     if (desde) q = q.gte('data_producao', desde);
     return q.order('data_producao').order('id').range(de, ate);
   });
-  return linhas
-    .filter((l) => Number(l.total_producao) > 0)
-    .map((l) => ({ id: l.id, data: l.data_producao, lactantes: l.total_lactantes, litros: Number(l.total_producao) }));
+  return linhas.map((l) => ({
+    data: l.data_producao,
+    lactantes: l.total_lactantes,
+    litros1: l.litros_1_ordenha == null ? null : Number(l.litros_1_ordenha),
+    litros2: l.litros_2_ordenha == null ? null : Number(l.litros_2_ordenha),
+  }));
 }
 
 interface LinhaSaida {
-  id: number;
   data_saida: string;
   litros: number | null;
   destino: string[] | null;
-  observacao: string | null;
 }
 
 export interface DoApp {
@@ -259,7 +266,7 @@ export interface DoApp {
   saidas: SaidaDoApp[];
 }
 
-/** O que o Lucas já lança no app: Produção Diária e Saída de Leite. Só leitura. */
+/** O que o produtor lança no app: Produção Diária e Saída de Leite. Só leitura. */
 export async function lerDoApp(): Promise<Resultado<DoApp>> {
   const s = supa();
   if (!s) return { ok: false, erro: SEM_CONFIG };
@@ -269,7 +276,7 @@ export async function lerDoApp(): Promise<Resultado<DoApp>> {
       paginado<LinhaSaida>((de, ate) =>
         s
           .from('saida_leite')
-          .select('id, data_saida, litros, destino, observacao')
+          .select('data_saida, litros, destino')
           .eq('propriedade_id', PROPRIEDADE_ID)
           .or('segmento.is.null,segmento.eq.caprino_leiteiro')
           .order('data_saida')
@@ -283,70 +290,11 @@ export async function lerDoApp(): Promise<Resultado<DoApp>> {
         producoes,
         saidas: saidas
           .filter((x) => Number(x.litros) > 0 && x.data_saida)
-          .map((x) => ({ id: x.id, data: x.data_saida, litros: Number(x.litros), destinos: x.destino ?? [], observacao: x.observacao })),
+          .map((x) => ({ data: x.data_saida, litros: Number(x.litros), destinos: x.destino ?? [] })),
       },
     };
   } catch (e) {
     console.error('[3irmaos] lerDoApp', e);
     return { ok: false, erro: 'Não foi possível ler a Produção Diária e as saídas de leite do app.' };
   }
-}
-
-export async function lerLancamentos(): Promise<Resultado<Lancamento[]>> {
-  const s = supa();
-  if (!s) return { ok: false, erro: SEM_CONFIG };
-  try {
-    const linhas = await paginado<Omit<Lancamento, 'origem'>>((de, ate) =>
-      s
-        .from('leite_acompanhamento')
-        .select('id, data, tipo, comprador, litros, observacao, criado_por')
-        .eq('propriedade_id', PROPRIEDADE_ID)
-        .order('data', { ascending: false })
-        .order('id', { ascending: false })
-        .range(de, ate),
-    );
-    return { ok: true, dados: linhas.map((l) => ({ ...l, origem: 'site' as const, litros: Number(l.litros) })) };
-  } catch (e) {
-    console.error('[3irmaos] lerLancamentos', e);
-    return { ok: false, erro: 'Não foi possível ler os lançamentos.' };
-  }
-}
-
-export interface NovoLancamento {
-  data: string;
-  tipo: 'producao' | 'coleta';
-  comprador: string | null;
-  litros: number;
-  observacao: string | null;
-}
-
-export async function gravarLancamento(l: NovoLancamento, email: string): Promise<Resultado<Lancamento>> {
-  const s = supa();
-  if (!s) return { ok: false, erro: SEM_CONFIG };
-  const { data, error } = await s
-    .from('leite_acompanhamento')
-    .insert({ ...l, propriedade_id: PROPRIEDADE_ID, criado_por: email })
-    .select('id, data, tipo, comprador, litros, observacao, criado_por')
-    .single();
-  if (error || !data) {
-    console.error('[3irmaos] gravarLancamento', error);
-    return { ok: false, erro: 'Não foi possível gravar.' };
-  }
-  return { ok: true, dados: { ...data, origem: 'site', litros: Number(data.litros) } };
-}
-
-export async function apagarLancamento(id: number): Promise<Resultado<null>> {
-  const s = supa();
-  if (!s) return { ok: false, erro: SEM_CONFIG };
-  const { error, count } = await s
-    .from('leite_acompanhamento')
-    .delete({ count: 'exact' })
-    .eq('id', id)
-    .eq('propriedade_id', PROPRIEDADE_ID);
-  if (error) {
-    console.error('[3irmaos] apagarLancamento', error);
-    return { ok: false, erro: 'Não foi possível apagar.' };
-  }
-  if (!count) return { ok: false, erro: 'Lançamento não encontrado.' };
-  return { ok: true, dados: null };
 }

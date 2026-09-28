@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import { describe, test } from 'node:test';
 
-import { agruparPorSemana, compradorDaSaida, lancamentosDoApp, type Lancamento } from '@/lib/tres-irmaos/acompanhamento';
-import { inicioDaSemana, somarMeses } from '@/lib/tres-irmaos/datas';
+import { agruparColetas, compradorDaSaida, montarColetas, ordenhasDoApp, type ProducaoDoApp } from '@/lib/tres-irmaos/acompanhamento';
+import { inicioDaSemana, somarDias, somarMeses } from '@/lib/tres-irmaos/datas';
 import { distribuir, normalizarParametros, parametrosIniciais, projetar, type Parametros } from '@/lib/tres-irmaos/projecao';
 
 // Terça-feira: a semana de fornecimento começa nela.
@@ -216,77 +216,90 @@ describe('normalizarParametros', () => {
   });
 });
 
-describe('acompanhamento', () => {
+describe('acompanhamento por coleta (depois da 1ª ordenha)', () => {
   const compradores = parametrosIniciais({ lactantes: 0, mediaInicial: null, efetivo: {} }).compradores;
-  let id = 0;
-  const l = (data: string, tipo: Lancamento['tipo'], litros: number, comprador: string | null = null): Lancamento => ({
-    id: ++id,
-    origem: 'site',
-    data,
-    tipo,
-    comprador,
-    litros,
-    observacao: null,
-    criado_por: null,
+
+  /** Dias com manhã e tarde lançadas, de `de` a `ate`. */
+  function dias(de: string, ate: string, manha = 100, tarde = 60): ProducaoDoApp[] {
+    const out: ProducaoDoApp[] = [];
+    for (let d = de; d <= ate; d = somarDias(d, 1)) out.push({ data: d, lactantes: 67, litros1: manha, litros2: tarde });
+    return out;
+  }
+
+  test('Rose (terça) leva da tarde de quinta à manhã de terça; Marina (quinta), da tarde de terça à manhã de quinta', () => {
+    // 24/09 é quinta; 29/09 terça; 01/10 quinta.
+    const coletas = montarColetas(ordenhasDoApp(dias('2026-09-24', '2026-10-01')), [], compradores, 1300, '2026-10-05');
+    const rose = coletas.find((c) => c.compradorId === 'rose' && c.data === '2026-09-29')!;
+    assert.deepEqual(rose.desde, { data: '2026-09-24', turno: 2 });
+    assert.equal(rose.ordenhasEsperadas, 10);
+    assert.equal(rose.ordenhasLancadas, 10);
+    assert.equal(rose.produzido, 60 + 4 * 160 + 100); // 800
+    const marina = coletas.find((c) => c.compradorId === 'marina' && c.data === '2026-10-01')!;
+    assert.deepEqual(marina.desde, { data: '2026-09-29', turno: 2 });
+    assert.equal(marina.ordenhasEsperadas, 4);
+    assert.equal(marina.produzido, 60 + 160 + 100);
   });
 
-  test('soma produção e coletas na semana de terça a segunda, mais recente primeiro', () => {
-    const semanas = agruparPorSemana(
-      [
-        l('2026-09-29', 'coleta', 800, 'rose'),
-        l('2026-10-01', 'coleta', 450, 'marina'),
-        l('2026-09-29', 'producao', 180),
-        l('2026-10-05', 'producao', 190), // segunda: ainda é a semana de 29/09
-        l('2026-10-06', 'producao', 200), // terça: semana nova
-      ],
-      compradores,
-      1300,
-    );
-    assert.equal(semanas.length, 2);
-    assert.equal(semanas[0].inicio, '2026-10-06');
-    const s = semanas[1];
-    assert.equal(s.producao, 370);
-    assert.equal(s.diasComProducao, 2);
-    assert.equal(s.vendido, 1250);
-    assert.equal(s.vendidoAcimaDoTeto, 0);
+  test('o que passa do máximo da Rose fica no tanque e vai para a Marina', () => {
+    const coletas = montarColetas(ordenhasDoApp(dias('2026-09-24', '2026-10-01', 110, 60)), [], compradores, 1300, '2026-10-05');
+    const rose = coletas.find((c) => c.data === '2026-09-29')!;
+    assert.equal(rose.produzido, 60 + 4 * 170 + 110); // 850
+    assert.equal(rose.leva, 800);
+    assert.equal(rose.sobra, 50);
+    assert.equal(rose.acimaDoMaximo, 50);
+    const marina = coletas.find((c) => c.data === '2026-10-01')!;
+    assert.equal(marina.sobraAnterior, 50);
+    assert.equal(marina.tanque, 50 + 60 + 170 + 110);
+    assert.equal(marina.leva, 390);
   });
 
-  test('marca acima do teto e fora do combinado', () => {
-    const [s] = agruparPorSemana(
-      [l('2026-09-29', 'coleta', 850, 'rose'), l('2026-10-01', 'coleta', 520, 'marina')],
-      compradores,
-      1300,
-    );
-    assert.equal(s.vendidoAcimaDoTeto, 70);
-    assert.equal(s.coletas[0].acimaDoMaximo, true);
-    assert.equal(s.coletas[1].acimaDoMaximo, true);
+  test('o teto semanal corta a Marina depois da Rose', () => {
+    const coletas = montarColetas(ordenhasDoApp(dias('2026-09-24', '2026-10-01', 110, 60)), [], compradores, 1000, '2026-10-05');
+    const marina = coletas.find((c) => c.data === '2026-10-01')!;
+    assert.equal(marina.leva, 200);
+    assert.equal(marina.sobra, 390 - 200);
   });
 
-  test('coleta de comprador fora da lista continua somando', () => {
-    const [s] = agruparPorSemana([l('2026-09-29', 'coleta', 100, 'antigo')], compradores, 1300);
-    assert.equal(s.coletasOutros, 100);
-    assert.deepEqual(s.destinosOutros, ['antigo']);
-    assert.equal(s.vendido, 100);
+  test('ordenha faltando marca a coleta incompleta e não carrega sobra', () => {
+    const producoes = dias('2026-09-24', '2026-10-01', 110, 60).filter((p) => p.data !== '2026-09-26');
+    const coletas = montarColetas(ordenhasDoApp(producoes), [], compradores, 1300, '2026-10-05');
+    const rose = coletas.find((c) => c.data === '2026-09-29')!;
+    assert.equal(rose.ordenhasLancadas, 8);
+    const marina = coletas.find((c) => c.data === '2026-10-01')!;
+    assert.equal(marina.sobraAnterior, 0);
   });
 
-  test('saída do app vai para o comprador pelo destino (Leite Chaparral = Marina), sem diferenciar maiúscula', () => {
-    assert.equal(compradorDaSaida(['Leite Rose'], compradores), 'rose');
-    assert.equal(compradorDaSaida(['leite chaparral '], compradores), 'marina');
-    assert.equal(compradorDaSaida(['Queijaria'], compradores), 'Queijaria');
-    assert.equal(compradorDaSaida([], compradores), 'sem destino');
+  test('dia só com a 1ª ordenha lançada conta só a manhã', () => {
+    const ord = ordenhasDoApp([{ data: '2026-09-28', lactantes: 67, litros1: 101, litros2: null }]);
+    assert.deepEqual(ord, [{ data: '2026-09-28', turno: 1, litros: 101 }]);
   });
 
-  test('produção diária e saídas do app entram na semana como lançamentos só de leitura', () => {
-    const doApp = lancamentosDoApp(
-      [{ id: 7, data: '2026-08-25', lactantes: 44, litros: 110 }],
-      [{ id: 3, data: '2026-08-25', litros: 650, destinos: ['Leite Rose'], observacao: null }],
-      compradores,
-    );
-    assert.ok(doApp.every((x) => x.origem === 'app' && x.id < 0));
-    assert.notEqual(doApp[0].id, doApp[1].id);
-    const [s] = agruparPorSemana(doApp, compradores, 1300);
-    assert.equal(s.inicio, '2026-08-25');
-    assert.equal(s.producao, 110);
-    assert.equal(s.coletas[0].litros, 650);
+  test('a próxima coleta aparece aberta, acumulando, e nada depois dela', () => {
+    const coletas = montarColetas(ordenhasDoApp(dias('2026-09-24', '2026-09-28')), [], compradores, 1300, '2026-09-28');
+    const ultima = coletas.at(-1)!;
+    assert.equal(ultima.data, '2026-09-29');
+    assert.equal(ultima.aberta, true);
+    assert.equal(ultima.ordenhasLancadas, 9); // falta a manhã de terça
+    assert.equal(coletas.filter((c) => c.aberta).length, 1);
+  });
+
+  test('a Saída de Leite do app aparece ao lado, pelo destino (Leite Chaparral = Marina)', () => {
+    const saidas = [
+      { data: '2026-10-01', litros: 320, destinos: ['leite chaparral'] },
+      { data: '2026-09-29', litros: 780, destinos: ['Leite Rose'] },
+      { data: '2026-09-29', litros: 10, destinos: ['Queijaria'] },
+    ];
+    const coletas = montarColetas(ordenhasDoApp(dias('2026-09-24', '2026-10-01')), saidas, compradores, 1300, '2026-10-05');
+    assert.equal(coletas.find((c) => c.data === '2026-09-29')!.saidaNoApp, 780);
+    assert.equal(coletas.find((c) => c.data === '2026-10-01')!.saidaNoApp, 320);
+    assert.equal(compradorDaSaida(['Queijaria'], compradores), null);
+  });
+
+  test('a semana soma as duas coletas e compara com o teto', () => {
+    const coletas = montarColetas(ordenhasDoApp(dias('2026-09-24', '2026-10-01', 110, 60)), [], compradores, 1100, '2026-10-05');
+    const semana = agruparColetas(coletas, 1100).find((s) => s.inicio === '2026-09-29')!;
+    assert.equal(semana.produzido, 850 + 340);
+    assert.equal(semana.acimaDoTeto, 90);
+    assert.equal(semana.completa, true);
   });
 });
