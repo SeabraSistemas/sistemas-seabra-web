@@ -84,13 +84,7 @@ export function GruposPainel({ salvos, hoje }: { salvos: ParametrosSalvos; hoje:
 
   return (
     <div className="flex flex-col gap-6">
-      <header className="flex flex-col gap-1">
-        <h1 className="text-3xl">Grupos reprodutivos</h1>
-        <p className="text-sm text-muted-foreground">
-          Quanto rebanho sustenta a meta de lactantes com grupos de cobertura{' '}
-          {g.calendario === 'meses' ? `em ${g.mesesCobertura.map((m) => MESES_CURTOS[m - 1]).join(', ')}` : g.intervaloMeses === 1 ? 'todo mês' : `de ${g.intervaloMeses} em ${g.intervaloMeses} meses`}. Modelo genérico: todos os números ao lado são editáveis. O resultado é o rebanho já em ritmo, com o calendário a partir do 1º grupo.
-        </p>
-      </header>
+      <h1 className="text-3xl">Grupos reprodutivos</h1>
 
       <section className={`grid grid-cols-2 gap-3 lg:grid-cols-4 ${calculando ? 'opacity-60' : ''}`} aria-busy={calculando}>
         <Tile
@@ -102,6 +96,8 @@ export function GruposPainel({ salvos, hoje }: { salvos: ParametrosSalvos; hoje:
         <Tile rotulo="Lactantes" valor={`${int(r.lactantes.media)} em média`} detalhe={`varia de ${int(r.lactantes.min)} a ${int(r.lactantes.max)}`} />
         <Tile rotulo="Leite por semana" valor={litros(r.litrosSemana.media)} detalhe={`de ${litros(r.litrosSemana.min)} a ${litros(r.litrosSemana.max)} (${String(g.mediaLitros).replace('.', ',')} L/cabra)`} />
       </section>
+
+      <IdealXHoje r={r} lactantesHoje={salvos.parametros.lactantesIniciais} efetivoHoje={salvos.parametros.efetivoInicial} calculando={calculando} />
 
       <div className="grid gap-6 lg:grid-cols-[22rem_1fr]">
         <aside className="order-2 flex flex-col gap-4 lg:order-1">
@@ -171,9 +167,6 @@ export function GruposPainel({ salvos, hoje }: { salvos: ParametrosSalvos; hoje:
             <Campo rotulo="Estação de monta" id="estacao">
               <CampoNumero id="estacao" valor={g.duracaoEstacao} aoMudar={(n) => mudar({ duracaoEstacao: Math.round(n) })} sufixo="dias" min={1} max={180} />
             </Campo>
-            <p className="text-xs text-muted-foreground">
-              Os grupos abrem no mesmo dia do mês do 1º. A estação é quantos dias cada grupo fica aberto para cobertura (espalha os partos) e para quando o grupo seguinte abre.
-            </p>
           </Bloco>
 
           <Bloco titulo="Cobertura">
@@ -201,7 +194,6 @@ export function GruposPainel({ salvos, hoje }: { salvos: ParametrosSalvos; hoje:
                 <CampoNumero id="seca" valor={g.secaAntesDias} aoMudar={(n) => mudar({ secaAntesDias: Math.round(n) })} sufixo="dias" max={120} />
               </Campo>
             </Par>
-            <p className="text-xs text-muted-foreground">Quem fica vazia passa para o grupo seguinte.</p>
           </Bloco>
 
           <Bloco titulo="Crias">
@@ -228,9 +220,8 @@ export function GruposPainel({ salvos, hoje }: { salvos: ParametrosSalvos; hoje:
               </Campo>
             </Par>
             {g.metaPctLactacao > 0 ? (
-              <p className="rounded-md bg-accent px-2.5 py-2 text-xs text-muted-foreground">
-                Com {Math.round(g.metaPctLactacao * 100)}% do rebanho em lactação, as cabritas que sobram e os machos saem com{' '}
-                <strong className="text-foreground">~{String(Math.round((r.saidaCalculadaMeses ?? 0) * 10) / 10).replace('.', ',')} meses</strong>. Matrizes, recria e reprodutores são fixos; o que sobra de espaço é das crias até a venda. Máximo possível: {Math.round(r.pctMaximo * 100)}%. Use 0% para informar as idades de saída.
+              <p className="text-xs text-muted-foreground" title="Matrizes, recria e reprodutores são fixos; o espaço que sobra é das crias até a venda. 0% = informar as idades de saída.">
+                Crias que sobram saem com <strong className="text-foreground">~{meses(r.saidaCalculadaMeses ?? 0)}</strong> · máximo possível {Math.round(r.pctMaximo * 100)}%
               </p>
             ) : (
               <Par>
@@ -249,18 +240,14 @@ export function GruposPainel({ salvos, hoje }: { salvos: ParametrosSalvos; hoje:
               <Campo rotulo="Matrizes por bode" id="bode">
                 <CampoNumero id="bode" valor={g.matrizesPorReprodutor} aoMudar={(n) => mudar({ matrizesPorReprodutor: n })} min={1} max={200} />
               </Campo>
-              <Campo rotulo="Bodes por grupo" id="bodes-grupo">
+              <Campo rotulo="Bodes por grupo (0 = auto)" id="bodes-grupo">
                 <CampoNumero id="bodes-grupo" valor={g.bodesPorGrupo} aoMudar={(n) => mudar({ bodesPorGrupo: Math.round(n) })} max={100} />
               </Campo>
             </Par>
-            <p className="text-xs text-muted-foreground">Bodes por grupo em 0 = automático: cobertas do grupo ÷ matrizes por bode.</p>
             <label className="flex items-center gap-2 text-sm">
               <input type="checkbox" checked={g.bodesCompartilhados} onChange={(e) => mudar({ bodesCompartilhados: e.target.checked })} className="size-4 accent-primary" />
               Os mesmos bodes servem a todos os grupos
             </label>
-            <p className="text-xs text-muted-foreground">
-              {g.bodesCompartilhados ? 'As estações não se sobrepõem: o rebanho precisa dos bodes do maior grupo.' : 'Cada grupo com os seus bodes (ex.: para trocar a genética): os bodes somam.'}
-            </p>
           </Bloco>
 
           <div className="sticky bottom-3 z-10 flex flex-col gap-2 rounded-xl border border-border bg-card/95 p-3 backdrop-blur">
@@ -299,8 +286,7 @@ export function GruposPainel({ salvos, hoje }: { salvos: ParametrosSalvos; hoje:
           )}
 
           <section className="painel">
-            <h2 className="mb-1 font-sans text-sm font-semibold">Lactantes ao longo do ano</h2>
-            <p className="mb-3 text-xs text-muted-foreground">Cada grupo pare, produz e seca {g.secaAntesDias} dias antes do próximo parto — a oscilação é essa seca.</p>
+            <h2 className="mb-3 font-sans text-sm font-semibold">Lactantes ao longo do ano</h2>
             <ul className="mb-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
               <li className="flex items-center gap-1.5">
                 <span className="size-2.5 rounded-sm" style={{ background: COR_SERIES[0] }} aria-hidden />
@@ -343,10 +329,7 @@ export function GruposPainel({ salvos, hoje }: { salvos: ParametrosSalvos; hoje:
           </section>
 
           <section className="painel overflow-x-auto">
-            <h2 className="mb-1 font-sans text-sm font-semibold">Os grupos no ano</h2>
-            <p className="mb-3 text-xs text-muted-foreground">
-              O 1º grupo abre em {dataCurta(r.inicio)} e o calendário se repete a cada ano. Cada grupo recebe as matrizes que completaram {g.diasPosParto} dias de parida, as vazias do grupo anterior e as cabritas de {String(g.idadeCabritaMeses).replace('.', ',')} meses.
-            </p>
+            <h2 className="mb-3 font-sans text-sm font-semibold">Os grupos no ano</h2>
             <table className="w-full min-w-[32rem] text-sm whitespace-nowrap tabular-nums">
               <thead className="text-xs text-muted-foreground">
                 <tr className="border-b border-border">
@@ -412,6 +395,65 @@ export function GruposPainel({ salvos, hoje }: { salvos: ParametrosSalvos; hoje:
         </div>
       </div>
     </div>
+  );
+}
+
+/**
+ * O rebanho ideal do modelo ao lado do rebanho de hoje (o efetivo da aba
+ * Projeção: vem do app e pode ter sido corrigido lá). As categorias do modelo
+ * casam com as do app assim: secas prenhes = pré-parto; secas vazias = seca;
+ * novilhas prenhes = recriada; crias até a venda = cria + recria.
+ */
+function IdealXHoje({ r, lactantesHoje, efetivoHoje, calculando }: { r: ReturnType<typeof calcularGrupos>; lactantesHoje: number; efetivoHoje: Record<string, number>; calculando: boolean }) {
+  const hoje = (...cats: string[]) => cats.reduce((t, c) => t + (efetivoHoje[c] ?? 0), 0);
+  const usadas = ['pre-parto', 'seca', 'recriada', 'cria', 'recria', 'reprodutor'];
+  const outras = Object.entries(efetivoHoje).filter(([c]) => !usadas.includes(c)).reduce((t, [, n]) => t + n, 0);
+  const linhas: Array<{ rotulo: string; ideal: number; hoje: number }> = [
+    { rotulo: 'Lactantes', ideal: r.lactantes.media, hoje: lactantesHoje },
+    { rotulo: 'Pré-parto (secas prenhes)', ideal: r.secas.media, hoje: hoje('pre-parto') },
+    { rotulo: 'Secas vazias', ideal: r.vazias.media, hoje: hoje('seca') },
+    { rotulo: 'Novilhas prenhes (recriadas)', ideal: r.novilhasPrenhes.media, hoje: hoje('recriada') },
+    { rotulo: 'Crias e recria', ideal: r.recria + r.cabritasExcedentes + r.cabritosMachos, hoje: hoje('cria', 'recria') },
+    { rotulo: 'Reprodutores', ideal: r.reprodutores, hoje: hoje('reprodutor') },
+    ...(outras ? [{ rotulo: 'Outras categorias', ideal: 0, hoje: outras }] : []),
+  ];
+  const totalHoje = linhas.reduce((t, l) => t + l.hoje, 0);
+  const diferenca = (d: number) => {
+    const n = Math.round(d);
+    if (n === 0) return <span className="text-muted-foreground">ok</span>;
+    return n > 0 ? <span className="text-primary">sobram {n}</span> : <span className="text-destructive">faltam {-n}</span>;
+  };
+
+  return (
+    <section className={`painel overflow-x-auto ${calculando ? 'opacity-60' : ''}`}>
+      <h2 className="mb-3 font-sans text-sm font-semibold">Rebanho ideal × hoje</h2>
+      <table className="w-full min-w-[28rem] text-sm whitespace-nowrap tabular-nums">
+        <thead className="text-xs text-muted-foreground">
+          <tr className="border-b border-border">
+            <th className="py-2 pr-3 text-left font-medium">Categoria</th>
+            <th className="px-2 text-right font-medium">Ideal</th>
+            <th className="px-2 text-right font-medium">Hoje</th>
+            <th className="pl-2 text-right font-medium">Diferença</th>
+          </tr>
+        </thead>
+        <tbody>
+          {linhas.map((l) => (
+            <tr key={l.rotulo} className="border-b border-border/60">
+              <td className="py-1.5 pr-3">{l.rotulo}</td>
+              <td className="px-2 text-right">{int(l.ideal)}</td>
+              <td className="px-2 text-right">{int(l.hoje)}</td>
+              <td className="pl-2 text-right">{diferenca(l.hoje - l.ideal)}</td>
+            </tr>
+          ))}
+          <tr className="font-semibold">
+            <td className="py-2 pr-3">Total</td>
+            <td className="px-2 text-right">{int(r.total)}</td>
+            <td className="px-2 text-right">{int(totalHoje)}</td>
+            <td className="pl-2 text-right">{diferenca(totalHoje - r.total)}</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
   );
 }
 
