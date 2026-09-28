@@ -4,7 +4,8 @@ import { describe, test } from 'node:test';
 import { calcularGrupos, GRUPOS_PADRAO, normalizarGrupos, type ParametrosGrupos } from '@/lib/tres-irmaos/grupos';
 
 const perto = (a: number, b: number, tol: number, msg?: string) => assert.ok(Math.abs(a - b) <= tol, msg ?? `${a} ≠ ${b} (±${tol})`);
-const com = (extra: Partial<ParametrosGrupos>) => calcularGrupos({ ...GRUPOS_PADRAO, ...extra });
+// Os testes de composição usam as idades de saída fixas (meta de % desligada), salvo onde dito.
+const com = (extra: Partial<ParametrosGrupos>) => calcularGrupos({ ...GRUPOS_PADRAO, metaPctLactacao: 0, ...extra });
 
 describe('grupos reprodutivos — conta exata (sem falha, sem descarte, cobertura contínua)', () => {
   // Estação do tamanho do intervalo = cobertura contínua: a cabra é coberta exatamente aos 210 dias.
@@ -54,7 +55,9 @@ describe('grupos reprodutivos — padrão (a cada 3 meses, estação 45 d, 210 d
   test('rebanho total = matrizes + recria + excedentes e machos até saírem + reprodutores', () => {
     perto(r.recria, r.reposicaoAno * (7 / 12), 1e-6);
     perto(r.total, r.matrizes + r.recria + r.cabritasExcedentes + r.cabritosMachos + r.reprodutores, 1e-6);
-    assert.equal(r.reprodutores, Math.ceil(r.matrizes / 25));
+    // 4 grupos de ~26 cobertas, 25 por bode → 2 bodes por grupo; os mesmos servem a todos.
+    for (const g of r.grupos) assert.equal(g.bodes, Math.ceil(g.coberturas / 25));
+    assert.equal(r.reprodutores, Math.max(...r.grupos.map((g) => g.bodes)));
     perto(r.pctLactacao, 70 / r.total, 1e-6);
   });
 });
@@ -90,6 +93,42 @@ describe('grupos reprodutivos — parâmetros mudam o resultado como deveriam', 
   test('avisa quando as cabritas não repõem o descarte', () => {
     const r = com({ prolificidade: 0.3, reposicaoAnual: 0.4 });
     assert.ok(r.alertas.some((a) => a.includes('não repõem')));
+  });
+});
+
+describe('meta de % em lactação (Lucas: 55% do rebanho total)', () => {
+  test('o rebanho total vira lactantes ÷ 55%, e a idade de saída das crias que sobram sai da conta', () => {
+    const r = com({ metaPctLactacao: 0.55 });
+    perto(r.pctLactacao, 0.55, 1e-6);
+    perto(r.total, 70 / 0.55, 1e-6);
+    assert.ok(r.saidaCalculadaMeses != null && r.saidaCalculadaMeses > 0 && r.saidaCalculadaMeses < 7);
+    perto(r.cabritasExcedentes, r.excedenteCabritasAno * (r.saidaCalculadaMeses! / 12), 1e-6);
+  });
+
+  test('meta impossível avisa o máximo (vendendo as crias ao nascer)', () => {
+    const r = com({ metaPctLactacao: 0.9 });
+    assert.equal(r.saidaCalculadaMeses, 0);
+    perto(r.pctLactacao, r.pctMaximo, 1e-6);
+    assert.ok(r.alertas.some((a) => a.includes('não fecha')));
+  });
+
+  test('desligada (0), valem as idades de saída informadas', () => {
+    const r = com({ metaPctLactacao: 0 });
+    assert.equal(r.saidaCalculadaMeses, null);
+    perto(r.cabritosMachos, r.cabritosMachosAno * (3 / 12), 1e-6);
+  });
+});
+
+describe('bodes por grupo', () => {
+  test('bodes fixados à mão valem para todos os grupos', () => {
+    const r = com({ bodesPorGrupo: 3 });
+    for (const g of r.grupos) assert.equal(g.bodes, 3);
+    assert.equal(r.reprodutores, 3);
+  });
+
+  test('cada grupo com os seus bodes: somam', () => {
+    const r = com({ bodesPorGrupo: 3, bodesCompartilhados: false });
+    assert.equal(r.reprodutores, 3 * r.grupos.length);
   });
 });
 

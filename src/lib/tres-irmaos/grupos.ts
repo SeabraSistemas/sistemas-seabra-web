@@ -60,12 +60,28 @@ export interface ParametrosGrupos {
   mortalidade: number;
   /** 0 a 1: fração das matrizes adultas repostas por ano. */
   reposicaoAnual: number;
-  /** Matrizes por reprodutor (monta natural). */
+  /** Matrizes por reprodutor (monta natural): dá a sugestão de bodes por grupo. */
   matrizesPorReprodutor: number;
+  /** Bodes em cada grupo. 0 = automático: cobertas do grupo ÷ matrizes por bode. */
+  bodesPorGrupo: number;
+  /**
+   * true = os mesmos bodes servem a todos os grupos (as estações não se
+   * sobrepõem), então o rebanho precisa do maior grupo; false = cada grupo
+   * tem os seus (ex.: para trocar a genética), e os bodes somam.
+   */
+  bodesCompartilhados: boolean;
   /** Idade (meses) com que as cabritas que não vão para a reposição saem do rebanho (venda). */
   saidaExcedenteMeses: number;
   /** Idade (meses) com que os cabritos machos saem do rebanho. */
   saidaMachosMeses: number;
+  /**
+   * 0 a 1: fração do rebanho TOTAL que deve estar em lactação (Lucas: 55%).
+   * 0 = desligado (usa as idades de saída acima). Ligado, o rebanho total é
+   * lactantes ÷ meta, e as idades de saída das cabritas que sobram e dos
+   * machos passam a ser CALCULADAS: é o espaço que sobra depois de matrizes,
+   * recria e reprodutores, que a biologia fixa.
+   */
+  metaPctLactacao: number;
 }
 
 export const GRUPOS_PADRAO: ParametrosGrupos = {
@@ -87,8 +103,11 @@ export const GRUPOS_PADRAO: ParametrosGrupos = {
   mortalidade: 0,
   reposicaoAnual: 0.2,
   matrizesPorReprodutor: 25,
+  bodesPorGrupo: 0,
+  bodesCompartilhados: true,
   saidaExcedenteMeses: 7,
   saidaMachosMeses: 3,
+  metaPctLactacao: 0.55,
 };
 
 export interface Faixa {
@@ -106,6 +125,8 @@ export interface GrupoNoAno {
   /** Das cobertas, quantas são cabritas (primeira cobertura). */
   cabritas: number;
   prenhes: number;
+  /** Bodes que o grupo usa. */
+  bodes: number;
   /** Dia do ano do primeiro e do último parto deste grupo. */
   partoDe: number;
   partoAte: number;
@@ -144,6 +165,10 @@ export interface ResultadoGrupos {
   total: number;
   /** Lactantes ÷ rebanho total. */
   pctLactacao: number;
+  /** Com a meta de % ligada: idade (meses) com que cabritas que sobram e machos precisam sair. null = meta desligada. */
+  saidaCalculadaMeses: number | null;
+  /** Maior % possível: vendendo as crias que sobram ao nascer. */
+  pctMaximo: number;
   /** Lactantes por semana ao longo de um ano (para o gráfico). */
   serie: Array<{ semana: number; lactantes: number; secas: number; vazias: number }>;
   /** Data de referência usada (o 1º grupo, ou o padrão quando vazio). */
@@ -182,7 +207,7 @@ function lim(n: number, min: number, max: number): number {
 /** Normaliza os parâmetros: fora da faixa vai para o limite, lixo vai para o padrão. */
 export function normalizarGrupos(bruto: unknown): ParametrosGrupos {
   const b = (bruto && typeof bruto === 'object' ? bruto : {}) as Partial<Record<keyof ParametrosGrupos, unknown>>;
-  type Numerico = Exclude<keyof ParametrosGrupos, 'inicioPrimeiroGrupo' | 'calendario' | 'mesesCobertura'>;
+  type Numerico = Exclude<keyof ParametrosGrupos, 'inicioPrimeiroGrupo' | 'calendario' | 'mesesCobertura' | 'bodesCompartilhados'>;
   const n = (k: Numerico, min: number, max: number) => {
     const v = b[k];
     return typeof v === 'number' && Number.isFinite(v) ? lim(v, min, max) : (GRUPOS_PADRAO[k] as number);
@@ -214,8 +239,11 @@ export function normalizarGrupos(bruto: unknown): ParametrosGrupos {
     mortalidade: n('mortalidade', 0, 1),
     reposicaoAnual: n('reposicaoAnual', 0, 1),
     matrizesPorReprodutor: n('matrizesPorReprodutor', 1, 200),
+    bodesPorGrupo: Math.round(n('bodesPorGrupo', 0, 100)),
+    bodesCompartilhados: typeof b.bodesCompartilhados === 'boolean' ? b.bodesCompartilhados : GRUPOS_PADRAO.bodesCompartilhados,
     saidaExcedenteMeses: n('saidaExcedenteMeses', 0, 24),
     saidaMachosMeses: n('saidaMachosMeses', 0, 24),
+    metaPctLactacao: n('metaPctLactacao', 0, 1),
   };
 }
 
@@ -327,7 +355,7 @@ export function calcularGrupos(entrada: ParametrosGrupos): ResultadoGrupos {
         const prenhes = cobertas * p.prenhez;
         if (abre[indiceGrupo] >= medirDesde && abre[indiceGrupo] < medirAte) {
           const numero = indiceGrupo;
-          const g = grupos.get(numero) ?? { numero, abre: abre[numero], coberturas: 0, cabritas: 0, prenhes: 0, partoDe: Infinity, partoAte: -Infinity };
+          const g = grupos.get(numero) ?? { numero, abre: abre[numero], coberturas: 0, cabritas: 0, prenhes: 0, bodes: 0, partoDe: Infinity, partoAte: -Infinity };
           g.coberturas += cobertas;
           if (c.cabrita) g.cabritas += cobertas;
           g.prenhes += prenhes;
@@ -384,10 +412,27 @@ export function calcularGrupos(entrada: ParametrosGrupos): ResultadoGrupos {
   const cabritosMachosAno = partosAno * p.prolificidade * (1 - p.femeas) * (1 - p.mortalidade);
   // Estoque médio = entradas por ano × tempo que fica (Little). A reposição fica até a cobertura.
   const recria = reposicaoAno * (p.idadeCabritaMeses / 12);
-  const cabritasExcedentes = excedenteCabritasAno * (p.saidaExcedenteMeses / 12);
-  const cabritosMachos = cabritosMachosAno * (p.saidaMachosMeses / 12);
-  const reprodutores = matrizes > 0 ? Math.ceil(matrizes / p.matrizesPorReprodutor) : 0;
-  const total = matrizes + recria + cabritasExcedentes + cabritosMachos + reprodutores;
+  // Bodes por grupo: fixado pelo criador, ou cobertas ÷ matrizes por bode (arredondado para cima).
+  const bodesDe = (coberturas: number) => (p.bodesPorGrupo > 0 ? p.bodesPorGrupo : Math.max(1, Math.ceil(coberturas / p.matrizesPorReprodutor - 1e-9)));
+  const bodesGrupos = [...grupos.values()].filter((g) => g.abre >= medirDesde && g.abre < medirAte).map((g) => bodesDe(g.coberturas * escala));
+  const reprodutores = matrizes <= 0 || bodesGrupos.length === 0 ? 0 : p.bodesCompartilhados ? Math.max(...bodesGrupos) : bodesGrupos.reduce((t, b) => t + b, 0);
+  const fixo = matrizes + recria + reprodutores; // a biologia manda: não dá para ter menos
+  const pctMaximo = fixo > 0 ? lactantes.media / fixo : 0;
+
+  // Com a meta de %, o rebanho total é lactantes ÷ meta; o espaço que sobra é das crias até a venda.
+  let saidaExcedente = p.saidaExcedenteMeses;
+  let saidaMachos = p.saidaMachosMeses;
+  let saidaCalculadaMeses: number | null = null;
+  if (p.metaPctLactacao > 0) {
+    const vagas = lactantes.media / p.metaPctLactacao - fixo;
+    const fluxo = excedenteCabritasAno + cabritosMachosAno;
+    saidaCalculadaMeses = vagas <= 0 || fluxo <= 0 ? 0 : Math.min(24, (vagas * 12) / fluxo);
+    saidaExcedente = saidaCalculadaMeses;
+    saidaMachos = saidaCalculadaMeses;
+  }
+  const cabritasExcedentes = excedenteCabritasAno * (saidaExcedente / 12);
+  const cabritosMachos = cabritosMachosAno * (saidaMachos / 12);
+  const total = fixo + cabritasExcedentes + cabritosMachos;
 
   // Grupos do ano medido: os que abrem dentro dele, numerados a partir de 1.
   const gruposAno = [...grupos.values()]
@@ -399,11 +444,20 @@ export function calcularGrupos(entrada: ParametrosGrupos): ResultadoGrupos {
       coberturas: g.coberturas * escala,
       cabritas: g.cabritas * escala,
       prenhes: g.prenhes * escala,
+      bodes: bodesDe(g.coberturas * escala),
       partoDe: g.partoDe - medirDesde,
       partoAte: g.partoAte - medirDesde,
     }));
 
   const alertas: string[] = [];
+  if (p.metaPctLactacao > 0 && pctMaximo + 1e-9 < p.metaPctLactacao) {
+    alertas.push(
+      `${Math.round(p.metaPctLactacao * 100)}% em lactação não fecha com esses números: só matrizes, recria e reprodutores já dão ${Math.round(pctMaximo * 100)}%, mesmo vendendo as crias que sobram ao nascer.`,
+    );
+  }
+  if (saidaCalculadaMeses != null && saidaCalculadaMeses >= 24) {
+    alertas.push(`Para ${Math.round(p.metaPctLactacao * 100)}% em lactação, as crias que sobram poderiam ficar mais de 2 anos: o rebanho tem espaço de sobra para crescer.`);
+  }
   if (cabritasVivasAno + 1e-9 < reposicaoAno) {
     alertas.push(
       `As cabritas que nascem (${cabritasVivasAno.toFixed(0)}/ano) não repõem o descarte (${reposicaoAno.toFixed(0)}/ano): vai precisar comprar matrizes ou baixar a reposição.`,
@@ -443,6 +497,8 @@ export function calcularGrupos(entrada: ParametrosGrupos): ResultadoGrupos {
     reprodutores,
     total,
     pctLactacao: total > 0 ? lactantes.media / total : 0,
+    saidaCalculadaMeses,
+    pctMaximo,
     serie: serie.map((s) => ({ semana: s.semana, lactantes: s.lactantes * escala, secas: s.secas * escala, vazias: s.vazias * escala })),
     inicio,
     alertas,

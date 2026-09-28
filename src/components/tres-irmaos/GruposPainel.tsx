@@ -15,6 +15,8 @@ import { calcularGrupos, GRUPOS_PADRAO, type ParametrosGrupos } from '@/lib/tres
 type Estado = { tipo: 'parado' } | { tipo: 'salvando' } | { tipo: 'salvo' } | { tipo: 'erro'; msg: string };
 
 const int = (n: number) => Math.round(n).toLocaleString('pt-BR');
+const meses = (n: number) => `${String(Math.round(n * 10) / 10).replace('.', ',')} ${n === 1 ? 'mês' : 'meses'}`;
+
 const MESES_CURTOS = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
 
 /** Rótulos de tempo a partir da data do 1º grupo (o dia 0 da conta). */
@@ -91,7 +93,11 @@ export function GruposPainel({ salvos, hoje }: { salvos: ParametrosSalvos; hoje:
       </header>
 
       <section className={`grid grid-cols-2 gap-3 lg:grid-cols-4 ${calculando ? 'opacity-60' : ''}`} aria-busy={calculando}>
-        <Tile rotulo="Rebanho total" valor={`${int(r.total)} animais`} detalhe={`${Math.round(r.pctLactacao * 100)}% em lactação`} />
+        <Tile
+          rotulo="Rebanho total"
+          valor={`${int(r.total)} animais`}
+          detalhe={`${Math.round(r.pctLactacao * 100)}% em lactação${g.metaPctLactacao > 0 ? (r.pctMaximo + 1e-9 < g.metaPctLactacao ? ` (meta ${Math.round(g.metaPctLactacao * 100)}% não fecha)` : ' (meta)') : ''}`}
+        />
         <Tile rotulo="Matrizes" valor={int(r.matrizes)} detalhe={`${r.grupos.length} grupos de ~${int(porGrupo)} cobertas`} />
         <Tile rotulo="Lactantes" valor={`${int(r.lactantes.media)} em média`} detalhe={`varia de ${int(r.lactantes.min)} a ${int(r.lactantes.max)}`} />
         <Tile rotulo="Leite por semana" valor={litros(r.litrosSemana.media)} detalhe={`de ${litros(r.litrosSemana.min)} a ${litros(r.litrosSemana.max)} (${String(g.mediaLitros).replace('.', ',')} L/cabra)`} />
@@ -214,21 +220,47 @@ export function GruposPainel({ salvos, hoje }: { salvos: ParametrosSalvos; hoje:
 
           <Bloco titulo="Rebanho">
             <Par>
+              <Campo rotulo="Em lactação (meta)" id="meta-pct">
+                <CampoNumero id="meta-pct" valor={Math.round(g.metaPctLactacao * 100)} aoMudar={(n) => mudar({ metaPctLactacao: n / 100 })} sufixo="%" max={100} />
+              </Campo>
               <Campo rotulo="Reposição de matrizes" id="repos">
                 <CampoNumero id="repos" valor={Math.round(g.reposicaoAnual * 100)} aoMudar={(n) => mudar({ reposicaoAnual: n / 100 })} sufixo="%/ano" max={100} />
               </Campo>
+            </Par>
+            {g.metaPctLactacao > 0 ? (
+              <p className="rounded-md bg-accent px-2.5 py-2 text-xs text-muted-foreground">
+                Com {Math.round(g.metaPctLactacao * 100)}% do rebanho em lactação, as cabritas que sobram e os machos saem com{' '}
+                <strong className="text-foreground">~{String(Math.round((r.saidaCalculadaMeses ?? 0) * 10) / 10).replace('.', ',')} meses</strong>. Matrizes, recria e reprodutores são fixos; o que sobra de espaço é das crias até a venda. Máximo possível: {Math.round(r.pctMaximo * 100)}%. Use 0% para informar as idades de saída.
+              </p>
+            ) : (
+              <Par>
+                <Campo rotulo="Cabritas que sobram saem com" id="saida-f">
+                  <CampoNumero id="saida-f" valor={g.saidaExcedenteMeses} aoMudar={(n) => mudar({ saidaExcedenteMeses: n })} sufixo="meses" max={24} />
+                </Campo>
+                <Campo rotulo="Machos saem com" id="saida-m">
+                  <CampoNumero id="saida-m" valor={g.saidaMachosMeses} aoMudar={(n) => mudar({ saidaMachosMeses: n })} sufixo="meses" max={24} />
+                </Campo>
+              </Par>
+            )}
+          </Bloco>
+
+          <Bloco titulo="Reprodutores">
+            <Par>
               <Campo rotulo="Matrizes por bode" id="bode">
                 <CampoNumero id="bode" valor={g.matrizesPorReprodutor} aoMudar={(n) => mudar({ matrizesPorReprodutor: n })} min={1} max={200} />
               </Campo>
-            </Par>
-            <Par>
-              <Campo rotulo="Cabritas que sobram saem com" id="saida-f">
-                <CampoNumero id="saida-f" valor={g.saidaExcedenteMeses} aoMudar={(n) => mudar({ saidaExcedenteMeses: n })} sufixo="meses" max={24} />
-              </Campo>
-              <Campo rotulo="Machos saem com" id="saida-m">
-                <CampoNumero id="saida-m" valor={g.saidaMachosMeses} aoMudar={(n) => mudar({ saidaMachosMeses: n })} sufixo="meses" max={24} />
+              <Campo rotulo="Bodes por grupo" id="bodes-grupo">
+                <CampoNumero id="bodes-grupo" valor={g.bodesPorGrupo} aoMudar={(n) => mudar({ bodesPorGrupo: Math.round(n) })} max={100} />
               </Campo>
             </Par>
+            <p className="text-xs text-muted-foreground">Bodes por grupo em 0 = automático: cobertas do grupo ÷ matrizes por bode.</p>
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" checked={g.bodesCompartilhados} onChange={(e) => mudar({ bodesCompartilhados: e.target.checked })} className="size-4 accent-primary" />
+              Os mesmos bodes servem a todos os grupos
+            </label>
+            <p className="text-xs text-muted-foreground">
+              {g.bodesCompartilhados ? 'As estações não se sobrepõem: o rebanho precisa dos bodes do maior grupo.' : 'Cada grupo com os seus bodes (ex.: para trocar a genética): os bodes somam.'}
+            </p>
           </Bloco>
 
           <div className="sticky bottom-3 z-10 flex flex-col gap-2 rounded-xl border border-border bg-card/95 p-3 backdrop-blur">
@@ -323,6 +355,7 @@ export function GruposPainel({ salvos, hoje }: { salvos: ParametrosSalvos; hoje:
                   <th className="px-2 text-right font-medium">Cobertas</th>
                   <th className="px-2 text-right font-medium">das quais cabritas</th>
                   <th className="px-2 text-right font-medium">Prenhes</th>
+                  <th className="px-2 text-right font-medium">Bodes</th>
                   <th className="pl-2 text-left font-medium">Partos</th>
                 </tr>
               </thead>
@@ -334,6 +367,7 @@ export function GruposPainel({ salvos, hoje }: { salvos: ParametrosSalvos; hoje:
                     <td className="px-2 text-right font-medium">{int(x.coberturas)}</td>
                     <td className="px-2 text-right text-muted-foreground">{int(x.cabritas)}</td>
                     <td className="px-2 text-right">{int(x.prenhes)}</td>
+                    <td className="px-2 text-right">{x.bodes}</td>
                     <td className="pl-2 text-muted-foreground">{cal.faixa(x.partoDe, x.partoAte)}</td>
                   </tr>
                 ))}
@@ -351,9 +385,9 @@ export function GruposPainel({ salvos, hoje }: { salvos: ParametrosSalvos; hoje:
                 <Linha rotulo="novilhas prenhes (1ª cria)" valor={r.novilhasPrenhes.media} total={r.total} recuo />
                 <Linha rotulo="vazias aguardando cobertura" valor={r.vazias.media} total={r.total} recuo />
                 <Linha rotulo="Recria de reposição" valor={r.recria} total={r.total} forte />
-                <Linha rotulo={`Cabritas que sobram (até ${String(g.saidaExcedenteMeses).replace('.', ',')} meses)`} valor={r.cabritasExcedentes} total={r.total} forte />
-                <Linha rotulo={`Cabritos machos (até ${String(g.saidaMachosMeses).replace('.', ',')} meses)`} valor={r.cabritosMachos} total={r.total} forte />
-                <Linha rotulo="Reprodutores" valor={r.reprodutores} total={r.total} forte />
+                <Linha rotulo={`Cabritas que sobram (até ${meses(r.saidaCalculadaMeses ?? g.saidaExcedenteMeses)})`} valor={r.cabritasExcedentes} total={r.total} forte />
+                <Linha rotulo={`Cabritos machos (até ${meses(r.saidaCalculadaMeses ?? g.saidaMachosMeses)})`} valor={r.cabritosMachos} total={r.total} forte />
+                <Linha rotulo={`Reprodutores (${g.bodesCompartilhados ? 'os mesmos em todos os grupos' : 'um conjunto por grupo'})`} valor={r.reprodutores} total={r.total} forte />
                 <div className="mt-1 flex justify-between border-t border-border pt-2 font-semibold">
                   <dt>Total</dt>
                   <dd>{int(r.total)}</dd>
