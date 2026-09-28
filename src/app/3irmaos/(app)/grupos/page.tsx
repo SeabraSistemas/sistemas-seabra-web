@@ -7,9 +7,10 @@ export const dynamic = 'force-dynamic';
 
 export default async function GruposPage() {
   await exigirSessao();
-  const rebanho = await lerRebanho(hojeBrasilia());
+  const hoje = hojeBrasilia();
+  const rebanho = await lerRebanho(hoje);
   if (!rebanho.ok) return <p className="text-sm text-destructive">{rebanho.erro}</p>;
   const salvos = await lerParametros(rebanho.dados);
   if (!salvos.ok) return <p className="text-sm text-destructive">{salvos.erro}</p>;
-  return <GruposPainel salvos={salvos.dados} />;
+  return <GruposPainel salvos={salvos.dados} hoje={hoje} />;
 }

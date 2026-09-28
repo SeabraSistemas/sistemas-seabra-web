@@ -1,9 +1,12 @@
+import { diasEntre, somarMeses } from '@/lib/tres-irmaos/datas';
+
 /**
  * Grupos reprodutivos: quanto rebanho sustenta uma meta de lactantes.
  *
  * O CONCEITO (Felipe, 28/09/2026), genérico — não é o rebanho de ninguém:
- * a cada `intervaloGrupos` dias abre um grupo de cobertura, com estação de
- * `duracaoEstacao` dias. A matriz volta para a cobertura ao completar
+ * abre um grupo de cobertura a cada `intervaloMeses` meses a partir do 1º
+ * grupo — ou nos meses do ano que o criador escolher (`mesesCobertura`) —,
+ * com estação de `duracaoEstacao` dias. A matriz volta para a cobertura ao completar
  * `diasPosParto` dias de parida e entra no grupo que estiver aberto (ou no
  * próximo). A cabrita entra com `idadeCabritaMeses`. Quem não emprenha
  * passa para o grupo seguinte. Gestação `gestacaoDias`; seca
@@ -26,8 +29,18 @@ export interface ParametrosGrupos {
   metaLactantes: number;
   /** L/cabra/dia, para converter lactantes em litros. */
   mediaLitros: number;
-  /** Dias entre a abertura de um grupo e a do seguinte (30 a 90 é o comum). */
-  intervaloGrupos: number;
+  /**
+   * Dia em que o 1º grupo abre ("aaaa-mm-dd"). Os grupos abrem sempre nesse
+   * dia do mês. Vazio = a tela sugere o dia 1 do mês que vem. O resultado é
+   * o rebanho já em ritmo, com o calendário a partir dessa data.
+   */
+  inicioPrimeiroGrupo: string;
+  /** 'intervalo' = um grupo a cada `intervaloMeses`; 'meses' = nos meses marcados. */
+  calendario: 'intervalo' | 'meses';
+  /** De quantos em quantos meses abre um grupo (2, 3…). */
+  intervaloMeses: number;
+  /** Meses do ano com cobertura (1 = janeiro … 12 = dezembro), no modo 'meses'. */
+  mesesCobertura: number[];
   /** Dias de cada estação de monta (não passa do intervalo). */
   duracaoEstacao: number;
   /** A matriz volta a ser coberta com tantos dias de parida (30 a 210 é o comum). */
@@ -58,7 +71,10 @@ export interface ParametrosGrupos {
 export const GRUPOS_PADRAO: ParametrosGrupos = {
   metaLactantes: 70,
   mediaLitros: 2.8,
-  intervaloGrupos: 90,
+  inicioPrimeiroGrupo: '',
+  calendario: 'intervalo',
+  intervaloMeses: 3,
+  mesesCobertura: [1, 4, 7, 10],
   duracaoEstacao: 45,
   diasPosParto: 210,
   idadeCabritaMeses: 7,
@@ -130,13 +146,20 @@ export interface ResultadoGrupos {
   pctLactacao: number;
   /** Lactantes por semana ao longo de um ano (para o gráfico). */
   serie: Array<{ semana: number; lactantes: number; secas: number; vazias: number }>;
-  /** Dias do período medido (um número inteiro de grupos, perto de um ano). */
-  periodo: number;
+  /** Data de referência usada (o 1º grupo, ou o padrão quando vazio). */
+  inicio: string;
   alertas: string[];
 }
 
 const ANOS = 8;
 const BASE = 100;
+/**
+ * Ciclo estral da cabra: quem já está esperando quando o grupo abre entra
+ * no cio ao longo dos primeiros 21 dias da estação, não toda no primeiro
+ * dia. Sem isso, com 210 dias de parida (todas já aptas na abertura) os
+ * partos de um grupo cabiam em uma semana.
+ */
+const CICLO_ESTRAL = 21;
 
 interface Coorte {
   qtd: number;
@@ -159,16 +182,27 @@ function lim(n: number, min: number, max: number): number {
 /** Normaliza os parâmetros: fora da faixa vai para o limite, lixo vai para o padrão. */
 export function normalizarGrupos(bruto: unknown): ParametrosGrupos {
   const b = (bruto && typeof bruto === 'object' ? bruto : {}) as Partial<Record<keyof ParametrosGrupos, unknown>>;
-  const n = (k: keyof ParametrosGrupos, min: number, max: number) => {
+  type Numerico = Exclude<keyof ParametrosGrupos, 'inicioPrimeiroGrupo' | 'calendario' | 'mesesCobertura'>;
+  const n = (k: Numerico, min: number, max: number) => {
     const v = b[k];
-    return typeof v === 'number' && Number.isFinite(v) ? lim(v, min, max) : GRUPOS_PADRAO[k];
+    return typeof v === 'number' && Number.isFinite(v) ? lim(v, min, max) : (GRUPOS_PADRAO[k] as number);
   };
-  const intervalo = Math.round(n('intervaloGrupos', 15, 180));
+  const meses = Array.isArray(b.mesesCobertura)
+    ? [...new Set(b.mesesCobertura.filter((m): m is number => Number.isInteger(m) && m >= 1 && m <= 12))].sort((x, y) => x - y)
+    : [];
+  const inicio = typeof b.inicioPrimeiroGrupo === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(b.inicioPrimeiroGrupo) ? b.inicioPrimeiroGrupo : '';
+  // Salvo antes de 28/09 com o intervalo em dias: converte para meses.
+  const intervaloDias = (b as Record<string, unknown>).intervaloGrupos;
+  const intervaloMeses =
+    typeof b.intervaloMeses === 'number' ? Math.round(n('intervaloMeses', 1, 12)) : typeof intervaloDias === 'number' ? Math.round(lim(intervaloDias / 30.4, 1, 12)) : GRUPOS_PADRAO.intervaloMeses;
   return {
     metaLactantes: n('metaLactantes', 1, 5000),
     mediaLitros: n('mediaLitros', 0, 20),
-    intervaloGrupos: intervalo,
-    duracaoEstacao: Math.round(lim(n('duracaoEstacao', 1, 180), 1, intervalo)),
+    inicioPrimeiroGrupo: inicio,
+    calendario: b.calendario === 'meses' ? 'meses' : 'intervalo',
+    intervaloMeses,
+    mesesCobertura: meses.length ? meses : GRUPOS_PADRAO.mesesCobertura,
+    duracaoEstacao: Math.round(n('duracaoEstacao', 1, 180)),
     diasPosParto: Math.round(n('diasPosParto', 20, 400)),
     idadeCabritaMeses: n('idadeCabritaMeses', 4, 24),
     pesoCabritaKg: n('pesoCabritaKg', 0, 100),
@@ -185,28 +219,53 @@ export function normalizarGrupos(bruto: unknown): ParametrosGrupos {
   };
 }
 
+/** Data usada quando o 1º grupo está em branco (só para a conta não depender de "hoje"). */
+const INICIO_PADRAO = '2026-01-01';
+
+/**
+ * Dias (relativos ao 1º grupo, que é o dia 0) em que um grupo abre, de `de` a `ate`.
+ * O dia do mês é sempre o do 1º grupo (dia 31 vira o último dia dos meses curtos).
+ */
+export function aberturas(p: ParametrosGrupos, inicio: string, de: number, ate: number): number[] {
+  const dias = new Set<number>();
+  if (p.calendario === 'meses') {
+    const ano = Number(inicio.slice(0, 4));
+    const base = (a: number) => `${a}-01-${inicio.slice(8, 10)}`;
+    const anos = Math.ceil(Math.max(-de, ate) / 365) + 1;
+    for (let a = ano - anos; a <= ano + anos; a++) for (const m of p.mesesCobertura) dias.add(diasEntre(inicio, somarMeses(base(a), m - 1)));
+  } else {
+    const passos = Math.ceil((Math.max(-de, ate) / 365) * (12 / p.intervaloMeses)) + 2;
+    for (let k = -passos; k <= passos; k++) dias.add(diasEntre(inicio, somarMeses(inicio, k * p.intervaloMeses)));
+  }
+  return [...dias].filter((d) => d >= de && d <= ate).sort((a, b) => a - b);
+}
+
 export function calcularGrupos(entrada: ParametrosGrupos): ResultadoGrupos {
   const p = normalizarGrupos(entrada);
-  const I = p.intervaloGrupos;
-  const E = p.duracaoEstacao;
+  const inicio = p.inicioPrimeiroGrupo || INICIO_PADRAO;
   const G = p.gestacaoDias;
   const S = Math.min(p.secaAntesDias, G);
   const D = p.diasPosParto;
-  // Período medido: um número inteiro de grupos perto de um ano (4 × 90 = 360, 12 × 30 = 360),
-  // começando na abertura de um grupo — assim cada grupo aparece uma vez.
-  const nGrupos = Math.max(1, Math.round(365 / I));
-  const periodo = nGrupos * I;
-  const medirDesde = Math.ceil(((ANOS - 1) * 365) / periodo) * periodo;
-  const medirAte = medirDesde + periodo;
+  // O dia 0 é o 1º grupo; mede-se um ano a partir dele, depois de ANOS−1 anos de ritmo.
+  const T0 = -(ANOS - 1) * 365;
+  const medirDesde = 0;
+  const medirAte = 365;
   const descarteDia = p.reposicaoAnual / 365;
 
+  // Janelas de cobertura: [abertura, fim), com a estação cortada na abertura seguinte.
+  const abre = aberturas(p, inicio, T0 - 400, medirAte + 400);
+  const fimJanela = abre.map((a, k) => Math.min(a + p.duracaoEstacao, abre[k + 1] ?? Infinity));
+  const aberturaSet = new Set(abre);
+
   // Partida com os grupos do MESMO tamanho: o criador monta os grupos assim. Cada grupo
-  // pariu no ano anterior, espalhado nos dias da sua estação.
+  // do primeiro ano simulado pariu um ano antes, espalhado nos dias da sua estação.
   let coortes: Coorte[] = [];
-  for (let g = 0; g < nGrupos; g++) {
-    for (let d = 0; d < E; d++) {
-      const parto = g * I + d + G - periodo;
-      coortes.push({ qtd: BASE / (nGrupos * E), parto, concep: null, apta: parto + D, tentou: -1, cabrita: false });
+  const doPrimeiroAno = abre.map((a, k) => ({ a, k })).filter(({ a }) => a >= T0 && a < T0 + 365);
+  for (const { a, k } of doPrimeiroAno) {
+    const dur = fimJanela[k] - a;
+    for (let d = 0; d < dur; d++) {
+      const parto = a + d + G - 365;
+      coortes.push({ qtd: BASE / (doPrimeiroAno.length * dur), parto, concep: null, apta: parto + D, tentou: -1, cabrita: false });
     }
   }
 
@@ -220,16 +279,19 @@ export function calcularGrupos(entrada: ParametrosGrupos): ResultadoGrupos {
   let somaLactacao = 0;
   let pesoLactacao = 0;
 
-  for (let dia = 0; dia < medirAte + G + E; dia++) {
-    const indiceGrupo = Math.floor(dia / I);
-    const naEstacao = dia - indiceGrupo * I < E;
+  let w = abre.findIndex((a) => a > T0) - 1;
+  // Passa do ano medido só para fechar a estação do último grupo dele.
+  for (let dia = T0; dia < medirAte + 200; dia++) {
+    while (w + 1 < abre.length && abre[w + 1] <= dia) w++;
+    const indiceGrupo = w;
+    const naEstacao = w >= 0 && dia < fimJanela[w];
     const medindo = dia >= medirDesde && dia < medirAte;
 
     // Descarte contínuo, proporcional em todos os estados.
     if (descarteDia > 0) for (const c of coortes) c.qtd *= 1 - descarteDia;
 
     // Reposição: na abertura de cada grupo entram cabritas para voltar às 100 matrizes.
-    if (dia % I === 0) {
+    if (aberturaSet.has(dia)) {
       const falta = BASE - coortes.reduce((t, c) => t + c.qtd, 0);
       if (falta > 1e-9) coortes.push({ qtd: falta, parto: null, concep: null, apta: dia, tentou: -1, cabrita: true });
     }
@@ -252,21 +314,29 @@ export function calcularGrupos(entrada: ParametrosGrupos): ResultadoGrupos {
         c.apta = dia + D;
         c.cabrita = false;
       }
-      // Cobertura: vazia, apta e ainda não tentada neste grupo.
+      // Cobertura: vazia, apta e ainda não tentada neste grupo. Quem já esperava na abertura
+      // é coberta aos poucos nos primeiros dias da estação (ciclo estral); quem fica apta
+      // durante a estação, no dia em que fica.
       if (naEstacao && c.concep == null && c.apta <= dia && c.tentou !== indiceGrupo) {
-        const prenhes = c.qtd * p.prenhez;
-        if (medindo) {
+        const j = dia - abre[w];
+        const ciclo = Math.min(CICLO_ESTRAL, fimJanela[w] - abre[w]);
+        const fracao = c.apta > abre[w] || j >= ciclo ? 1 : 1 / (ciclo - j);
+        const cobertas = c.qtd * fracao;
+        const esperando = c.qtd - cobertas;
+        if (esperando > 1e-12) proximas.push({ ...c, qtd: esperando });
+        const prenhes = cobertas * p.prenhez;
+        if (abre[indiceGrupo] >= medirDesde && abre[indiceGrupo] < medirAte) {
           const numero = indiceGrupo;
-          const g = grupos.get(numero) ?? { numero, abre: numero * I, coberturas: 0, cabritas: 0, prenhes: 0, partoDe: Infinity, partoAte: -Infinity };
-          g.coberturas += c.qtd;
-          if (c.cabrita) g.cabritas += c.qtd;
+          const g = grupos.get(numero) ?? { numero, abre: abre[numero], coberturas: 0, cabritas: 0, prenhes: 0, partoDe: Infinity, partoAte: -Infinity };
+          g.coberturas += cobertas;
+          if (c.cabrita) g.cabritas += cobertas;
           g.prenhes += prenhes;
           g.partoDe = Math.min(g.partoDe, dia + G);
           g.partoAte = Math.max(g.partoAte, dia + G);
           grupos.set(numero, g);
         }
         if (prenhes > 0) proximas.push({ ...c, qtd: prenhes, concep: dia, tentou: indiceGrupo });
-        const falhas = c.qtd - prenhes;
+        const falhas = cobertas - prenhes;
         if (falhas > 1e-12) proximas.push({ ...c, qtd: falhas, tentou: indiceGrupo });
         continue;
       }
@@ -306,7 +376,7 @@ export function calcularGrupos(entrada: ParametrosGrupos): ResultadoGrupos {
   const faixa = (f: number[], total: number): Faixa => ({ min: f[0] * escala, media: (total / soma.dias) * escala, max: f[1] * escala });
   const lactantes = faixa(faixas.lact, soma.lact);
 
-  const partosAno = (partosMedidos * escala * 365) / periodo;
+  const partosAno = partosMedidos * escala;
   const cabritasNascidasAno = partosAno * p.prolificidade * p.femeas;
   const cabritasVivasAno = cabritasNascidasAno * (1 - p.mortalidade);
   const reposicaoAno = matrizes * p.reposicaoAnual;
@@ -320,12 +390,11 @@ export function calcularGrupos(entrada: ParametrosGrupos): ResultadoGrupos {
   const total = matrizes + recria + cabritasExcedentes + cabritosMachos + reprodutores;
 
   // Grupos do ano medido: os que abrem dentro dele, numerados a partir de 1.
-  const primeiroGrupo = medirDesde / I;
   const gruposAno = [...grupos.values()]
     .filter((g) => g.abre >= medirDesde && g.abre < medirAte)
     .sort((a, b) => a.numero - b.numero)
-    .map((g) => ({
-      numero: g.numero - primeiroGrupo + 1,
+    .map((g, k) => ({
+      numero: k + 1,
       abre: g.abre - medirDesde,
       coberturas: g.coberturas * escala,
       cabritas: g.cabritas * escala,
@@ -341,6 +410,12 @@ export function calcularGrupos(entrada: ParametrosGrupos): ResultadoGrupos {
     );
   }
   if (p.diasPosParto + p.gestacaoDias - S <= 0) alertas.push('Com esses dias, a cabra seca antes de parir: confira dias pós-parto e seca.');
+  const tamanhos = gruposAno.map((g) => g.coberturas);
+  if (tamanhos.length > 1 && Math.min(...tamanhos) < 0.6 * Math.max(...tamanhos)) {
+    alertas.push(
+      `Os grupos ficam desiguais (de ${Math.round(Math.min(...tamanhos))} a ${Math.round(Math.max(...tamanhos))} cobertas): com ${p.diasPosParto} dias de parida, a cabra volta num mês que não casa com o calendário. Ajuste os meses ou os dias pós-parto.`,
+    );
+  }
   if (lactantes.max - lactantes.min > 0.3 * lactantes.media) {
     alertas.push('As lactantes variam mais de 30% ao longo do ano: grupos mais próximos ou estação mais longa deixam a produção mais homogênea.');
   }
@@ -369,7 +444,7 @@ export function calcularGrupos(entrada: ParametrosGrupos): ResultadoGrupos {
     total,
     pctLactacao: total > 0 ? lactantes.media / total : 0,
     serie: serie.map((s) => ({ semana: s.semana, lactantes: s.lactantes * escala, secas: s.secas * escala, vazias: s.vazias * escala })),
-    periodo,
+    inicio,
     alertas,
   };
 }

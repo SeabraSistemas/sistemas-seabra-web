@@ -7,18 +7,29 @@ import { Button } from '@/components/ui/button';
 import { CampoNumero } from '@/components/tres-irmaos/CampoNumero';
 import { COR_SERIES } from '@/components/tres-irmaos/GraficoSemanal';
 import { litros } from '@/components/tres-irmaos/formato';
+import { dataCurta, rotuloMes, somarDias, somarMeses } from '@/lib/tres-irmaos/datas';
+import { Input } from '@/components/ui/input';
 import type { ParametrosSalvos } from '@/lib/tres-irmaos/dados';
 import { calcularGrupos, GRUPOS_PADRAO, type ParametrosGrupos } from '@/lib/tres-irmaos/grupos';
 
 type Estado = { tipo: 'parado' } | { tipo: 'salvando' } | { tipo: 'salvo' } | { tipo: 'erro'; msg: string };
 
 const int = (n: number) => Math.round(n).toLocaleString('pt-BR');
-const mes = (dia: number) => `mês ${Math.floor(dia / 30.4) + 1}`;
+const MESES_CURTOS = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
 
-/** Parto que cai depois do mês 12 é do ciclo seguinte: "mês 2*" em vez de "mês 14". */
-function faixaDeMeses(de: number, ate: number, periodo: number): string {
-  const rotulo = (d: number) => `${mes(d % periodo)}${d >= periodo ? '*' : ''}`;
-  return de === ate || mes(de) === mes(ate) ? rotulo(de) : `${rotulo(de)} a ${rotulo(ate)}`;
+/** Rótulos de tempo a partir da data do 1º grupo (o dia 0 da conta). */
+function calendario(inicio: string) {
+  const data = (dia: number) => dataCurta(somarDias(inicio, dia));
+  return {
+    mes: (dia: number) => rotuloMes(somarDias(inicio, dia).slice(0, 7)),
+    data,
+    faixa: (de: number, ate: number) => (de === ate ? data(de) : `${data(de)} a ${data(ate)}`),
+  };
+}
+
+/** Dia 1 do mês que vem: sugestão para o 1º grupo quando ainda não há data. */
+function proximoMes(hoje: string): string {
+  return `${somarMeses(hoje.slice(0, 7) + '-01', 1)}`;
 }
 
 /**
@@ -27,10 +38,12 @@ function faixaDeMeses(de: number, ate: number, periodo: number): string {
  * Lucas"). A conta está em src/lib/tres-irmaos/grupos.ts; aqui só o painel.
  * Recalcula ~0,3 s depois da última tecla: a simulação leva uns 400 ms.
  */
-export function GruposPainel({ salvos }: { salvos: ParametrosSalvos }) {
-  const [base, setBase] = useState(salvos.parametros.grupos);
-  const [g, setG] = useState<ParametrosGrupos>(salvos.parametros.grupos);
-  const [calculado, setCalculado] = useState<ParametrosGrupos>(salvos.parametros.grupos);
+export function GruposPainel({ salvos, hoje }: { salvos: ParametrosSalvos; hoje: string }) {
+  // Sem data salva, o 1º grupo sugerido é o dia 1 do mês que vem.
+  const inicial = salvos.parametros.grupos.inicioPrimeiroGrupo ? salvos.parametros.grupos : { ...salvos.parametros.grupos, inicioPrimeiroGrupo: proximoMes(hoje) };
+  const [base, setBase] = useState(inicial);
+  const [g, setG] = useState<ParametrosGrupos>(inicial);
+  const [calculado, setCalculado] = useState<ParametrosGrupos>(inicial);
   const [estado, setEstado] = useState<Estado>(salvos.salvo ? { tipo: 'salvo' } : { tipo: 'parado' });
 
   useEffect(() => {
@@ -63,6 +76,7 @@ export function GruposPainel({ salvos }: { salvos: ParametrosSalvos }) {
     }
   }
 
+  const cal = calendario(r.inicio);
   const porGrupo = r.grupos.length ? r.grupos.reduce((t, x) => t + x.coberturas, 0) / r.grupos.length : 0;
   const serie = r.serie.map((s) => ({ semana: s.semana, lactantes: Math.round(s.lactantes * 10) / 10, secas: Math.round(s.secas * 10) / 10 }));
 
@@ -71,7 +85,8 @@ export function GruposPainel({ salvos }: { salvos: ParametrosSalvos }) {
       <header className="flex flex-col gap-1">
         <h1 className="text-3xl">Grupos reprodutivos</h1>
         <p className="text-sm text-muted-foreground">
-          Quanto rebanho sustenta a meta de lactantes, com um grupo de cobertura a cada {g.intervaloGrupos} dias. Modelo genérico: todos os números ao lado são editáveis. O resultado é o rebanho já em ritmo, depois de alguns anos no sistema.
+          Quanto rebanho sustenta a meta de lactantes com grupos de cobertura{' '}
+          {g.calendario === 'meses' ? `em ${g.mesesCobertura.map((m) => MESES_CURTOS[m - 1]).join(', ')}` : g.intervaloMeses === 1 ? 'todo mês' : `de ${g.intervaloMeses} em ${g.intervaloMeses} meses`}. Modelo genérico: todos os números ao lado são editáveis. O resultado é o rebanho já em ritmo, com o calendário a partir do 1º grupo.
         </p>
       </header>
 
@@ -96,15 +111,63 @@ export function GruposPainel({ salvos }: { salvos: ParametrosSalvos }) {
           </Bloco>
 
           <Bloco titulo="Calendário dos grupos">
-            <Par>
+            <Campo rotulo="1º grupo abre em" id="inicio-grupo">
+              <Input id="inicio-grupo" type="date" value={g.inicioPrimeiroGrupo} onChange={(e) => e.target.value && mudar({ inicioPrimeiroGrupo: e.target.value })} />
+            </Campo>
+            <div className="grid grid-cols-2 gap-1 rounded-lg bg-accent p-1 text-sm" role="radiogroup" aria-label="Como os grupos se repetem">
+              {(
+                [
+                  ['intervalo', 'Intervalo fixo'],
+                  ['meses', 'Escolher os meses'],
+                ] as const
+              ).map(([valor, rotulo]) => (
+                <button
+                  key={valor}
+                  type="button"
+                  role="radio"
+                  aria-checked={g.calendario === valor}
+                  onClick={() => mudar({ calendario: valor })}
+                  className={`rounded-md px-2 py-1.5 ${g.calendario === valor ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+                >
+                  {rotulo}
+                </button>
+              ))}
+            </div>
+            {g.calendario === 'intervalo' ? (
               <Campo rotulo="Um grupo a cada" id="intervalo">
-                <CampoNumero id="intervalo" valor={g.intervaloGrupos} aoMudar={(n) => mudar({ intervaloGrupos: Math.round(n), duracaoEstacao: Math.min(g.duracaoEstacao, Math.round(n)) })} sufixo="dias" min={15} max={180} />
+                <CampoNumero id="intervalo" valor={g.intervaloMeses} aoMudar={(n) => mudar({ intervaloMeses: Math.round(n) })} sufixo="meses" min={1} max={12} />
               </Campo>
-              <Campo rotulo="Estação de monta" id="estacao">
-                <CampoNumero id="estacao" valor={g.duracaoEstacao} aoMudar={(n) => mudar({ duracaoEstacao: Math.round(n) })} sufixo="dias" min={1} max={g.intervaloGrupos} />
-              </Campo>
-            </Par>
-            <p className="text-xs text-muted-foreground">A estação é quantos dias o grupo fica aberto para cobertura (e espalha os partos).</p>
+            ) : (
+              <div className="flex flex-col gap-1">
+                <span className="text-xs text-muted-foreground">Meses com cobertura</span>
+                <div className="grid grid-cols-6 gap-1">
+                  {MESES_CURTOS.map((nome, k) => {
+                    const m = k + 1;
+                    const marcado = g.mesesCobertura.includes(m);
+                    return (
+                      <button
+                        key={nome}
+                        type="button"
+                        aria-pressed={marcado}
+                        onClick={() => {
+                          const meses = marcado ? g.mesesCobertura.filter((x) => x !== m) : [...g.mesesCobertura, m].sort((a, b) => a - b);
+                          if (meses.length) mudar({ mesesCobertura: meses });
+                        }}
+                        className={`rounded-md border py-1.5 text-sm ${marcado ? 'border-primary bg-primary/20 text-foreground' : 'border-border text-muted-foreground hover:text-foreground'}`}
+                      >
+                        {nome}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+            <Campo rotulo="Estação de monta" id="estacao">
+              <CampoNumero id="estacao" valor={g.duracaoEstacao} aoMudar={(n) => mudar({ duracaoEstacao: Math.round(n) })} sufixo="dias" min={1} max={180} />
+            </Campo>
+            <p className="text-xs text-muted-foreground">
+              Os grupos abrem no mesmo dia do mês do 1º. A estação é quantos dias cada grupo fica aberto para cobertura (espalha os partos) e para quando o grupo seguinte abre.
+            </p>
           </Bloco>
 
           <Bloco titulo="Cobertura">
@@ -226,7 +289,7 @@ export function GruposPainel({ salvos }: { salvos: ParametrosSalvos }) {
                   <CartesianGrid stroke="var(--border)" vertical={false} />
                   <XAxis
                     dataKey="semana"
-                    tickFormatter={(v: number) => mes(v * 7)}
+                    tickFormatter={(v: number) => cal.mes(v * 7)}
                     axisLine={false}
                     tickLine={false}
                     tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }}
@@ -236,7 +299,7 @@ export function GruposPainel({ salvos }: { salvos: ParametrosSalvos }) {
                   <YAxis width={40} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }} />
                   <Tooltip
                     contentStyle={{ background: 'var(--popover)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', color: 'var(--popover-foreground)', fontSize: 13 }}
-                    labelFormatter={(v) => `Semana ${Number(v) + 1} (${mes(Number(v) * 7)})`}
+                    labelFormatter={(v) => `Semana de ${cal.data(Number(v) * 7)}`}
                     formatter={(valor, nome) => [int(Number(valor)), String(nome ?? '')]}
                   />
                   <ReferenceLine y={g.metaLactantes} stroke="var(--foreground)" strokeOpacity={0.7} strokeDasharray="5 4" />
@@ -250,7 +313,7 @@ export function GruposPainel({ salvos }: { salvos: ParametrosSalvos }) {
           <section className="painel overflow-x-auto">
             <h2 className="mb-1 font-sans text-sm font-semibold">Os grupos no ano</h2>
             <p className="mb-3 text-xs text-muted-foreground">
-              Mês 1 = abertura do primeiro grupo; * = no ciclo seguinte. Cada grupo recebe as matrizes que completaram {g.diasPosParto} dias de parida, as vazias do grupo anterior e as cabritas de {String(g.idadeCabritaMeses).replace('.', ',')} meses.
+              O 1º grupo abre em {dataCurta(r.inicio)} e o calendário se repete a cada ano. Cada grupo recebe as matrizes que completaram {g.diasPosParto} dias de parida, as vazias do grupo anterior e as cabritas de {String(g.idadeCabritaMeses).replace('.', ',')} meses.
             </p>
             <table className="w-full min-w-[32rem] text-sm whitespace-nowrap tabular-nums">
               <thead className="text-xs text-muted-foreground">
@@ -267,13 +330,11 @@ export function GruposPainel({ salvos }: { salvos: ParametrosSalvos }) {
                 {r.grupos.map((x) => (
                   <tr key={x.numero} className="border-b border-border/60 last:border-0">
                     <td className="py-2 pr-3">{x.numero}</td>
-                    <td className="px-2 text-muted-foreground">
-                      {mes(x.abre)} ({g.duracaoEstacao} dias)
-                    </td>
+                    <td className="px-2 text-muted-foreground">{cal.faixa(x.abre, x.abre + Math.min(g.duracaoEstacao, (r.grupos[x.numero]?.abre ?? Infinity) - x.abre) - 1)}</td>
                     <td className="px-2 text-right font-medium">{int(x.coberturas)}</td>
                     <td className="px-2 text-right text-muted-foreground">{int(x.cabritas)}</td>
                     <td className="px-2 text-right">{int(x.prenhes)}</td>
-                    <td className="pl-2 text-muted-foreground">{faixaDeMeses(x.partoDe, x.partoAte, r.periodo)}</td>
+                    <td className="pl-2 text-muted-foreground">{cal.faixa(x.partoDe, x.partoAte)}</td>
                   </tr>
                 ))}
               </tbody>
