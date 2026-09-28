@@ -30,6 +30,10 @@ import Image from 'next/image';
  * vetorial como os outros — testado antes de incluir, porque foto vira
  * silhueta mais "suja" que ícone; no tamanho renderizado (56px) ainda leu bem,
  * mas é o mais arriscado do lote se o logo for redesenhado no futuro.
+ *
+ * CAPRISUL veio já com alfa real (selo completo, puxado do repositório
+ * ~/Projects/caprisul), sem precisar de chroma key — mesmo tratamento direto
+ * das outras 7.
  */
 const logos = [
   { name: 'Fazenda Campinas', src: '/images/logos/mono/fazenda-campinas.png', w: 1024, h: 724 },
@@ -48,6 +52,7 @@ const logos = [
   { name: 'Gran Sierra', src: '/images/logos/mono/gran-sierra.png', w: 271, h: 136 },
   { name: 'ABCOL', src: '/images/logos/mono/abcol.png', w: 355, h: 344 },
   { name: 'ABCGRAN — Associação Brasileira dos Criadores da Raça Murciano-Granadina', src: '/images/logos/mono/abcgran.png', w: 580, h: 534 },
+  { name: 'CAPRISUL — Associação de Caprinocultores', src: '/images/logos/mono/caprisul.png', w: 1600, h: 1600 },
 ];
 
 export function LogosSection() {
