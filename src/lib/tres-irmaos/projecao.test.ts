@@ -3,7 +3,7 @@ import { describe, test } from 'node:test';
 
 import { agruparColetas, compradorDaSaida, montarColetas, ordenhasDoApp, type ProducaoDoApp } from '@/lib/tres-irmaos/acompanhamento';
 import { inicioDaSemana, somarDias, somarMeses } from '@/lib/tres-irmaos/datas';
-import { distribuir, normalizarParametros, parametrosIniciais, projetar, type Parametros } from '@/lib/tres-irmaos/projecao';
+import { distribuir, normalizarParametros, parametrosIniciais, projetar, simularTanque, type Parametros } from '@/lib/tres-irmaos/projecao';
 
 // Terça-feira: a semana de fornecimento começa nela.
 const HOJE = '2026-09-29';
@@ -174,6 +174,44 @@ describe('projeção — horizonte e meses', () => {
   });
 });
 
+describe('tanque (o do Lucas: 1.200 L)', () => {
+  const compradores = parametrosIniciais({ lactantes: 0, mediaInicial: null, efetivo: {} }).compradores;
+
+  test('o pico é antes da Rose: 5 dias de leite (qui tarde → ter manhã)', () => {
+    const pico = simularTanque(compradores, 1300, 1200);
+    assert.equal(pico(163), 815);
+  });
+
+  test('a sobra da Marina volta para a Rose da semana seguinte', () => {
+    const pico = simularTanque(compradores, 1300, 1200);
+    // 205,2 L/dia (76 × 2,7): Rose 1.026 → leva 800, sobra 226; Marina 226 + 410,4 → leva 500, sobra 136,4.
+    perto(pico(205.2), 1026);
+    perto(pico(205.2), 136.4 + 1026); // 1.162,4 — cabe; sobra 362,4 → Marina 772,8 → sobra 272,8
+    perto(pico(205.2), 272.8 + 1026); // 1.298,8 — passa do tanque
+  });
+
+  test('o que passa da capacidade transborda e não é carregado', () => {
+    const pico = simularTanque(compradores, 1300, 1000);
+    pico(300); // Rose: 1.500 → cabem 1.000, leva 800, sobra 200; Marina: 200 + 600 = 800 → leva 500, sobra 300
+    assert.equal(pico(0), 300);
+  });
+
+  test('a projeção marca a primeira semana em que o tanque não comporta', () => {
+    const p = params({ partos: [{ data: '2026-10-06', quantidade: 13 }] });
+    const proj = projetar(p, HOJE);
+    // Sobra da semana de 29/09 (63 × 2,7): Rose 850,5 → sobra 50,5; Marina 50,5 + 340,2 = 390,7 → leva tudo.
+    // 06/10: 1.026 → sobra 226 → Marina 636,4 → sobra 136,4. 13/10: 1.162,4 (cabe) → … sobra 272,8. 20/10: 1.298,8.
+    assert.equal(proj.primeiraSemanaTanqueCheio, '2026-10-20');
+    const s = proj.semanas.find((x) => x.inicio === '2026-10-20')!;
+    perto(s.acimaDaCapacidade, 272.8 + 1026 - 1200);
+  });
+
+  test('capacidade zero desliga o aviso', () => {
+    const p = params({ partos: [{ data: '2026-10-06', quantidade: 13 }], capacidadeTanque: 0 });
+    assert.equal(projetar(p, HOJE).primeiraSemanaTanqueCheio, null);
+  });
+});
+
 describe('distribuir', () => {
   const compradores = parametrosIniciais({ lactantes: 0, mediaInicial: null, efetivo: {} }).compradores;
 
@@ -293,6 +331,14 @@ describe('acompanhamento por coleta (depois da 1ª ordenha)', () => {
     assert.equal(coletas.find((c) => c.data === '2026-09-29')!.saidaNoApp, 780);
     assert.equal(coletas.find((c) => c.data === '2026-10-01')!.saidaNoApp, 320);
     assert.equal(compradorDaSaida(['Queijaria'], compradores), null);
+  });
+
+  test('tanque acima da capacidade antes da coleta fica marcado', () => {
+    const coletas = montarColetas(ordenhasDoApp(dias('2026-09-24', '2026-10-01', 150, 90)), [], compradores, 1300, '2026-10-05', 1100);
+    const rose = coletas.find((c) => c.data === '2026-09-29')!;
+    assert.equal(rose.tanque, 90 + 4 * 240 + 150); // 1.200
+    assert.equal(rose.acimaDaCapacidade, 100);
+    assert.equal(coletas.find((c) => c.data === '2026-10-01')!.acimaDaCapacidade, 0);
   });
 
   test('a semana soma as duas coletas e compara com o teto', () => {

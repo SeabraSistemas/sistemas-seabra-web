@@ -85,6 +85,8 @@ export interface Coleta {
   sobra: number;
   /** Tanque acima do máximo do comprador. */
   acimaDoMaximo: number;
+  /** Tanque acima da capacidade física (leite que não caberia até a coleta). */
+  acimaDaCapacidade: number;
   abaixoDoMinimo: boolean;
   /** A coleta ainda não aconteceu (a 1ª ordenha do dia não foi lançada). */
   aberta: boolean;
@@ -113,6 +115,7 @@ export function montarColetas(
   compradores: Comprador[],
   teto: number,
   hoje: string,
+  capacidade = 0,
 ): Coleta[] {
   if (ordenhas.length === 0 || compradores.length === 0) return [];
   const porPosicao = new Map<number, number>();
@@ -184,6 +187,7 @@ export function montarColetas(
       leva,
       sobra: sobraDepois,
       acimaDoMaximo: Math.max(0, tanque - c.maxSemanal),
+      acimaDaCapacidade: capacidade > 0 ? Math.max(0, tanque - capacidade) : 0,
       abaixoDoMinimo: leva + 1e-9 < c.minSemanal,
       aberta,
       saidaNoApp: saidasPorChave.get(`${c.id}|${data}`) ?? null,

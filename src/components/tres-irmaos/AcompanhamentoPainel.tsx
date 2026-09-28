@@ -18,9 +18,9 @@ const TURNO = { 1: 'manhã', 2: 'tarde' } as const;
  * produtor lança no app, ordenha por ordenha, e da Saída de Leite.
  */
 export function AcompanhamentoPainel({ hoje, parametros, doApp }: { hoje: string; parametros: Parametros; doApp: DoApp }) {
-  const { compradores, tetoSemanal } = parametros;
+  const { compradores, tetoSemanal, capacidadeTanque } = parametros;
   const ordenhas = useMemo(() => ordenhasDoApp(doApp.producoes), [doApp.producoes]);
-  const coletas = useMemo(() => montarColetas(ordenhas, doApp.saidas, compradores, tetoSemanal, hoje), [ordenhas, doApp.saidas, compradores, tetoSemanal, hoje]);
+  const coletas = useMemo(() => montarColetas(ordenhas, doApp.saidas, compradores, tetoSemanal, hoje, capacidadeTanque), [ordenhas, doApp.saidas, compradores, tetoSemanal, hoje, capacidadeTanque]);
   const semanas = useMemo(() => agruparColetas(coletas, tetoSemanal), [coletas, tetoSemanal]);
   const nomeDe = (id: string) => compradores.find((c) => c.id === id)?.nome ?? id;
   const maxDe = (id: string) => compradores.find((c) => c.id === id)?.maxSemanal ?? 0;
@@ -80,7 +80,7 @@ export function AcompanhamentoPainel({ hoje, parametros, doApp }: { hoje: string
           ))}
         </ul>
         <p className="text-xs text-muted-foreground">
-          Teto de venda: {litros(tetoSemanal)} por semana (terça a segunda). Última ordenha lançada:{' '}
+          Teto de venda: {litros(tetoSemanal)} por semana (terça a segunda). Tanque: {litros(capacidadeTanque)}. Última ordenha lançada:{' '}
           {ultimaOrdenha ? `${DIA_CURTO[diaDaSemana(ultimaOrdenha.data)]} ${dataCurta(ultimaOrdenha.data)}, ${TURNO[ultimaOrdenha.turno]}` : 'nenhuma'}.
         </p>
       </header>
@@ -95,9 +95,15 @@ export function AcompanhamentoPainel({ hoje, parametros, doApp }: { hoje: string
             <Medidor
               rotulo="Deve chegar a"
               valor={estimativaAberta.total}
-              de={maxDe(aberta.compradorId)}
-              detalhe={estimativaAberta.faltam ? `faltam ${estimativaAberta.faltam} ordenhas, no ritmo atual` : 'todas as ordenhas lançadas'}
-              alerta={estimativaAberta.total > maxDe(aberta.compradorId)}
+              de={capacidadeTanque || undefined}
+              detalhe={
+                capacidadeTanque && estimativaAberta.total > capacidadeTanque
+                  ? `passa ${litros(estimativaAberta.total - capacidadeTanque)} do tanque de ${litros(capacidadeTanque)}`
+                  : estimativaAberta.faltam
+                    ? `faltam ${estimativaAberta.faltam} ordenhas, no ritmo atual`
+                    : 'todas as ordenhas lançadas'
+              }
+              alerta={!!capacidadeTanque && estimativaAberta.total > capacidadeTanque}
             />
             <Medidor
               rotulo={`${nomeDe(aberta.compradorId)} leva até`}
@@ -146,7 +152,7 @@ export function AcompanhamentoPainel({ hoje, parametros, doApp }: { hoje: string
                 <th className="px-2 text-left font-medium">Leite de</th>
                 <th className="px-2 text-right font-medium">Ordenhas</th>
                 <th className="px-2 text-right font-medium">Produzido</th>
-                <th className="px-2 text-right font-medium">No tanque</th>
+                <th className="px-2 text-right font-medium">No tanque (máx {litros(capacidadeTanque)})</th>
                 <th className="px-2 text-right font-medium">Leva</th>
                 <th className="px-2 text-right font-medium">Fica</th>
                 <th className="pl-2 text-right font-medium">Saída no app</th>
@@ -274,7 +280,11 @@ function LinhaColeta({ c, nome, max }: { c: Coleta; nome: string; max: number })
         {c.ordenhasLancadas}/{c.ordenhasEsperadas}
       </td>
       <td className="px-2 text-right">{litros(c.produzido)}</td>
-      <td className={`px-2 text-right ${c.acimaDoMaximo > 0.5 ? 'text-destructive' : ''}`} title={c.sobraAnterior ? `inclui ${litros(c.sobraAnterior)} da coleta anterior` : undefined}>
+      <td
+        className={`px-2 text-right ${c.acimaDaCapacidade > 0.5 ? 'font-semibold text-destructive' : c.acimaDoMaximo > 0.5 ? 'text-destructive' : ''}`}
+        title={[c.sobraAnterior ? `inclui ${litros(c.sobraAnterior)} da coleta anterior` : '', c.acimaDaCapacidade > 0.5 ? `${litros(c.acimaDaCapacidade)} acima da capacidade do tanque` : ''].filter(Boolean).join(' · ') || undefined}
+      >
+        {c.acimaDaCapacidade > 0.5 && <AlertTriangle className="mr-1 inline size-3.5" aria-label="acima da capacidade do tanque" />}
         {litros(c.tanque)}
       </td>
       <td className="px-2 text-right font-medium">

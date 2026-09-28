@@ -1,4 +1,4 @@
-import { diasEntre, inicioDaSemana, mesDe, somarDias, somarMeses } from '@/lib/tres-irmaos/datas';
+import { DIA_INICIO_SEMANA, diasEntre, inicioDaSemana, mesDe, somarDias, somarMeses } from '@/lib/tres-irmaos/datas';
 
 /**
  * Projeção de produção de leite, semana a semana, de 1 a 12 meses.
@@ -38,6 +38,8 @@ export interface Parametros {
   /** 1 a 12. */
   horizonteMeses: number;
   tetoSemanal: number;
+  /** Litros que cabem no tanque de resfriamento (o do Lucas: 1.200 L). */
+  capacidadeTanque: number;
   /** Em ordem de prioridade: o primeiro enche antes do segundo receber. */
   compradores: Comprador[];
   lactantesIniciais: number;
@@ -91,6 +93,10 @@ export interface SemanaProjetada {
   excedente: number;
   /** Quanto a PRODUÇÃO passou do teto semanal — o número que importa para o laticínio. */
   acimaDoTeto: number;
+  /** Maior nível do tanque na semana: logo antes de uma coleta (ver `simularTanque`). */
+  picoTanque: number;
+  /** Quanto o pico passa da capacidade do tanque. */
+  acimaDaCapacidade: number;
 }
 
 export interface MesProjetado {
@@ -113,6 +119,8 @@ export interface Projecao {
   meses: MesProjetado[];
   /** Primeira semana em que a produção passa do teto, ou null. */
   primeiraSemanaAcimaDoTeto: string | null;
+  /** Primeira semana em que o tanque não comporta o leite até a coleta, ou null. */
+  primeiraSemanaTanqueCheio: string | null;
 }
 
 export const HORIZONTE_MIN = 1;
@@ -161,6 +169,43 @@ export function distribuir(litros: number, compradores: Comprador[], teto: numbe
   });
 }
 
+/**
+ * O tanque ao longo da semana. Os compradores recolhem depois da 1ª ordenha
+ * do seu dia, então o tanque está no máximo logo antes de cada coleta: tem o
+ * leite de todos os dias desde a coleta anterior mais o que ela deixou. Com
+ * Rose na terça e Marina na quinta, a janela da Rose é de 5 dias (qui tarde →
+ * ter manhã) e a da Marina de 2 (ter tarde → qui manhã).
+ *
+ * Devolve uma função que recebe os litros/dia da semana e diz o pico; a sobra
+ * de uma coleta passa para a seguinte, inclusive de uma semana para outra.
+ * O que não cabe no tanque transborda (não é carregado adiante).
+ */
+export function simularTanque(compradores: Comprador[], teto: number, capacidade: number) {
+  const eventos = compradores
+    .map((c, prioridade) => ({ c, prioridade, offset: (c.diaColeta - DIA_INICIO_SEMANA + 7) % 7 }))
+    .sort((a, b) => a.offset - b.offset || a.prioridade - b.prioridade);
+  const janelas = eventos.map((e, i) => {
+    const anterior = i === 0 ? eventos[eventos.length - 1].offset - 7 : eventos[i - 1].offset;
+    return e.offset - anterior;
+  });
+  const cap = positivo(capacidade) || Infinity;
+  let sobra = 0;
+  return (litrosDia: number): number => {
+    if (eventos.length === 0) return litrosDia * 7;
+    let vendido = 0;
+    let pico = 0;
+    eventos.forEach((e, i) => {
+      const tanque = sobra + litrosDia * janelas[i];
+      pico = Math.max(pico, tanque);
+      const cabe = Math.min(tanque, cap);
+      const leva = Math.max(0, Math.min(cabe, positivo(e.c.maxSemanal), positivo(teto) - vendido));
+      vendido += leva;
+      sobra = cabe - leva;
+    });
+    return pico;
+  };
+}
+
 export function projetar(p: Parametros, hoje: string, partosDoApp: Previsao[] = []): Projecao {
   const horizonte = limitar(Math.round(p.horizonteMeses) || HORIZONTE_MAX, HORIZONTE_MIN, HORIZONTE_MAX);
   const inicio = inicioDaSemana(hoje);
@@ -179,6 +224,7 @@ export function projetar(p: Parametros, hoje: string, partosDoApp: Previsao[] = 
   let base = positivo(p.lactantesIniciais); // as lactantes de hoje
   let novas = 0; // quem pariu dentro da projeção
   let foraDaOrdenha = CATEGORIAS_FORA_DA_ORDENHA.reduce((t, c) => t + positivo(p.efetivoInicial?.[c]), 0);
+  const tanque = simularTanque(p.compradores, p.tetoSemanal, p.capacidadeTanque);
 
   for (let i = 0, semana = inicio; semana < fim; i++, semana = somarDias(semana, 7)) {
     const partos = (partosManuais.get(semana) ?? 0) + (partosCobertura.get(semana) ?? 0) + (partosApp.get(semana) ?? 0);
@@ -212,6 +258,7 @@ export function projetar(p: Parametros, hoje: string, partosDoApp: Previsao[] = 
     const fracao = dias / 7;
     const entregas = distribuir(litrosSemana, p.compradores, p.tetoSemanal, fracao);
     const vendido = entregas.reduce((s, e) => s + e.litros, 0);
+    const picoTanque = tanque(litrosDia);
 
     semanas.push({
       inicio: semana,
@@ -228,6 +275,8 @@ export function projetar(p: Parametros, hoje: string, partosDoApp: Previsao[] = 
       vendido,
       excedente: Math.max(0, litrosSemana - vendido),
       acimaDoTeto: Math.max(0, litrosSemana - positivo(p.tetoSemanal) * fracao),
+      picoTanque,
+      acimaDaCapacidade: positivo(p.capacidadeTanque) ? Math.max(0, picoTanque - positivo(p.capacidadeTanque)) : 0,
     });
   }
 
@@ -237,6 +286,7 @@ export function projetar(p: Parametros, hoje: string, partosDoApp: Previsao[] = 
     semanas,
     meses: agruparPorMes(semanas, hoje),
     primeiraSemanaAcimaDoTeto: semanas.find((s) => s.acimaDoTeto > 0.5)?.inicio ?? null,
+    primeiraSemanaTanqueCheio: semanas.find((s) => s.acimaDaCapacidade > 0.5)?.inicio ?? null,
   };
 }
 
@@ -296,6 +346,8 @@ export function parametrosIniciais(app: DadosDoApp): Parametros {
     versao: 1,
     horizonteMeses: 12,
     tetoSemanal: 1300,
+    // O Lucas (28/09/2026): tanque de 1.200 L.
+    capacidadeTanque: 1200,
     compradores: [
       { id: 'rose', nome: 'Rose', diaColeta: 2, minSemanal: 600, maxSemanal: 800, destinosApp: ['Leite Rose'] },
       // A Marina é do Capril Chaparral: no app do Lucas a saída dela é "Leite Chaparral".
@@ -358,6 +410,7 @@ export function normalizarParametros(bruto: unknown, iniciais: Parametros): Para
     versao: 1,
     horizonteMeses: limitar(Math.round(num(b.horizonteMeses, iniciais.horizonteMeses)), HORIZONTE_MIN, HORIZONTE_MAX),
     tetoSemanal: num(b.tetoSemanal, iniciais.tetoSemanal),
+    capacidadeTanque: num(b.capacidadeTanque, iniciais.capacidadeTanque),
     compradores,
     lactantesIniciais: num(b.lactantesIniciais, iniciais.lactantesIniciais),
     efetivoInicial: efetivo(b.efetivoInicial),

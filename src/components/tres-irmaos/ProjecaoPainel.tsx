@@ -32,6 +32,8 @@ export function ProjecaoPainel({ hoje, rebanho, salvos }: { hoje: string; rebanh
   const acima = proj.semanas.filter((s) => s.acimaDoTeto > 0.5);
   const semanaAcima = acima[0];
   const totalExcedente = proj.semanas.reduce((t, s) => t + s.excedente, 0);
+  const semanaTanque = proj.semanas.find((s) => s.acimaDaCapacidade > 0.5);
+  const picoTanque = proj.semanas.reduce((m, s) => (s.picoTanque > m.picoTanque ? s : m), primeira);
 
   const linhasGrafico = proj.semanas.map((s) => {
     const linha: Record<string, number | string> = { inicio: s.inicio };
@@ -80,7 +82,7 @@ export function ProjecaoPainel({ hoje, rebanho, salvos }: { hoje: string; rebanh
         </p>
       </header>
 
-      <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <section className="grid grid-cols-2 gap-3 lg:grid-cols-5">
         <Tile rotulo="Esta semana" valor={litros(primeira.litrosSemana)} detalhe={`${animais(primeira.lactantes)} lactantes · ${litros(primeira.litrosDia)}/dia`} />
         <Tile rotulo="Semana de pico" valor={litros(pico.litrosSemana)} detalhe={`${diaMes(pico.inicio)} · ${animais(pico.lactantes)} lactantes`} />
         <Tile
@@ -88,6 +90,16 @@ export function ProjecaoPainel({ hoje, rebanho, salvos }: { hoje: string; rebanh
           valor={semanaAcima ? `a partir de ${diaMes(semanaAcima.inicio)}` : 'não passa'}
           detalhe={semanaAcima ? `${acima.length} ${acima.length === 1 ? 'semana' : 'semanas'} · até ${litros(Math.max(...acima.map((s) => s.acimaDoTeto)))} a mais` : 'dentro do teto em todo o período'}
           alerta={!!semanaAcima}
+        />
+        <Tile
+          rotulo={`Tanque de ${litros(p.capacidadeTanque)}`}
+          valor={semanaTanque ? `enche a partir de ${diaMes(semanaTanque.inicio)}` : 'cabe'}
+          detalhe={
+            semanaTanque
+              ? `antes da coleta chega a ${litros(picoTanque.picoTanque)} (${litros(picoTanque.acimaDaCapacidade)} a mais)`
+              : `pico de ${litros(picoTanque.picoTanque)} antes da coleta, em ${diaMes(picoTanque.inicio)}`
+          }
+          alerta={!!semanaTanque}
         />
         <Tile rotulo="Leite sem comprador no período" valor={litros(totalExcedente)} detalhe="acima do teto ou dos máximos" alerta={totalExcedente > 0.5} />
       </section>
@@ -236,7 +248,7 @@ export function ProjecaoPainel({ hoje, rebanho, salvos }: { hoje: string; rebanh
           </div>
 
           <div className="painel flex flex-col gap-3">
-            <h2 className="font-sans text-sm font-semibold">Compradores e teto</h2>
+            <h2 className="font-sans text-sm font-semibold">Compradores, teto e tanque</h2>
             <p className="text-xs text-muted-foreground">Na ordem de prioridade: o primeiro leva até o máximo antes do segundo receber.</p>
             {p.compradores.map((c, i) => (
               <div key={c.id} className="flex flex-col gap-2 rounded-lg border border-border p-2.5">
@@ -295,9 +307,14 @@ export function ProjecaoPainel({ hoje, rebanho, salvos }: { hoje: string; rebanh
                 <Plus className="size-4" /> Comprador
               </button>
             )}
-            <Campo rotulo="Teto semanal (total vendido)" id="teto">
-              <CampoNumero id="teto" valor={p.tetoSemanal} aoMudar={(n) => mudar({ tetoSemanal: n })} sufixo="L" />
-            </Campo>
+            <div className="grid grid-cols-2 gap-3">
+              <Campo rotulo="Teto semanal (vendido)" id="teto">
+                <CampoNumero id="teto" valor={p.tetoSemanal} aoMudar={(n) => mudar({ tetoSemanal: n })} sufixo="L" />
+              </Campo>
+              <Campo rotulo="Capacidade do tanque" id="tanque">
+                <CampoNumero id="tanque" valor={p.capacidadeTanque} aoMudar={(n) => mudar({ capacidadeTanque: n })} sufixo="L" />
+              </Campo>
+            </div>
           </div>
 
           <div className="sticky bottom-3 z-10 flex flex-col gap-2 rounded-xl border border-border bg-card/95 p-3 backdrop-blur">
@@ -388,7 +405,8 @@ export function ProjecaoPainel({ hoje, rebanho, salvos }: { hoje: string; rebanh
                         {c.nome}
                       </th>
                     ))}
-                    <th className="pl-2 text-right font-medium">Excedente</th>
+                    <th className="px-2 text-right font-medium">Excedente</th>
+                    <th className="pl-2 text-right font-medium">Pico do tanque</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -408,7 +426,8 @@ export function ProjecaoPainel({ hoje, rebanho, salvos }: { hoje: string; rebanh
                           {e.abaixoDoMinimo && <span className="ml-1 text-xs text-primary" title="abaixo do mínimo combinado">↓mín</span>}
                         </td>
                       ))}
-                      <td className={`pl-2 text-right ${s.excedente > 0.5 ? 'text-destructive' : 'text-muted-foreground'}`}>{s.excedente > 0.5 ? litros(s.excedente) : '—'}</td>
+                      <td className={`px-2 text-right ${s.excedente > 0.5 ? 'text-destructive' : 'text-muted-foreground'}`}>{s.excedente > 0.5 ? litros(s.excedente) : '—'}</td>
+                      <td className={`pl-2 text-right ${s.acimaDaCapacidade > 0.5 ? 'font-semibold text-destructive' : 'text-muted-foreground'}`}>{litros(s.picoTanque)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -416,7 +435,7 @@ export function ProjecaoPainel({ hoje, rebanho, salvos }: { hoje: string; rebanh
             )}
           </section>
           <p className="text-xs text-muted-foreground">
-            A projeção não inclui mortes, vendas nem a curva da lactação (sobe até o pico e cai depois): cada cabra produz a média informada o tempo todo. A semana de {diaMes(primeira.inicio)} começou antes de hoje e entra inteira.
+            O pico do tanque é logo antes de cada coleta (depois da 1ª ordenha): a Rose leva 5 dias de leite mais o que a Marina deixou. A projeção não inclui mortes, vendas nem a curva da lactação (sobe até o pico e cai depois): cada cabra produz a média informada o tempo todo. A semana de {diaMes(primeira.inicio)} começou antes de hoje e entra inteira.
           </p>
         </div>
       </div>
