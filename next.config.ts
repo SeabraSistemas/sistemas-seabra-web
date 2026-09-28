@@ -112,6 +112,20 @@ const nextConfig: NextConfig = {
           { key: 'X-Content-Type-Options', value: 'nosniff' },
         ],
       },
+      {
+        // /3irmaos: projeção de leite e fornecimento do Capril Rancho 3 Irmãos
+        // (propriedade 262 do app) — produção e venda de um cliente real,
+        // mesmos headers do /sanri.
+        source: '/3irmaos/:path*',
+        headers: [
+          { key: 'X-Robots-Tag', value: 'noindex, nofollow, noarchive, nosnippet, noimageindex' },
+          { key: 'Cache-Control', value: 'no-store, no-cache, must-revalidate, private' },
+          { key: 'Referrer-Policy', value: 'no-referrer' },
+          { key: 'X-Frame-Options', value: 'DENY' },
+          { key: 'Content-Security-Policy', value: "frame-ancestors 'none'" },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+        ],
+      },
     ];
   },
   async rewrites() {
