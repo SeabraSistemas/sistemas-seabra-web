@@ -1,4 +1,5 @@
 import { DIA_INICIO_SEMANA, diasEntre, inicioDaSemana, mesDe, somarDias, somarMeses } from '@/lib/tres-irmaos/datas';
+import { GRUPOS_PADRAO, normalizarGrupos, type ParametrosGrupos } from '@/lib/tres-irmaos/grupos';
 
 /**
  * Projeção de produção de leite, semana a semana, de 1 a 12 meses.
@@ -64,6 +65,8 @@ export interface Parametros {
   gestacaoDias: number;
   /** Somar os partos previstos que o app já conhece (gestação confirmada). */
   usarPartosDoApp: boolean;
+  /** Planejamento dos grupos reprodutivos (aba própria). */
+  grupos: ParametrosGrupos;
 }
 
 export interface Entrega {
@@ -369,6 +372,7 @@ export function parametrosIniciais(app: DadosDoApp): Parametros {
     taxaPrenhez: 0.7,
     gestacaoDias: 150,
     usarPartosDoApp: true,
+    grupos: GRUPOS_PADRAO,
   };
 }
 
@@ -423,5 +427,6 @@ export function normalizarParametros(bruto: unknown, iniciais: Parametros): Para
     taxaPrenhez: limitar(num(b.taxaPrenhez, iniciais.taxaPrenhez), 0, 1),
     gestacaoDias: num(b.gestacaoDias, iniciais.gestacaoDias),
     usarPartosDoApp: typeof b.usarPartosDoApp === 'boolean' ? b.usarPartosDoApp : iniciais.usarPartosDoApp,
+    grupos: b.grupos && typeof b.grupos === 'object' ? normalizarGrupos(b.grupos) : iniciais.grupos,
   };
 }

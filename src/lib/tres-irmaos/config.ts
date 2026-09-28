@@ -10,4 +10,5 @@ export const HOME_HREF = '/3irmaos/projecao';
 export const LINKS: NavLink[] = [
   { href: HOME_HREF, label: 'Projeção' },
   { href: '/3irmaos/acompanhamento', label: 'Acompanhamento' },
+  { href: '/3irmaos/grupos', label: 'Grupos reprodutivos' },
 ];
