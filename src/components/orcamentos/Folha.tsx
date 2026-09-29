@@ -20,9 +20,8 @@ export function Folha({ o }: { o: Orcamento }) {
     <article className="orc-folha">
       <header className="orc-topo">
         <div className="orc-marca">
-          <img src="/images/logo-icon.svg" alt="" className="orc-logo" />
+          <img src="/images/logo-icon-recorte.svg" alt="" className="orc-logo" />
           <div>
-            <p className="orc-nome">Seabra</p>
             <p className="orc-razao">{EMPRESA.razaoSocial}</p>
             <p className="orc-miudo">CNPJ {EMPRESA.cnpj}</p>
             <p className="orc-miudo">{EMPRESA.endereco}</p>

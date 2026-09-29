@@ -32,10 +32,10 @@
 
 /* ── topo ─────────────────────────────────────────────────────────────── */
 .orc-topo { display: flex; justify-content: space-between; gap: 8mm; padding-bottom: 5mm; border-bottom: 2.5pt solid var(--azul); }
-.orc-marca { display: flex; gap: 4mm; align-items: center; }
-.orc-logo { width: 20mm; height: 20mm; }
-.orc-nome { font-size: 22pt; font-weight: 800; letter-spacing: -0.02em; line-height: 1; color: var(--azul); }
-.orc-razao { margin-top: 1.5mm; font-weight: 600; }
+.orc-marca { display: flex; gap: 5mm; align-items: center; }
+/* logo-icon-recorte.svg: o mesmo símbolo sem a sobra do quadrado 512×512 */
+.orc-logo { width: auto; height: 16mm; }
+.orc-razao { font-size: 11.5pt; font-weight: 700; }
 .orc-miudo { font-size: 8pt; color: var(--cinza); }
 .orc-doc { text-align: right; }
 .orc-titulo { font-size: 17pt; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--azul); line-height: 1.1; }
