@@ -41,13 +41,13 @@ export const CATALOGO: ItemCatalogo[] = [
   { curto: 'Leitor bastão', nome: 'Leitor bastão RFID', detalhe: 'FDX-B com Bluetooth', valor: precoRfid('leitor-bastao') },
   ...PLANOS.map((p) => ({
     curto: `Anuidade ${p.nome}`,
-    nome: `Anuidade SeabraApp Pequenos Ruminantes — ${p.nome}`,
+    nome: `Anuidade Sistema Seabra - Pequenos Ruminantes (${p.nome})`,
     detalhe: `12 meses por propriedade · ${APP}`,
     valor: p.anual,
   })),
   ...PLANOS.map((p) => ({
     curto: `Mensal ${p.nome}`,
-    nome: `Mensalidade SeabraApp Pequenos Ruminantes — ${p.nome}`,
+    nome: `Mensalidade Sistema Seabra - Pequenos Ruminantes (${p.nome})`,
     detalhe: `Por propriedade · ${APP}`,
     valor: p.mensal,
   })),

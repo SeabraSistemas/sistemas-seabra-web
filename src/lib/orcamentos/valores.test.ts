@@ -34,6 +34,7 @@ test('datas', () => {
 });
 
 test('título do arquivo sem caracteres proibidos', () => {
-  assert.equal(tituloArquivo('2026/001', 'UFF'), 'Orçamento Seabra - 2026-001 - UFF');
-  assert.equal(tituloArquivo('2026-001', ''), 'Orçamento Seabra - 2026-001');
+  assert.equal(tituloArquivo('UFF', '2026-09-29'), 'Orçamento Seabra - UFF - 29-09-2026');
+  assert.equal(tituloArquivo('A/B: C', '2026-09-29'), 'Orçamento Seabra - A-B- C - 29-09-2026');
+  assert.equal(tituloArquivo('', '2026-09-29'), 'Orçamento Seabra - 29-09-2026');
 });

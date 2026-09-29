@@ -51,7 +51,7 @@ function Editor() {
 
   function gerarPdf() {
     const antes = document.title;
-    document.title = tituloArquivo(o.numero, o.cliente);
+    document.title = tituloArquivo(o.cliente, o.data);
     window.addEventListener(
       'afterprint',
       () => {
@@ -193,10 +193,7 @@ function Editor() {
 
         <section className={cartao}>
           <p className={rotulo}>Documento e condições</p>
-          <div className="mt-3 grid grid-cols-3 gap-2">
-            <Campo nome="Nº">
-              <Input value={o.numero} onChange={(e) => mudar('numero', e.target.value)} />
-            </Campo>
+          <div className="mt-3 grid grid-cols-2 gap-2">
             <Campo nome="Data">
               <Input type="date" value={o.data} onChange={(e) => mudar('data', e.target.value)} />
             </Campo>

@@ -31,12 +31,6 @@ export function Folha({ o }: { o: Orcamento }) {
         <div className="orc-doc">
           <p className="orc-titulo">Orçamento</p>
           <dl>
-            {o.numero.trim() && (
-              <>
-                <dt>Nº</dt>
-                <dd>{o.numero}</dd>
-              </>
-            )}
             <dt>Data</dt>
             <dd>{dataBR(o.data)}</dd>
             {dias > 0 && (
@@ -141,7 +135,7 @@ export function Folha({ o }: { o: Orcamento }) {
         </section>
 
         <section className="orc-conheca">
-          <p className="orc-conheca-titulo">Conheça o SeabraApp</p>
+          <p className="orc-conheca-titulo">Conheça o Sistema Seabra</p>
           <p className="orc-miudo">Gestão de rebanho de caprinos, ovinos e bovinos — no celular, offline e na web.</p>
           <ul>
             {LINKS.map((l) => (

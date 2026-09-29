@@ -6,9 +6,6 @@ import { hojeISO, type Item } from '@/lib/orcamentos/valores';
  */
 
 export type Orcamento = {
-  /** sequência do próximo número (2026-001, 2026-002…) — sobrevive ao "Novo". */
-  seq: number;
-  numero: string;
   data: string;
   validadeDias: string;
   cliente: string;
@@ -24,8 +21,6 @@ export type Orcamento = {
 
 const CHAVE = 'seabra:orcamentos:v1';
 
-const numeroDe = (seq: number, data: string) => `${data.slice(0, 4)}-${String(seq).padStart(3, '0')}`;
-
 export function novoId(): string {
   return typeof crypto !== 'undefined' && 'randomUUID' in crypto
     ? crypto.randomUUID()
@@ -33,11 +28,8 @@ export function novoId(): string {
 }
 
 function inicial(): Orcamento {
-  const data = hojeISO();
   return {
-    seq: 1,
-    numero: numeroDe(1, data),
-    data,
+    data: hojeISO(),
     validadeDias: '15',
     cliente: '',
     documento: '',
@@ -53,12 +45,8 @@ function inicial(): Orcamento {
 
 /** Próximo orçamento: limpa cliente e itens, mantém condições e validade. */
 export function proximo(o: Orcamento): Orcamento {
-  const seq = o.seq + 1;
-  const data = hojeISO();
   return {
     ...inicial(),
-    seq,
-    numero: numeroDe(seq, data),
     validadeDias: o.validadeDias,
     pagamento: o.pagamento,
     prazo: o.prazo,

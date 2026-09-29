@@ -52,7 +52,7 @@ export function hojeISO(agora = new Date()): string {
 }
 
 /** Nome de arquivo do PDF (o Chrome usa o título da página). */
-export function tituloArquivo(numero: string, cliente: string): string {
+export function tituloArquivo(cliente: string, dataIso: string): string {
   const limpo = (s: string) => s.replace(/[\\/:*?"<>|]+/g, '-').trim();
-  return ['Orçamento Seabra', limpo(numero), limpo(cliente)].filter(Boolean).join(' - ');
+  return ['Orçamento Seabra', limpo(cliente), dataBR(dataIso).replace(/\//g, '-')].filter(Boolean).join(' - ');
 }
