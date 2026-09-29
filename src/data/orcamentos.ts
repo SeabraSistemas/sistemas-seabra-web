@@ -33,7 +33,7 @@ const PLANOS = [
   { nome: 'Pro', mensal: 150, anual: 1530 },
 ];
 
-const APP = 'Android, iOS e Web · backup na nuvem · atualizações incluídas';
+const APP = 'Android, iOS e Web · atualizações incluídas';
 
 export const CATALOGO: ItemCatalogo[] = [
   { curto: 'Microchip', nome: 'Seringa com microchip (ICAR)', detalhe: 'FDX-B 134,2 kHz · ISO 11784/11785', valor: precoRfid('microchip-icar') },
