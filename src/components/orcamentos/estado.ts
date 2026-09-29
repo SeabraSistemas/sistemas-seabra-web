@@ -45,7 +45,7 @@ function inicial(): Orcamento {
     contato: '',
     itens: [],
     desconto: '',
-    pagamento: 'Pix ou transferência bancária',
+    pagamento: 'Boleto bancário',
     prazo: '',
     observacoes: '',
   };
