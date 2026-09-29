@@ -18,7 +18,7 @@ export const EMPRESA = {
 /** Links impressos no orçamento (clicáveis no PDF). */
 export const LINKS = [
   { rotulo: 'Planos e valores', url: 'https://www.sistemaseabra.com.br/planos' },
-  { rotulo: 'Apresentação do SeabraApp', url: 'https://www.sistemaseabra.com.br/apresentacao' },
+  { rotulo: 'Apresentação do Sistema Seabra', url: 'https://www.sistemaseabra.com.br/apresentacao' },
   { rotulo: 'Site', url: 'https://www.sistemaseabra.com.br' },
 ] as const;
 
