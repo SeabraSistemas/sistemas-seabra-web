@@ -1,0 +1,93 @@
+/*
+ * Folha A4 do /orcamentos. Na tela é a prévia; na impressão é o PDF — por isso
+ * medidas em mm/pt e cores fixas, fora do tema escuro do site.
+ */
+
+.orc-folha {
+  --azul: #155aa5;
+  --verde: #5ea85a;
+  --tinta: #1c2430;
+  --cinza: #5b6675;
+  --linha: #dfe4ec;
+  --fundo: #eef3fa;
+
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  width: 210mm;
+  min-height: 297mm;
+  padding: 14mm 15mm 12mm;
+  background: #fff;
+  color: var(--tinta);
+  font-size: 9.5pt;
+  line-height: 1.4;
+  box-shadow: 0 10px 40px rgb(0 0 0 / 0.35);
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.orc-folha * { box-sizing: border-box; }
+/* :where zera a especificidade — o reset não pode vencer as classes abaixo. */
+:where(.orc-folha) :where(p, dl, dd, ul) { margin: 0; padding: 0; }
+.orc-folha a { color: var(--azul); text-decoration: none; }
+
+/* ── topo ─────────────────────────────────────────────────────────────── */
+.orc-topo { display: flex; justify-content: space-between; gap: 8mm; padding-bottom: 5mm; border-bottom: 2.5pt solid var(--azul); }
+.orc-marca { display: flex; gap: 4mm; align-items: center; }
+.orc-logo { width: 20mm; height: 20mm; }
+.orc-nome { font-size: 22pt; font-weight: 800; letter-spacing: -0.02em; line-height: 1; color: var(--azul); }
+.orc-razao { margin-top: 1.5mm; font-weight: 600; }
+.orc-miudo { font-size: 8pt; color: var(--cinza); }
+.orc-doc { text-align: right; }
+.orc-titulo { font-size: 17pt; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--azul); line-height: 1.1; }
+.orc-doc dl { display: grid; grid-template-columns: auto auto; justify-content: end; column-gap: 3mm; margin-top: 2mm; }
+.orc-doc dt { color: var(--cinza); }
+.orc-doc dd { font-weight: 600; font-variant-numeric: tabular-nums; }
+
+/* ── cliente ──────────────────────────────────────────────────────────── */
+.orc-rotulo { font-size: 7.5pt; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--azul); margin-bottom: 1.5mm; }
+.orc-cliente { margin-top: 6mm; padding: 4mm 5mm; background: var(--fundo); border-radius: 2mm; }
+.orc-cliente-nome { font-size: 12pt; font-weight: 700; }
+.orc-cliente-linhas { display: flex; flex-wrap: wrap; column-gap: 6mm; margin-top: 1mm; color: var(--cinza); }
+.orc-cliente-linhas b { color: var(--tinta); font-weight: 600; }
+
+/* ── itens ────────────────────────────────────────────────────────────── */
+.orc-tabela { width: 100%; margin-top: 6mm; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.orc-tabela th { padding: 2.2mm 2.5mm; background: var(--azul); color: #fff; font-size: 8pt; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; text-align: left; }
+.orc-tabela td { padding: 2.4mm 2.5mm; border-bottom: 0.75pt solid var(--linha); vertical-align: top; }
+.orc-tabela tr { break-inside: avoid; }
+.orc-tabela .num { text-align: right; white-space: nowrap; }
+.orc-tabela .qtd { text-align: center; width: 16mm; }
+.orc-item-nome { font-weight: 600; }
+.orc-item-detalhe { font-size: 8pt; color: var(--cinza); }
+.orc-vazio { color: var(--cinza); font-style: italic; text-align: center; }
+
+.orc-totais { display: grid; grid-template-columns: auto minmax(34mm, max-content); justify-content: end; column-gap: 6mm; row-gap: 1mm; margin-top: 3mm; font-variant-numeric: tabular-nums; }
+.orc-totais dt { color: var(--cinza); text-align: right; }
+.orc-totais dd { text-align: right; white-space: nowrap; }
+.orc-total { margin-top: 1.5mm; padding: 2.5mm 5mm; background: var(--azul); color: #fff; border-radius: 1.5mm; font-size: 13pt; font-weight: 800; }
+.orc-totais dt.orc-total-rotulo { align-self: center; margin-top: 1.5mm; color: var(--tinta); font-weight: 700; font-size: 10pt; text-transform: uppercase; letter-spacing: 0.06em; }
+
+/* ── condições + links ───────────────────────────────────────────────── */
+.orc-base { display: grid; grid-template-columns: 1fr 1fr; gap: 6mm; margin-top: 8mm; break-inside: avoid; }
+.orc-condicoes dl { display: grid; row-gap: 1.8mm; }
+.orc-condicoes dt { font-weight: 700; }
+.orc-condicoes dd { color: var(--cinza); white-space: pre-line; }
+.orc-conheca { padding: 4mm 5mm; border: 1pt solid var(--linha); border-left: 3pt solid var(--verde); border-radius: 2mm; }
+.orc-conheca-titulo { font-size: 11pt; font-weight: 700; }
+.orc-conheca ul { list-style: none; display: grid; row-gap: 1.8mm; margin-top: 2.5mm; }
+.orc-conheca li span { display: block; font-size: 8pt; color: var(--cinza); }
+.orc-conheca a { font-weight: 600; }
+
+/* ── rodapé ───────────────────────────────────────────────────────────── */
+.orc-rodape { margin-top: auto; padding-top: 8mm; }
+.orc-rodape p { padding-top: 3mm; border-top: 0.75pt solid var(--linha); text-align: center; font-size: 8pt; color: var(--cinza); }
+
+/* ── impressão: só a folha, sem margem de página (some o cabeçalho do navegador) ── */
+@page { size: A4; margin: 0; }
+@media print {
+  html, body { background: #fff !important; }
+  .orc-nao-imprime { display: none !important; }
+  .orc-raiz { display: block !important; height: auto !important; }
+  .orc-palco { display: block !important; padding: 0 !important; margin: 0 !important; overflow: visible !important; background: none !important; }
+  .orc-folha { box-shadow: none; min-height: calc(297mm - 1px); -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+}
