@@ -79,6 +79,8 @@
     "amlTitulo": "Evaluación morfológica lineal",
     "amlPontosLabel": "Puntos",
     "amlAvaliadaEm": "Evaluada el {data}",
+    "amlPorFoto": "Evaluación por foto",
+    "amlMobilidadeNaoAvaliada": "no evaluada (por foto)",
     "medidasTitulo": "Medidas corporales",
     "lactacaoAberta": "Lactancia abierta",
     "lactacaoDiasSufixo": "días",

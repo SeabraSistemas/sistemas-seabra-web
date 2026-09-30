@@ -453,6 +453,14 @@
 .vitrine-scope .bar .bf.y { background: #e3c65b; }
 .vitrine-scope .bar .bf.r { background: #f87171; }
 .vitrine-scope .bar .bv { font-family: var(--vit-mono); font-size: 13px; font-weight: 600; color: var(--vit-ink); text-align: right; font-variant-numeric: tabular-nums; }
+/* AML por foto (29/09/2026): selo no cabeçalho do bloco e a mobilidade, que
+   sem vídeo não é avaliada, dita em texto no lugar do trilho e da nota. */
+.vitrine-scope .block-h .selo-foto {
+  display: inline-flex; align-items: center; gap: 4px; align-self: center;
+  font-size: 11px; font-weight: 600; color: var(--vit-primary);
+  border: 1px solid var(--vit-line); border-radius: 99px; padding: 1px 8px;
+}
+.vitrine-scope .bar .bna { grid-column: 3 / span 2; font-size: 12px; font-style: italic; color: var(--vit-ink-mute); }
 
 /* Empilha cedo (900px, não 760): com o rótulo em 13px o .bar não desce de
    ~292px, e uma coluna de barras espremida ao lado do radar transbordava o

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { Camera } from 'lucide-react';
 import type { AmlData } from '@/lib/criadores/normalize';
 import { RadarAml } from './RadarAml';
 
@@ -29,6 +30,14 @@ export function AmlBloco({ aml }: { aml: AmlData }) {
     <div className="block">
       <div className="block-h">
         <h3>{t('amlTitulo')}</h3>
+        {/* AML feita pelo admin a partir das fotos (29/09/2026): conta como AML
+            normal, com o selo — no leite, sem vídeo, a mobilidade fica de fora. */}
+        {aml.porFoto && (
+          <span className="selo-foto">
+            <Camera size={12} aria-hidden="true" />
+            {t('amlPorFoto')}
+          </span>
+        )}
         {(aml.totalFmt || aml.dataFmt) && (
           <span className="k">
             {aml.totalFmt}
@@ -47,6 +56,14 @@ export function AmlBloco({ aml }: { aml: AmlData }) {
           />
         </div>
         <div className="bars">
+          {/* A mobilidade é a nº 1: vem antes das outras, como na legenda da ficha. */}
+          {aml.mobilidadeNaoAvaliada && (
+            <div className="bar bar-na">
+              <span className="bn">1</span>
+              <span className="bl">Mobilidade</span>
+              <span className="bna">{t('amlMobilidadeNaoAvaliada')}</span>
+            </div>
+          )}
           {aml.pts.map((p, i) => (
             <div
               className={`bar${i === destaqueIndex ? ' on' : ''}`}

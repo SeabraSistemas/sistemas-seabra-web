@@ -1,5 +1,7 @@
 import type { Animal, Criador, SexoNorm } from './types';
-import { AML_NUMERO } from './aml';
+// `@/` e não './aml': o runner de testes do Node só resolve o alias (ver
+// scripts/testes/alias-hook.mjs), e o normalize.test.ts importa este arquivo.
+import { AML_NUMERO } from '@/lib/criadores/aml';
 
 /**
  * Regras de exibicao da vitrine. NUNCA renderizar rotulo orfao: cada helper
@@ -76,7 +78,17 @@ export function fmtDataBr(d: string | null | undefined): string | null {
 export type AmlPonto = { n: number | null; label: string; valor: number };
 
 /** Snapshot da AML pronto para render (retorno de amlDe), consumido por AmlBloco/RadarAml. */
-export type AmlData = { totalFmt: string | null; totalInt: number | null; dataFmt: string | null; pts: AmlPonto[] };
+export type AmlData = {
+  totalFmt: string | null;
+  totalInt: number | null;
+  dataFmt: string | null;
+  pts: AmlPonto[];
+  /** AML feita pelo admin a partir das fotos: o bloco ganha o selo. */
+  porFoto: boolean;
+  /** Por foto e sem o ponto 1: o bloco diz que a mobilidade não foi avaliada,
+   * em vez de simplesmente não mostrar a linha. */
+  mobilidadeNaoAvaliada: boolean;
+};
 
 /**
  * Snapshot da AML pronto para render, ou null quando não há avaliação com pontos
@@ -103,7 +115,9 @@ export function amlDe(a: Animal): AmlData | null {
     const [label, valor] = pt;
     return { n: AML_NUMERO[label] ?? null, label, valor };
   });
-  return { totalFmt, totalInt, dataFmt, pts };
+  const porFoto = a.aml?.por_foto === true;
+  const mobilidadeNaoAvaliada = porFoto && !pts.some((p) => p.n === AML_NUMERO['Mobilidade']);
+  return { totalFmt, totalInt, dataFmt, pts, porFoto, mobilidadeNaoAvaliada };
 }
 
 function fmtKg(n: number): string {

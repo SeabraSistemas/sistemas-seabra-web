@@ -79,6 +79,8 @@
     "amlTitulo": "Linear morphological evaluation",
     "amlPontosLabel": "Points",
     "amlAvaliadaEm": "Evaluated on {data}",
+    "amlPorFoto": "Photo-based evaluation",
+    "amlMobilidadeNaoAvaliada": "not assessed (photo)",
     "medidasTitulo": "Body measurements",
     "lactacaoAberta": "Open lactation",
     "lactacaoDiasSufixo": "days",

@@ -35,6 +35,12 @@ export type Genealogia = Partial<Record<
 export interface Aml {
   total?: number | null;
   data?: string | null;
+  /**
+   * true quando a AML foi feita pelo admin a partir das fotos (migration
+   * 20260929235000 no app). Sem vídeo não há mobilidade: o ponto 1 vem nulo e
+   * some do array. Ausente nas AMLs de visita.
+   */
+  por_foto?: boolean;
   pts?: ([string, number] | [number, string, number])[];
 }
 
