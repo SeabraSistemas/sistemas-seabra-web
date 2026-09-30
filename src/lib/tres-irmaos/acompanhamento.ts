@@ -1,5 +1,5 @@
 import { diaDaSemana, diasEntre, inicioDaSemana, somarDias } from '@/lib/tres-irmaos/datas';
-import type { Comprador } from '@/lib/tres-irmaos/projecao';
+import { diaColetaNaSemana, type Comprador } from '@/lib/tres-irmaos/projecao';
 
 /**
  * Acompanhamento das coletas, SÓ LEITURA, a partir da Produção Diária que o
@@ -9,8 +9,11 @@ import type { Comprador } from '@/lib/tres-irmaos/projecao';
  * Felipe, 28/09/2026). Então cada coleta leva o leite da ordenha seguinte à
  * coleta anterior até a 1ª ordenha do próprio dia:
  *
- *   Rose, terça   → da tarde de quinta até a manhã de terça  (10 ordenhas)
- *   Marina, quinta → da tarde de terça até a manhã de quinta (4 ordenhas)
+ *   Rose, terça   → da tarde de sexta até a manhã de terça (8 ordenhas)
+ *   Marina, sexta → da tarde de terça até a manhã de sexta (6 ordenhas)
+ *
+ * (Até a semana de 22/09/2026 a Marina recolhia na quinta: cada semana usa o
+ * dia que valia nela — `diaColetaNaSemana`.)
  *
  * O tanque é simulado: cada comprador leva até o seu máximo semanal, e o
  * que ele não leva fica para a coleta seguinte. A semana é a da Rose (terça
@@ -128,7 +131,7 @@ export function montarColetas(
 
   const eventos: Array<{ comprador: Comprador; data: string; corte: number }> = [];
   for (let d = inicio; d <= fim; d = somarDias(d, 1)) {
-    for (const c of compradores) if (diaDaSemana(d) === c.diaColeta) eventos.push({ comprador: c, data: d, corte: posicao(d, 1) });
+    for (const c of compradores) if (diaDaSemana(d) === diaColetaNaSemana(c, inicioDaSemana(d))) eventos.push({ comprador: c, data: d, corte: posicao(d, 1) });
   }
   // Mesmo dia: a ordem de prioridade decide quem leva primeiro.
   eventos.sort((a, b) => a.corte - b.corte || compradores.indexOf(a.comprador) - compradores.indexOf(b.comprador));

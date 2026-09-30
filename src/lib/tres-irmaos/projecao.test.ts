@@ -3,7 +3,17 @@ import { describe, test } from 'node:test';
 
 import { agruparColetas, compradorDaSaida, montarColetas, ordenhasDoApp, type ProducaoDoApp } from '@/lib/tres-irmaos/acompanhamento';
 import { inicioDaSemana, somarDias, somarMeses } from '@/lib/tres-irmaos/datas';
-import { distribuir, normalizarParametros, parametrosIniciais, projetar, simularTanque, type Parametros } from '@/lib/tres-irmaos/projecao';
+import {
+  diaColetaNaSemana,
+  distribuir,
+  normalizarParametros,
+  parametrosIniciais,
+  projetar,
+  simularTanque,
+  trocarDiaColeta,
+  type Comprador,
+  type Parametros,
+} from '@/lib/tres-irmaos/projecao';
 
 // Terça-feira: a semana de fornecimento começa nela.
 const HOJE = '2026-09-29';
@@ -19,11 +29,16 @@ function params(extra: Partial<Parametros> = {}): Parametros {
 
 const perto = (a: number, b: number, msg?: string) => assert.ok(Math.abs(a - b) < 1e-6, msg ?? `${a} ≠ ${b}`);
 
+/** Rose e Marina de hoje (Marina na sexta). */
+const COMPRADORES = parametrosIniciais({ lactantes: 0, mediaInicial: null, efetivo: {} }).compradores;
+/** Como era até a semana de 22/09/2026: Marina na quinta. Os cenários de mecânica abaixo foram contados assim. */
+const NA_QUINTA: Comprador[] = COMPRADORES.map((c) => (c.id === 'marina' ? { ...c, diaColeta: 4 } : c));
+
 describe('datas', () => {
   test('a semana começa na terça', () => {
     assert.equal(inicioDaSemana('2026-09-28'), '2026-09-22'); // segunda → terça anterior
     assert.equal(inicioDaSemana('2026-09-29'), '2026-09-29'); // terça é ela mesma
-    assert.equal(inicioDaSemana('2026-10-01'), '2026-09-29'); // quinta (Marina)
+    assert.equal(inicioDaSemana('2026-10-02'), '2026-09-29'); // sexta (Marina)
   });
 
   test('somar meses não transborda o fim do mês', () => {
@@ -175,7 +190,15 @@ describe('projeção — horizonte e meses', () => {
 });
 
 describe('tanque (o do Lucas: 1.200 L)', () => {
-  const compradores = parametrosIniciais({ lactantes: 0, mediaInicial: null, efetivo: {} }).compradores;
+  const compradores = NA_QUINTA;
+
+  test('com a Marina na sexta, o pico antes da Rose cai para 4 dias de leite (sex tarde → ter manhã)', () => {
+    const pico = simularTanque(COMPRADORES, 1300, 1200);
+    assert.equal(pico(163), 652);
+    // 205,2 L/dia: Rose 820,8 → leva 800, sobra 20,8; Marina 20,8 + 615,6 → leva 500, sobra 136,4.
+    perto(pico(205.2), 820.8);
+    perto(pico(205.2), 136.4 + 820.8);
+  });
 
   test('o pico é antes da Rose: 5 dias de leite (qui tarde → ter manhã)', () => {
     const pico = simularTanque(compradores, 1300, 1200);
@@ -197,7 +220,7 @@ describe('tanque (o do Lucas: 1.200 L)', () => {
   });
 
   test('a projeção marca a primeira semana em que o tanque não comporta', () => {
-    const p = params({ partos: [{ data: '2026-10-06', quantidade: 13 }] });
+    const p = params({ partos: [{ data: '2026-10-06', quantidade: 13 }], compradores: NA_QUINTA });
     const proj = projetar(p, HOJE);
     // Sobra da semana de 29/09 (63 × 2,7): Rose 850,5 → sobra 50,5; Marina 50,5 + 340,2 = 390,7 → leva tudo.
     // 06/10: 1.026 → sobra 226 → Marina 636,4 → sobra 136,4. 13/10: 1.162,4 (cabe) → … sobra 272,8. 20/10: 1.298,8.
@@ -213,7 +236,7 @@ describe('tanque (o do Lucas: 1.200 L)', () => {
 });
 
 describe('distribuir', () => {
-  const compradores = parametrosIniciais({ lactantes: 0, mediaInicial: null, efetivo: {} }).compradores;
+  const compradores = COMPRADORES;
 
   test('quem paga mais enche primeiro', () => {
     const [rose, marina] = distribuir(700, compradores, 1300);
@@ -255,7 +278,7 @@ describe('normalizarParametros', () => {
 });
 
 describe('acompanhamento por coleta (depois da 1ª ordenha)', () => {
-  const compradores = parametrosIniciais({ lactantes: 0, mediaInicial: null, efetivo: {} }).compradores;
+  const compradores = NA_QUINTA;
 
   /** Dias com manhã e tarde lançadas, de `de` a `ate`. */
   function dias(de: string, ate: string, manha = 100, tarde = 60): ProducaoDoApp[] {
@@ -347,5 +370,94 @@ describe('acompanhamento por coleta (depois da 1ª ordenha)', () => {
     assert.equal(semana.produzido, 850 + 340);
     assert.equal(semana.acimaDoTeto, 90);
     assert.equal(semana.completa, true);
+  });
+});
+
+describe('troca do dia da coleta (Marina: quinta → sexta em 30/09/2026)', () => {
+  const marina = NA_QUINTA.find((c) => c.id === 'marina')!;
+  const QUARTA = '2026-09-30';
+
+  test('trocada na quarta, vale já nesta semana: a quinta 01/10 ainda não tinha passado', () => {
+    const t = trocarDiaColeta(marina, 5, QUARTA);
+    assert.equal(t.diaColeta, 5);
+    assert.deepEqual(t.diasAnteriores, [{ dia: 4, ateSemana: '2026-09-29' }]);
+    assert.equal(diaColetaNaSemana(t, '2026-09-22'), 4);
+    assert.equal(diaColetaNaSemana(t, '2026-09-29'), 5);
+    assert.equal(diaColetaNaSemana(t, '2026-10-06'), 5);
+  });
+
+  test('trocada na sexta, depois da quinta: esta semana fica na quinta e a troca vale da próxima', () => {
+    const t = trocarDiaColeta(marina, 5, '2026-10-02');
+    assert.deepEqual(t.diasAnteriores, [{ dia: 4, ateSemana: '2026-10-06' }]);
+    assert.equal(diaColetaNaSemana(t, '2026-09-29'), 4);
+  });
+
+  test('mexer de novo na mesma semana não empilha; voltar ao dia de antes apaga a troca', () => {
+    const t = trocarDiaColeta(trocarDiaColeta(marina, 6, QUARTA), 5, QUARTA);
+    assert.deepEqual(t.diasAnteriores, [{ dia: 4, ateSemana: '2026-09-29' }]);
+    const volta = trocarDiaColeta(t, 4, QUARTA);
+    assert.equal('diasAnteriores' in volta, false);
+    assert.deepEqual(volta, marina);
+  });
+
+  test('uma troca antiga continua valendo nas semanas dela', () => {
+    const antiga = { ...marina, diaColeta: 4, diasAnteriores: [{ dia: 3, ateSemana: '2026-09-01' }] };
+    const t = trocarDiaColeta(antiga, 5, QUARTA);
+    assert.deepEqual(t.diasAnteriores, [
+      { dia: 3, ateSemana: '2026-09-01' },
+      { dia: 4, ateSemana: '2026-09-29' },
+    ]);
+    assert.equal(diaColetaNaSemana(t, '2026-08-25'), 3);
+    assert.equal(diaColetaNaSemana(t, '2026-09-22'), 4);
+    assert.equal(diaColetaNaSemana(t, '2026-09-29'), 5);
+  });
+
+  test('o acompanhamento mantém as quintas de antes e passa a Marina para a sexta', () => {
+    const trocados = NA_QUINTA.map((c) => (c.id === 'marina' ? trocarDiaColeta(c, 5, QUARTA) : c));
+    const producoes: ProducaoDoApp[] = [];
+    for (let d = '2026-09-17'; d <= '2026-10-06'; d = somarDias(d, 1)) producoes.push({ data: d, lactantes: 67, litros1: 100, litros2: 60 });
+    const saidas = [
+      { data: '2026-09-24', litros: 300, destinos: ['Leite Chaparral'] },
+      { data: '2026-10-02', litros: 450, destinos: ['Leite Chaparral'] },
+    ];
+    const coletas = montarColetas(ordenhasDoApp(producoes), saidas, trocados, 1300, '2026-10-07');
+    const daMarina = coletas.filter((c) => c.compradorId === 'marina').map((c) => c.data);
+    assert.deepEqual(daMarina, ['2026-09-17', '2026-09-24', '2026-10-02', '2026-10-09']); // nenhuma em 01/10
+
+    const quinta = coletas.find((c) => c.compradorId === 'marina' && c.data === '2026-09-24')!;
+    assert.equal(quinta.ordenhasEsperadas, 4);
+    assert.equal(quinta.saidaNoApp, 300);
+    // A Rose de 29/09 ainda leva da quinta à terça (10 ordenhas)…
+    assert.deepEqual(coletas.find((c) => c.data === '2026-09-29')!.desde, { data: '2026-09-24', turno: 2 });
+    // …a primeira sexta leva da tarde de terça à manhã de sexta (6)…
+    const sexta = coletas.find((c) => c.data === '2026-10-02')!;
+    assert.deepEqual(sexta.desde, { data: '2026-09-29', turno: 2 });
+    assert.equal(sexta.ordenhasEsperadas, 6);
+    assert.equal(sexta.saidaNoApp, 450);
+    // …e a Rose de 06/10 fica com a tarde de sexta até a manhã de terça (8).
+    const rose = coletas.find((c) => c.data === '2026-10-06')!;
+    assert.deepEqual(rose.desde, { data: '2026-10-02', turno: 2 });
+    assert.equal(rose.ordenhasEsperadas, 8);
+  });
+
+  test('a troca salva volta do jsonb; entrada torta é descartada', () => {
+    const n = normalizarParametros(
+      {
+        compradores: [
+          {
+            ...marina,
+            diaColeta: 5,
+            diasAnteriores: [{ dia: 4, ateSemana: '2026-09-29' }, { dia: 4, ateSemana: '29/09' }, null, { dia: 9, ateSemana: '2026-10-01' }],
+          },
+        ],
+      },
+      params(),
+    );
+    // A data vira a terça da semana; o dia vai para a faixa 0–6.
+    assert.deepEqual(n.compradores[0].diasAnteriores, [
+      { dia: 4, ateSemana: '2026-09-29' },
+      { dia: 6, ateSemana: '2026-09-29' },
+    ]);
+    assert.equal('diasAnteriores' in normalizarParametros({ compradores: [marina] }, params()).compradores[0], false);
   });
 });

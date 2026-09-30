@@ -20,12 +20,24 @@ import { GRUPOS_PADRAO, normalizarGrupos, type ParametrosGrupos } from '@/lib/tr
 export interface Comprador {
   id: string;
   nome: string;
-  /** 0 = domingo … 6 = sábado. Só informativo: a conta é semanal. */
+  /** 0 = domingo … 6 = sábado. O dia de agora: a projeção e o tanque usam este. */
   diaColeta: number;
+  /**
+   * Dias de antes de uma troca, para o Acompanhamento não reescrever o
+   * passado: nas semanas que começam antes de `ateSemana` (uma terça), o
+   * comprador recolhia em `dia`. A Marina passou de quinta para sexta a
+   * partir da semana de 29/09/2026.
+   */
+  diasAnteriores?: DiaAnterior[];
   minSemanal: number;
   maxSemanal: number;
   /** Nomes de destino da Saída de Leite do app que são deste comprador (ex.: "Leite Rose"). */
   destinosApp: string[];
+}
+
+export interface DiaAnterior {
+  dia: number;
+  ateSemana: string;
 }
 
 /** Uma quantidade de animais numa data (partos ou secagens previstos). */
@@ -140,6 +152,34 @@ function positivo(n: unknown): number {
   return Number.isFinite(v) && v > 0 ? v : 0;
 }
 
+/** Dia em que o comprador recolhia na semana que começa em `semana` (uma terça). */
+export function diaColetaNaSemana(c: Comprador, semana: string): number {
+  const vigente = (c.diasAnteriores ?? []).filter((x) => semana < x.ateSemana).sort((a, b) => (a.ateSemana < b.ateSemana ? -1 : 1))[0];
+  return vigente ? vigente.dia : c.diaColeta;
+}
+
+/**
+ * Troca o dia da coleta guardando o de antes. Vale desde a semana de `hoje`,
+ * a não ser que o dia antigo ou o novo já tenha passado nela — aí a coleta
+ * desta semana fica como foi e a troca começa na seguinte. Trocar de novo na
+ * mesma semana não empilha, e voltar ao dia de antes apaga a troca.
+ */
+export function trocarDiaColeta(c: Comprador, dia: number, hoje: string): Comprador {
+  const semanaAtual = inicioDaSemana(hoje);
+  const passou = (d: number) => somarDias(semanaAtual, (d - DIA_INICIO_SEMANA + 7) % 7) < hoje;
+  const desde = passou(diaColetaNaSemana(c, semanaAtual)) || passou(dia) ? somarDias(semanaAtual, 7) : semanaAtual;
+  const antes = diaColetaNaSemana(c, somarDias(desde, -7));
+  const anteriores = (c.diasAnteriores ?? []).filter((x) => x.ateSemana < desde);
+  return comAnteriores({ ...c, diaColeta: dia }, antes === dia ? anteriores : [...anteriores, { dia: antes, ateSemana: desde }]);
+}
+
+/** Sem troca nenhuma, o campo nem aparece (o jsonb salvo fica igual ao de antes). */
+function comAnteriores(c: Comprador, anteriores: DiaAnterior[]): Comprador {
+  const sem = { ...c };
+  delete sem.diasAnteriores;
+  return anteriores.length ? { ...sem, diasAnteriores: anteriores } : sem;
+}
+
 /**
  * Soma as previsões por semana (chave = terça da semana). Previsão antes do
  * início é ignorada: quem já pariu já está nas lactantes de hoje.
@@ -176,8 +216,8 @@ export function distribuir(litros: number, compradores: Comprador[], teto: numbe
  * O tanque ao longo da semana. Os compradores recolhem depois da 1ª ordenha
  * do seu dia, então o tanque está no máximo logo antes de cada coleta: tem o
  * leite de todos os dias desde a coleta anterior mais o que ela deixou. Com
- * Rose na terça e Marina na quinta, a janela da Rose é de 5 dias (qui tarde →
- * ter manhã) e a da Marina de 2 (ter tarde → qui manhã).
+ * Rose na terça e Marina na sexta, a janela da Rose é de 4 dias (sex tarde →
+ * ter manhã) e a da Marina de 3 (ter tarde → sex manhã).
  *
  * Devolve uma função que recebe os litros/dia da semana e diz o pico; a sobra
  * de uma coleta passa para a seguinte, inclusive de uma semana para outra.
@@ -354,7 +394,8 @@ export function parametrosIniciais(app: DadosDoApp): Parametros {
     compradores: [
       { id: 'rose', nome: 'Rose', diaColeta: 2, minSemanal: 600, maxSemanal: 800, destinosApp: ['Leite Rose'] },
       // A Marina é do Capril Chaparral: no app do Lucas a saída dela é "Leite Chaparral".
-      { id: 'marina', nome: 'Marina', diaColeta: 4, minSemanal: 100, maxSemanal: 500, destinosApp: ['Leite Chaparral'] },
+      // Recolhia na quinta; na sexta desde a semana de 29/09/2026.
+      { id: 'marina', nome: 'Marina', diaColeta: 5, minSemanal: 100, maxSemanal: 500, destinosApp: ['Leite Chaparral'] },
     ],
     lactantesIniciais: app.lactantes,
     efetivoInicial,
@@ -398,16 +439,25 @@ export function normalizarParametros(bruto: unknown, iniciais: Parametros): Para
   const compradores = Array.isArray(b.compradores)
     ? (b.compradores as Comprador[])
         .filter((c) => c && typeof c.id === 'string' && typeof c.nome === 'string')
-        .map((c) => ({
-          id: c.id,
-          nome: c.nome,
-          diaColeta: limitar(Math.round(num(c.diaColeta, 2)), 0, 6),
-          minSemanal: num(c.minSemanal, 0),
-          maxSemanal: num(c.maxSemanal, 0),
-          destinosApp: Array.isArray(c.destinosApp)
-            ? c.destinosApp.filter((d): d is string => typeof d === 'string')
-            : (padraoComprador.get(c.id)?.destinosApp ?? []),
-        }))
+        .map((c) =>
+          comAnteriores(
+            {
+              id: c.id,
+              nome: c.nome,
+              diaColeta: limitar(Math.round(num(c.diaColeta, 2)), 0, 6),
+              minSemanal: num(c.minSemanal, 0),
+              maxSemanal: num(c.maxSemanal, 0),
+              destinosApp: Array.isArray(c.destinosApp)
+                ? c.destinosApp.filter((d): d is string => typeof d === 'string')
+                : (padraoComprador.get(c.id)?.destinosApp ?? []),
+            },
+            Array.isArray(c.diasAnteriores)
+              ? c.diasAnteriores
+                  .filter((x): x is DiaAnterior => !!x && typeof x === 'object' && typeof x.ateSemana === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(x.ateSemana))
+                  .map((x) => ({ dia: limitar(Math.round(num(x.dia, 0)), 0, 6), ateSemana: inicioDaSemana(x.ateSemana) }))
+              : [],
+          ),
+        )
     : iniciais.compradores;
 
   return {

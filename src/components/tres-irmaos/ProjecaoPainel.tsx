@@ -9,8 +9,8 @@ import { EditorPrevisoes } from '@/components/tres-irmaos/EditorPrevisoes';
 import { COR_EXCEDENTE, COR_SERIES, GraficoSemanal } from '@/components/tres-irmaos/GraficoSemanal';
 import { DIAS_SEMANA, animais, litros, media } from '@/components/tres-irmaos/formato';
 import type { ParametrosSalvos, RebanhoDoApp } from '@/lib/tres-irmaos/dados';
-import { dataCurta, diaMes, rotuloMesLongo } from '@/lib/tres-irmaos/datas';
-import { HORIZONTE_MAX, HORIZONTE_MIN, projetar, type Comprador, type Parametros } from '@/lib/tres-irmaos/projecao';
+import { dataCurta, diaMes, rotuloMesLongo, somarDias } from '@/lib/tres-irmaos/datas';
+import { HORIZONTE_MAX, HORIZONTE_MIN, projetar, trocarDiaColeta, type Comprador, type Parametros } from '@/lib/tres-irmaos/projecao';
 
 type Estado = { tipo: 'parado' } | { tipo: 'salvando' } | { tipo: 'salvo'; em: string; por: string } | { tipo: 'erro'; msg: string };
 
@@ -257,7 +257,7 @@ export function ProjecaoPainel({ hoje, rebanho, salvos }: { hoje: string; rebanh
                   <Input value={c.nome} onChange={(e) => mudarComprador(i, { nome: e.target.value })} aria-label="Nome do comprador" className="h-8" />
                   <select
                     value={c.diaColeta}
-                    onChange={(e) => mudarComprador(i, { diaColeta: Number(e.target.value) })}
+                    onChange={(e) => mudarComprador(i, trocarDiaColeta(c, Number(e.target.value), hoje))}
                     aria-label="Dia da coleta"
                     className="h-8 rounded-md border border-input bg-input/30 px-2 text-sm"
                   >
@@ -278,6 +278,11 @@ export function ProjecaoPainel({ hoje, rebanho, salvos }: { hoje: string; rebanh
                     </button>
                   )}
                 </div>
+                {c.diasAnteriores?.length ? (
+                  <p className="text-xs text-muted-foreground">
+                    {c.diasAnteriores.map((x) => `Até ${diaMes(somarDias(x.ateSemana, -1))}: ${DIAS_SEMANA[x.dia]}`).join(' · ')}. O acompanhamento das semanas de antes usa esse dia.
+                  </p>
+                ) : null}
                 <div className="grid grid-cols-2 gap-2">
                   <Campo rotulo="Mínimo/semana" id={`min-${c.id}`}>
                     <CampoNumero id={`min-${c.id}`} valor={c.minSemanal} aoMudar={(n) => mudarComprador(i, { minSemanal: n })} sufixo="L" />
