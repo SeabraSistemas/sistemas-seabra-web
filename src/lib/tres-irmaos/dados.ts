@@ -3,6 +3,7 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import type { ProducaoDoApp, SaidaDoApp } from '@/lib/tres-irmaos/acompanhamento';
 import { PROPRIEDADE_ID } from '@/lib/tres-irmaos/config';
 import { diasEntre, somarDias } from '@/lib/tres-irmaos/datas';
+import { CHAVES_GRUPO, type ChaveGrupo, type DietaCadastrada, type InsumoApp, type ItemFormulacao } from '@/lib/tres-irmaos/insumos';
 import {
   normalizarParametros,
   parametrosIniciais,
@@ -296,5 +297,119 @@ export async function lerDoApp(): Promise<Resultado<DoApp>> {
   } catch (e) {
     console.error('[3irmaos] lerDoApp', e);
     return { ok: false, erro: 'Não foi possível ler a Produção Diária e as saídas de leite do app.' };
+  }
+}
+
+interface LinhaConsumo {
+  categoria_id: string;
+  kg_concentrado_dia: number | null;
+  kg_volumoso_dia: number | null;
+  kg_sal_dia: number | null;
+  updated_at: string | null;
+}
+
+interface LinhaFormulacao {
+  categoria_id: string;
+  insumo_id: number;
+  proporcao: number | null;
+  updated_at: string | null;
+}
+
+interface LinhaInsumo {
+  id: number;
+  nome: string;
+  tipo: string;
+  unidade: string | null;
+  valor_unitario: number | null;
+  ativo: boolean | null;
+}
+
+export interface DietaDoApp {
+  /** Catálogo de insumos de dieta da fazenda (concentrado, volumoso, sal mineral). */
+  insumos: InsumoApp[];
+  dietas: DietaCadastrada[];
+  /** Última mexida na dieta no app (consumo ou formulação). */
+  atualizadoEm: string | null;
+}
+
+/**
+ * A dieta como o produtor cadastrou no app: quanto cada categoria come por
+ * dia (`consumo_categoria`) e de que insumos a ração é feita
+ * (`formulacao_categoria`), com o catálogo de preços (`insumo`). Só leitura —
+ * a dieta se edita no app, aqui ela só vira pedido de compra.
+ */
+export async function lerDieta(): Promise<Resultado<DietaDoApp>> {
+  const s = supa();
+  if (!s) return { ok: false, erro: SEM_CONFIG };
+  try {
+    const [cats, consumos, formulacoes, insumos] = await Promise.all([
+      s.from('categoria_animal').select('id, nome'),
+      paginado<LinhaConsumo>((de, ate) =>
+        s
+          .from('consumo_categoria')
+          .select('categoria_id, kg_concentrado_dia, kg_volumoso_dia, kg_sal_dia, updated_at')
+          .eq('propriedade_id', PROPRIEDADE_ID)
+          .or('segmento.is.null,segmento.eq.caprino_leiteiro')
+          .order('id')
+          .range(de, ate),
+      ),
+      paginado<LinhaFormulacao>((de, ate) =>
+        s
+          .from('formulacao_categoria')
+          .select('categoria_id, insumo_id, proporcao, updated_at')
+          .eq('propriedade_id', PROPRIEDADE_ID)
+          .or('segmento.is.null,segmento.eq.caprino_leiteiro')
+          .order('id')
+          .range(de, ate),
+      ),
+      paginado<LinhaInsumo>((de, ate) =>
+        s
+          .from('insumo')
+          .select('id, nome, tipo, unidade, valor_unitario, ativo')
+          .eq('propriedade_id', PROPRIEDADE_ID)
+          .in('tipo', CHAVES_GRUPO)
+          .order('id')
+          .range(de, ate),
+      ),
+    ]);
+    if (cats.error) throw new Error(cats.error.message);
+    const nomes = new Map((cats.data ?? []).map((c: { id: string; nome: string }) => [c.id, c.nome]));
+
+    const porCategoria = new Map<string, ItemFormulacao[]>();
+    for (const f of formulacoes) {
+      const itens = porCategoria.get(f.categoria_id) ?? [];
+      itens.push({ insumoId: f.insumo_id, proporcao: Number(f.proporcao) || 0 });
+      porCategoria.set(f.categoria_id, itens);
+    }
+
+    const datas = [...consumos, ...formulacoes].map((l) => l.updated_at).filter((d): d is string => !!d);
+
+    return {
+      ok: true,
+      dados: {
+        insumos: insumos.map((i) => ({
+          id: i.id,
+          nome: i.nome,
+          grupo: i.tipo as ChaveGrupo,
+          unidade: i.unidade ?? 'kg',
+          // 0 no app é "não informado": virar 0 no custo faria o pedido parecer de graça.
+          valorUnitario: Number(i.valor_unitario) > 0 ? Number(i.valor_unitario) : null,
+          ativo: i.ativo !== false,
+        })),
+        dietas: consumos.map((c) => ({
+          categoria: nomes.get(c.categoria_id) ?? 'sem categoria',
+          porCabeca: {
+            concentrado: Number(c.kg_concentrado_dia) || 0,
+            volumoso: Number(c.kg_volumoso_dia) || 0,
+            sal_mineral: Number(c.kg_sal_dia) || 0,
+          },
+          formulacao: porCategoria.get(c.categoria_id) ?? [],
+        })),
+        atualizadoEm: datas.length ? datas.reduce((max, d) => (d > max ? d : max)) : null,
+      },
+    };
+  } catch (e) {
+    console.error('[3irmaos] lerDieta', e);
+    return { ok: false, erro: 'Não foi possível ler a dieta cadastrada no app.' };
   }
 }
