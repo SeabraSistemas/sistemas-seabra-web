@@ -192,6 +192,8 @@ export function InsumosPainel({
         </p>
       </section>
 
+      <ResumoPedido r={r} />
+
       <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Tile rotulo="Rebanho" valor={`${inteiro.format(r.animais)} animais`} detalhe={`${r.categorias.filter((c) => c.animais > 0).length} categorias${ajustado ? ' · ajustado' : ' · do app'}`} />
         <Tile rotulo="Come por dia" valor={peso(r.kgDiaConsumo)} detalhe={`${umaCasa.format(r.animais ? r.kgDiaConsumo / r.animais : 0)} kg por cabeça`} />
@@ -447,6 +449,52 @@ export function InsumosPainel({
         aqui é só a conta do pedido.
       </p>
     </div>
+  );
+}
+
+/**
+ * O resumo que o produtor leva para o fornecedor: só o essencial, sem custo,
+ * sem formulação, sem edição. Rebanho por categoria de um lado, insumo por
+ * insumo de outro — sacos inteiros (granel em kg) e para quantos dias dá.
+ * Tudo que está nas tabelas de baixo, só que sem precisar procurar.
+ */
+function ResumoPedido({ r }: { r: ReturnType<typeof calcularPedido> }) {
+  const categorias = r.categorias.filter((c) => c.animais > 0);
+  return (
+    <section className="painel flex flex-col gap-4">
+      <h2 className="font-sans text-base font-semibold">Resumo do pedido · {r.dias} dias</h2>
+      <div className="grid gap-x-8 gap-y-5 sm:grid-cols-2">
+        <div>
+          <h3 className="mb-1.5 text-xs font-medium tracking-wide text-muted-foreground uppercase">Rebanho</h3>
+          <dl className="flex flex-col divide-y divide-border/60 text-sm">
+            {categorias.map((c) => (
+              <div key={c.categoria} className="flex items-baseline justify-between gap-3 py-1.5">
+                <dt>{rotulo(c.categoria)}</dt>
+                <dd className="font-semibold tabular-nums">{inteiro.format(c.animais)}</dd>
+              </div>
+            ))}
+            <div className="flex items-baseline justify-between gap-3 py-1.5 font-semibold">
+              <dt>Total</dt>
+              <dd className="tabular-nums">{inteiro.format(r.animais)} animais</dd>
+            </div>
+          </dl>
+        </div>
+        <div>
+          <h3 className="mb-1.5 text-xs font-medium tracking-wide text-muted-foreground uppercase">Comprar</h3>
+          <dl className="flex flex-col divide-y divide-border/60 text-sm">
+            {r.itens.map((i) => (
+              <div key={i.insumoId} className="flex items-baseline justify-between gap-3 py-1.5">
+                <dt className="min-w-0 truncate pr-2">{i.nome}</dt>
+                <dd className="shrink-0 text-right tabular-nums">
+                  <span className="font-semibold">{i.sacos == null ? kg(i.kgComprado) : `${inteiro.format(i.sacos)} ${i.sacos === 1 ? 'saco' : 'sacos'}`}</span>
+                  <span className="ml-2 text-xs text-muted-foreground">dá {i.diasCobertos ?? r.dias} dias</span>
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      </div>
+    </section>
   );
 }
 
