@@ -12,12 +12,16 @@ import {
   DIAS_ATALHOS,
   DIAS_MAX,
   DIAS_MIN,
+  kgPorSacoPadrao,
   limitarDias,
   nomeGrupo,
   type DietaCategoria,
   type InsumoApp,
   type ItemPedido,
 } from '@/lib/tres-irmaos/insumos';
+import type { ParametrosSalvos } from '@/lib/tres-irmaos/dados';
+
+type Estado = { tipo: 'parado' } | { tipo: 'salvando' } | { tipo: 'salvo' } | { tipo: 'erro'; msg: string };
 
 const inteiro = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 });
 const umaCasa = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 1 });
@@ -81,32 +85,68 @@ export function InsumosPainel({
   insumos,
   atualizadoEm,
   hoje,
+  salvos,
 }: {
   categoriasDoApp: DietaCategoria[];
   insumos: InsumoApp[];
   atualizadoEm: string | null;
   hoje: string;
+  salvos: ParametrosSalvos;
 }) {
   const [dias, setDias] = useState(30);
   const [animais, setAnimais] = useState<Record<string, number>>(() => Object.fromEntries(categoriasDoApp.map((c) => [c.categoria, c.animais])));
+  // Peso do saco: o padrão de mercado, sobrescrito pelo que já foi salvo.
+  const sacosSalvos = useMemo(
+    () => Object.fromEntries(insumos.map((i) => [String(i.id), salvos.parametros.sacos?.[String(i.id)] ?? kgPorSacoPadrao(i)])),
+    [insumos, salvos.parametros.sacos],
+  );
+  const [sacos, setSacos] = useState<Record<string, number>>(sacosSalvos);
+  const [estado, setEstado] = useState<Estado>({ tipo: 'parado' });
 
   const categorias = useMemo(
     () => categoriasDoApp.map((c) => ({ ...c, animais: animais[c.categoria] ?? c.animais })),
     [categoriasDoApp, animais],
   );
-  const r = useMemo(() => calcularPedido({ dias, categorias, insumos }), [dias, categorias, insumos]);
+  const r = useMemo(() => calcularPedido({ dias, categorias, insumos, sacos }), [dias, categorias, insumos, sacos]);
+
+  const sacosAlterados = Object.keys(sacosSalvos).some((id) => sacos[id] !== sacosSalvos[id]);
+
+  async function salvarSacos() {
+    setEstado({ tipo: 'salvando' });
+    try {
+      const resp = await fetch('/3irmaos/api/parametros', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ ...salvos.parametros, sacos }),
+      });
+      const corpo = await resp.json().catch(() => ({}));
+      if (!resp.ok) {
+        setEstado({ tipo: 'erro', msg: corpo.erro ?? 'Não foi possível salvar.' });
+        return;
+      }
+      setEstado({ tipo: 'salvo' });
+    } catch {
+      setEstado({ tipo: 'erro', msg: 'Sem conexão. Tente de novo.' });
+    }
+  }
 
   const ajustado = categoriasDoApp.some((c) => (animais[c.categoria] ?? c.animais) !== c.animais);
   const ate = dataCurta(somarDias(hoje, r.dias - 1));
+  const granel = r.itens.filter((i) => i.sacos == null);
+  const kgComprado = r.itens.reduce((t, i) => t + i.kgComprado, 0);
   const naoAtribuido = r.kgDiaConsumo - r.kgDia;
 
   const colunas: CsvColumn<ItemPedido>[] = [
     { key: 'insumo', header: 'Insumo', value: (i) => i.nome },
+    { key: 'sacos', header: 'Sacos', value: (i) => (i.sacos == null ? 'granel' : String(i.sacos)) },
+    { key: 'saco', header: 'kg por saco', value: (i) => (i.kgPorSaco > 0 ? umaCasa.format(i.kgPorSaco) : '') },
+    { key: 'kgComprado', header: 'Comprando (kg)', value: (i) => umaCasa.format(i.kgComprado) },
+    { key: 'custoCompra', header: 'Custo (R$)', value: (i) => (i.custoCompra == null ? '' : i.custoCompra.toFixed(2).replace('.', ',')) },
     { key: 'grupo', header: 'Grupo', value: (i) => nomeGrupo(i.grupo) },
-    { key: 'kgPeriodo', header: `Pedido ${r.dias} dias (kg)`, value: (i) => umaCasa.format(i.kgPeriodo) },
+    { key: 'kgPeriodo', header: `Consumo em ${r.dias} dias (kg)`, value: (i) => umaCasa.format(i.kgPeriodo) },
     { key: 'kgDia', header: 'Por dia (kg)', value: (i) => umaCasa.format(i.kgDia) },
+    { key: 'sobra', header: 'Sobra (kg)', value: (i) => umaCasa.format(i.sobraKg) },
     { key: 'preco', header: 'R$/kg', value: (i) => (i.valorUnitario == null ? '' : i.valorUnitario.toFixed(4).replace('.', ',')) },
-    { key: 'custo', header: 'Custo (R$)', value: (i) => (i.custoPeriodo == null ? '' : i.custoPeriodo.toFixed(2).replace('.', ',')) },
     { key: 'categorias', header: 'Para', value: (i) => i.porCategoria.map((p) => `${rotulo(p.categoria)}: ${umaCasa.format(p.kgDia * r.dias)} kg`).join(' · ') },
   ];
 
@@ -144,7 +184,7 @@ export function InsumosPainel({
               ))}
             </div>
           </div>
-          <CsvExport columns={colunas} rows={r.itens} requiredKeys={['insumo', 'kgPeriodo']} filename={`pedido-insumos-${r.dias}-dias`} />
+          <CsvExport columns={colunas} rows={r.itens} requiredKeys={['insumo', 'sacos']} filename={`pedido-insumos-${r.dias}-dias`} />
         </div>
         <p className="text-xs text-muted-foreground">
           Cobre de <strong className="text-foreground">{dataCurta(hoje)}</strong> a <strong className="text-foreground">{ate}</strong> · mínimo {DIAS_MIN} dias, máximo {DIAS_MAX}{' '}
@@ -155,11 +195,15 @@ export function InsumosPainel({
       <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Tile rotulo="Rebanho" valor={`${inteiro.format(r.animais)} animais`} detalhe={`${r.categorias.filter((c) => c.animais > 0).length} categorias${ajustado ? ' · ajustado' : ' · do app'}`} />
         <Tile rotulo="Come por dia" valor={peso(r.kgDiaConsumo)} detalhe={`${umaCasa.format(r.animais ? r.kgDiaConsumo / r.animais : 0)} kg por cabeça`} />
-        <Tile rotulo={`Pedido de ${r.dias} dias`} valor={peso(r.kgPeriodo)} detalhe={`${inteiro.format(r.kgPeriodo)} kg em ${r.itens.length} insumos`} />
+        <Tile
+          rotulo={`Pedido de ${r.dias} dias`}
+          valor={`${inteiro.format(r.sacos)} ${r.sacos === 1 ? 'saco' : 'sacos'}`}
+          detalhe={granel.length ? `+ ${peso(granel.reduce((t, i) => t + i.kgComprado, 0))} a granel (${granel.map((i) => i.nome.toLowerCase()).join(', ')})` : `${peso(kgComprado)} no total`}
+        />
         <Tile
           rotulo="Custo do pedido"
-          valor={dinheiro(r.custoPeriodo)}
-          detalhe={`${dinheiro(r.custoDia)}/dia${r.custoParcial ? ' · falta preço de algum insumo' : ''}`}
+          valor={dinheiro(r.custoCompra)}
+          detalhe={`${dinheiro(r.custoDia)}/dia de consumo${r.custoParcial ? ' · falta preço de algum insumo' : ''}`}
         />
       </section>
 
@@ -175,15 +219,35 @@ export function InsumosPainel({
       )}
 
       <section className="painel overflow-x-auto">
-        <h2 className="mb-1 font-sans text-sm font-semibold">O pedido, insumo por insumo</h2>
-        <p className="mb-3 text-xs text-muted-foreground">Para {r.dias} dias, {inteiro.format(r.animais)} animais.</p>
-        <table className="w-full min-w-[40rem] text-sm whitespace-nowrap tabular-nums">
+        <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
+          <h2 className="font-sans text-sm font-semibold">O pedido, insumo por insumo</h2>
+          <div className="flex items-center gap-2">
+            {sacosAlterados && (
+              <Button size="sm" onClick={salvarSacos} disabled={estado.tipo === 'salvando'}>
+                {estado.tipo === 'salvando' ? 'Salvando…' : 'Salvar os sacos'}
+              </Button>
+            )}
+            {sacosAlterados && (
+              <Button variant="outline" size="sm" onClick={() => setSacos(sacosSalvos)}>
+                Desfazer
+              </Button>
+            )}
+          </div>
+        </div>
+        <p className="mb-3 text-xs text-muted-foreground" aria-live="polite">
+          Para {r.dias} dias, {inteiro.format(r.animais)} animais. O saco é sempre inteiro: o que falta para fechar o último saco vira sobra.
+          {estado.tipo === 'erro' && <span className="ml-1 text-destructive">{estado.msg}</span>}
+          {estado.tipo === 'salvo' && !sacosAlterados && <span className="ml-1">Pesos salvos.</span>}
+        </p>
+        <table className="w-full min-w-[46rem] text-sm whitespace-nowrap tabular-nums">
           <thead className="text-xs text-muted-foreground">
             <tr className="border-b border-border">
               <th className="py-2 pr-3 text-left font-medium">Insumo</th>
-              <th className="px-2 text-right font-medium">Por dia</th>
-              <th className="px-2 text-right font-medium">Pedido ({r.dias} d)</th>
-              <th className="px-2 text-right font-medium">R$/kg</th>
+              <th className="px-2 text-right font-medium">Saco</th>
+              <th className="px-2 text-right font-medium">Pedir</th>
+              <th className="px-2 text-right font-medium">Comprando</th>
+              <th className="px-2 text-right font-medium">Consumo ({r.dias} d)</th>
+              <th className="px-2 text-right font-medium">Sobra</th>
               <th className="pl-2 text-right font-medium">Custo</th>
             </tr>
           </thead>
@@ -194,7 +258,7 @@ export function InsumosPainel({
             return (
               <tbody key={chave} className="border-b border-border last:border-0">
                 <tr className="text-xs text-muted-foreground">
-                  <th colSpan={5} className="pt-3 pb-1 text-left font-medium">
+                  <th colSpan={7} className="pt-3 pb-1 text-left font-medium">
                     {grupo.nome}
                   </th>
                 </tr>
@@ -204,19 +268,46 @@ export function InsumosPainel({
                       {i.nome}
                       {!i.ativo && <span className="ml-1.5 text-xs text-muted-foreground">(inativo no app)</span>}
                       <span className="block text-xs text-muted-foreground">
-                        {i.porCategoria.map((p) => `${rotulo(p.categoria)} ${kg(p.kgDia * r.dias)}`).join(' · ')}
+                        {kg(i.kgDia)}/dia · {i.porCategoria.map((p) => `${rotulo(p.categoria)} ${kg(p.kgDia * r.dias)}`).join(' · ')}
                       </span>
                     </td>
-                    <td className="px-2 text-right text-muted-foreground">{kg(i.kgDia)}</td>
-                    <td className="px-2 text-right font-medium">{kg(i.kgPeriodo)}</td>
-                    <td className="px-2 text-right text-muted-foreground">{i.valorUnitario == null ? '—' : reaisExatos.format(i.valorUnitario)}</td>
-                    <td className="pl-2 text-right">{i.custoPeriodo == null ? <span className="text-muted-foreground">sem preço</span> : dinheiro(i.custoPeriodo)}</td>
+                    <td className="px-2 py-1 text-right">
+                      <CampoNumero
+                        id={`saco-${i.insumoId}`}
+                        valor={i.kgPorSaco}
+                        aoMudar={(n) => setSacos((atual) => ({ ...atual, [String(i.insumoId)]: n }))}
+                        max={2000}
+                        className="ml-auto w-20"
+                      />
+                      <span className="block text-xs text-muted-foreground">{i.kgPorSaco > 0 ? 'kg por saco' : 'granel'}</span>
+                    </td>
+                    <td className="px-2 text-right">
+                      {i.sacos == null ? (
+                        <span className="text-muted-foreground">granel</span>
+                      ) : (
+                        <span className="font-semibold">
+                          {inteiro.format(i.sacos)} {i.sacos === 1 ? 'saco' : 'sacos'}
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-2 text-right font-medium">{kg(i.kgComprado)}</td>
+                    <td className="px-2 text-right text-muted-foreground">{kg(i.kgPeriodo)}</td>
+                    <td className="px-2 text-right text-muted-foreground">
+                      {i.sacos == null ? '—' : kg(i.sobraKg)}
+                      {i.diasCobertos != null && <span className="block text-xs">dá {i.diasCobertos} dias</span>}
+                    </td>
+                    <td className="pl-2 text-right">
+                      {i.custoCompra == null ? <span className="text-muted-foreground">sem preço</span> : dinheiro(i.custoCompra)}
+                      {i.valorUnitario != null && <span className="block text-xs text-muted-foreground">{reaisExatos.format(i.valorUnitario)}/kg</span>}
+                    </td>
                   </tr>
                 ))}
                 {grupo.semInsumoKgDia > 0 && (
                   <tr className="border-b border-border/60 last:border-0 text-muted-foreground">
                     <td className="py-1.5 pr-3 whitespace-normal">sem insumo na formulação do app</td>
-                    <td className="px-2 text-right">{kg(grupo.semInsumoKgDia)}</td>
+                    <td className="px-2 text-right">—</td>
+                    <td className="px-2 text-right">—</td>
+                    <td className="px-2 text-right">—</td>
                     <td className="px-2 text-right">{kg(grupo.semInsumoKgDia * r.dias)}</td>
                     <td className="px-2 text-right">—</td>
                     <td className="pl-2 text-right">—</td>
@@ -225,11 +316,13 @@ export function InsumosPainel({
                 {itens.length > 1 && (
                   <tr className="text-muted-foreground">
                     <td className="py-1.5 pr-3">Total de {grupo.nome.toLowerCase()}</td>
-                    <td className="px-2 text-right">{kg(grupo.kgDia)}</td>
-                    <td className="px-2 text-right">{kg(grupo.kgPeriodo)}</td>
                     <td className="px-2" />
+                    <td className="px-2 text-right">{grupo.sacos > 0 ? `${inteiro.format(grupo.sacos)} sacos` : '—'}</td>
+                    <td className="px-2 text-right">{kg(grupo.kgComprado)}</td>
+                    <td className="px-2 text-right">{kg(grupo.kgPeriodo)}</td>
+                    <td className="px-2 text-right">{kg(grupo.kgComprado - grupo.kgPeriodo)}</td>
                     <td className="pl-2 text-right">
-                      {dinheiro(grupo.custoPeriodo)}
+                      {dinheiro(grupo.custoCompra)}
                       {grupo.custoParcial && '*'}
                     </td>
                   </tr>
@@ -240,17 +333,25 @@ export function InsumosPainel({
           <tfoot>
             <tr className="font-semibold">
               <td className="py-2 pr-3">Total do pedido</td>
-              <td className="px-2 text-right">{kg(r.kgDia)}</td>
-              <td className="px-2 text-right">{kg(r.kgPeriodo)}</td>
               <td className="px-2" />
+              <td className="px-2 text-right">
+                {inteiro.format(r.sacos)} {r.sacos === 1 ? 'saco' : 'sacos'}
+              </td>
+              <td className="px-2 text-right">{kg(kgComprado)}</td>
+              <td className="px-2 text-right">{kg(r.kgPeriodo)}</td>
+              <td className="px-2 text-right">{kg(r.sobraKg)}</td>
               <td className="pl-2 text-right">
-                {dinheiro(r.custoPeriodo)}
+                {dinheiro(r.custoCompra)}
                 {r.custoParcial && '*'}
               </td>
             </tr>
           </tfoot>
         </table>
-        {r.custoParcial && <p className="mt-2 text-xs text-muted-foreground">* custo parcial: tem insumo sem preço no app.</p>}
+        <p className="mt-2 text-xs text-muted-foreground">
+          Pagando pelos sacos inteiros: {dinheiro(r.custoCompra)} ({dinheiro(r.custoPeriodo)} é o que o rebanho come no período; a diferença de {dinheiro(r.custoCompra - r.custoPeriodo)}{' '}
+          fica na sobra de {kg(r.sobraKg)}, que adianta o pedido seguinte).
+          {r.custoParcial && ' * custo parcial: tem insumo sem preço no app.'}
+        </p>
       </section>
 
       <section className="painel overflow-x-auto">

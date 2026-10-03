@@ -79,6 +79,13 @@ export interface Parametros {
   usarPartosDoApp: boolean;
   /** Planejamento dos grupos reprodutivos (aba própria). */
   grupos: ParametrosGrupos;
+  /**
+   * kg por saco de cada insumo da ração (chave = id do insumo do app, em
+   * texto; 0 = granel). Mora aqui porque o app não tem esse campo: o cadastro
+   * de insumo é em kg, e o pedido de compra se faz em saco inteiro (aba
+   * Insumos). Vazio = os padrões de kgPorSacoPadrao().
+   */
+  sacos: Record<string, number>;
 }
 
 export interface Entrega {
@@ -414,6 +421,7 @@ export function parametrosIniciais(app: DadosDoApp): Parametros {
     gestacaoDias: 150,
     usarPartosDoApp: true,
     grupos: GRUPOS_PADRAO,
+    sacos: {},
   };
 }
 
@@ -478,5 +486,16 @@ export function normalizarParametros(bruto: unknown, iniciais: Parametros): Para
     gestacaoDias: num(b.gestacaoDias, iniciais.gestacaoDias),
     usarPartosDoApp: typeof b.usarPartosDoApp === 'boolean' ? b.usarPartosDoApp : iniciais.usarPartosDoApp,
     grupos: b.grupos && typeof b.grupos === 'object' ? normalizarGrupos(b.grupos) : iniciais.grupos,
+    sacos: sacos(b.sacos),
   };
+}
+
+/** Só id numérico → kg não negativo; o resto cai fora (o jsonb pode ter sido editado à mão). */
+function sacos(v: unknown): Record<string, number> {
+  if (!v || typeof v !== 'object' || Array.isArray(v)) return {};
+  return Object.fromEntries(
+    Object.entries(v as Record<string, unknown>)
+      .filter(([id, kg]) => /^\d+$/.test(id) && typeof kg === 'number' && Number.isFinite(kg) && kg >= 0)
+      .map(([id, kg]) => [id, Math.max(0, kg as number)]),
+  );
 }

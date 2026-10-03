@@ -3,6 +3,7 @@ import { describe, test } from 'node:test';
 
 import {
   calcularPedido,
+  kgPorSacoPadrao,
   montarCategorias,
   DIAS_MAX,
   DIAS_MIN,
@@ -22,7 +23,10 @@ const INSUMOS: InsumoApp[] = [
   { id: 103, nome: 'Núcleo leite', grupo: 'concentrado', unidade: 'kg', valorUnitario: 7.8825, ativo: true },
   { id: 115, nome: 'Sal mineral leite', grupo: 'sal_mineral', unidade: 'kg', valorUnitario: 9.2, ativo: true },
   { id: 148, nome: 'Silagem de milho', grupo: 'volumoso', unidade: 'kg', valorUnitario: 0.3, ativo: true },
-  { id: 120, nome: 'Sal mineral recria', grupo: 'concentrado', unidade: 'kg', valorUnitario: null, ativo: false },
+  // O seed de insumos do app repete o nome em dois tipos: "Sal mineral recria"
+  // existe como concentrado (117) e como sal_mineral (164). A formulação da
+  // recriada aponta para o 117 — inativo e sem preço.
+  { id: 117, nome: 'Sal mineral recria', grupo: 'concentrado', unidade: 'kg', valorUnitario: null, ativo: false },
 ];
 
 const semSal = { concentrado: 0, volumoso: 0, sal_mineral: 0 };
@@ -139,7 +143,7 @@ describe('insumo sem preço e inativo (o "Sal mineral recria" do app)', () => {
     formulacao: [
       { insumoId: 101, proporcao: 0.75 },
       { insumoId: 97, proporcao: 0.25 },
-      { insumoId: 120, proporcao: 1 },
+      { insumoId: 117, proporcao: 1 },
       { insumoId: 148, proporcao: 1 },
     ],
     semDieta: false,
@@ -258,7 +262,7 @@ describe('o rebanho do Lucas em 03/10/2026, pedido de 1 ano', () => {
       formulacao: [
         { insumoId: 101, proporcao: 0.75 },
         { insumoId: 97, proporcao: 0.25 },
-        { insumoId: 120, proporcao: 1 },
+        { insumoId: 117, proporcao: 1 },
         { insumoId: 148, proporcao: 1 },
       ],
       semDieta: false,
@@ -334,6 +338,98 @@ describe('juntar a dieta do app com o efetivo', () => {
   test('sêmen e embrião não comem: ficam fora', () => {
     const r = montarCategorias(dietas, { lactante: 72, semen: 40, embriao: 5 });
     assert.deepEqual(r.map((c) => c.categoria).sort(), ['lactante', 'recria']);
+  });
+});
+
+describe('o pedido vai em saco inteiro, sempre para cima', () => {
+  // Os sacos da fazenda (Felipe, 03/10/2026): fubá e soja 50 kg, caroço 40 kg,
+  // sal mineral 25 kg; silagem a granel.
+  test('o padrão de cada insumo', () => {
+    const por = (nome: string) => kgPorSacoPadrao(INSUMOS.find((i) => i.nome === nome)!);
+    assert.equal(por('Fubá'), 50);
+    assert.equal(por('Farelo de soja'), 50);
+    assert.equal(por('Caroço de algodão'), 40);
+    assert.equal(por('Sal mineral leite'), 25);
+    assert.equal(por('Núcleo leite'), 25);
+    assert.equal(por('Silagem de milho'), 0, 'volumoso é granel');
+  });
+
+  test('fração de saco vira o saco seguinte', () => {
+    // 72 lactantes × 1,2 kg × 0,02/0,98 de núcleo × 30 dias = 52,9 kg → 3 sacos de 25.
+    const r = pedido([LACTANTE], 30);
+    const núcleo = r.itens.find((i) => i.nome === 'Núcleo leite')!;
+    perto(núcleo.kgPeriodo, 52.9, 0.1);
+    assert.equal(núcleo.kgPorSaco, 25);
+    assert.equal(núcleo.sacos, 3);
+    perto(núcleo.kgComprado, 75, 1e-9);
+    perto(núcleo.sobraKg, 75 - núcleo.kgPeriodo, 1e-9);
+    assert.equal(núcleo.diasCobertos, Math.floor(75 / núcleo.kgDia));
+  });
+
+  test('múltiplo exato não ganha um saco a mais', () => {
+    const cat: DietaCategoria = {
+      categoria: 'seca',
+      animais: 10,
+      porCabeca: { concentrado: 1, volumoso: 0, sal_mineral: 0 },
+      formulacao: [{ insumoId: 101, proporcao: 1 }],
+      semDieta: false,
+    };
+    // 10 kg/dia × 10 dias = 100 kg = exatamente 2 sacos de 50.
+    const r = calcularPedido({ dias: 10, categorias: [cat], insumos: INSUMOS });
+    const fubá = r.itens.find((i) => i.nome === 'Fubá')!;
+    assert.equal(fubá.sacos, 2);
+    perto(fubá.sobraKg, 0, 1e-9);
+  });
+
+  test('1 grama já pede o saco inteiro', () => {
+    const cat: DietaCategoria = {
+      categoria: 'recria',
+      animais: 1,
+      porCabeca: { concentrado: 0.001, volumoso: 0, sal_mineral: 0 },
+      formulacao: [{ insumoId: 101, proporcao: 1 }],
+      semDieta: false,
+    };
+    const r = calcularPedido({ dias: 7, categorias: [cat], insumos: INSUMOS });
+    assert.equal(r.itens[0].sacos, 1);
+    perto(r.itens[0].kgComprado, 50, 1e-9);
+  });
+
+  test('granel (silagem) não vira saco: compra o que precisa', () => {
+    const r = pedido([LACTANTE], 30);
+    const silagem = r.itens.find((i) => i.nome === 'Silagem de milho')!;
+    assert.equal(silagem.sacos, null);
+    assert.equal(silagem.kgPorSaco, 0);
+    perto(silagem.kgComprado, silagem.kgPeriodo, 1e-9);
+    perto(silagem.sobraKg, 0, 1e-9);
+    assert.equal(silagem.diasCobertos, null, 'granel compra o exato: não há saco cobrindo dias a mais');
+  });
+
+  test('o peso do saco pode ser trocado (o que vier salvo manda)', () => {
+    const r = calcularPedido({ dias: 30, categorias: [LACTANTE], insumos: INSUMOS, sacos: { '101': 40, '148': 1000 } });
+    const fubá = r.itens.find((i) => i.nome === 'Fubá')!;
+    assert.equal(fubá.kgPorSaco, 40);
+    assert.equal(fubá.sacos, Math.ceil(fubá.kgPeriodo / 40));
+    const silagem = r.itens.find((i) => i.nome === 'Silagem de milho')!;
+    assert.equal(silagem.sacos, Math.ceil(silagem.kgPeriodo / 1000), 'silagem em fardo de 1 t, se for o caso');
+  });
+
+  test('o custo do pedido é o dos sacos, nunca menor que o consumo', () => {
+    const r = pedido([LACTANTE], 30);
+    assert.ok(r.custoCompra >= r.custoPeriodo);
+    perto(r.custoCompra, r.itens.reduce((t, i) => t + (i.custoCompra ?? 0), 0), 1e-6);
+    perto(r.sobraKg, r.itens.reduce((t, i) => t + i.sobraKg, 0), 1e-9);
+    assert.equal(r.sacos, r.itens.reduce((t, i) => t + (i.sacos ?? 0), 0));
+  });
+
+  test('nenhum saco fracionado em nenhum período, de 7 a 365 dias', () => {
+    for (const dias of [7, 15, 30, 60, 90, 180, 365]) {
+      for (const i of pedido([LACTANTE], dias).itens) {
+        if (i.sacos == null) continue;
+        assert.equal(i.sacos, Math.trunc(i.sacos), `${i.nome} em ${dias} dias`);
+        assert.ok(i.kgComprado + 1e-9 >= i.kgPeriodo, `${i.nome}: comprado cobre o consumo`);
+        assert.ok(i.sobraKg < i.kgPorSaco, `${i.nome}: a sobra nunca chega a um saco inteiro`);
+      }
+    }
   });
 });
 

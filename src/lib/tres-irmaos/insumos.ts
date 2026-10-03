@@ -89,6 +89,8 @@ export interface EntradaPedido {
   dias: number;
   categorias: DietaCategoria[];
   insumos: InsumoApp[];
+  /** kg por saco de cada insumo (chave = id do insumo em texto, como no jsonb). 0 = granel. */
+  sacos?: Record<string, number>;
 }
 
 export interface ParteDeCategoria {
@@ -102,10 +104,23 @@ export interface ItemPedido {
   grupo: ChaveGrupo;
   unidade: string;
   kgDia: number;
+  /** O que o rebanho come no período: a necessidade, com fração. */
   kgPeriodo: number;
+  /** kg de um saco. 0 = o insumo vem a granel (silagem). */
+  kgPorSaco: number;
+  /** Sacos inteiros, SEMPRE arredondando para cima. null = granel. */
+  sacos: number | null;
+  /** O que vai ser comprado de fato: sacos × kg do saco (ou a necessidade, no granel). */
+  kgComprado: number;
+  /** kgComprado − kgPeriodo: o que sobra do saco arredondado. */
+  sobraKg: number;
+  /** Dias que os sacos comprados cobrem (para baixo). null no granel, que compra o exato. */
+  diasCobertos: number | null;
   valorUnitario: number | null;
-  /** null quando o insumo está sem preço no app. */
+  /** O custo da necessidade exata. null quando o insumo está sem preço no app. */
   custoPeriodo: number | null;
+  /** O custo do que vai ser comprado (sacos inteiros). É o que se paga. */
+  custoCompra: number | null;
   ativo: boolean;
   /** Quanto cada categoria puxa deste insumo, da maior para a menor. */
   porCategoria: ParteDeCategoria[];
@@ -132,7 +147,11 @@ export interface LinhaGrupo {
   nome: string;
   kgDia: number;
   kgPeriodo: number;
+  /** O que se compra: sacos inteiros convertidos em kg (granel = a necessidade). */
+  kgComprado: number;
+  sacos: number;
   custoPeriodo: number;
+  custoCompra: number;
   custoParcial: boolean;
   /** kg/dia que o app manda dar mas nenhum insumo da formulação cobre. */
   semInsumoKgDia: number;
@@ -149,6 +168,12 @@ export interface Pedido {
   kgPeriodoConsumo: number;
   custoDia: number;
   custoPeriodo: number;
+  /** Total pagando por sacos inteiros — o número do pedido. */
+  custoCompra: number;
+  /** kg que sobram do arredondamento, somados. */
+  sobraKg: number;
+  /** Sacos do pedido, somados (os insumos a granel não entram). */
+  sacos: number;
   /** Tem insumo sem preço no app: o custo mostrado é só uma parte. */
   custoParcial: boolean;
   itens: ItemPedido[];
@@ -180,6 +205,23 @@ export function montarCategorias(dietas: DietaCadastrada[], efetivo: Record<stri
       };
     })
     .sort((a, b) => b.animais - a.animais || a.categoria.localeCompare(b.categoria, 'pt-BR'));
+}
+
+/**
+ * Peso do saco quando ninguém disse qual é. O app não tem esse campo (o
+ * cadastro de insumo é só em kg), então o padrão são os sacos da fazenda,
+ * ditos pelo Felipe em 03/10/2026: fubá 50 kg, farelo de soja 50 kg, caroço
+ * de algodão 40 kg e sal mineral 25 kg. Núcleo e gordura protegida seguem o
+ * sal (25 kg) por serem da mesma prateleira — a confirmar. Volumoso vem a
+ * granel: silagem não tem saco. Tudo isso é só o ponto de partida; a tela
+ * deixa corrigir insumo por insumo e salva junto dos outros parâmetros.
+ */
+export function kgPorSacoPadrao(insumo: InsumoApp): number {
+  if (insumo.grupo === 'volumoso') return 0;
+  const nome = insumo.nome.toLowerCase();
+  if (/caro[çc]o/.test(nome)) return 40;
+  if (insumo.grupo === 'sal_mineral' || /sal mineral|n[úu]cleo|gordura|premix|aditivo|bicarbonato/.test(nome)) return 25;
+  return 50;
 }
 
 /** Diferença de até 0,5 ponto percentual na soma do grupo não vira aviso (arredondamento do app). */
@@ -215,10 +257,13 @@ export function vazio(dias = DIAS_PADRAO): Pedido {
     kgPeriodoConsumo: 0,
     custoDia: 0,
     custoPeriodo: 0,
+    custoCompra: 0,
+    sobraKg: 0,
+    sacos: 0,
     custoParcial: false,
     itens: [],
     categorias: [],
-    grupos: GRUPOS.map((g) => ({ grupo: g.chave, nome: g.nome, kgDia: 0, kgPeriodo: 0, custoPeriodo: 0, custoParcial: false, semInsumoKgDia: 0 })),
+    grupos: GRUPOS.map((g) => ({ grupo: g.chave, nome: g.nome, kgDia: 0, kgPeriodo: 0, kgComprado: 0, sacos: 0, custoPeriodo: 0, custoCompra: 0, custoParcial: false, semInsumoKgDia: 0 })),
     avisos: [],
   };
 }
@@ -230,7 +275,7 @@ export function vazio(dias = DIAS_PADRAO): Pedido {
  * não está no catálogo é ignorado — a proporção dele não rateia nada e o
  * aviso diz quanto ficou de fora.
  */
-export function calcularPedido({ dias, categorias, insumos }: EntradaPedido): Pedido {
+export function calcularPedido({ dias, categorias, insumos, sacos = {} }: EntradaPedido): Pedido {
   const d = limitarDias(dias);
   const catalogo = new Map(insumos.map((i) => [i.id, i]));
   const avisos: string[] = [];
@@ -312,15 +357,28 @@ export function calcularPedido({ dias, categorias, insumos }: EntradaPedido): Pe
   const itens: ItemPedido[] = [...acumulado.entries()]
     .map(([id, { kgDia, porCategoria }]) => {
       const insumo = catalogo.get(id)!;
+      const kgPeriodo = kgDia * d;
+      const kgPorSaco = positivo(sacos[String(id)] ?? kgPorSacoPadrao(insumo));
+      // Saco é unidade inteira: nunca meio saco. A folga de 1e-9 evita que um
+      // múltiplo exato (100 kg em sacos de 50) vire 3 sacos por arredondamento
+      // binário.
+      const inteiros = kgPorSaco > 0 ? Math.ceil(kgPeriodo / kgPorSaco - 1e-9) : null;
+      const kgComprado = inteiros == null ? kgPeriodo : inteiros * kgPorSaco;
       return {
         insumoId: id,
         nome: insumo.nome,
         grupo: insumo.grupo,
         unidade: insumo.unidade,
         kgDia,
-        kgPeriodo: kgDia * d,
+        kgPeriodo,
+        kgPorSaco,
+        sacos: inteiros,
+        kgComprado,
+        sobraKg: kgComprado - kgPeriodo,
+        diasCobertos: inteiros != null && kgDia > 0 ? Math.floor(kgComprado / kgDia) : null,
         valorUnitario: insumo.valorUnitario,
-        custoPeriodo: insumo.valorUnitario == null ? null : kgDia * d * insumo.valorUnitario,
+        custoPeriodo: insumo.valorUnitario == null ? null : kgPeriodo * insumo.valorUnitario,
+        custoCompra: insumo.valorUnitario == null ? null : kgComprado * insumo.valorUnitario,
         ativo: insumo.ativo,
         porCategoria: [...porCategoria.entries()]
           .map(([categoria, kg]) => ({ categoria, kgDia: kg }))
@@ -337,7 +395,10 @@ export function calcularPedido({ dias, categorias, insumos }: EntradaPedido): Pe
       nome: g.nome,
       kgDia: doGrupo.reduce((t, i) => t + i.kgDia, 0),
       kgPeriodo: doGrupo.reduce((t, i) => t + i.kgPeriodo, 0),
+      kgComprado: doGrupo.reduce((t, i) => t + i.kgComprado, 0),
+      sacos: doGrupo.reduce((t, i) => t + (i.sacos ?? 0), 0),
       custoPeriodo: doGrupo.reduce((t, i) => t + (i.custoPeriodo ?? 0), 0),
+      custoCompra: doGrupo.reduce((t, i) => t + (i.custoCompra ?? 0), 0),
       custoParcial: doGrupo.some((i) => i.custoPeriodo == null),
       semInsumoKgDia: semInsumo.get(g.chave) ?? 0,
     };
@@ -363,6 +424,9 @@ export function calcularPedido({ dias, categorias, insumos }: EntradaPedido): Pe
     kgPeriodoConsumo: kgDiaConsumo * d,
     custoDia,
     custoPeriodo: custoDia * d,
+    custoCompra: itens.reduce((t, i) => t + (i.custoCompra ?? 0), 0),
+    sobraKg: itens.reduce((t, i) => t + i.sobraKg, 0),
+    sacos: itens.reduce((t, i) => t + (i.sacos ?? 0), 0),
     custoParcial: itens.some((i) => i.custoPeriodo == null),
     itens,
     categorias: linhasCategoria.sort((a, b) => b.kgDia - a.kgDia || a.categoria.localeCompare(b.categoria, 'pt-BR')),
