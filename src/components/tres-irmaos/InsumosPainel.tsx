@@ -12,6 +12,7 @@ import {
   DIAS_ATALHOS,
   DIAS_MAX,
   DIAS_MIN,
+  ehSalOuNucleo,
   kgPorSacoPadrao,
   limitarDias,
   nomeGrupo,
@@ -102,6 +103,8 @@ export function InsumosPainel({
   );
   const [sacos, setSacos] = useState<Record<string, number>>(sacosSalvos);
   const [estado, setEstado] = useState<Estado>({ tipo: 'parado' });
+  // Sal mineral e núcleo: a fazenda já resolve à parte, e um botão tira os dois da conta sem mexer no cálculo.
+  const [mostrarSalENucleo, setMostrarSalENucleo] = useState(true);
 
   const categorias = useMemo(
     () => categoriasDoApp.map((c) => ({ ...c, animais: animais[c.categoria] ?? c.animais })),
@@ -132,9 +135,24 @@ export function InsumosPainel({
 
   const ajustado = categoriasDoApp.some((c) => (animais[c.categoria] ?? c.animais) !== c.animais);
   const ate = dataCurta(somarDias(hoje, r.dias - 1));
-  const granel = r.itens.filter((i) => i.sacos == null);
-  const kgComprado = r.itens.reduce((t, i) => t + i.kgComprado, 0);
   const naoAtribuido = r.kgDiaConsumo - r.kgDia;
+
+  // O que a tela mostra quando sal e núcleo estão escondidos: os mesmos itens
+  // e totais de sempre, só que somados sem os dois — nunca mexe em r (o
+  // cálculo completo continua intacto, inclusive para o CSV se a pessoa
+  // mostrar de novo).
+  const itensVisiveis = useMemo(
+    () => (mostrarSalENucleo ? r.itens : r.itens.filter((i) => !ehSalOuNucleo(i))),
+    [r.itens, mostrarSalENucleo],
+  );
+  const granel = itensVisiveis.filter((i) => i.sacos == null);
+  const kgPeriodoVisivel = itensVisiveis.reduce((t, i) => t + i.kgPeriodo, 0);
+  const kgCompradoVisivel = itensVisiveis.reduce((t, i) => t + i.kgComprado, 0);
+  const sacosVisiveis = itensVisiveis.reduce((t, i) => t + (i.sacos ?? 0), 0);
+  const custoPeriodoVisivel = itensVisiveis.reduce((t, i) => t + (i.custoPeriodo ?? 0), 0);
+  const custoCompraVisivel = itensVisiveis.reduce((t, i) => t + (i.custoCompra ?? 0), 0);
+  const custoParcialVisivel = itensVisiveis.some((i) => i.custoPeriodo == null);
+  const avisosVisiveis = mostrarSalENucleo ? r.avisos : r.avisos.filter((a) => !/sal mineral|n[úu]cleo/i.test(a));
 
   const colunas: CsvColumn<ItemPedido>[] = [
     { key: 'insumo', header: 'Insumo', value: (i) => i.nome },
@@ -184,7 +202,7 @@ export function InsumosPainel({
               ))}
             </div>
           </div>
-          <CsvExport columns={colunas} rows={r.itens} requiredKeys={['insumo', 'sacos']} filename={`pedido-insumos-${r.dias}-dias`} />
+          <CsvExport columns={colunas} rows={itensVisiveis} requiredKeys={['insumo', 'sacos']} filename={`pedido-insumos-${r.dias}-dias${mostrarSalENucleo ? '' : '-sem-sal-nucleo'}`} />
         </div>
         <p className="text-xs text-muted-foreground">
           Cobre de <strong className="text-foreground">{dataCurta(hoje)}</strong> a <strong className="text-foreground">{ate}</strong> · mínimo {DIAS_MIN} dias, máximo {DIAS_MAX}{' '}
@@ -192,26 +210,26 @@ export function InsumosPainel({
         </p>
       </section>
 
-      <ResumoPedido r={r} />
+      <ResumoPedido r={r} itens={itensVisiveis} escondido={!mostrarSalENucleo} aoAlternar={() => setMostrarSalENucleo((v) => !v)} />
 
       <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Tile rotulo="Rebanho" valor={`${inteiro.format(r.animais)} animais`} detalhe={`${r.categorias.filter((c) => c.animais > 0).length} categorias${ajustado ? ' · ajustado' : ' · do app'}`} />
         <Tile rotulo="Come por dia" valor={peso(r.kgDiaConsumo)} detalhe={`${umaCasa.format(r.animais ? r.kgDiaConsumo / r.animais : 0)} kg por cabeça`} />
         <Tile
           rotulo={`Pedido de ${r.dias} dias`}
-          valor={`${inteiro.format(r.sacos)} ${r.sacos === 1 ? 'saco' : 'sacos'}`}
-          detalhe={granel.length ? `+ ${peso(granel.reduce((t, i) => t + i.kgComprado, 0))} a granel (${granel.map((i) => i.nome.toLowerCase()).join(', ')})` : `${peso(kgComprado)} no total`}
+          valor={`${inteiro.format(sacosVisiveis)} ${sacosVisiveis === 1 ? 'saco' : 'sacos'}`}
+          detalhe={granel.length ? `+ ${peso(granel.reduce((t, i) => t + i.kgComprado, 0))} a granel (${granel.map((i) => i.nome.toLowerCase()).join(', ')})` : `${peso(kgCompradoVisivel)} no total`}
         />
         <Tile
           rotulo="Custo do pedido"
-          valor={dinheiro(r.custoCompra)}
-          detalhe={`${dinheiro(r.custoDia)}/dia de consumo${r.custoParcial ? ' · falta preço de algum insumo' : ''}`}
+          valor={dinheiro(custoCompraVisivel)}
+          detalhe={`${dinheiro(custoPeriodoVisivel / r.dias)}/dia de consumo${custoParcialVisivel ? ' · falta preço de algum insumo' : ''}`}
         />
       </section>
 
-      {r.avisos.length > 0 && (
+      {avisosVisiveis.length > 0 && (
         <section className="flex flex-col gap-2">
-          {r.avisos.map((a) => (
+          {avisosVisiveis.map((a) => (
             <p key={a} className="flex gap-2 rounded-md border border-destructive/50 px-3 py-2 text-sm text-muted-foreground">
               <AlertTriangle className="mt-0.5 size-4 shrink-0 text-destructive" aria-hidden />
               {a}
@@ -254,9 +272,19 @@ export function InsumosPainel({
             </tr>
           </thead>
           {CHAVES_GRUPO.map((chave) => {
-            const itens = r.itens.filter((i) => i.grupo === chave);
+            // Sal mineral some do pedido por inteiro quando escondido; núcleo (dentro de
+            // concentrado) só tira a própria linha — o resto do grupo continua.
+            if (chave === 'sal_mineral' && !mostrarSalENucleo) return null;
+            const itens = itensVisiveis.filter((i) => i.grupo === chave);
             const grupo = r.grupos.find((g) => g.grupo === chave)!;
             if (itens.length === 0 && grupo.semInsumoKgDia === 0) return null;
+            // Subtotais recalculados só com o que está visível: com núcleo escondido, a
+            // linha "Total de concentrado" não pode continuar somando ele por baixo.
+            const kgPeriodoGrupo = itens.reduce((t, i) => t + i.kgPeriodo, 0);
+            const kgCompradoGrupo = itens.reduce((t, i) => t + i.kgComprado, 0);
+            const sacosGrupo = itens.reduce((t, i) => t + (i.sacos ?? 0), 0);
+            const custoCompraGrupo = itens.reduce((t, i) => t + (i.custoCompra ?? 0), 0);
+            const custoParcialGrupo = itens.some((i) => i.custoPeriodo == null);
             return (
               <tbody key={chave} className="border-b border-border last:border-0">
                 <tr className="text-xs text-muted-foreground">
@@ -319,13 +347,13 @@ export function InsumosPainel({
                   <tr className="text-muted-foreground">
                     <td className="py-1.5 pr-3">Total de {grupo.nome.toLowerCase()}</td>
                     <td className="px-2" />
-                    <td className="px-2 text-right">{grupo.sacos > 0 ? `${inteiro.format(grupo.sacos)} sacos` : '—'}</td>
-                    <td className="px-2 text-right">{kg(grupo.kgComprado)}</td>
-                    <td className="px-2 text-right">{kg(grupo.kgPeriodo)}</td>
-                    <td className="px-2 text-right">{kg(grupo.kgComprado - grupo.kgPeriodo)}</td>
+                    <td className="px-2 text-right">{sacosGrupo > 0 ? `${inteiro.format(sacosGrupo)} sacos` : '—'}</td>
+                    <td className="px-2 text-right">{kg(kgCompradoGrupo)}</td>
+                    <td className="px-2 text-right">{kg(kgPeriodoGrupo)}</td>
+                    <td className="px-2 text-right">{kg(kgCompradoGrupo - kgPeriodoGrupo)}</td>
                     <td className="pl-2 text-right">
-                      {dinheiro(grupo.custoCompra)}
-                      {grupo.custoParcial && '*'}
+                      {dinheiro(custoCompraGrupo)}
+                      {custoParcialGrupo && '*'}
                     </td>
                   </tr>
                 )}
@@ -337,22 +365,23 @@ export function InsumosPainel({
               <td className="py-2 pr-3">Total do pedido</td>
               <td className="px-2" />
               <td className="px-2 text-right">
-                {inteiro.format(r.sacos)} {r.sacos === 1 ? 'saco' : 'sacos'}
+                {inteiro.format(sacosVisiveis)} {sacosVisiveis === 1 ? 'saco' : 'sacos'}
               </td>
-              <td className="px-2 text-right">{kg(kgComprado)}</td>
-              <td className="px-2 text-right">{kg(r.kgPeriodo)}</td>
-              <td className="px-2 text-right">{kg(r.sobraKg)}</td>
+              <td className="px-2 text-right">{kg(kgCompradoVisivel)}</td>
+              <td className="px-2 text-right">{kg(kgPeriodoVisivel)}</td>
+              <td className="px-2 text-right">{kg(kgCompradoVisivel - kgPeriodoVisivel)}</td>
               <td className="pl-2 text-right">
-                {dinheiro(r.custoCompra)}
-                {r.custoParcial && '*'}
+                {dinheiro(custoCompraVisivel)}
+                {custoParcialVisivel && '*'}
               </td>
             </tr>
           </tfoot>
         </table>
         <p className="mt-2 text-xs text-muted-foreground">
-          Pagando pelos sacos inteiros: {dinheiro(r.custoCompra)} ({dinheiro(r.custoPeriodo)} é o que o rebanho come no período; a diferença de {dinheiro(r.custoCompra - r.custoPeriodo)}{' '}
-          fica na sobra de {kg(r.sobraKg)}, que adianta o pedido seguinte).
-          {r.custoParcial && ' * custo parcial: tem insumo sem preço no app.'}
+          Pagando pelos sacos inteiros: {dinheiro(custoCompraVisivel)} ({dinheiro(custoPeriodoVisivel)} é o que o rebanho come no período; a diferença de{' '}
+          {dinheiro(custoCompraVisivel - custoPeriodoVisivel)} fica na sobra de {kg(kgCompradoVisivel - kgPeriodoVisivel)}, que adianta o pedido seguinte).
+          {custoParcialVisivel && ' * custo parcial: tem insumo sem preço no app.'}
+          {!mostrarSalENucleo && ' Sal mineral e núcleo de fora (botão acima).'}
         </p>
       </section>
 
@@ -457,12 +486,34 @@ export function InsumosPainel({
  * sem formulação, sem edição. Rebanho por categoria de um lado, insumo por
  * insumo de outro — sacos inteiros (granel em kg) e para quantos dias dá.
  * Tudo que está nas tabelas de baixo, só que sem precisar procurar.
+ *
+ * O botão esconde sal mineral e núcleo da lista (a fazenda já resolve os
+ * dois à parte) — `itens` já chega filtrado; aqui só o rótulo do botão muda.
  */
-function ResumoPedido({ r }: { r: ReturnType<typeof calcularPedido> }) {
+function ResumoPedido({
+  r,
+  itens,
+  escondido,
+  aoAlternar,
+}: {
+  r: ReturnType<typeof calcularPedido>;
+  itens: ItemPedido[];
+  escondido: boolean;
+  aoAlternar: () => void;
+}) {
   const categorias = r.categorias.filter((c) => c.animais > 0);
   return (
     <section className="painel flex flex-col gap-4">
-      <h2 className="font-sans text-base font-semibold">Resumo do pedido · {r.dias} dias</h2>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 className="font-sans text-base font-semibold">Resumo do pedido · {r.dias} dias</h2>
+        <button
+          type="button"
+          onClick={aoAlternar}
+          className="rounded-md border border-border px-2.5 py-1 text-xs text-muted-foreground hover:text-foreground"
+        >
+          {escondido ? 'Mostrar sal e núcleo' : 'Esconder sal e núcleo'}
+        </button>
+      </div>
       <div className="grid gap-x-8 gap-y-5 sm:grid-cols-2">
         <div>
           <h3 className="mb-1.5 text-xs font-medium tracking-wide text-muted-foreground uppercase">Rebanho</h3>
@@ -482,7 +533,7 @@ function ResumoPedido({ r }: { r: ReturnType<typeof calcularPedido> }) {
         <div>
           <h3 className="mb-1.5 text-xs font-medium tracking-wide text-muted-foreground uppercase">Comprar</h3>
           <dl className="flex flex-col divide-y divide-border/60 text-sm">
-            {r.itens.map((i) => (
+            {itens.map((i) => (
               <div key={i.insumoId} className="flex items-baseline justify-between gap-3 py-1.5">
                 <dt className="min-w-0 truncate pr-2">{i.nome}</dt>
                 <dd className="shrink-0 text-right tabular-nums">

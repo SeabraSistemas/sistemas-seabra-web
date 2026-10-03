@@ -46,6 +46,16 @@ export function nomeGrupo(chave: ChaveGrupo): string {
   return GRUPOS.find((g) => g.chave === chave)?.nome ?? chave;
 }
 
+/**
+ * Sal mineral e núcleo — os dois que a tela deixa esconder do pedido (o
+ * Felipe, 03/10/2026: a fazenda já resolve os dois à parte, e eles poluem a
+ * conta do que falta comprar). Núcleo não é um grupo próprio no app (é
+ * concentrado), daí o filtro ser pelo nome.
+ */
+export function ehSalOuNucleo(i: Pick<ItemPedido, 'grupo' | 'nome'>): boolean {
+  return i.grupo === 'sal_mineral' || /n[úu]cleo/i.test(i.nome);
+}
+
 export interface InsumoApp {
   id: number;
   nome: string;

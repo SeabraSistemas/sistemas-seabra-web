@@ -3,6 +3,7 @@ import { describe, test } from 'node:test';
 
 import {
   calcularPedido,
+  ehSalOuNucleo,
   kgPorSacoPadrao,
   montarCategorias,
   DIAS_MAX,
@@ -213,6 +214,26 @@ describe('o rebanho inteiro soma por insumo', () => {
 
   test('as categorias vêm da que come mais para a que come menos', () => {
     assert.deepEqual(r.categorias.map((c) => c.categoria), ['lactante', 'pre-parto']);
+  });
+});
+
+describe('o que a tela deixa esconder: sal mineral e núcleo', () => {
+  const item = (grupo: 'concentrado' | 'volumoso' | 'sal_mineral', nome: string) => ({ grupo, nome });
+
+  test('sal mineral é escondível em qualquer nome', () => {
+    assert.equal(ehSalOuNucleo(item('sal_mineral', 'Sal branco')), true);
+    assert.equal(ehSalOuNucleo(item('sal_mineral', 'Qualquer coisa')), true);
+  });
+
+  test('núcleo é escondível mesmo sendo concentrado, com ou sem acento', () => {
+    assert.equal(ehSalOuNucleo(item('concentrado', 'Núcleo leite')), true);
+    assert.equal(ehSalOuNucleo(item('concentrado', 'Nucleo cria')), true);
+  });
+
+  test('os demais concentrados e o volumoso não são escondidos', () => {
+    assert.equal(ehSalOuNucleo(item('concentrado', 'Farelo de soja')), false);
+    assert.equal(ehSalOuNucleo(item('concentrado', 'Fubá')), false);
+    assert.equal(ehSalOuNucleo(item('volumoso', 'Silagem de milho')), false);
   });
 });
 
