@@ -25,6 +25,9 @@ export interface Estado {
   resetExtra: number | null;
   /** Último Weekly digitado — opcional, só para comparar com a meta de hoje. */
   leitura: Leitura | null;
+  /** Tokens (medidos no PC) que valem 100% da semana / da sessão de 5h. Vem de uma leitura real digitada; ver uso.ts. */
+  limiteSemana: number | null;
+  limiteSessao: number | null;
 }
 
 export const ESTADO_INICIAL: Estado = {
@@ -32,6 +35,8 @@ export const ESTADO_INICIAL: Estado = {
   resetHora: 2,
   resetExtra: null,
   leitura: null,
+  limiteSemana: null,
+  limiteSessao: null,
 };
 
 /** Próxima ocorrência do dia da semana às hora:00, estritamente depois de t. */

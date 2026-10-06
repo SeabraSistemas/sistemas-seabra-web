@@ -7,7 +7,7 @@ import { ESTADO_INICIAL, type Estado } from './ciclo';
  * sincronizar entre aparelhos. Sem localStorage (aba privada), segue na memória.
  */
 
-/** v2: escada fixa com uma leitura só (a v1 guardava o histórico de leituras). */
+/** v2: escada fixa com uma leitura só (a v1 guardava o histórico de leituras). Os limites de calibração entraram depois, como campos opcionais. */
 const CHAVE = 'seabra:tokens:v2';
 const EVENTO = 'seabra:tokens';
 
@@ -31,6 +31,10 @@ function assinar(avisar: () => void) {
 }
 
 const numero = (v: unknown): number | null => (typeof v === 'number' && Number.isFinite(v) ? v : null);
+const positivo = (v: unknown): number | null => {
+  const n = numero(v);
+  return n != null && n > 0 ? n : null;
+};
 
 function interpretar(bruto: string | null): Estado {
   if (!bruto) return ESTADO_INICIAL;
@@ -44,6 +48,8 @@ function interpretar(bruto: string | null): Estado {
       resetHora: numero(o.resetHora) ?? ESTADO_INICIAL.resetHora,
       resetExtra: numero(o.resetExtra),
       leitura: t != null && pct != null ? { t, pct } : null,
+      limiteSemana: positivo(o.limiteSemana),
+      limiteSessao: positivo(o.limiteSessao),
     };
   } catch {
     return ESTADO_INICIAL;

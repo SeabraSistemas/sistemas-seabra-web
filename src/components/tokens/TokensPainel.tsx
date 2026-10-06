@@ -1,12 +1,14 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { AlertTriangle, Check, OctagonX, RotateCcw, Trash2 } from 'lucide-react';
+import { AlertTriangle, Check, OctagonX, RefreshCw, RotateCcw, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { ESTADO_INICIAL, montarSemana, type Estado, type Semana } from '@/lib/tokens/ciclo';
 import { alterarEstado, useAgora, useEstadoTokens } from '@/lib/tokens/estado';
+import { limiteDe, pctDe, sessaoAtual, tokensDesde } from '@/lib/tokens/uso';
+import { useUso, type UsoLido } from '@/lib/tokens/useUso';
 import { diaCurto, duracao, formatPct, hora, lerPct, quando, SEMANA_LONGA } from './formato';
 
 const cartao = 'rounded-2xl border border-border bg-card p-5 sm:p-6';
@@ -24,7 +26,18 @@ export function TokensPainel() {
 }
 
 function Painel({ estado, agora }: { estado: Estado; agora: number }) {
-  const semana = useMemo(() => montarSemana(agora, estado), [agora, estado]);
+  const vivo = useUso();
+  const { uso } = vivo;
+  const base = useMemo(() => montarSemana(agora, estado), [agora, estado]);
+
+  // Tokens da escada atual (desde o último reset) e o % que eles representam, se já houver calibração.
+  const tokensSemana = tokensDesde(uso.horas, base.dias[base.iReset].inicio);
+  const pctSemanaEstimado = pctDe(tokensSemana, estado.limiteSemana);
+  // Com o coletor calibrado, o % estimado substitui a leitura digitada e a comparação com a meta fica ao vivo.
+  const semana = useMemo<Semana>(
+    () => (pctSemanaEstimado != null ? { ...base, leitura: { t: uso.coletadoEm ?? agora, pct: pctSemanaEstimado } } : base),
+    [base, pctSemanaEstimado, uso.coletadoEm, agora]
+  );
   const horaReset = `${String(estado.resetHora).padStart(2, '0')}:00`;
 
   return (
@@ -43,15 +56,16 @@ function Painel({ estado, agora }: { estado: Estado; agora: number }) {
       </header>
 
       <div className="mt-8 flex flex-col gap-4">
-        <Hoje semana={semana} />
+        <Hoje semana={semana} tokensSemana={tokensSemana} />
+        <UsoAoVivo vivo={vivo} estado={estado} agora={agora} tokensSemana={tokensSemana} pctSemana={pctSemanaEstimado} />
         <Escada semana={semana} />
         <Reset semana={semana} />
         <Ajustes estado={estado} />
       </div>
 
       <p className="mt-8 text-xs leading-relaxed text-muted-foreground">
-        Cada dia vai das {horaReset} às {horaReset}. Metas arredondadas para baixo, para não passar do ritmo. Os dados ficam só neste
-        navegador.
+        Cada dia vai das {horaReset} às {horaReset}. Metas arredondadas para baixo, para não passar do ritmo. Reset e calibração ficam só
+        neste navegador; o uso vem do coletor no PC.
       </p>
     </main>
   );
@@ -59,7 +73,7 @@ function Painel({ estado, agora }: { estado: Estado; agora: number }) {
 
 /* ── Hoje ───────────────────────────────────────────────────────────────── */
 
-function Hoje({ semana }: { semana: Semana }) {
+function Hoje({ semana, tokensSemana }: { semana: Semana; tokensSemana: number }) {
   const hoje = semana.dias[semana.iHoje];
   const { metaHoje, leitura } = semana;
   const passou = leitura != null && leitura.pct > metaHoje;
@@ -78,7 +92,7 @@ function Hoje({ semana }: { semana: Semana }) {
 
       <Barra semana={semana} />
 
-      <Comparar />
+      <Comparar tokensSemana={tokensSemana} />
       {leitura && (
         <p className={cn('mt-3 flex items-center gap-2 text-sm', passou ? 'text-destructive' : 'text-muted-foreground')}>
           {leitura.pct >= 100 ? (
@@ -130,7 +144,7 @@ function Barra({ semana }: { semana: Semana }) {
   );
 }
 
-function Comparar() {
+function Comparar({ tokensSemana }: { tokensSemana: number }) {
   const [texto, setTexto] = useState('');
   const [erro, setErro] = useState(false);
 
@@ -138,7 +152,9 @@ function Comparar() {
     ev.preventDefault();
     const pct = lerPct(texto);
     if (pct == null) return setErro(true);
-    alterarEstado((e) => ({ ...e, leitura: { t: Date.now(), pct } }));
+    // Se o coletor já mediu tokens nesta semana, o % real digitado calibra quantos tokens valem 100%.
+    const limite = limiteDe(tokensSemana, pct);
+    alterarEstado((e) => ({ ...e, leitura: { t: Date.now(), pct }, limiteSemana: limite ?? e.limiteSemana }));
     setTexto('');
     setErro(false);
   }
@@ -164,6 +180,139 @@ function Comparar() {
         Comparar
       </Button>
       {erro && <span className="text-sm text-destructive">0 a 100</span>}
+    </form>
+  );
+}
+
+/* ── Uso ao vivo (coletor no PC) ────────────────────────────────────────── */
+
+const fmtTokens = new Intl.NumberFormat('pt-BR', { notation: 'compact', maximumFractionDigits: 1 });
+
+function UsoAoVivo({
+  vivo,
+  estado,
+  agora,
+  tokensSemana,
+  pctSemana,
+}: {
+  vivo: UsoLido;
+  estado: Estado;
+  agora: number;
+  tokensSemana: number;
+  pctSemana: number | null;
+}) {
+  const { uso, buscadoEm, carregando, erro, atualizar } = vivo;
+  const sessao = sessaoAtual(uso.horas, agora);
+  const pctSessao = sessao ? pctDe(sessao.tokens, estado.limiteSessao) : 0;
+  const semDados = uso.coletadoEm == null;
+  const parado = uso.coletadoEm != null && agora - uso.coletadoEm > 5 * 60_000;
+
+  return (
+    <section className={cartao}>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h2 className="text-2xl">Uso agora</h2>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {semDados
+              ? carregando
+                ? 'Buscando…'
+                : 'Nenhum coletor enviou dados ainda.'
+              : `Coletor enviou ${duracao(agora - uso.coletadoEm!)} atrás`}
+            {buscadoEm != null && <> · buscado às {hora(buscadoEm)}</>}
+          </p>
+        </div>
+        <Button variant="outline" size="sm" onClick={atualizar} disabled={carregando} aria-label="Atualizar uso agora">
+          <RefreshCw className={cn(carregando && 'animate-spin')} /> Atualizar
+        </Button>
+      </div>
+
+      {erro && <p className="mt-3 text-sm text-destructive">Não consegui atualizar — mostrando o último dado.</p>}
+      {parado && !erro && (
+        <p className="mt-3 flex items-center gap-2 text-sm text-destructive">
+          <AlertTriangle className="size-4 shrink-0" /> O coletor parou de enviar. Veja se o PC está ligado e o script rodando.
+        </p>
+      )}
+
+      {!semDados && (
+        <div className="mt-5 flex flex-col gap-5">
+          <Medidor
+            titulo="Sessão (5h)"
+            pct={pctSessao}
+            detalhe={
+              sessao
+                ? `${fmtTokens.format(sessao.tokens)} tokens · zera em ${duracao(sessao.fim - agora)}`
+                : 'Sem sessão ativa — o contador está zerado.'
+            }
+          />
+          <Medidor
+            titulo="Semana (7 dias)"
+            pct={pctSemana}
+            detalhe={`${fmtTokens.format(tokensSemana)} tokens desde o reset${uso.maquinas > 1 ? ` · ${uso.maquinas} máquinas` : ''}`}
+          />
+          <CalibrarSessao sessao={sessao} />
+          {(estado.limiteSemana == null || estado.limiteSessao == null) && (
+            <p className="text-xs leading-relaxed text-muted-foreground">
+              Para virar %, digite o valor real do Claude uma vez: o Weekly no campo “Weekly agora” acima e a sessão no campo abaixo. O
+              painel descobre quantos tokens valem 100%.
+            </p>
+          )}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function Medidor({ titulo, pct, detalhe }: { titulo: string; pct: number | null; detalhe: string }) {
+  return (
+    <div>
+      <div className="flex items-baseline justify-between gap-3">
+        <p className={rotulo}>{titulo}</p>
+        <p className="text-2xl font-semibold tabular-nums">{pct != null ? `~${formatPct(pct)}` : '—'}</p>
+      </div>
+      <div className="mt-2 h-2 rounded-full bg-secondary">
+        {pct != null && <div className={cn('h-full rounded-full', pct >= 90 ? 'bg-destructive' : 'bg-primary')} style={{ width: `${pct}%` }} />}
+      </div>
+      <p className="mt-1.5 text-xs text-muted-foreground">{detalhe}</p>
+    </div>
+  );
+}
+
+function CalibrarSessao({ sessao }: { sessao: { tokens: number } | null }) {
+  const [texto, setTexto] = useState('');
+  const [erro, setErro] = useState(false);
+
+  function enviar(ev: React.FormEvent) {
+    ev.preventDefault();
+    const pct = lerPct(texto);
+    const limite = sessao ? limiteDe(sessao.tokens, pct ?? 0) : null;
+    if (pct == null || limite == null) return setErro(true);
+    alterarEstado((e) => ({ ...e, limiteSessao: limite }));
+    setTexto('');
+    setErro(false);
+  }
+
+  return (
+    <form onSubmit={enviar} className="flex flex-wrap items-center gap-2">
+      <label htmlFor="sessao" className="text-sm text-muted-foreground">
+        Sessão agora
+      </label>
+      <span className="relative w-24">
+        <Input
+          id="sessao"
+          value={texto}
+          onChange={(e) => setTexto(e.target.value)}
+          inputMode="decimal"
+          autoComplete="off"
+          disabled={!sessao}
+          aria-invalid={erro || undefined}
+          className="pr-7 tabular-nums"
+        />
+        <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">%</span>
+      </span>
+      <Button type="submit" variant="outline" disabled={!sessao}>
+        Calibrar
+      </Button>
+      {erro && <span className="text-sm text-destructive">{sessao ? '1 a 100' : 'sem sessão ativa'}</span>}
     </form>
   );
 }
@@ -302,7 +451,7 @@ function Ajustes({ estado }: { estado: Estado }) {
         size="sm"
         className="mt-4 text-destructive hover:text-destructive"
         onClick={() => {
-          if (window.confirm('Apagar reset e leitura deste navegador?')) alterarEstado(() => ESTADO_INICIAL);
+          if (window.confirm('Apagar reset, leitura e calibração deste navegador?')) alterarEstado(() => ESTADO_INICIAL);
         }}
       >
         <Trash2 /> Apagar dados
