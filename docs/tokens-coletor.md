@@ -13,23 +13,23 @@ Redmi / qualquer aparelho ─► /tokens  ◄── GET /api/tokens (a cada 60 s
 
 ## Instalação (uma vez)
 
-1. **Tabela.** Rode `supabase/tokens/tokens_01_uso.sql` no SQL Editor do Supabase do site.
-2. **Segredo.** Gere um e depois cadastre na Vercel (Production) como `TOKENS_COLETOR_SECRET` e faça redeploy:
+1. **Tabela.** `supabase/tokens/tokens_01_uso.sql` (já aplicada no projeto Caprinos Leiteiros, o mesmo que o `/adm` lê).
+2. **No PC (Windows).** Atualize o repositório (`git pull origin main`) e cole no PowerShell. O bloco gera o segredo, grava `~\.seabra-tokens.json`, copia o segredo para a área de transferência e cria a tarefa que roda o coletor em segundo plano a cada login:
+   ```powershell
+   $repo = "C:\Coding\Web\React\sistemas-seabra-web"   # ajuste se o repositório estiver em outro lugar
+   $b = New-Object byte[] 32; [Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($b)
+   $secret = ($b | ForEach-Object { $_.ToString('x2') }) -join ''
+   $json = (@{ secret = $secret; maquina = $env:COMPUTERNAME } | ConvertTo-Json)
+   [IO.File]::WriteAllText("$HOME\.seabra-tokens.json", $json)
+   Set-Clipboard $secret
+   $acao = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-WindowStyle Hidden -Command `"node '$repo\scripts\tokens-coletor.mjs' --loop`""
+   Register-ScheduledTask -TaskName "Seabra Tokens" -Action $acao -Trigger (New-ScheduledTaskTrigger -AtLogOn) -Force | Out-Null
+   Start-ScheduledTask -TaskName "Seabra Tokens"
+   "Segredo copiado. Cole na Vercel como TOKENS_COLETOR_SECRET."
    ```
-   node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
-   ```
-   O site já usa `NEXT_PUBLIC_SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY`; nada novo além do segredo.
-3. **No PC (Windows).** Crie `C:\Users\<você>\.seabra-tokens.json`:
-   ```json
-   { "secret": "o-mesmo-segredo", "maquina": "pc-casa" }
-   ```
-   `maquina` é só o nome que aparece no painel; use um nome diferente em cada PC, que o painel soma todos.
-4. **Teste sem enviar:** `node scripts\tokens-coletor.mjs --dry` — mostra quantos tokens achou.
-5. **Rodar sempre.** Tarefa que abre no login, em segundo plano (ajuste o caminho do repositório):
-   ```
-   schtasks /create /tn "Seabra Tokens" /sc onlogon /tr "powershell -WindowStyle Hidden -Command node C:\Coding\Web\React\sistemas-seabra-web\scripts\tokens-coletor.mjs --loop"
-   ```
-   Para iniciar já, sem deslogar: `schtasks /run /tn "Seabra Tokens"`.
+   Sem permissão para criar a tarefa? Abra o PowerShell como administrador. Outro PC: rode o mesmo bloco **sem gerar outro segredo** — troque a linha do `$secret` pelo valor que já está na Vercel; o `maquina` já sai com o nome do computador.
+3. **Vercel.** Cadastre o segredo (que está na área de transferência) em Settings → Environment Variables → `TOKENS_COLETOR_SECRET`, marcado como *Sensitive*, em Production. Depois faça **Redeploy** do último deploy.
+4. **Conferir sem enviar:** `node scripts\tokens-coletor.mjs --dry` mostra quantos tokens achou.
 
 ## Calibração (o % é estimado)
 

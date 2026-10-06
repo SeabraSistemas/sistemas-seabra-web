@@ -136,7 +136,8 @@ export function coletar(pastas, agora = Date.now()) {
 function configuracao() {
   let arquivo = {};
   try {
-    arquivo = JSON.parse(readFileSync(join(homedir(), '.seabra-tokens.json'), 'utf8'));
+    // O PowerShell grava UTF-8 com BOM; JSON.parse não aceita o caractere invisível.
+    arquivo = JSON.parse(readFileSync(join(homedir(), '.seabra-tokens.json'), 'utf8').replace(/^\uFEFF/, ''));
   } catch {
     // Sem arquivo: só variáveis de ambiente.
   }
