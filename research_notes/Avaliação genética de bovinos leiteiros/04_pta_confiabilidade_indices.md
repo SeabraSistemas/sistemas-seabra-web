@@ -2,7 +2,7 @@
 
 Data de referência: buscas realizadas em 14/10/2026. Escopo: prática internacional e brasileira.
 
-Método e limites: foram feitas 20 chamadas de WebSearch (modos standard e extended). WebFetch e curl não funcionam neste ambiente, então nenhum PDF foi lido na íntegra. Os fatos vêm de trechos e resumos retornados pela busca, e os URLs são os que a busca retornou. Valores que não puderam ser conferidos no documento primário aparecem como "(a conferir)". Conhecimento de fundo sem fonte obtida aparece como "[não verificado]". Fontes secundárias (Bullvine, Alta Genetics, ABS Global, Viking Genetics, topagrar, empresas) só são usadas quando nenhuma fonte primária apareceu, e estão indicadas como tal.
+Método e limites: foram feitas 17 chamadas de WebSearch (modos standard e extended), além de leitura do guia de pesquisa e verificação da pasta de destino. WebFetch e curl não funcionam neste ambiente, então nenhum PDF foi lido na íntegra. Os fatos vêm de trechos e resumos retornados pela busca, e os URLs são os que a busca retornou. Valores que não puderam ser conferidos no documento primário aparecem como "(a conferir)". Conhecimento de fundo sem fonte obtida aparece como "[não verificado]". Fontes secundárias (Bullvine, Alta Genetics, ABS Global, Viking Genetics, topagrar, empresas) só são usadas quando nenhuma fonte primária apareceu, e estão indicadas como tal.
 
 ## Q1. Definições: PTA, EBV, PD, RBV, confiabilidade, daughter equivalents e índice de pedigree
 
@@ -157,7 +157,7 @@ Os índices diferem em unidade (dólar, euro, pontos ou base 100) e em peso. Fer
 - Os valores econômicos foram revisados recentemente — mesmas fontes.
 
 ### Inferences
-- **Escalas diferentes.** NM$, BW e BPI estão em moeda; EBI em pontos com fertilidade a 33%; RZG/RBV em base 100; HWI em unidades; TPI em pontos. Comparações diretas exigem conversão, ou o MACE para BV e PTA entre países (ver Q2).
+- **Escalas diferentes.** NM$, BW e BPI são expressos em dólares (BW e BPI em moeda do respectivo país; a moeda exata de cada um não foi verificada); o EBI tem fertilidade com 33% de peso e unidade não verificada (provavelmente euro [não verificado]); RZG/RBV em base 100; HWI em unidades; TPI em pontos. Comparações diretas exigem conversão, ou o MACE para BV e PTA entre países (ver Q2).
 - **Tendência convergente.** A eficiência alimentar ganhou peso no NM$ 2025 (17,8% relatado), no NTM 2026 (0,35 para Holandês) e no BPI/HWI. Isso aparece nos documentos consultados.
 - **Mudanças de peso seguem o preço.** As mudanças do NM$ 2025 e do TPI 2026 foram justificadas por tendências de preço do leite (gordura contra proteína), segundo CDCB e Holstein USA.
 
