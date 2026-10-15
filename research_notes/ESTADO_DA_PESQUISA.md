@@ -15,8 +15,8 @@ A central também terá um **laboratório de testes dos modelos**. Os modelos s�
 |---|---|---|
 | Bovinos de corte | **v2**, cerca de 23,6 mil palavras. Verificação com texto completo: 135 itens (78 confirmados, 26 corrigidos, 24 não confirmados, 7 pagos). Inclui o aprofundamento: ANCP 2023–2026, MGTe atual, Possible Change, idade da vaca, Interbeef | `reports/Avaliação genética de bovinos de corte.md`; `research_notes/Verificação de fontes/verificacao_corte.md`; `research_notes/Verificação de fontes/aprofundamento_corte.md` |
 | Bovinos leiteiros | **v2**, cerca de 25,7 mil palavras. Verificação: 123 itens (65 confirmados, 36 corrigidos, 17 não confirmados, 5 pagos) | `reports/Avaliação genética de bovinos leiteiros.md`; `research_notes/Verificação de fontes/verificacao_leite.md` |
-| Caprinos leiteiros | **v1**, cerca de 23,4 mil palavras. Captação com texto completo, 8 exemplos em numpy, metas por categoria, dados para o SeabraApp. Verificação independente ainda pendente | `reports/Avaliação genética de caprinos leiteiros.md`; notas em `research_notes/Avaliação genética de caprinos leiteiros/` |
-| Ovinos leiteiros | **Em captação**: 6 frentes no Haiku, com texto completo | `research_notes/Avaliação genética de ovinos leiteiros/` |
+| Caprinos leiteiros | **v2**, cerca de 27,4 mil palavras. Verificação: 249 itens (194 confirmados, 40 corrigidos, 9 não confirmados, 6 pagos). 8 exemplos em numpy, metas por categoria, dados para o SeabraApp | `reports/Avaliação genética de caprinos leiteiros.md`; `research_notes/Verificação de fontes/verificacao_caprinos.md`; notas em `research_notes/Avaliação genética de caprinos leiteiros/` |
+| Ovinos leiteiros | **v1**, cerca de 28,1 mil palavras. Captação com texto completo, 8 exemplos em numpy. Verificação independente ainda pendente | `reports/Avaliação genética de ovinos leiteiros.md`; notas em `research_notes/Avaliação genética de ovinos leiteiros/` |
 
 ## Equipe de IA (modelos por fase)
 
@@ -37,8 +37,8 @@ A central também terá um **laboratório de testes dos modelos**. Os modelos s�
 - Não usar Sci-Hub nem fontes não autorizadas. Artigos pagos só pelo acesso institucional do usuário (UFF/CAPES): lista em `research_notes/Verificação de fontes/artigos_para_obter.md`.
 
 ## Próximos passos
-1. Concluir a captação de ovinos leiteiros e escrever o relatório (Opus).
-2. Verificar o relatório de caprinos (Sonnet) e aplicar as correções (Opus).
+1. Verificar o relatório de ovinos (Sonnet) e aplicar as correções (Opus).
+2. Documentos bloqueados para robôs, que o usuário pode anexar: fórmula oficial do ISOL (Idele/Lacaune), catálogos Latxa (ASLANA), relatório MAPA/INIA de ovinos de leite e PDFs da HAL citados nas notas de ovinos.
 3. Ler os PDFs pagos que o usuário anexar e confirmar as equações clássicas (Henderson, Quaas, Willham, Gilmour, Wood, Wilmink, Ali & Schaeffer, Ptak & Schaeffer, Schaeffer 2004).
 4. Laboratório: calculadoras interativas na central, depois motor de BLUP intra-rebanho testado com dados anonimizados do SeabraApp.
 5. Ao final, voltar a rede para **Confiável**.

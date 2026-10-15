@@ -142,8 +142,8 @@ td.fit { text-align: center; font-family: var(--font-mono); font-weight: 500; wh
     <h1>Central de Melhoramento Seabra</h1>
     <p class="lede">Modelos estatísticos, pesquisas e indicadores para avaliação genética, organizados por segmento. Cada modelo é aplicado conforme a demanda: associações com milhões de registros ou produtores com o próprio rebanho. Os modelos são testados aqui antes de chegarem ao SeabraApp.</p>
     <div class="status-strip" role="status">
-      <strong>Em andamento</strong>
-      <span>Corte e leite bovino revisados com texto completo (v2) e relatório de caprinos leiteiros pronto, em 15/10/2026. Ovinos leiteiros em captação.</span>
+      <strong>Série completa</strong>
+      <span>Os quatro relatórios estão prontos em 15/10/2026: corte, leite bovino e caprinos verificados com texto completo (v2); ovinos leiteiros v1. Próximo: verificar ovinos e montar o laboratório.</span>
     </div>
   </header>
 
@@ -177,7 +177,7 @@ td.fit { text-align: center; font-family: var(--font-mono); font-weight: 500; wh
       <article class="card seg-card">
         <span class="seg-code">LEITE · CAP</span>
         <h3>Caprinos leiteiros</h3>
-        <span class="chip done">Relatório v1 · texto completo</span>
+        <span class="chip done">Relatório v2 · verificado</span>
         <p class="note">Foco do SeabraApp. ICAR para cabras, Capragene, ICC francês, ssGBLUP multirraça, metas por categoria e dados para o app.</p>
       </article>
       <article class="card seg-card">
@@ -217,8 +217,7 @@ td.fit { text-align: center; font-family: var(--font-mono); font-weight: 500; wh
       <span class="eyebrow">Próximos passos</span>
       <h3>Na ordem</h3>
       <ol class="flow">
-        <li><span>Concluir a captação de ovinos leiteiros (6 frentes com texto completo) e escrever o relatório.</span></li>
-        <li><span>Verificar o relatório de caprinos com o mesmo método usado em corte e leite.</span></li>
+        <li><span>Verificar o relatório de ovinos com o mesmo método usado nos outros três e aplicar as correções.</span></li>
         <li><span>Ler os PDFs dos artigos pagos (acesso UFF/CAPES) à medida que forem anexados e confirmar as equações clássicas.</span></li>
         <li><span>Laboratório: calculadoras interativas com os exemplos verificados.</span></li>
         <li><span>Ao final da pesquisa, voltar a rede do ambiente para <strong>Confiável</strong>.</span></li>
@@ -324,12 +323,12 @@ td.fit { text-align: center; font-family: var(--font-mono); font-weight: 500; wh
     <div class="grid">
       <article class="card">
         <h3>Situação</h3>
-        <span class="chip done">Relatório v1 · texto completo</span>
+        <span class="chip done">Relatório v2 · verificado</span>
         <dl class="kv">
-          <dt>Relatório</dt><dd>~23,4 mil palavras</dd>
-          <dt>Captação</dt><dd>6 frentes com leitura de texto completo</dd>
+          <dt>Relatório</dt><dd>~27,4 mil palavras (v2)</dd>
+          <dt>Verificação</dt><dd>249 itens: 194 confirmados, 40 corrigidos, 9 não confirmados, 6 pagos</dd>
+          <dt>Destaques</dt><dd>repetibilidade 0,36 (Saanen); single-step francês oficial em 2018; longevidade h² 0,58</dd>
           <dt>Exemplos</dt><dd>8 exemplos conferidos em numpy</dd>
-          <dt>Pendente</dt><dd>verificação independente; repetibilidade caprina brasileira</dd>
         </dl>
       </article>
       <article class="card">
@@ -581,7 +580,8 @@ const DOCS = {
     ["Nota 06", "Indicadores de rebanho e N menor", "docs/leite/06_indicadores_rebanho_n_menor.md", "captação"]
   ],
   caprinos: [
-    ["Relatório", "Cabras leiteiras ganham PTAs conectando rebanhos pequenos", "docs/caprinos/relatorio.md", "~23,4 mil palavras"],
+    ["Relatório v2", "Cabras leiteiras ganham PTAs conectando rebanhos pequenos", "docs/caprinos/relatorio.md", "~27,4 mil palavras"],
+    ["Verificação", "Verificação do relatório de caprinos contra as fontes", "docs/verificacao/caprinos.md", "249 itens"],
     ["Nota 01", "Modelos de produção", "docs/caprinos/01_modelos_producao.md", "texto completo"],
     ["Nota 02", "Programas de avaliação", "docs/caprinos/02_programas_avaliacao.md", "texto completo"],
     ["Nota 03", "Genômica", "docs/caprinos/03_genomica.md", "texto completo"],
