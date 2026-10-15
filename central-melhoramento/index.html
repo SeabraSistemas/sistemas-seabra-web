@@ -176,6 +176,8 @@ td.alto { color: var(--danger); font-weight: 600; }
 td.zero { color: var(--muted); }
 tr.total td { font-weight: 600; border-top: 2px solid var(--line); }
 .tabela-entrada { background: var(--surface); }
+.table-wrap.compacta { width: fit-content; max-width: 100%; }
+.table-wrap.compacta th, .table-wrap.compacta td { padding-left: 18px; }
 .tabela-entrada td { padding: 6px 8px; }
 .calc .tabela-entrada input[type="text"] { width: 9ch; padding: 5px 7px; font-size: 14px; }
 .calc .tabela-entrada td:first-child input[type="text"] { width: 20ch; }
@@ -203,7 +205,7 @@ tr.total td { font-weight: 600; border-top: 2px solid var(--line); }
     <p class="lede">Modelos estatísticos, pesquisas e indicadores para avaliação genética, organizados por segmento. Cada modelo é aplicado conforme a demanda: associações com milhões de registros ou produtores com o próprio rebanho. Os modelos são testados aqui antes de chegarem ao SeabraApp.</p>
     <div class="status-strip" role="status">
       <strong>Série completa</strong>
-      <span>Os quatro relatórios estão prontos em 15/10/2026: corte, leite bovino e caprinos verificados com texto completo (v2); ovinos leiteiros v1. Próximo: verificar ovinos e montar o laboratório.</span>
+      <span>Os quatro relatórios estão prontos em 15/10/2026: corte, leite bovino e caprinos verificados com texto completo (v2); ovinos leiteiros v1, com a verificação feita e a v2 em revisão. O Laboratório já tem o motor em Python e oito calculadoras.</span>
     </div>
   </header>
 
@@ -277,9 +279,10 @@ tr.total td { font-weight: 600; border-top: 2px solid var(--line); }
       <span class="eyebrow">Próximos passos</span>
       <h3>Na ordem</h3>
       <ol class="flow">
-        <li><span>Verificar o relatório de ovinos com o mesmo método usado nos outros três e aplicar as correções.</span></li>
+        <li><span>Aplicar ao relatório de ovinos as correções da verificação (v2).</span></li>
+        <li><span>Guia de aplicação por demanda: do pedido do produtor ou da associação ao modelo, aos dados e aos indicadores.</span></li>
         <li><span>Ler os PDFs dos artigos pagos (acesso UFF/CAPES) à medida que forem anexados e confirmar as equações clássicas.</span></li>
-        <li><span>Laboratório: calculadoras interativas com os exemplos verificados.</span></li>
+        <li><span>Laboratório: rodar o motor com dados anonimizados do SeabraApp.</span></li>
         <li><span>Ao final da pesquisa, voltar a rede do ambiente para <strong>Confiável</strong>.</span></li>
       </ol>
     </article>
@@ -606,7 +609,7 @@ tr.total td { font-weight: 600; border-top: 2px solid var(--line); }
           <div class="campo"><label for="mppa-r">Repetibilidade (r)</label><input id="mppa-r" type="text" inputmode="decimal" value="0,36"></div>
           <div class="campo"><label for="mppa-sp">DP fenotípico σP (kg)</label><input id="mppa-sp" type="text" inputmode="decimal" value="200"></div>
           <div class="campo"><label for="mppa-escala">O pai entra pela</label>
-            <select id="mppa-escala"><option value="PTA" selected>PTA (caprinos, bovinos)</option><option value="EBV">EBV (ovinos)</option></select></div>
+            <select id="mppa-escala"><option value="PTA" selected>PTA</option><option value="EBV">EBV (ovinos)</option></select></div>
           <div class="campo largo"><label for="mppa-animais">Fêmeas: identificação; desvios (kg); PTA do pai; REL do pai</label>
             <textarea id="mppa-animais" rows="7" spellcheck="false" aria-describedby="mppa-dica">C1; 150; 40; 0,60
 C2; 120 90 100; 10; 0,80
@@ -636,7 +639,7 @@ C6; 60 80; -30; 0,60</textarea>
           <div class="campo"><label for="rel-filhas">Filhas de X em cada rebanho</label><input id="rel-filhas" type="text" value="15x2" aria-describedby="rel-filhas-dica"><span class="dica" id="rel-filhas-dica">2 5 3, ou 15x2 para 15 rebanhos com 2</span></div>
           <div class="campo"><label for="rel-outras">Filhas de outro pai por rebanho</label><input id="rel-outras" type="text" inputmode="decimal" value="10" aria-describedby="rel-outras-dica"><span class="dica" id="rel-outras-dica">contemporâneas de X; um número vale para todos</span></div>
           <div class="campo"><label for="rel-outro-tipo">O outro pai é</label>
-            <select id="rel-outro-tipo"><option value="mesmo" selected>o mesmo em todos os rebanhos (IA)</option><option value="diferente">um diferente em cada rebanho</option></select></div>
+            <select id="rel-outro-tipo"><option value="mesmo" selected>o mesmo (IA)</option><option value="diferente">um por rebanho</option></select></div>
           <div class="campo"><label for="rel-outro-rel">REL do outro pai</label><input id="rel-outro-rel" type="text" inputmode="decimal" value="0,90" aria-describedby="rel-outro-rel-dica"><span class="dica" id="rel-outro-rel-dica">0 se não tem prova</span></div>
           <div class="campo"><label for="rel-pa">REL da média dos pais de X</label><input id="rel-pa" type="text" inputmode="decimal" value="0"></div>
           <div class="campo"><label for="rel-alvo">REL alvo</label><input id="rel-alvo" type="text" inputmode="decimal" value="0,70"></div>
@@ -651,7 +654,7 @@ C6; 60 80; -30; 0,60</textarea>
         <div class="campos">
           <div class="campo"><label for="conv-valor">Valor publicado</label><input id="conv-valor" type="text" inputmode="decimal" value="0,50"></div>
           <div class="campo"><label for="conv-escala">Escala</label>
-            <select id="conv-escala"><option value="r" selected>acurácia r (correlação)</option><option value="REL">confiabilidade REL (r²)</option><option value="BIF">acurácia BIF</option></select></div>
+            <select id="conv-escala"><option value="r" selected>r</option><option value="REL">REL</option><option value="BIF">acurácia BIF</option></select></div>
         </div>
         <div class="acoes"><button class="btn primary" type="submit">Converter</button><button class="btn" type="button" data-exemplo="padrao">Restaurar exemplo</button></div>
       </form>
@@ -670,7 +673,7 @@ C6; 60 80; -30; 0,60</textarea>
         <p class="exemplo"><span class="chip next" data-chip>Exemplo</span><span data-exemplo-texto>Animal 4 do pedigree de 8 animais (relatório de corte, Passo 3): PEV de 92,08 com σ²a = 100 kg²</span></p>
         <div class="campos">
           <div class="campo"><label for="pc-tipo">Ponto de partida</label>
-            <select id="pc-tipo"><option value="PEV" selected>PEV (kg²)</option><option value="BIF">acurácia BIF publicada</option><option value="r">acurácia r publicada</option><option value="REL">confiabilidade REL</option></select></div>
+            <select id="pc-tipo"><option value="PEV" selected>PEV (kg²)</option><option value="BIF">acurácia BIF</option><option value="r">acurácia r</option><option value="REL">REL</option></select></div>
           <div class="campo"><label for="pc-valor">Valor</label><input id="pc-valor" type="text" inputmode="decimal" value="92,08"></div>
           <div class="campo"><label for="pc-sa">DP genético aditivo σA (kg)</label><input id="pc-sa" type="text" inputmode="decimal" value="10"></div>
           <div class="campo"><label for="pc-f">F do animal (só com PEV)</label><input id="pc-f" type="text" inputmode="decimal" value="0"></div>
@@ -760,7 +763,8 @@ B5  0   0</textarea>
           <div class="campo"><label for="tx-alfa">Significância α (%)</label><input id="tx-alfa" type="text" inputmode="decimal" value="5"></div>
           <div class="campo"><label for="tx-poder">Poder (%)</label><input id="tx-poder" type="text" inputmode="decimal" value="80"></div>
           <div class="campo"><label for="tx-var">Variância</label>
-            <select id="tx-var"><option value="agrupada" selected>agrupada (caprinos, ovinos)</option><option value="separada">separada (leite)</option></select></div>
+            <select id="tx-var" aria-describedby="tx-var-dica"><option value="agrupada" selected>agrupada</option><option value="separada">separada</option></select>
+            <span class="dica" id="tx-var-dica">agrupada: caprinos e ovinos; separada: leite</span></div>
           <div class="campo"><label for="tx-ndisp">Animais por ano no rebanho</label><input id="tx-ndisp" type="text" inputmode="numeric" value="30"></div>
         </div>
         <div class="acoes"><button class="btn primary" type="submit">Calcular</button><button class="btn" type="button" data-exemplo="padrao">Restaurar exemplo</button></div>
@@ -805,7 +809,7 @@ B5  0   0</textarea>
         <p class="exemplo"><span class="chip next" data-chip>Exemplo</span><span data-exemplo-texto>Exemplo 1 de caprinos: cabra Saanen fictícia ordenhada desde o parto, 10 controles mensais e secagem no dia 290</span></p>
         <div class="campos">
           <div class="campo"><label for="lac-especie">Espécie</label>
-            <select id="lac-especie"><option value="caprino" selected>cabra (ICAR)</option><option value="ovino">ovelha (ICAR)</option><option value="bovino">vaca (TIM até 305 d)</option></select></div>
+            <select id="lac-especie"><option value="caprino" selected>cabra (ICAR)</option><option value="ovino">ovelha (ICAR)</option><option value="bovino">vaca (TIM)</option></select></div>
           <div class="campo"><label for="lac-secagem">Dia da secagem</label><input id="lac-secagem" type="text" inputmode="decimal" value="290"></div>
           <div class="campo"><label for="lac-separacao">Separação das crias (dia)</label><input id="lac-separacao" type="text" inputmode="decimal" value="" aria-describedby="lac-separacao-dica"><span class="dica" id="lac-separacao-dica">vazio = ordenha desde o parto (TMY)</span></div>
           <div class="campo"><label for="lac-comprimento">Comprimento padrão (dias)</label><input id="lac-comprimento" type="text" inputmode="decimal" value="305"></div>
@@ -936,6 +940,7 @@ const DOCS = {
   ],
   ovinos: [
     ["Relatório", "Ovelhas leiteiras ganham EBVs importando conexão genética", "docs/ovinos/relatorio.md", "~28,1 mil palavras"],
+    ["Verificação", "Verificação do relatório de ovinos contra as fontes", "docs/verificacao/ovinos.md", "290 itens"],
     ["Nota 01", "Modelos de produção", "docs/ovinos/01_modelos_producao.md", "texto completo"],
     ["Nota 02", "Programas de avaliação", "docs/ovinos/02_programas_avaliacao.md", "texto completo"],
     ["Nota 03", "Genômica", "docs/ovinos/03_genomica.md", "texto completo"],
@@ -1086,7 +1091,7 @@ showTab((location.hash || "#visao").slice(1));
   const aviso = (t) => `<p class="aviso">${t}</p>`;
   const nota = (t) => `<p class="note">${t}</p>`;
   // cab: [{t, num}]; linhas: arrays de células (texto HTML ou {h, classe}) ou {classe, celulas}
-  function tabela(cab, linhas) {
+  function tabela(cab, linhas, compacta) {
     const th = cab.map((c) => `<th scope="col"${c.num ? ' class="num"' : ""}>${c.t}</th>`).join("");
     const corpo = linhas.map((l) => {
       const celulas = Array.isArray(l) ? l : l.celulas;
@@ -1097,7 +1102,7 @@ showTab((location.hash || "#visao").slice(1));
         return `<td${cls ? ` class="${cls}"` : ""}>${c.h}</td>`;
       }).join("") + "</tr>";
     }).join("");
-    return `<div class="table-wrap"><table><thead><tr>${th}</tr></thead><tbody>${corpo}</tbody></table></div>`;
+    return `<div class="table-wrap${compacta ? " compacta" : ""}"><table><thead><tr>${th}</tr></thead><tbody>${corpo}</tbody></table></div>`;
   }
   function posicoes(valores) {           // 1 = maior valor
     const pos = [];
@@ -1357,7 +1362,8 @@ showTab((location.hash || "#visao").slice(1));
       ]);
       html += tabela(
         [{ t: "r", num: true }, { t: "REL", num: true }, { t: "Acurácia BIF", num: true }],
-        [0.5, 0.6, 0.8, 0.9, 0.98].map((x) => [fmt(x, 2), fmt(x * x, 3), fmt(cf.bif_de_r(x), 3)])
+        [0.5, 0.6, 0.8, 0.9, 0.98].map((x) => [fmt(x, 2), fmt(x * x, 3), fmt(cf.bif_de_r(x), 3)]),
+        true
       );
       html += nota("REL = r² e a_BIF = 1 − √(1 − REL). A escala BIF é conservadora: r = 0,50 vale 0,134. Antes de comparar a “acurácia” de dois sumários, confira qual escala cada um publica.");
       return html;
