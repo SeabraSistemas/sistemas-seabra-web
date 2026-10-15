@@ -193,9 +193,9 @@ Os testes conferem cerca de 800 números impressos nos relatórios, sempre "arre
 
 ### Discrepâncias encontradas
 
-As três diferenças estão no relatório de ovinos e têm a mesma origem: a tabela do texto arredonda **de novo** a saída de 3 casas do Apêndice A. Os testes documentam cada uma (`tests/test_blup.py` e `tests/test_indices.py`).
+As três diferenças estavam na v1 do relatório de ovinos e tinham a mesma origem: a tabela do texto arredondava **de novo** a saída de 3 casas do Apêndice A. A v2 (15/10/2026) corrigiu as três, e o apêndice passou a imprimir 4 casas. Os testes documentam cada uma (`tests/test_blup.py` e `tests/test_indices.py`).
 
-| Onde | Tabela do relatório | Valor exato | Correto com 2 casas |
+| Onde | Tabela da v1 | Valor exato | v2 (2 casas) |
 |---|---|---|---|
 | Ovinos, Exemplo 4, h² 0,24, "ao lado de 10 filhas de outro carneiro local" | 0,20 | 0,1948 (apêndice: 0,195) | 0,19 |
 | Ovinos, Exemplo 4, h² 0,30, "40 filhas em 10 rebanhos", e o texto "0,68 a 0,70" | 0,70 | 0,6948 (apêndice: 0,695) | 0,69 |

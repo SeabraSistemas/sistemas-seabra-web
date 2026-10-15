@@ -9,7 +9,7 @@ Este guia liga a demanda de um cliente ao modelo, aos dados e aos indicadores. P
 | Marcador | Significado |
 |---|---|
 | **Corte**, **Leite**, **Caprinos**, **Ovinos** | os quatro relatórios em `reports/` (*Avaliação genética de bovinos de corte*, *de bovinos leiteiros*, *de caprinos leiteiros*, *de ovinos leiteiros*); entre aspas, o título da seção; "Ex. n", o exemplo numérico n |
-| **Verif. ovinos** | `research_notes/Verificação de fontes/verificacao_ovinos.md`. O relatório de ovinos está em correção; quando um número diverge, vale a verificação ("correção n" e "conflito" remetem às seções dela) |
+| **Verif. ovinos** | `research_notes/Verificação de fontes/verificacao_ovinos.md`. O relatório de ovinos v2 (15/10/2026) já incorpora a verificação; "correção n" e "conflito" remetem às seções dela |
 | `módulo.função` | função do pacote `melhoramento`, em `central-melhoramento/laboratorio/` (110 testes) |
 | **README** | `central-melhoramento/laboratorio/README.md` |
 | **[proposta]** | meta ou regra proposta pelo relatório citado, sem fonte primária que a fixe |
@@ -366,7 +366,7 @@ Referências brasileiras: 0,633 L por cabra ordenhada por dia na média nacional
 
 ### 4.4 Ovinos leiteiros
 
-O relatório de ovinos está em correção; esta subseção segue a verificação de fontes onde ela diverge.
+Esta subseção segue o relatório de ovinos v2, que já incorpora a verificação de fontes; as remissões à verificação indicam onde está o detalhe de cada correção.
 
 **Características e modelos** (Ovinos). TMM por Fleischmann, com controles de uma ordenha (AT e AC), que cobrem 98% das ovelhas controladas; modelo animal de repetibilidade por característica, com grupos de pais desconhecidos e variância heterogênea (França); três notas de úbere na Lacaune; ordenhabilidade; células; fertilidade e prolificidade; verminose; PRNP como restrição (ARR/ARR), não como herdabilidade; SOCS2 como gene de grande efeito.
 
@@ -383,7 +383,7 @@ O relatório de ovinos está em correção; esta subseção segue a verificaçã
 | Úbere; fluxo máximo | 0,16 a 0,33; 0,54 | Ovinos, "Úbere" e "Ordenhabilidade" |
 | OPG; longevidade funcional | 0,14 a 0,33; 0,07 (log) a 0,11 (original) | Ovinos, "Verminose" e "Cordeiros e longevidade" |
 
-Com h² de 0,30, k_d = 11,33: REL de 0,50 pede 11,3 filhas-equivalentes, e 0,70 pede 26,4 (Ovinos, Ex. 4). Pelo motor, um carneiro com 10 filhas ao lado de 10 de outro carneiro local tem REL de 0,1948 com h² de 0,24 (o relatório imprime 0,20), e 40 filhas em 5 ou 10 rebanhos, ao lado de filhas de um importado, dão 0,6803 e 0,6948 com h² de 0,30 (o relatório imprime 0,68 a 0,70) (README, "Discrepâncias encontradas"; Apêndice A, bloco E).
+Com h² de 0,30, k_d = 11,33: REL de 0,50 pede 11,3 filhas-equivalentes, e 0,70 pede 26,4 (Ovinos, Ex. 4). Pelo motor, um carneiro com 10 filhas ao lado de 10 de outro carneiro local tem REL de 0,1948 com h² de 0,24 (0,19 no relatório v2), e 40 filhas em 5 ou 10 rebanhos, ao lado de filhas de um importado, dão 0,6803 e 0,6948 com h² de 0,30 (0,68 a 0,69 no relatório v2; a v1 imprimia 0,20 e 0,70 por arredondar duas vezes) (README, "Discrepâncias encontradas"; Apêndice A, bloco E).
 
 **Indicadores e metas**
 
@@ -408,7 +408,7 @@ O Regulamento (CE) 853/2004 fixa só contagem em placas (1,5 milhão de UFC/mL p
 - **Ne da Lacaune:** 188 por pedigree e 370 por desequilíbrio de ligação; diferem por método e período (Verif. ovinos, correção 7).
 - **ISOL** seleciona sólidos, células e úbere, não volume (Ovinos, "ISOL").
 - **SOCS2:** o alelo T caiu de 0,21 em 2005 para 0,09 em 2017 entre carneiros de IA (Verif. ovinos, correção 4).
-- **Sêmen importado:** com tendência francesa de 3,8 a 4,1 L/ano, correlação entre ambientes de 0,86 e 14 anos sem renovação (hipótese), o atraso é de 45,8 a 49,4 L, e as filhas do primeiro sêmen ganham de 22,9 a 24,7 L por lactação; com correlação de 0,70, de 18,6 a 26,5 L (Verif. ovinos, "Hipóteses do Exemplo 8"; Apêndice A, bloco E). É ordem de grandeza condicional, não previsão.
+- **Sêmen importado:** com tendência francesa de 3,8 a 4,1 L/ano, correlação entre ambientes de 0,86 e 14 anos sem renovação (hipótese), o atraso é de 45,8 a 49,4 L, e as filhas do primeiro sêmen ganham de 22,9 a 24,7 L por lactação; com a correlação de 0,70 (Latxa e Manech), a mesma conta dá de 18,6 a 20,1 L (Verif. ovinos, "Hipóteses do Exemplo 8"; Apêndice A, bloco E). Incluindo os 5,4 L/ano da brochura da Lacaune, ainda sem confirmação, o relatório v2 dá a faixa completa: atraso de 37 a 65 L e ganho de 19 a 33 L nas filhas (Ovinos, Ex. 8). É ordem de grandeza condicional, não previsão.
 - **Grécia:** com acesso aos pais franceses, o ganho previsto passou de 37,62 para 82,20 kg (+118%), por simulação (Verif. ovinos, correção 8).
 
 ---
@@ -524,13 +524,17 @@ Cada resultado genético vai para uma tabela própria com EBV, REL, data do cál
 
 Do mais simples ao mais pesado (README, "Passos sugeridos"): (1) `taxas`, `confiabilidade` e `ganho` em Dart, com teste que lê `vetores_teste.json`; (2) Fleischmann com as regras da ICAR, o que exige registrar a separação das crias e a secagem; (3) MPPA e índice da fêmea, com as duas ordens e a REL ao lado; (4) F por par e alerta de 6,25% no planejamento de acasalamentos; (5) BLUP na Edge Function, validado com os vetores de `blup.*`. O pipeline `python3 -m melhoramento.rebanho` mostra o resultado esperado de ponta a ponta para 30 cabras fictícias (README, "O pipeline do rebanho").
 
+### 6.6 As calculadoras da central
+
+Antes da porta em Dart, a aba Laboratório da central já roda oito calculadoras em JavaScript (`central-melhoramento/lab/calculadoras.js`): MPPA e índice da fêmea, confiabilidade, acurácia BIF e Possible Change, parentesco e endogamia, taxas, índice econômico, lactação ICAR e ganho genético. Elas são a primeira porta do motor: `node lab/testar_calculadoras.mjs` confere 120 dos 128 vetores (os 8 restantes são funções que nenhuma calculadora usa: BLUP matricial, variância heterogênea, ajustes de Wood e Wilmink e Smith-Hazel) e 112 números impressos nos relatórios (`central-melhoramento/lab/README.md`). Servem para demonstrar uma análise na triagem, com os números do próprio cliente, e como referência de tela para o app. Os exemplos que vêm preenchidos são fictícios.
+
 ---
 
 ## 7. Mensagens ao cliente
 
 ### 7.1 Três números, sempre juntos
 
-Todo valor genético sai com o valor (PTA, DEP ou EBV, na unidade da característica), a confiabilidade com a escala escrita e a faixa de incerteza (README). A confiabilidade "não deve ser utilizada como critério de seleção", e sim para "decidir a intensidade de utilização de um reprodutor" (Caprinos, "PTA, base e confiabilidade", citando o Capragene). Siglas para o produtor: **PTA** e **DEP**, metade do valor genético, o desempenho esperado das filhas em relação à média do mesmo rebanho, ano e época; **EBV**, o valor genético inteiro, publicado nos carneiros (Ovinos, Ex. 5); **REL** (ou CD), de 0 a 1, cresce com filhas, parentes e contemporâneas; **r**, a raiz da REL; **acurácia BIF**, escala mais conservadora, em que r = 0,50 vale 0,134 (Corte, "Passo 3").
+Todo valor genético sai com o valor (PTA, DEP ou EBV, na unidade da característica), a confiabilidade com a escala escrita e a faixa de incerteza (README). A confiabilidade "não deve ser utilizada como critério de seleção", e sim para "decidir a intensidade de utilização de um reprodutor" (Caprinos, "PTA, base e confiabilidade", citando o Capragene). Siglas para o produtor: **PTA** e **DEP**, metade do valor genético: o desempenho esperado da progênie em relação à média dos animais do mesmo rebanho, ano e época (definição do Capragene); **EBV**, o valor genético inteiro, publicado nos carneiros (Ovinos, Ex. 5); **REL** (ou CD), de 0 a 1, cresce com filhas, parentes e contemporâneas; **r**, a raiz da REL; **acurácia BIF**, escala mais conservadora, em que r = 0,50 vale 0,134 (Corte, "Passo 3").
 
 ### 7.2 Frases-modelo
 
@@ -540,7 +544,7 @@ Todo valor genético sai com o valor (PTA, DEP ou EBV, na unidade da caracterís
 | Comparar reprodutores | "Entre um bode de +70 kg e outro de −50 kg, a diferença esperada entre as filhas é de 120 kg." | idem |
 | Confiabilidade baixa | "A confiabilidade é de 0,40. A PTA ainda pode mudar bastante com mais filhas. Use este reprodutor em poucas fêmeas." | Caprinos, "Metas por categoria" |
 | Faixa de incerteza | "A DEP é de +12 kg. Em 68% dos casos, o valor verdadeiro fica entre 9,5 e 14,5 kg; em 95%, entre 7,1 e 16,9 kg." | Corte, "Passo 3" |
-| Escala da acurácia | "Acurácia de 70% na escala BIF dá ±2,47 kg; se a tabela usa a correlação, ±5,88 kg." | Corte, "Passo 3"; seção 8.4, D4 |
+| Escala da acurácia | "Nesta DEP de peso aos 450 dias, acurácia de 70% dá ±2,47 kg se for a escala BIF e ±5,88 kg se for a correlação. Antes de comparar, precisamos saber a escala." | Corte, "Passo 3"; seção 8.4, D4 |
 | Probabilidade de superar | "O touro Y tem DEP maior, mas a chance de ele ser de fato melhor que o X é de 68%." | seção 8.4, D4 |
 | Descarte e reposição | "A primeira lista diz quem deve produzir mais na próxima lactação: serve para descartar. A segunda diz de quem vale guardar filhas. As listas diferem, e isso é esperado." | Caprinos, Ex. 6; Ovinos, Ex. 5 |
 | Taxa com poucas fêmeas | "Com 30 cabras, a parição de 86,7% pode estar entre 69% e 96%. A diferença de um ano para o outro, com esse número, quase nunca prova mudança." | Caprinos, Ex. 7 |
@@ -566,7 +570,7 @@ PTA, DEP ou EBV com a REL ao lado e a escala escrita (README). As duas listas, M
 | Certificação (CEIP, CSG, ATJ, ICAR) | depende do programa; o método D não dá certificado ICAR | Corte, "Metas genéticas"; Caprinos, "Pela ICAR" |
 | Que um índice estrangeiro serve ao pagamento local | o índice carrega o objetivo de quem o fez | Caprinos, Ex. 4; Ovinos, "ISOL" |
 | Acurácia sem escala | 0,70 BIF e 0,70 de correlação são coisas diferentes | Corte, "Passo 3" |
-| Que a queda de uma taxa num ano veio do manejo | com o N do rebanho, o poder costuma ficar abaixo de 30% | Caprinos, Ex. 7; seção 8.1 |
+| Que a queda de uma taxa num ano veio do manejo | com 30 a 60 fêmeas, o poder para diferenças plausíveis ficou entre 17% e 32% nos exemplos | Caprinos, Ex. 7; seção 8.1 |
 | Litros exatos com sêmen importado | depende da tendência de origem, da correlação entre ambientes e do atraso, todos hipóteses | Verif. ovinos, "Hipóteses do Exemplo 8" |
 | Endogamia zero | com seleção, o ΔF real é maior que o da fórmula, que é limite inferior | Caprinos, Ex. 8 (FAO) |
 
@@ -695,7 +699,7 @@ C3 modelo animal, 3 rebanhos ligados pelo bode IA1 (24 cabras):
    L3: PTA   -0.0 kg; REL 0.000
 C4 24 bodes x 3.000 cabras, uso igual: Ne = 95.2; dF = 0.52%
    uso desigual (4 bodes com 15% cada e 20 com 2%): N efetivo de pais = 10.20; Ne = 40.7; dF = 1.23%
-C5 ganho esperado: teste de progenie 17.14 kg/ano; bodes jovens genomicos 27.45 kg/ano
+C5 ganho esperado: teste de progenie 17.14 kg/ano; bodes jovens genomicos 27.46 kg/ano
 C6 Daetwyler: N = 600, h2/REL = 0.25, Me = 1000: r = 0.36
 C6 Daetwyler: N = 600, h2/REL = 0.25, Me = 3000: r = 0.22
 C6 Daetwyler: N = 677, h2/REL = 0.8, Me = 1000: r = 0.59
@@ -711,7 +715,7 @@ C7 bode B: IPC = 1.74; ICC Alpina = 2.34; ICC Saanen = 2.46
 2. **Teste de bodes.** As mesmas 30 filhas valem REL de 0 num rebanho sem outro bode, 0,42 em 3 rebanhos e 0,54 em 15, ao lado de filhas de um bode de IA (C2). Regra a propor: a francesa, com filhas em pelo menos 15 rebanhos e 30 filhas indexadas (Caprinos, "PTA, base e confiabilidade").
 3. **Conexão.** Com um bode de IA comum aos três rebanhos, os bodes locais ganham alguma avaliação (REL de 0,088 com 4 filhas cada); sem ele, a REL é zero (C3). A IA com bodes comuns é a primeira decisão da associação.
 4. **Tamanho efetivo.** Vinte e quatro bodes usados por igual dão Ne de 95 e ΔF de 0,52% por geração. Se quatro bodes fizerem 60% dos cabritos, o Ne cai para 41 e o ΔF sobe para 1,23%, acima do limite de 1% da FAO (C4). Limitar o uso de cada bode, como a NSG faz com as doses (Caprinos, "Esquemas de seleção de bodes").
-5. **Ganho.** Teste de progênie: 17,1 kg/ano; bodes jovens genômicos: 27,4 kg/ano (valor exato 27,45; o Exemplo 5 de caprinos imprime 27,5). São tetos: o Capragene realizou 6,34 kg/ano na Saanen e 4,05 na Alpina (Caprinos, Ex. 5).
+5. **Ganho.** Teste de progênie: 17,1 kg/ano; bodes jovens genômicos: 27,5 kg/ano (27,46 com σa = √8000 = 89,44 kg, como no Exemplo 5 de caprinos). São tetos: o Capragene realizou 6,34 kg/ano na Saanen e 4,05 na Alpina (Caprinos, Ex. 5).
 6. **Genômica.** Com 600 fêmeas genotipadas de uma lactação, a acurácia esperada fica entre 0,22 e 0,36, conforme o M_e, não estimado para caprinos; r de 0,50 exigiria 1.333 fêmeas com M_e de 1.000 (C6). Não montar referência própria: genotipar pelo Capragene (chip Axiom OviCap na Saanen) e priorizar a verificação de paternidade (Caprinos, "Uma referência de centenas de animais").
 7. **Índice.** O Capragene não publica índice composto (Caprinos, "Índices"). Um índice da associação precisa de valores econômicos brasileiros, ausentes nas fontes [a definir]. A conta C7 reproduz o ICC francês do Exemplo 4 só como ilustração: o bode A, melhor em produção, perde para o B pelo úbere.
 
@@ -768,7 +772,7 @@ A razão BIF (D2) é conta direta, sem função no motor.
 
 - **Faltam parâmetros brasileiros:** repetibilidade de lactação de Gir e Girolando, σP dentro do GC em caprinos, h² de leite de ovelhas brasileiras, parâmetros de verminose, longevidade e tipo em cabras brasileiras (seções de parâmetros de Leite, Caprinos e Ovinos). O guia usa valores estrangeiros ou hipotéticos e manda rodar sensibilidade.
 - **O motor não faz tudo:** REML, Gibbs, ssGBLUP, regressão aleatória, limiar, sobrevivência, grupos de pais desconhecidos e GC aleatório estão fora (README, "Limites").
-- **Ovinos em correção:** quando a versão corrigida do relatório sair, a seção 4.4 deve ser reconferida.
+- **Ovinos:** a seção 4.4 foi reconferida com o relatório v2 em 15/10/2026; os conflitos que seguem abertos (Ne de 370 contra 188, os 5,4 L/ano da brochura, 0,62 contra 0,51 desvio do ISOL) aparecem lado a lado.
 - **Metas são, em boa parte, propostas:** o guia separa referência com fonte de [proposta] e de [equipe].
 - **Dados fictícios:** os exemplos ilustram contas e decisões; não são benchmarks.
 
@@ -812,6 +816,7 @@ O script gera todos os números da seção 8 e o bloco E (conferências de ovino
 # Nenhum animal, rebanho ou criador e real. Parametros: ver o guia (secao 8).
 import math
 from melhoramento import blup, confiabilidade as conf, ganho, indices, lactacao, parentesco, taxas
+SIGMA_A_CAP = math.sqrt(8000)  # h2 0,20 x sigmaP 200 kg (Caprinos, Exemplo 5): 89,44 kg
 
 
 def pct(x, c=1):
@@ -894,8 +899,8 @@ print(f"   F do filho de BX com a filha F1: {pct(parentesco.F_acasalamento(ped_a
 # A5. Ganho esperado: bode pela producao da mae x bode avaliado (Caprinos, Exemplo 5)
 i15 = ganho.intensidade_selecao(0.15)
 i80 = ganho.intensidade_selecao(0.80)
-g_mae = ganho.ganho_vias([(i15, 0.224, 3), (i80, 0.447, 4)], 89.4)
-g_aval = ganho.ganho_vias([(i15, 0.775, 4), (i80, 0.55, 4)], 89.4)
+g_mae = ganho.ganho_vias([(i15, 0.224, 3), (i80, 0.447, 4)], SIGMA_A_CAP)
+g_aval = ganho.ganho_vias([(i15, 0.775, 4), (i80, 0.55, 4)], SIGMA_A_CAP)
 print(f"A5 i(15%) = {i15:.3f}; i(80%) = {i80:.3f}; bode pela producao da mae: {g_mae:.1f} kg/ano; "
       f"bode avaliado (REL 0,60): {g_aval:.1f} kg/ano")
 
@@ -1017,8 +1022,8 @@ print(f"C4 24 bodes x 3.000 cabras, uso igual: Ne = {ne_ig:.1f}; dF = {pct(paren
 print(f"   uso desigual (4 bodes com 15% cada e 20 com 2%): N efetivo de pais = {nef:.2f}; Ne = {ne_des:.1f}; "
       f"dF = {pct(parentesco.delta_F(ne_des), 2)}")
 i5, i10, i15, i20, i80 = (ganho.intensidade_selecao(p) for p in (0.05, 0.10, 0.15, 0.20, 0.80))
-tp_ = ganho.ganho_vias([(i20, 0.79, 5.5), (i20, 0.79, 5.5), (i5, 0.60, 4), (i80, 0.55, 4)], 89.4)
-gen_ = ganho.ganho_vias([(i5, 0.65, 2), (i15, 0.65, 2.5), (i10, 0.65, 3.5), (i80, 0.55, 4)], 89.4)
+tp_ = ganho.ganho_vias([(i20, 0.79, 5.5), (i20, 0.79, 5.5), (i5, 0.60, 4), (i80, 0.55, 4)], SIGMA_A_CAP)
+gen_ = ganho.ganho_vias([(i5, 0.65, 2), (i15, 0.65, 2.5), (i10, 0.65, 3.5), (i80, 0.55, 4)], SIGMA_A_CAP)
 print(f"C5 ganho esperado: teste de progenie {tp_:.2f} kg/ano; bodes jovens genomicos {gen_:.2f} kg/ano")
 for N, h2r, me in ((600, 0.25, 1000), (600, 0.25, 3000), (677, 0.80, 1000), (677, 0.80, 3000)):
     print(f"C6 Daetwyler: N = {N}, h2/REL = {h2r}, Me = {me}: r = {conf.daetwyler_r(N, h2r, me):.2f}")
