@@ -19,6 +19,8 @@
   --ochre-soft: #f5e7cf;
   --slate: #44606f;
   --slate-soft: #dde8ee;
+  --danger: #a33b2b;
+  --danger-soft: #f6e1dc;
   --font-display: "IBM Plex Sans Condensed", "Arial Narrow", "Roboto Condensed", sans-serif;
   --font-body: "IBM Plex Sans", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
@@ -27,14 +29,14 @@
   :root:not([data-theme="light"]) {
     --bg: #111613; --surface: #18201b; --sunken: #1f2923; --ink: #e5ece6; --muted: #9eaca2; --line: #2e3a32;
     --accent: #6cc28a; --accent-soft: #1f3a29; --accent-ink: #0d1a12;
-    --ochre: #e0a54a; --ochre-soft: #3a2c14; --slate: #8fb3c6; --slate-soft: #1d2d36;
+    --ochre: #e0a54a; --ochre-soft: #3a2c14; --slate: #8fb3c6; --slate-soft: #1d2d36; --danger: #f0907c; --danger-soft: #3b1f1a;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #111613; --surface: #18201b; --sunken: #1f2923; --ink: #e5ece6; --muted: #9eaca2; --line: #2e3a32;
   --accent: #6cc28a; --accent-soft: #1f3a29; --accent-ink: #0d1a12;
-  --ochre: #e0a54a; --ochre-soft: #3a2c14; --slate: #8fb3c6; --slate-soft: #1d2d36;
+  --ochre: #e0a54a; --ochre-soft: #3a2c14; --slate: #8fb3c6; --slate-soft: #1d2d36; --danger: #f0907c; --danger-soft: #3b1f1a;
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
@@ -131,6 +133,64 @@ td.fit { text-align: center; font-family: var(--font-mono); font-weight: 500; wh
   .panel { animation: fade 160ms ease-out; }
   @keyframes fade { from { opacity: 0.6; } to { opacity: 1; } }
 }
+[hidden] { display: none !important; }
+.md h1, .md h2, .md h3, .md h4 { scroll-margin-top: 72px; }
+
+/* Laboratório: calculadoras (formulário sobre fundo rebaixado, resultado em destaques e tabelas) */
+.nota-lab { background: var(--slate-soft); border: 1px solid color-mix(in srgb, var(--slate) 30%, transparent); border-radius: 8px; padding: 12px 14px; font-size: 14px; max-width: 88ch; }
+.nota-lab strong { color: var(--slate); }
+.subtabs { display: flex; flex-wrap: wrap; gap: 6px; }
+.subtab { appearance: none; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: 500 13px var(--font-body); padding: 6px 12px; border-radius: 999px; cursor: pointer; }
+.subtab:hover { border-color: var(--accent); }
+.subtab[aria-selected="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.calc { gap: 16px; }
+.calc-head { display: grid; gap: 6px; }
+.calc-head .note { max-width: 80ch; font-size: 14px; }
+.calc-form { display: grid; gap: 12px; background: var(--sunken); border-radius: 8px; padding: 14px; min-width: 0; }
+.calc h4 { font-family: var(--font-display); font-size: 15px; font-weight: 600; margin: 0; line-height: 1.25; }
+.calc h4.sub { margin-top: 4px; }
+.exemplo { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; font-size: 13px; color: var(--muted); margin: 0; }
+.campos { display: grid; gap: 10px 12px; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
+.campo { display: grid; gap: 4px; align-content: start; min-width: 0; }
+.campo.largo { grid-column: 1 / -1; }
+.campo label { font-size: 13px; font-weight: 500; color: var(--ink); }
+.dica { font-size: 12px; color: var(--muted); }
+.calc input[type="text"], .calc select, .calc textarea { width: 100%; min-width: 0; font: 400 15px var(--font-body); color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 7px 9px; font-variant-numeric: tabular-nums; }
+.calc textarea { font: 400 13px/1.5 var(--font-mono); resize: vertical; }
+.calc input:focus-visible, .calc select:focus-visible, .calc textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); }
+.acoes { display: flex; flex-wrap: wrap; gap: 8px; }
+.btn:hover { border-color: var(--accent); }
+.resultado { display: grid; gap: 12px; min-width: 0; }
+.resultado:empty { display: none; }
+.destaques { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
+.destaque { display: grid; gap: 2px; align-content: start; border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; min-width: 0; }
+.destaque .rotulo { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.destaque .valor { font-family: var(--font-display); font-size: clamp(21px, 4.5vw, 26px); font-weight: 600; line-height: 1.15; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.destaque .lado { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.destaque.principal { background: var(--accent-soft); border-color: color-mix(in srgb, var(--accent) 40%, var(--line)); }
+.erro { margin: 0; color: var(--danger); background: var(--danger-soft); border-radius: 6px; padding: 9px 12px; font-size: 14px; }
+.aviso { margin: 0; background: var(--ochre-soft); border: 1px solid color-mix(in srgb, var(--ochre) 35%, transparent); border-radius: 6px; padding: 9px 12px; font-size: 14px; }
+ul.avisos { margin: 0; background: var(--ochre-soft); border: 1px solid color-mix(in srgb, var(--ochre) 35%, transparent); border-radius: 6px; padding: 9px 12px 9px 30px; font-size: 14px; display: grid; gap: 4px; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+td.alto { color: var(--danger); font-weight: 600; }
+td.zero { color: var(--muted); }
+tr.total td { font-weight: 600; border-top: 2px solid var(--line); }
+.tabela-entrada { background: var(--surface); }
+.tabela-entrada td { padding: 6px 8px; }
+.calc .tabela-entrada input[type="text"] { width: 9ch; padding: 5px 7px; font-size: 14px; }
+.calc .tabela-entrada td:first-child input[type="text"] { width: 20ch; }
+.origem { font-size: 13px; color: var(--muted); border-top: 1px dashed var(--line); padding-top: 10px; margin: 0; }
+.origem strong { color: var(--ink); font-weight: 600; }
+.linkbtn { appearance: none; border: 0; background: none; padding: 0; color: var(--accent); font: inherit; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; text-align: left; }
+.calc details summary { cursor: pointer; color: var(--accent); font-size: 14px; }
+.calc details[open] summary { margin-bottom: 8px; }
+.ic-graf { display: grid; gap: 8px; }
+.ic-linha { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 10px; align-items: center; font-size: 13px; }
+.ic-trilho { position: relative; height: 12px; background: var(--sunken); border-radius: 6px; }
+.ic-faixa { position: absolute; top: 0; bottom: 0; min-width: 2px; border-radius: 6px; background: var(--accent); }
+.ic-faixa.fora { background: var(--danger); }
+.ic-ponto { position: absolute; top: -4px; bottom: -4px; width: 2px; margin-left: -1px; background: var(--ink); }
+.ic-eixo { display: flex; justify-content: space-between; margin-left: 66px; font-family: var(--font-mono); font-size: 11px; color: var(--muted); }
 </style>
 
 <div class="wrap">
@@ -483,7 +543,7 @@ td.fit { text-align: center; font-family: var(--font-mono); font-weight: 500; wh
       <article class="card">
         <span class="chip done">Disponível</span>
         <h3>Scripts verificados</h3>
-        <p class="note">Os apêndices dos três relatórios trazem scripts em numpy que reproduzem todos os exemplos.</p>
+        <p class="note">Os apêndices dos quatro relatórios trazem scripts em numpy que reproduzem todos os exemplos.</p>
         <ul class="clean">
           <li>Corte: A⁻¹, MME, direto-materno, multicaracterística, ssGBLUP, APY, índices, MPPA, Possible Change, idade da vaca, Ne</li>
           <li>Leite: TIM, Wood e Wilmink, dia de controle com regressão aleatória, DE e REL com k_d, DPR, intervalos, endogamia</li>
@@ -492,23 +552,307 @@ td.fit { text-align: center; font-family: var(--font-mono); font-weight: 500; wh
         </ul>
       </article>
       <article class="card">
-        <span class="chip next">Próximo</span>
+        <span class="chip done">Disponível</span>
         <h3>Calculadoras nesta central</h3>
+        <p class="note">Oito calculadoras em JavaScript, logo abaixo. Elas reproduzem os 120 vetores de teste do motor Python que se aplicam a elas.</p>
         <ul class="clean">
-          <li>MPPA e ranking de vacas</li>
-          <li>Confiabilidade a partir de filhas-equivalentes</li>
-          <li>Acurácia BIF a partir da PEV</li>
-          <li>Ne e ΔF do rebanho; F por acasalamento</li>
-          <li>Intervalo de confiança de taxas reprodutivas</li>
-          <li>Índice econômico de touros</li>
+          <li><button class="linkbtn" type="button" data-ir="mppa">MPPA e índice da fêmea</button></li>
+          <li><button class="linkbtn" type="button" data-ir="rel">Confiabilidade por filhas-equivalentes</button></li>
+          <li><button class="linkbtn" type="button" data-ir="pc">Acurácia BIF e Possible Change</button></li>
+          <li><button class="linkbtn" type="button" data-ir="ped">Parentesco, F por acasalamento, Ne e ΔF</button></li>
+          <li><button class="linkbtn" type="button" data-ir="taxas">Intervalos de taxas e tamanho amostral</button></li>
+          <li><button class="linkbtn" type="button" data-ir="indice">Índice econômico de reprodutores</button></li>
+          <li><button class="linkbtn" type="button" data-ir="lac">Lactação padronizada (ICAR)</button></li>
+          <li><button class="linkbtn" type="button" data-ir="ganho">Ganho genético</button></li>
         </ul>
       </article>
       <article class="card">
-        <span class="chip plan">Depois</span>
+        <span class="chip done">Pronto em Python</span>
         <h3>Motor de avaliação</h3>
-        <p class="note">BLUP intra-rebanho com variâncias da literatura, testado com dados anonimizados do SeabraApp (Supabase). Com resultados validados, o motor é portado para os apps.</p>
+        <p class="note">O motor já existe: o pacote Python <span class="mono">melhoramento</span>, em <span class="mono">laboratorio/</span>, implementa os modelos dos quatro relatórios, de A e A⁻¹ ao BLUP de modelo animal, direto-materno, multicaracterística e de touro, além de lactação pela ICAR, confiabilidade, índices, taxas e ganho genético. São 110 testes, que conferem cerca de 800 números publicados, e 128 vetores de entrada e saída para validar as portas em JavaScript e Dart.</p>
+        <p class="note">Próximo: rodar o motor com dados anonimizados do SeabraApp (Supabase), com variâncias da literatura, e levar as fórmulas validadas para o app.</p>
       </article>
     </div>
+
+    <div class="section-head" id="calculadoras">
+      <span class="eyebrow">Calculadoras</span>
+      <h2>Calculadoras do laboratório</h2>
+      <p class="lede">Cada calculadora abre com um exemplo dos relatórios, que você pode editar. As contas rodam no navegador com as mesmas fórmulas do motor Python, que continua sendo a referência.</p>
+    </div>
+    <p class="nota-lab"><strong>Dados fictícios, parâmetros da literatura.</strong> Os animais e rebanhos dos exemplos são fictícios. Herdabilidade, repetibilidade e variâncias são parâmetros publicados, nunca estimados com os dados do rebanho. Escreva decimais com vírgula ou ponto, sem separador de milhar.</p>
+
+    <div class="subtabs" role="tablist" aria-label="Calculadoras">
+      <button class="subtab" role="tab" type="button" id="sub-mppa" aria-controls="calc-mppa" data-calc="mppa" aria-selected="true">MPPA e índice da fêmea</button>
+      <button class="subtab" role="tab" type="button" id="sub-rel" aria-controls="calc-rel" data-calc="rel" aria-selected="false">Confiabilidade</button>
+      <button class="subtab" role="tab" type="button" id="sub-pc" aria-controls="calc-pc" data-calc="pc" aria-selected="false">Acurácia e Possible Change</button>
+      <button class="subtab" role="tab" type="button" id="sub-ped" aria-controls="calc-ped" data-calc="ped" aria-selected="false">Parentesco e endogamia</button>
+      <button class="subtab" role="tab" type="button" id="sub-taxas" aria-controls="calc-taxas" data-calc="taxas" aria-selected="false">Taxas do rebanho</button>
+      <button class="subtab" role="tab" type="button" id="sub-indice" aria-controls="calc-indice" data-calc="indice" aria-selected="false">Índice de reprodutores</button>
+      <button class="subtab" role="tab" type="button" id="sub-lac" aria-controls="calc-lac" data-calc="lac" aria-selected="false">Lactação padronizada</button>
+      <button class="subtab" role="tab" type="button" id="sub-ganho" aria-controls="calc-ganho" data-calc="ganho" aria-selected="false">Ganho genético</button>
+    </div>
+
+    <!-- 1. MPPA e índice da fêmea -->
+    <article class="card calc" id="calc-mppa" role="tabpanel" aria-labelledby="sub-mppa">
+      <div class="calc-head">
+        <span class="eyebrow">Fêmeas do rebanho</span>
+        <h3>MPPA e índice da fêmea com a PTA do pai</h3>
+        <p class="note">Duas contas para duas decisões. A MPPA prevê a próxima lactação, inclui o ambiente permanente e serve para descarte. O EBV por índice de seleção soma os registros próprios à PTA do pai e serve para escolher de quem guardar filhas.</p>
+      </div>
+      <form class="calc-form" id="f-mppa" autocomplete="off" novalidate>
+        <p class="exemplo"><span class="chip next" data-chip>Exemplo</span><span data-exemplo-texto>Cabras C1 a C6 do Exemplo 6 de caprinos (fictícias): PL305 em desvio das contemporâneas</span></p>
+        <div class="campos">
+          <div class="campo"><label for="mppa-h2">Herdabilidade (h²)</label><input id="mppa-h2" type="text" inputmode="decimal" value="0,20"></div>
+          <div class="campo"><label for="mppa-r">Repetibilidade (r)</label><input id="mppa-r" type="text" inputmode="decimal" value="0,36"></div>
+          <div class="campo"><label for="mppa-sp">DP fenotípico σP (kg)</label><input id="mppa-sp" type="text" inputmode="decimal" value="200"></div>
+          <div class="campo"><label for="mppa-escala">O pai entra pela</label>
+            <select id="mppa-escala"><option value="PTA" selected>PTA (caprinos, bovinos)</option><option value="EBV">EBV (ovinos)</option></select></div>
+          <div class="campo largo"><label for="mppa-animais">Fêmeas: identificação; desvios (kg); PTA do pai; REL do pai</label>
+            <textarea id="mppa-animais" rows="7" spellcheck="false" aria-describedby="mppa-dica">C1; 150; 40; 0,60
+C2; 120 90 100; 10; 0,80
+C3; 200 40; ;
+C4; -60; 60; 0,70
+C5; -80 -40 -100 -50; 20; 0,50
+C6; 60 80; -30; 0,60</textarea>
+            <span class="dica" id="mppa-dica">Uma fêmea por linha, campos separados por ponto e vírgula. Os desvios de cada lactação vão separados por espaço. Deixe a PTA e a REL vazias se o pai não tem avaliação.</span></div>
+        </div>
+        <div class="acoes"><button class="btn primary" type="submit">Calcular</button><button class="btn" type="button" data-exemplo="padrao">Restaurar exemplo</button></div>
+      </form>
+      <div class="resultado" id="r-mppa" aria-live="polite"></div>
+      <p class="origem"><strong>De onde vem:</strong> relatório de caprinos leiteiros, seção “Exemplo 6: MPPA e índice de cabras com a PTA do pai”. A mesma conta está no relatório de bovinos leiteiros, em “Comparar com contemporâneas e ranquear com repetibilidade”. A repetibilidade de 0,36 é a da PL305 da Saanen brasileira (Embrapa 2015); a sensibilidade publicada vai a 0,44 e 0,50. O σP de 200 kg é escolha do relatório. Cabras fictícias. <button class="linkbtn" type="button" data-doc="caprinos" data-secao="Exemplo 6">Abrir o relatório nesta seção</button></p>
+    </article>
+
+    <!-- 2. Confiabilidade -->
+    <article class="card calc" id="calc-rel" role="tabpanel" aria-labelledby="sub-rel" hidden>
+      <div class="calc-head">
+        <span class="eyebrow">Reprodutores</span>
+        <h3>Confiabilidade a partir de filhas-equivalentes</h3>
+        <p class="note">Quanto as filhas de um reprodutor dizem sobre ele. A fórmula REL = DE/(DE + k) é um teto, válido com cada filha num rebanho diferente. A PEV exata do modelo de touro mostra o desenho real: filhas sem contemporâneas de outro pai não avaliam o pai.</p>
+      </div>
+      <form class="calc-form" id="f-rel" autocomplete="off" novalidate>
+        <p class="exemplo"><span class="chip next" data-chip>Exemplo</span><span data-exemplo-texto>Exemplo 3 de caprinos: bode X com 2 filhas em cada um de 15 rebanhos, ao lado de 10 filhas do bode de IA Z (REL 0,90)</span></p>
+        <div class="campos">
+          <div class="campo"><label for="rel-h2">Herdabilidade (h²)</label><input id="rel-h2" type="text" inputmode="decimal" value="0,20"></div>
+          <div class="campo"><label for="rel-filhas">Filhas de X em cada rebanho</label><input id="rel-filhas" type="text" value="15x2" aria-describedby="rel-filhas-dica"><span class="dica" id="rel-filhas-dica">2 5 3, ou 15x2 para 15 rebanhos com 2</span></div>
+          <div class="campo"><label for="rel-outras">Filhas de outro pai por rebanho</label><input id="rel-outras" type="text" inputmode="decimal" value="10" aria-describedby="rel-outras-dica"><span class="dica" id="rel-outras-dica">contemporâneas de X; um número vale para todos</span></div>
+          <div class="campo"><label for="rel-outro-tipo">O outro pai é</label>
+            <select id="rel-outro-tipo"><option value="mesmo" selected>o mesmo em todos os rebanhos (IA)</option><option value="diferente">um diferente em cada rebanho</option></select></div>
+          <div class="campo"><label for="rel-outro-rel">REL do outro pai</label><input id="rel-outro-rel" type="text" inputmode="decimal" value="0,90" aria-describedby="rel-outro-rel-dica"><span class="dica" id="rel-outro-rel-dica">0 se não tem prova</span></div>
+          <div class="campo"><label for="rel-pa">REL da média dos pais de X</label><input id="rel-pa" type="text" inputmode="decimal" value="0"></div>
+          <div class="campo"><label for="rel-alvo">REL alvo</label><input id="rel-alvo" type="text" inputmode="decimal" value="0,70"></div>
+        </div>
+        <div class="acoes"><button class="btn primary" type="submit">Calcular</button><button class="btn" type="button" data-exemplo="padrao">Restaurar exemplo</button><button class="btn" type="button" data-exemplo="umRebanho">Exemplo: 10 filhas num só rebanho</button></div>
+      </form>
+      <div class="resultado" id="r-rel" aria-live="polite"></div>
+
+      <form class="calc-form" id="f-conv" autocomplete="off" novalidate>
+        <h4>Conversão entre REL, r e acurácia BIF</h4>
+        <p class="exemplo"><span class="chip next" data-chip>Exemplo</span><span data-exemplo-texto>r = 0,50, que equivale a acurácia BIF de 0,134 (relatório de corte)</span></p>
+        <div class="campos">
+          <div class="campo"><label for="conv-valor">Valor publicado</label><input id="conv-valor" type="text" inputmode="decimal" value="0,50"></div>
+          <div class="campo"><label for="conv-escala">Escala</label>
+            <select id="conv-escala"><option value="r" selected>acurácia r (correlação)</option><option value="REL">confiabilidade REL (r²)</option><option value="BIF">acurácia BIF</option></select></div>
+        </div>
+        <div class="acoes"><button class="btn primary" type="submit">Converter</button><button class="btn" type="button" data-exemplo="padrao">Restaurar exemplo</button></div>
+      </form>
+      <div class="resultado" id="r-conv" aria-live="polite"></div>
+      <p class="origem"><strong>De onde vem:</strong> relatório de bovinos leiteiros, seção “Filhas-equivalentes: a régua comum de toda informação” (VanRaden e Wiggans 1991); relatório de caprinos leiteiros, “PTA, base e confiabilidade” e “Exemplo 3: confiabilidade de um bode com poucas filhas em poucos rebanhos”. As conversões estão no relatório de bovinos de corte, “Passo 3: da PEV à acurácia e à DEP”. A h² de 0,20 é da literatura; o desenho é fictício. <button class="linkbtn" type="button" data-doc="caprinos" data-secao="Exemplo 3">Abrir o relatório nesta seção</button></p>
+    </article>
+
+    <!-- 3. Acurácia BIF e Possible Change -->
+    <article class="card calc" id="calc-pc" role="tabpanel" aria-labelledby="sub-pc" hidden>
+      <div class="calc-head">
+        <span class="eyebrow">DEP e PTA publicadas</span>
+        <h3>Acurácia BIF e Possible Change a partir da PEV</h3>
+        <p class="note">Da variância do erro de predição saem a confiabilidade, a acurácia r e a acurácia BIF. A Possible Change traduz a acurácia em amplitude: a DEP mais ou menos o PC contém o valor verdadeiro em 68% dos casos (95% com o dobro).</p>
+      </div>
+      <form class="calc-form" id="f-pc" autocomplete="off" novalidate>
+        <p class="exemplo"><span class="chip next" data-chip>Exemplo</span><span data-exemplo-texto>Animal 4 do pedigree de 8 animais (relatório de corte, Passo 3): PEV de 92,08 com σ²a = 100 kg²</span></p>
+        <div class="campos">
+          <div class="campo"><label for="pc-tipo">Ponto de partida</label>
+            <select id="pc-tipo"><option value="PEV" selected>PEV (kg²)</option><option value="BIF">acurácia BIF publicada</option><option value="r">acurácia r publicada</option><option value="REL">confiabilidade REL</option></select></div>
+          <div class="campo"><label for="pc-valor">Valor</label><input id="pc-valor" type="text" inputmode="decimal" value="92,08"></div>
+          <div class="campo"><label for="pc-sa">DP genético aditivo σA (kg)</label><input id="pc-sa" type="text" inputmode="decimal" value="10"></div>
+          <div class="campo"><label for="pc-f">F do animal (só com PEV)</label><input id="pc-f" type="text" inputmode="decimal" value="0"></div>
+          <div class="campo"><label for="pc-dep">DEP publicada (kg, opcional)</label><input id="pc-dep" type="text" inputmode="decimal" value="1,06"></div>
+        </div>
+        <div class="acoes"><button class="btn primary" type="submit">Calcular</button><button class="btn" type="button" data-exemplo="padrao">Restaurar exemplo</button><button class="btn" type="button" data-exemplo="touro">Exemplo: touro de P450 com acurácia BIF 0,70</button></div>
+      </form>
+      <div class="resultado" id="r-pc" aria-live="polite"></div>
+      <p class="origem"><strong>De onde vem:</strong> relatório de bovinos de corte, seção “Passo 3: da PEV à acurácia e à DEP”, com a definição do BIF (Guidelines, 9ª ed., p. 73): PC = t·(1 − a_BIF)·σA/2. O touro de P450 (σA = 16,48 kg) e a leitura da tabela da ANCP estão na mesma seção. Pedigree e touro fictícios. <button class="linkbtn" type="button" data-doc="corte" data-secao="Passo 3">Abrir o relatório nesta seção</button></p>
+    </article>
+
+    <!-- 4. Parentesco e endogamia -->
+    <article class="card calc" id="calc-ped" role="tabpanel" aria-labelledby="sub-ped" hidden>
+      <div class="calc-head">
+        <span class="eyebrow">Acasalamentos</span>
+        <h3>Parentesco, F por acasalamento, Ne e ΔF</h3>
+        <p class="note">O F do filho é metade do parentesco entre os pais, F = ½·a_pai,mãe, lido na matriz A do pedigree. A decisão é por par, não por reprodutor: o mesmo macho pode ser seguro para uma fêmea e perigoso para outra.</p>
+      </div>
+      <form class="calc-form" id="f-ped" autocomplete="off" novalidate>
+        <p class="exemplo"><span class="chip next" data-chip>Exemplo</span><span data-exemplo-texto>Rebanho fictício do Exemplo 8 de caprinos: bode B1, três cabras fundadoras e os bodes candidatos B2, B4 e B5</span></p>
+        <div class="campos">
+          <div class="campo largo"><label for="ped-pedigree">Pedigree: animal, pai e mãe</label>
+            <textarea id="ped-pedigree" rows="14" spellcheck="false" aria-describedby="ped-dica"># animal  pai  mãe
+B1  0   0
+D1  0   0
+D2  0   0
+D3  0   0
+B2  B1  D1
+C1  B1  D1
+C2  B1  D2
+C3  B1  D3
+B3  0   0
+C4  B3  D2
+C5  B2  C2
+B4  B3  C1
+B5  0   0</textarea>
+            <span class="dica" id="ped-dica">Uma linha por animal. Use 0 para pai ou mãe desconhecido. Pais sem linha própria entram como fundadores, e a ordem das linhas não importa.</span></div>
+          <div class="campo largo"><label for="ped-machos">Machos candidatos, em ordem de preferência</label><input id="ped-machos" type="text" value="B2 B4 B5"></div>
+          <div class="campo largo"><label for="ped-femeas">Fêmeas a acasalar</label><input id="ped-femeas" type="text" value="D1 C1 C2 C3 C4 C5"></div>
+          <div class="campo"><label for="ped-limite">Limite de F (%)</label><input id="ped-limite" type="text" inputmode="decimal" value="6,25"></div>
+        </div>
+        <div class="acoes"><button class="btn primary" type="submit">Calcular</button><button class="btn" type="button" data-exemplo="padrao">Restaurar exemplo</button></div>
+      </form>
+      <div class="resultado" id="r-ped" aria-live="polite"></div>
+
+      <form class="calc-form" id="f-ne" autocomplete="off" novalidate>
+        <h4>Tamanho efetivo e endogamia acumulada</h4>
+        <p class="exemplo"><span class="chip next" data-chip>Exemplo</span><span data-exemplo-texto>Rebanho fechado com 1 bode e 20 cabras por geração, intervalo de gerações de 3 anos (tabela do Exemplo 8)</span></p>
+        <div class="campos">
+          <div class="campo"><label for="ne-machos">Machos por geração (Nm)</label><input id="ne-machos" type="text" inputmode="decimal" value="1"></div>
+          <div class="campo"><label for="ne-femeas">Fêmeas por geração (Nf)</label><input id="ne-femeas" type="text" inputmode="decimal" value="20"></div>
+          <div class="campo"><label for="ne-l">Intervalo de gerações (anos)</label><input id="ne-l" type="text" inputmode="decimal" value="3"></div>
+          <div class="campo"><label for="ne-t">Gerações</label><input id="ne-t" type="text" inputmode="decimal" value="5"></div>
+          <div class="campo"><label for="ne-anos">Anos</label><input id="ne-anos" type="text" inputmode="decimal" value="10"></div>
+          <div class="campo"><label for="ne-alvo">Ne alvo</label><input id="ne-alvo" type="text" inputmode="decimal" value="50"></div>
+        </div>
+        <div class="acoes"><button class="btn primary" type="submit">Calcular</button><button class="btn" type="button" data-exemplo="padrao">Restaurar exemplo</button><button class="btn" type="button" data-exemplo="grande">Exemplo: 13 bodes e 1.000 cabras</button></div>
+      </form>
+      <div class="resultado" id="r-ne" aria-live="polite"></div>
+      <p class="origem"><strong>De onde vem:</strong> relatório de caprinos leiteiros, seção “Exemplo 8: endogamia por acasalamento e Ne de um rebanho fechado”; método tabular e F no relatório de bovinos de corte, “Passo 1: do pedigree a A, F e A⁻¹”, e Ne de Wright em “Endogamia e tamanho efetivo”. Ne e ΔF supõem acasalamento ao acaso: com seleção, o ΔF real é maior, e os números são um limite inferior. Pedigree fictício. <button class="linkbtn" type="button" data-doc="caprinos" data-secao="Exemplo 8">Abrir o relatório nesta seção</button></p>
+    </article>
+
+    <!-- 5. Taxas -->
+    <article class="card calc" id="calc-taxas" role="tabpanel" aria-labelledby="sub-taxas" hidden>
+      <div class="calc-head">
+        <span class="eyebrow">Indicadores do rebanho</span>
+        <h3>Intervalo de confiança de taxas e tamanho amostral</h3>
+        <p class="note">Num rebanho pequeno, cada animal vale vários pontos percentuais. O intervalo de Wald falha com n pequeno ou taxa extrema; o de Wilson é o recomendado, e o exato de Clopper-Pearson é o conservador.</p>
+      </div>
+      <form class="calc-form" id="f-ic" autocomplete="off" novalidate>
+        <p class="exemplo"><span class="chip next" data-chip>Exemplo</span><span data-exemplo-texto>Prenhez de 21 dias: 6 prenhezes em 30 elegíveis (relatório de leite)</span></p>
+        <div class="campos">
+          <div class="campo"><label for="tx-x">Eventos (x)</label><input id="tx-x" type="text" inputmode="numeric" value="6"></div>
+          <div class="campo"><label for="tx-n">Animais ou oportunidades (n)</label><input id="tx-n" type="text" inputmode="numeric" value="30"></div>
+          <div class="campo"><label for="tx-conf">Confiança (%)</label><input id="tx-conf" type="text" inputmode="decimal" value="95"></div>
+        </div>
+        <div class="acoes"><button class="btn primary" type="submit">Calcular</button><button class="btn" type="button" data-exemplo="padrao">Restaurar exemplo</button><button class="btn" type="button" data-exemplo="aborto">Exemplo: aborto, 3 de 30 gestações</button></div>
+      </form>
+      <div class="resultado" id="r-ic" aria-live="polite"></div>
+
+      <form class="calc-form" id="f-n" autocomplete="off" novalidate>
+        <h4>Quantos animais para comparar dois anos</h4>
+        <p class="exemplo"><span class="chip next" data-chip>Exemplo</span><span data-exemplo-texto>Aborto de 10% para 20%, com 30 gestações por ano (Exemplo 7 de caprinos)</span></p>
+        <div class="campos">
+          <div class="campo"><label for="tx-p1">Taxa no ano 1 (%)</label><input id="tx-p1" type="text" inputmode="decimal" value="10"></div>
+          <div class="campo"><label for="tx-p2">Taxa no ano 2 (%)</label><input id="tx-p2" type="text" inputmode="decimal" value="20"></div>
+          <div class="campo"><label for="tx-alfa">Significância α (%)</label><input id="tx-alfa" type="text" inputmode="decimal" value="5"></div>
+          <div class="campo"><label for="tx-poder">Poder (%)</label><input id="tx-poder" type="text" inputmode="decimal" value="80"></div>
+          <div class="campo"><label for="tx-var">Variância</label>
+            <select id="tx-var"><option value="agrupada" selected>agrupada (caprinos, ovinos)</option><option value="separada">separada (leite)</option></select></div>
+          <div class="campo"><label for="tx-ndisp">Animais por ano no rebanho</label><input id="tx-ndisp" type="text" inputmode="numeric" value="30"></div>
+        </div>
+        <div class="acoes"><button class="btn primary" type="submit">Calcular</button><button class="btn" type="button" data-exemplo="padrao">Restaurar exemplo</button></div>
+      </form>
+      <div class="resultado" id="r-n" aria-live="polite"></div>
+      <p class="origem"><strong>De onde vem:</strong> relatório de bovinos leiteiros, seção “Toda taxa precisa de intervalo de confiança”, e relatório de caprinos leiteiros, “Exemplo 7: taxas com 30 cabras precisam de intervalo exato”. O exato usa a beta incompleta própria do motor (fração continuada de Lentz), sem bibliotecas. Casos fictícios. <button class="linkbtn" type="button" data-doc="caprinos" data-secao="Exemplo 7">Abrir o relatório nesta seção</button></p>
+    </article>
+
+    <!-- 6. Índice econômico -->
+    <article class="card calc" id="calc-indice" role="tabpanel" aria-labelledby="sub-indice" hidden>
+      <div class="calc-head">
+        <span class="eyebrow">Escolha de reprodutores</span>
+        <h3>Índice econômico de dois reprodutores</h3>
+        <p class="note">O índice soma as PTAs ponderadas por valores econômicos, I = Σ VE·PTA. As confiabilidades dizem quanto confiar na diferença: com erros independentes entre PTAs, sai a probabilidade de um reprodutor ser de fato melhor que o outro.</p>
+      </div>
+      <form class="calc-form" id="f-ie" autocomplete="off" novalidate>
+        <p class="exemplo"><span class="chip next" data-chip>Exemplo</span><span data-exemplo-texto>Touros A (provado, REL 0,95) e B (genômico, REL 0,65) num índice brasileiro hipotético, em reais (relatório de leite)</span></p>
+        <div class="campos">
+          <div class="campo"><label for="ie-nome-a">Reprodutor A</label><input id="ie-nome-a" type="text" value="Touro A"></div>
+          <div class="campo"><label for="ie-nome-b">Reprodutor B</label><input id="ie-nome-b" type="text" value="Touro B"></div>
+        </div>
+        <div class="table-wrap tabela-entrada">
+          <table>
+            <thead><tr><th scope="col">Característica</th><th scope="col">VE (R$/unid.)</th><th scope="col">DP da PTA</th><th scope="col">PTA A</th><th scope="col">REL A</th><th scope="col">PTA B</th><th scope="col">REL B</th></tr></thead>
+            <tbody id="ie-linhas" data-linhas></tbody>
+          </table>
+        </div>
+        <div class="acoes"><button class="btn primary" type="submit">Calcular</button><button class="btn" type="button" data-linha-mais>Adicionar característica</button><button class="btn" type="button" data-linha-menos>Remover a última</button><button class="btn" type="button" data-exemplo="padrao">Restaurar exemplo</button><button class="btn" type="button" data-exemplo="solidos">Exemplo: pagamento por sólidos</button></div>
+      </form>
+      <div class="resultado" id="r-ie" aria-live="polite"></div>
+      <p class="origem"><strong>De onde vem:</strong> relatório de bovinos leiteiros, seção “Índices econômicos: o que cada país põe na balança”. Valores econômicos, desvios-padrão das PTAs e touros são hipotéticos; o segundo cenário (leite a −R$ 0,02/kg e DPR a R$ 120 por ponto) está no mesmo texto. A ênfase relativa usa |VE|·DP da PTA. <button class="linkbtn" type="button" data-doc="leite" data-secao="Índices econômicos">Abrir o relatório nesta seção</button></p>
+    </article>
+
+    <!-- 7. Lactação -->
+    <article class="card calc" id="calc-lac" role="tabpanel" aria-labelledby="sub-lac" hidden>
+      <div class="calc-head">
+        <span class="eyebrow">Controle leiteiro</span>
+        <h3>Lactação padronizada pelo TIM (Fleischmann)</h3>
+        <p class="note">Os controles viram a produção da lactação por trapézios: I₀·M₁ + Σ I·(M + M′)/2 + I_n·M_n. Para cabras e ovelhas valem as regras da Seção 16 da ICAR: só a ordenha exclusiva entra (TMM), o cálculo para num hiato acima do dobro do intervalo médio, e são precisos pelo menos três controles.</p>
+      </div>
+      <form class="calc-form" id="f-lac" autocomplete="off" novalidate>
+        <p class="exemplo"><span class="chip next" data-chip>Exemplo</span><span data-exemplo-texto>Exemplo 1 de caprinos: cabra Saanen fictícia ordenhada desde o parto, 10 controles mensais e secagem no dia 290</span></p>
+        <div class="campos">
+          <div class="campo"><label for="lac-especie">Espécie</label>
+            <select id="lac-especie"><option value="caprino" selected>cabra (ICAR)</option><option value="ovino">ovelha (ICAR)</option><option value="bovino">vaca (TIM até 305 d)</option></select></div>
+          <div class="campo"><label for="lac-secagem">Dia da secagem</label><input id="lac-secagem" type="text" inputmode="decimal" value="290"></div>
+          <div class="campo"><label for="lac-separacao">Separação das crias (dia)</label><input id="lac-separacao" type="text" inputmode="decimal" value="" aria-describedby="lac-separacao-dica"><span class="dica" id="lac-separacao-dica">vazio = ordenha desde o parto (TMY)</span></div>
+          <div class="campo"><label for="lac-comprimento">Comprimento padrão (dias)</label><input id="lac-comprimento" type="text" inputmode="decimal" value="305"></div>
+          <div class="campo"><label for="lac-intervalo">Intervalo médio (dias)</label><input id="lac-intervalo" type="text" inputmode="decimal" value="" aria-describedby="lac-intervalo-dica"><span class="dica" id="lac-intervalo-dica">vazio = 30 (cabra) ou 35 (ovelha)</span></div>
+          <div class="campo largo"><label for="lac-controles">Controles: dia em lactação e produção do dia</label>
+            <textarea id="lac-controles" rows="10" spellcheck="false" aria-describedby="lac-dica">10   2,63
+40   2,90
+70   3,00
+100  2,66
+130  2,62
+160  2,31
+190  2,04
+220  1,94
+250  1,61
+280  1,51</textarea>
+            <span class="dica" id="lac-dica">Um controle por linha: dia contado do parto e produção (kg ou L por dia). Sem data de secagem, o fim é o último controle mais meio intervalo.</span></div>
+        </div>
+        <div class="acoes"><button class="btn primary" type="submit">Calcular</button><button class="btn" type="button" data-exemplo="padrao">Restaurar exemplo</button><button class="btn" type="button" data-exemplo="ovelha">Exemplo: ovelha com hiato de 90 dias</button><button class="btn" type="button" data-exemplo="vaca">Exemplo: vaca do relatório de leite</button></div>
+      </form>
+      <div class="resultado" id="r-lac" aria-live="polite"></div>
+      <p class="origem"><strong>De onde vem:</strong> relatório de caprinos leiteiros, seções “Pela ICAR, só o leite da ordenha exclusiva entra na conta” e “Exemplo 1: de quatro a dez controles até a lactação padronizada”; relatório de ovinos leiteiros, “Exemplo 1”; relatório de bovinos leiteiros, “Do controle ao total”. Controles fictícios. <button class="linkbtn" type="button" data-doc="caprinos" data-secao="Exemplo 1">Abrir o relatório nesta seção</button></p>
+    </article>
+
+    <!-- 8. Ganho genético -->
+    <article class="card calc" id="calc-ganho" role="tabpanel" aria-labelledby="sub-ganho" hidden>
+      <div class="calc-head">
+        <span class="eyebrow">Planejamento</span>
+        <h3>Ganho genético esperado por ano</h3>
+        <p class="note">A equação do criador, ΔG = i·r·σa/L, vale para uma via de seleção. Com várias vias (pai de bode, pai de cabra, mãe de bode, mãe de cabra), somam-se os produtos i·r e os intervalos de gerações: ΔG = Σ(i·r)·σa/ΣL. A intensidade i sai da fração selecionada, i = φ(z)/p.</p>
+      </div>
+      <form class="calc-form" id="f-ga" autocomplete="off" novalidate>
+        <p class="exemplo"><span class="chip next" data-chip>Exemplo</span><span data-exemplo-texto>Exemplo 5 de caprinos: teste de progênie, PL305 com σa = 89,44 kg (h² 0,20 e σP 200 kg)</span></p>
+        <div class="campos">
+          <div class="campo"><label for="ga-sa">DP genético aditivo σa</label><input id="ga-sa" type="text" inputmode="decimal" value="89,44"></div>
+          <div class="campo"><label for="ga-unidade">Unidade</label><input id="ga-unidade" type="text" value="kg"></div>
+        </div>
+        <div class="table-wrap tabela-entrada">
+          <table>
+            <thead><tr><th scope="col">Via de seleção</th><th scope="col">Selecionados (%)</th><th scope="col">Acurácia r</th><th scope="col">L (anos)</th></tr></thead>
+            <tbody id="ga-linhas" data-linhas></tbody>
+          </table>
+        </div>
+        <div class="acoes"><button class="btn primary" type="submit">Calcular</button><button class="btn" type="button" data-linha-mais>Adicionar via</button><button class="btn" type="button" data-linha-menos>Remover a última</button><button class="btn" type="button" data-exemplo="padrao">Restaurar exemplo</button><button class="btn" type="button" data-exemplo="comercial">Exemplo: rebanho comercial, 2 vias</button></div>
+      </form>
+      <div class="resultado" id="r-ga" aria-live="polite"></div>
+      <p class="origem"><strong>De onde vem:</strong> relatório de caprinos leiteiros, seção “Exemplo 5: ganho genético esperado” (Rendel e Robertson 1950); relatório de bovinos de corte, “Resposta à seleção: a equação do criador”. O intervalo de 5,5 anos do teste de progênie é da França; as demais acurácias e intervalos são hipóteses do relatório. Os números são teóricos: o ganho realizado na Saanen do Capragene foi de 6,34 kg/ano. <button class="linkbtn" type="button" data-doc="caprinos" data-secao="Exemplo 5">Abrir o relatório nesta seção</button></p>
+    </article>
   </section>
 
   <!-- FONTES -->
@@ -556,6 +900,7 @@ td.fit { text-align: center; font-family: var(--font-mono); font-weight: 500; wh
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.3.0/marked.min.js"></script>
+<script src="lab/calculadoras.js"></script>
 <script>
 const DOCS = {
   corte: [
@@ -636,7 +981,7 @@ document.querySelectorAll("[data-docs]").forEach(box => {
   });
 });
 
-async function openDoc(title, path) {
+async function openDoc(title, path, secao) {
   panels.forEach(p => { p.hidden = true; });
   reader.hidden = false;
   readerTitle.textContent = title;
@@ -649,6 +994,10 @@ async function openDoc(title, path) {
     readerBody.innerHTML = window.marked ? marked.parse(md) : "<pre></pre>";
     if (!window.marked) readerBody.querySelector("pre").textContent = md;
     readerBody.querySelectorAll("a[href^='http']").forEach(a => { a.target = "_blank"; a.rel = "noopener"; });
+    if (secao) {
+      const alvo = Array.from(readerBody.querySelectorAll("h1, h2, h3, h4")).find(h => h.textContent.trim().startsWith(secao));
+      if (alvo) alvo.scrollIntoView({ block: "start" });
+    }
   } catch (e) {
     readerBody.innerHTML = '<p>Não foi possível abrir este documento agora. Ele também está no repositório, em reports/ ou research_notes/.</p>';
   }
@@ -656,4 +1005,866 @@ async function openDoc(title, path) {
 
 document.getElementById("voltar").addEventListener("click", () => showTab(lastTab));
 showTab((location.hash || "#visao").slice(1));
+/* ---------- Laboratório: ligação entre a interface e lab/calculadoras.js ---------- */
+(function iniciarCalculadoras() {
+  if (!document.getElementById("calculadoras")) return;
+  const Lab = window.LabSeabra;
+  if (!Lab) {
+    document.querySelectorAll(".calc .resultado").forEach((r) => {
+      r.innerHTML = '<p class="erro" role="alert">As calculadoras não carregaram: o arquivo lab/calculadoras.js precisa ser publicado ao lado desta página.</p>';
+    });
+    return;
+  }
+  const { taxas, confiabilidade: cf, indices, parentesco: pa, blup, lactacao: la, ganho } = Lab;
+
+  // ---------- formatação
+  const formatos = new Map();
+  function fmt(x, casas = 2) {
+    if (typeof x !== "number" || !Number.isFinite(x)) return "—";
+    if (!formatos.has(casas)) {
+      formatos.set(casas, new Intl.NumberFormat("pt-BR", { minimumFractionDigits: casas, maximumFractionDigits: casas }));
+    }
+    const s = formatos.get(casas).format(x);
+    return /^-0(,0+)?$/.test(s) ? s.slice(1) : s.replace("-", "−");
+  }
+  function fmtSinal(x, casas = 1) {
+    const s = fmt(x, casas);
+    return x > 0 && /[1-9]/.test(s) ? "+" + s : s;
+  }
+  const pct = (x, casas = 1) => (Number.isFinite(x) ? fmt(100 * x, casas) + "%" : "—");
+  const livre = new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 3 });
+  function fmtLivre(x, sinal) {             // decimais como digitados (até 3)
+    if (!Number.isFinite(x)) return "—";
+    const s = livre.format(x);
+    const t = /^-0(,0+)?$/.test(s) ? s.slice(1) : s.replace("-", "−");
+    return sinal && x > 0 ? "+" + t : t;
+  }
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+  const plural = (n, um, varios) => `${n} ${n === 1 ? um : varios}`;
+
+  // ---------- leitura dos campos
+  class ErroEntrada extends Error {}
+  function paraNumero(txt) {
+    let t = String(txt).trim().replace(/[−‒–]/g, "-").replace(/\s+/g, "");
+    if (t.includes(",") && t.includes(".")) t = t.replace(/\./g, "");
+    t = t.replace(",", ".");
+    if (t === "" || t === "-" || t === "+") return NaN;
+    return Number(t);
+  }
+  const valorDe = (id) => document.getElementById(id).value;
+  const comMaiuscula = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+  const textoNum = (x) => String(x).replace(".", ",");
+  function lerNum(id, nome, o = {}) {
+    const txt = valorDe(id).trim();
+    if (txt === "") {
+      if (o.opcional) return null;
+      throw new ErroEntrada(`Preencha ${nome}.`);
+    }
+    const v = paraNumero(txt);
+    if (!Number.isFinite(v)) throw new ErroEntrada(`${comMaiuscula(nome)}: “${txt}” não é um número.`);
+    if (o.inteiro && !Number.isInteger(v)) throw new ErroEntrada(`${comMaiuscula(nome)} precisa ser um número inteiro.`);
+    if (o.min !== undefined && (o.minAberto ? v <= o.min : v < o.min)) {
+      throw new ErroEntrada(`${comMaiuscula(nome)} precisa ser ${o.minAberto ? "maior que" : "pelo menos"} ${textoNum(o.min)}.`);
+    }
+    if (o.max !== undefined && (o.maxAberto ? v >= o.max : v > o.max)) {
+      throw new ErroEntrada(`${comMaiuscula(nome)} precisa ser ${o.maxAberto ? "menor que" : "no máximo"} ${textoNum(o.max)}.`);
+    }
+    return v;
+  }
+  function linhasDe(id) {
+    return valorDe(id).split(/\r?\n/).map((texto, i) => ({ texto: texto.trim(), n: i + 1 }))
+      .filter((l) => l.texto !== "" && !l.texto.startsWith("#"));
+  }
+  const listaIds = (id) => Array.from(new Set(valorDe(id).split(/[\s,;]+/).filter(Boolean)));
+
+  // ---------- pedaços de HTML
+  function destaque(rotulo, valor, lado, principal) {
+    return `<div class="destaque${principal ? " principal" : ""}"><span class="rotulo">${rotulo}</span>` +
+      `<span class="valor">${valor}</span>${lado ? `<span class="lado">${lado}</span>` : ""}</div>`;
+  }
+  const destaques = (itens) => `<div class="destaques">${itens.join("")}</div>`;
+  const aviso = (t) => `<p class="aviso">${t}</p>`;
+  const nota = (t) => `<p class="note">${t}</p>`;
+  // cab: [{t, num}]; linhas: arrays de células (texto HTML ou {h, classe}) ou {classe, celulas}
+  function tabela(cab, linhas) {
+    const th = cab.map((c) => `<th scope="col"${c.num ? ' class="num"' : ""}>${c.t}</th>`).join("");
+    const corpo = linhas.map((l) => {
+      const celulas = Array.isArray(l) ? l : l.celulas;
+      const tr = Array.isArray(l) || !l.classe ? "<tr>" : `<tr class="${l.classe}">`;
+      return tr + celulas.map((v, k) => {
+        const c = v !== null && typeof v === "object" ? v : { h: v };
+        const cls = [cab[k] && cab[k].num ? "num" : "", c.classe || ""].filter(Boolean).join(" ");
+        return `<td${cls ? ` class="${cls}"` : ""}>${c.h}</td>`;
+      }).join("") + "</tr>";
+    }).join("");
+    return `<div class="table-wrap"><table><thead><tr>${th}</tr></thead><tbody>${corpo}</tbody></table></div>`;
+  }
+  function posicoes(valores) {           // 1 = maior valor
+    const pos = [];
+    valores.map((v, i) => [v, i]).sort((a, b) => b[0] - a[0]).forEach(([, i], k) => { pos[i] = k + 1; });
+    return pos;
+  }
+
+  // ---------- linhas editáveis (índice e vias de seleção)
+  function linhasEditaveis(tbodyId, prefixo, colunas, minimo = 1, maximo = 20) {
+    const corpo = document.getElementById(tbodyId);
+    function adicionar(valores = []) {
+      if (corpo.rows.length >= maximo) return;
+      const n = corpo.rows.length + 1;
+      const tr = document.createElement("tr");
+      colunas.forEach((c, k) => {
+        const td = document.createElement("td");
+        const el = document.createElement("input");
+        el.type = "text";
+        el.id = `${prefixo}-${c.chave}-${n}`;
+        el.autocomplete = "off";
+        if (c.num) el.inputMode = "decimal";
+        el.value = valores[k] !== undefined ? valores[k] : "";
+        el.setAttribute("aria-label", `${c.rotulo}, linha ${n}`);
+        td.appendChild(el);
+        tr.appendChild(td);
+      });
+      corpo.appendChild(tr);
+    }
+    return {
+      render(linhas) { corpo.innerHTML = ""; linhas.forEach((l) => adicionar(l)); },
+      adicionar() { adicionar(); },
+      remover() { if (corpo.rows.length > minimo) corpo.deleteRow(-1); },
+      ler() {
+        return Array.from(corpo.rows).map((tr, i) => ({ n: i + 1, v: Array.from(tr.querySelectorAll("input")).map((el) => el.value.trim()) }))
+          .filter((l) => l.v.some((x) => x !== ""));
+      },
+    };
+  }
+
+  // ---------- registro de cada formulário
+  function capturar(form) {
+    const campos = {};
+    form.querySelectorAll("input[id], select[id], textarea[id]").forEach((el) => {
+      if (!el.closest("[data-linhas]")) campos[el.id] = el.value;
+    });
+    return campos;
+  }
+  function registrar(formId, cfg) {
+    const form = document.getElementById(formId);
+    const saida = document.getElementById(cfg.saida);
+    const chip = form.querySelector("[data-chip]");
+    const textoEx = form.querySelector("[data-exemplo-texto]");
+    const exemplos = cfg.exemplos || {};
+    if (cfg.linhas && exemplos.padrao && exemplos.padrao.linhas) cfg.linhas.render(exemplos.padrao.linhas);
+    exemplos.padrao = Object.assign({ texto: textoEx.textContent, campos: capturar(form) }, exemplos.padrao || {});
+    function calcular() {
+      try {
+        saida.innerHTML = cfg.calcular();
+      } catch (e) {
+        const msg = e instanceof ErroEntrada ? e.message : `Não foi possível calcular: ${e.message}.`;
+        saida.innerHTML = `<p class="erro" role="alert">${esc(msg)}</p>`;
+      }
+    }
+    function marcar(editado, texto) {
+      chip.textContent = editado ? "Dados editados" : "Exemplo";
+      chip.className = editado ? "chip plan" : "chip next";
+      if (texto) textoEx.textContent = texto;
+    }
+    function aplicar(ex) {
+      if (cfg.linhas && ex.linhas) cfg.linhas.render(ex.linhas);
+      const campos = Object.assign({}, exemplos.padrao.campos, ex.campos || {});
+      Object.keys(campos).forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) el.value = campos[id];
+      });
+      marcar(false, ex.texto);
+      calcular();
+    }
+    form.addEventListener("submit", (ev) => { ev.preventDefault(); calcular(); });
+    form.addEventListener("input", () => marcar(true));
+    form.addEventListener("change", () => marcar(true));
+    form.querySelectorAll("[data-exemplo]").forEach((b) => {
+      b.addEventListener("click", () => aplicar(exemplos[b.dataset.exemplo]));
+    });
+    if (cfg.linhas) {
+      form.querySelectorAll("[data-linha-mais]").forEach((b) => b.addEventListener("click", () => { cfg.linhas.adicionar(); marcar(true); }));
+      form.querySelectorAll("[data-linha-menos]").forEach((b) => b.addEventListener("click", () => { cfg.linhas.remover(); marcar(true); }));
+    }
+    calcular();
+  }
+
+  // =================================================================================
+  // 1. MPPA e índice da fêmea
+  // =================================================================================
+  registrar("f-mppa", {
+    saida: "r-mppa",
+    calcular() {
+      const h2 = lerNum("mppa-h2", "a herdabilidade", { min: 0, minAberto: true, max: 1, maxAberto: true });
+      const r = lerNum("mppa-r", "a repetibilidade", { min: 0, minAberto: true, max: 1 });
+      const sp = lerNum("mppa-sp", "o desvio-padrão fenotípico", { min: 0, minAberto: true });
+      const escala = valorDe("mppa-escala");
+      const linhas = linhasDe("mppa-animais");
+      if (!linhas.length) throw new ErroEntrada("Escreva pelo menos uma fêmea, uma por linha.");
+      if (linhas.length > 500) throw new ErroEntrada("Use até 500 fêmeas por vez.");
+      const femeas = linhas.map(({ texto, n }) => {
+        const partes = texto.split(/[;\t]/).map((s) => s.trim());
+        const id = partes[0] || `linha ${n}`;
+        const desvios = (partes[1] || "").split(/\s+/).filter(Boolean).map(paraNumero);
+        if (!desvios.length || desvios.some((v) => !Number.isFinite(v))) {
+          throw new ErroEntrada(`Linha ${n}: escreva os desvios como números separados por espaço, depois do primeiro ponto e vírgula (ex.: C2; 120 90 100; 10; 0,80).`);
+        }
+        let pta = null;
+        let rel = 0;
+        const ptaTxt = partes[2] || "";
+        if (ptaTxt !== "") {
+          pta = paraNumero(ptaTxt);
+          if (!Number.isFinite(pta)) throw new ErroEntrada(`Linha ${n}: a PTA do pai “${ptaTxt}” não é um número.`);
+          rel = paraNumero(partes[3] || "");
+          if (!(rel >= 0 && rel <= 1)) throw new ErroEntrada(`Linha ${n}: informe a REL do pai, de 0 a 1 (ex.: 0,60).`);
+        }
+        const media = desvios.reduce((a, b) => a + b, 0) / desvios.length;
+        return {
+          id, pta, rel, media, n: desvios.length,
+          mppa: indices.mppa(media, desvios.length, r, 0),
+          ind: indices.indice_femea(desvios, h2, r, sp, pta, rel, escala),
+        };
+      });
+      const posM = posicoes(femeas.map((f) => f.mppa));
+      const posE = posicoes(femeas.map((f) => f.ind.ebv));
+      const reposicao = femeas[posE.indexOf(1)];
+      const descarte = femeas[posM.indexOf(femeas.length)];
+      const sa = Math.sqrt(h2) * sp;
+      let html = destaques([
+        destaque("Guardar filhas de", `${fmtSinal(reposicao.ind.ebv, 1)} kg`, `${esc(reposicao.id)}: maior EBV, com REL ${fmt(reposicao.ind.confiabilidade, 2)}`, true),
+        destaque("Primeira a descartar", `${fmtSinal(descarte.mppa, 1)} kg`, `${esc(descarte.id)}: menor MPPA, com ${plural(descarte.n, "lactação", "lactações")}`),
+        destaque("σa usado", `${fmt(sa, 1)} kg`, `σa = √h²·σP, com h² ${fmt(h2, 2)} e r ${fmt(r, 2)}`),
+      ]);
+      if (r < h2) html += aviso("A repetibilidade não pode ser menor que a herdabilidade. Use um par (h², r) publicado, com r ≥ h².");
+      html += tabela(
+        [{ t: "Fêmea" }, { t: "n", num: true }, { t: "Desvio médio", num: true }, { t: "MPPA", num: true }, { t: "Ordem MPPA", num: true },
+          { t: `${escala} do pai (REL)`, num: true }, { t: "Pesos b", num: true }, { t: "EBV", num: true }, { t: "PTA", num: true },
+          { t: "REL", num: true }, { t: "Ordem EBV", num: true }],
+        femeas.map((f, i) => [
+          esc(f.id), String(f.n), fmtSinal(f.media, 1), fmtSinal(f.mppa, 1), `${posM[i]}º`,
+          f.pta === null || !(f.rel > 0) ? "sem avaliação" : `${fmtLivre(f.pta, true)} (${fmt(f.rel, 2)})`,
+          f.ind.pesos.map((b) => fmt(b, 3)).join("; "),
+          fmtSinal(f.ind.ebv, 1), fmtSinal(f.ind.pta, 1), fmt(f.ind.confiabilidade, 2), `${posE[i]}º`,
+        ])
+      );
+      html += nota(`Valores em kg de desvio das contemporâneas (μ = 0). A MPPA prevê a próxima lactação; o EBV é o que a fêmea transmite, e a PTA é a metade dele. Os pesos b são o da média própria e o do pai.${escala === "EBV" ? " Com o pai pelo EBV, o peso dele cai pela metade, e o EBV e a REL da fêmea não mudam." : ""}`);
+      return html;
+    },
+  });
+
+  // =================================================================================
+  // 2. Confiabilidade por filhas-equivalentes e conversões
+  // =================================================================================
+  function lerFilhas(id) {
+    const txt = valorDe(id).trim();
+    if (txt === "") throw new ErroEntrada("Informe as filhas de X em cada rebanho (ex.: 2 2 2 ou 15x2).");
+    const saida = [];
+    for (const tok of txt.split(/[\s;]+/).filter(Boolean)) {
+      const m = tok.match(/^(\d+)\s*[x×*]\s*(\d+)$/i);
+      if (m) {
+        for (let k = 0; k < Number(m[1]); k++) saida.push(Number(m[2]));
+      } else {
+        const v = paraNumero(tok);
+        if (!Number.isInteger(v) || v < 0) throw new ErroEntrada(`Filhas de X: “${tok}” não é um número inteiro de filhas.`);
+        saida.push(v);
+      }
+      if (saida.length > 200) throw new ErroEntrada("Use até 200 rebanhos.");
+    }
+    return saida;
+  }
+  registrar("f-rel", {
+    saida: "r-rel",
+    exemplos: {
+      umRebanho: {
+        texto: "Exemplo 3 de caprinos: 10 filhas de X num só rebanho, ao lado de 10 filhas de um bode local sem prova (Y)",
+        campos: { "rel-filhas": "10", "rel-outras": "10", "rel-outro-tipo": "mesmo", "rel-outro-rel": "0" },
+      },
+    },
+    calcular() {
+      const h2 = lerNum("rel-h2", "a herdabilidade", { min: 0, minAberto: true, max: 1, maxAberto: true });
+      const filhas = lerFilhas("rel-filhas");
+      const outrasTok = valorDe("rel-outras").trim().split(/[\s;]+/).filter(Boolean).map(paraNumero);
+      if (!outrasTok.length || outrasTok.some((v) => !Number.isInteger(v) || v < 0)) {
+        throw new ErroEntrada("Filhas do outro pai: escreva um número inteiro, ou um por rebanho.");
+      }
+      if (outrasTok.length !== 1 && outrasTok.length !== filhas.length) {
+        throw new ErroEntrada(`Filhas do outro pai: escreva um número para todos os rebanhos ou ${filhas.length} números, um por rebanho.`);
+      }
+      const outras = filhas.map((_, h) => (outrasTok.length === 1 ? outrasTok[0] : outrasTok[h]));
+      const tipo = valorDe("rel-outro-tipo");
+      const relOutro = lerNum("rel-outro-rel", "a REL do outro pai", { min: 0, max: 1, maxAberto: true });
+      const relPa = lerNum("rel-pa", "a REL da média dos pais", { min: 0, max: 1, maxAberto: true });
+      const alvo = lerNum("rel-alvo", "a REL alvo", { min: 0, minAberto: true, max: 1, maxAberto: true });
+      const n = filhas.reduce((a, b) => a + b, 0);
+      if (n === 0) throw new ErroEntrada("X precisa de pelo menos uma filha.");
+      const nReb = filhas.filter((d) => d > 0).length;
+      const kd = cf.k_d(h2);
+      const k = cf.k_touro(h2);
+      const dePaKd = relPa > 0 ? cf.de_de_rel(relPa, kd) : 0;
+      const dePaK = relPa > 0 ? cf.de_de_rel(relPa, k) : 0;
+      const relKd = cf.rel_de_de(n + dePaKd, kd);
+      const relK = cf.rel_de_de(n + dePaK, k);
+      const deUsda = filhas.filter((d) => d > 0).reduce((s, d) => s + cf.de_filhas_mesmo_rebanho(d), 0);
+      const relUsda = cf.rel_de_de(deUsda + dePaKd, kd);
+      const nomeOutro = (h) => (tipo === "mesmo" ? "Z" : `L${h + 1}`);
+      const rebanhos = filhas.map((d, h) => {
+        const reb = {};
+        if (d > 0) reb.X = d;
+        if (outras[h] > 0) reb[nomeOutro(h)] = outras[h];
+        return reb;
+      }).filter((reb) => Object.keys(reb).length > 0);
+      const ext = {};
+      if (relOutro > 0) outras.forEach((o, h) => { if (o > 0) ext[nomeOutro(h)] = relOutro; });
+      if (relPa > 0) ext.X = relPa;
+      const relExata = blup.rel_exata_modelo_touro(rebanhos, h2, ext).X;
+      const deEq = relExata > 0 ? cf.de_de_rel(relExata, k) : 0;
+      const semContemporaneas = filhas.filter((d, h) => d > 0 && !(outras[h] > 0)).length;
+      let html = destaques([
+        destaque("REL exata de X", fmt(relExata, 2), `acurácia r = ${fmt(Math.sqrt(relExata), 2)}; ${plural(n, "filha", "filhas")} em ${plural(nReb, "rebanho", "rebanhos")}`, true),
+        destaque("Teto: DE ≈ n", fmt(relK, 2), `${fmt(n + dePaK, 1)}/(${fmt(n + dePaK, 1)} + ${fmt(k, 1)}), com k = (4 − h²)/h²`),
+        destaque(`DE para REL ${fmt(alvo, 2)}`, fmt(cf.de_de_rel(alvo, kd), 1), `filhas em rebanhos diferentes, com k_d = ${fmt(kd, 1)}; ${fmt(cf.de_de_rel(alvo, k), 1)} com k = ${fmt(k, 1)}`),
+      ]);
+      if (semContemporaneas) {
+        html += aviso(`Em ${plural(semContemporaneas, "rebanho", "rebanhos")}, as filhas de X não têm contemporâneas de outro pai. O grupo de contemporâneas absorve a diferença, e essas filhas não informam nada sobre X.`);
+      }
+      html += tabela(
+        [{ t: "Método" }, { t: "O que supõe" }, { t: "DE de X", num: true }, { t: "REL", num: true }, { t: "r", num: true }],
+        [
+          ["PEV exata, modelo de touro", "o desenho digitado: cada filha comparada só com as contemporâneas do mesmo rebanho", fmt(deEq, 1), fmt(relExata, 3), fmt(Math.sqrt(relExata), 3)],
+          ["Filhas concentradas (USDA)", "DE = 1/(0,16 + 0,84/d) por rebanho, com k_d", fmt(deUsda + dePaKd, 1), fmt(relUsda, 3), fmt(Math.sqrt(relUsda), 3)],
+          ["DE ≈ n, k = (4 − h²)/h²", "cada filha num rebanho diferente, com muitas contemporâneas; mães desconhecidas", fmt(n + dePaK, 1), fmt(relK, 3), fmt(Math.sqrt(relK), 3)],
+          ["DE ≈ n, k_d = (4 − 2h²)/h²", "o mesmo, com o mérito das companheiras descontado", fmt(n + dePaKd, 1), fmt(relKd, 3), fmt(Math.sqrt(relKd), 3)],
+        ]
+      );
+      html += nota(`Com h² = ${fmt(h2, 2)}: k = ${fmt(k, 2)} e k_d = ${fmt(kd, 2)}. A REL da média dos pais entra como filhas-equivalentes (DE = k·REL/(1 − REL)) e, no modelo exato, como informação externa de X. O modelo exato trata os reprodutores como não aparentados.`);
+      return html;
+    },
+  });
+
+  registrar("f-conv", {
+    saida: "r-conv",
+    calcular() {
+      const v = lerNum("conv-valor", "o valor publicado", { min: 0, max: 1 });
+      const escala = valorDe("conv-escala");
+      const rel = escala === "REL" ? v : escala === "r" ? cf.rel_de_r(v) : cf.rel_de_bif(v);
+      const r = cf.r_de_rel(rel);
+      const bif = cf.bif_de_rel(rel);
+      const marca = (e) => (e === escala ? "informado" : "convertido");
+      let html = destaques([
+        destaque("Confiabilidade REL", fmt(rel, 3), marca("REL"), escala === "REL"),
+        destaque("Acurácia r", fmt(r, 3), marca("r"), escala === "r"),
+        destaque("Acurácia BIF", fmt(bif, 3), marca("BIF"), escala === "BIF"),
+      ]);
+      html += tabela(
+        [{ t: "r", num: true }, { t: "REL", num: true }, { t: "Acurácia BIF", num: true }],
+        [0.5, 0.6, 0.8, 0.9, 0.98].map((x) => [fmt(x, 2), fmt(x * x, 3), fmt(cf.bif_de_r(x), 3)])
+      );
+      html += nota("REL = r² e a_BIF = 1 − √(1 − REL). A escala BIF é conservadora: r = 0,50 vale 0,134. Antes de comparar a “acurácia” de dois sumários, confira qual escala cada um publica.");
+      return html;
+    },
+  });
+
+  // =================================================================================
+  // 3. Acurácia BIF e Possible Change
+  // =================================================================================
+  registrar("f-pc", {
+    saida: "r-pc",
+    exemplos: {
+      touro: {
+        texto: "Touro com DEP de P450 de +12 kg, σA de 16,48 kg e acurácia BIF de 0,70 (relatório de corte)",
+        campos: { "pc-tipo": "BIF", "pc-valor": "0,70", "pc-sa": "16,48", "pc-f": "0", "pc-dep": "12" },
+      },
+    },
+    calcular() {
+      const tipo = valorDe("pc-tipo");
+      const sa = lerNum("pc-sa", "o σA", { min: 0, minAberto: true });
+      const dep = lerNum("pc-dep", "a DEP", { opcional: true });
+      let rel;
+      let sep;
+      let F = 0;
+      if (tipo === "PEV") {
+        const pev = lerNum("pc-valor", "a PEV", { min: 0 });
+        F = lerNum("pc-f", "o F do animal", { min: 0, max: 1 });
+        rel = cf.rel_de_pev(pev, sa * sa, F);
+        if (rel < 0) throw new ErroEntrada(`A PEV passa de (1 + F)·σ²a = ${fmt((1 + F) * sa * sa, 2)} kg². Confira σA, F e a PEV.`);
+        sep = Math.sqrt(pev) / 2;
+      } else {
+        const v = lerNum("pc-valor", "a acurácia", { min: 0, max: 1 });
+        rel = tipo === "REL" ? v : tipo === "r" ? cf.rel_de_r(v) : cf.rel_de_bif(v);
+        sep = Math.sqrt((1 - rel) * sa * sa) / 2;
+      }
+      const r = cf.r_de_rel(rel);
+      const bif = cf.bif_de_rel(rel);
+      const pc68 = blup.possible_change(bif, sa, 1);
+      const pc95 = blup.possible_change(bif, sa, 2);
+      const faixa = (pc) => (dep === null ? "" : `DEP de ${fmtSinal(dep - pc, 2)} a ${fmtSinal(dep + pc, 2)} kg`);
+      let html = destaques([
+        destaque("Acurácia BIF", fmt(bif, 3), `r = ${fmt(r, 3)}; REL = ${fmt(rel, 3)}`, true),
+        destaque("Possible Change, 68%", `± ${fmt(pc68, 2)} kg`, faixa(pc68)),
+        destaque("Possible Change, 95%", `± ${fmt(pc95, 2)} kg`, faixa(pc95)),
+        destaque("Erro-padrão da DEP", `${fmt(sep, 2)} kg`, tipo === "PEV" ? "SEP = √PEV/2" : "√[(1 − REL)·σ²a]/2, com F = 0"),
+      ]);
+      const v = paraNumero(valorDe("pc-valor"));
+      if (tipo === "BIF") {
+        html += aviso(`Se esse ${fmt(v, 2)} fosse a acurácia r, e não a BIF, a amplitude a 68% seria de ± ${fmt(blup.possible_change_de_r(v, sa), 2)} kg. É a leitura que reproduz a tabela de possível mudança da ANCP. Declare a escala ao publicar.`);
+      } else if (tipo === "r") {
+        html += aviso(`Se esse ${fmt(v, 2)} fosse a acurácia BIF, e não r, a amplitude a 68% seria de ± ${fmt(blup.possible_change(v, sa), 2)} kg. Declare a escala ao publicar.`);
+      }
+      if (tipo === "PEV" && F > 0) {
+        html += aviso(`O Possible Change do BIF supõe F = 0. Com F = ${fmt(F, 3)}, a REL usa (1 + F)·σ²a, e a amplitude a 68% é melhor dada pelo erro-padrão da DEP (± ${fmt(sep, 2)} kg).`);
+      }
+      html += nota("REL = 1 − PEV/[(1 + F)·σ²a]; r = √REL; a_BIF = 1 − √(1 − REL); PC = t·(1 − a_BIF)·σA/2, com t = 1 para 68% e t = 2 para 95%. Com F = 0, o PC a 68% é igual ao erro-padrão da DEP.");
+      return html;
+    },
+  });
+
+  // =================================================================================
+  // 4. Parentesco, F por acasalamento, Ne e ΔF
+  // =================================================================================
+  function lerPedigree(id) {
+    const linhas = linhasDe(id);
+    if (!linhas.length) throw new ErroEntrada("Escreva o pedigree: uma linha por animal, com animal, pai e mãe.");
+    if (linhas.length > 400) throw new ErroEntrada("O pedigree passa de 400 animais. Esta calculadora monta a matriz A inteira; use o motor Python para pedigrees maiores.");
+    return linhas.map(({ texto, n }) => {
+      const t = texto.split(/[\s,;]+/).filter(Boolean);
+      if (t.length === 1) return [t[0], "0", "0"];
+      if (t.length !== 3) throw new ErroEntrada(`Linha ${n} do pedigree: escreva animal, pai e mãe, com 0 para desconhecido. Veio “${texto}”.`);
+      if (t[1] === t[0] || t[2] === t[0]) throw new ErroEntrada(`Linha ${n} do pedigree: ${t[0]} não pode ser pai ou mãe de si mesmo.`);
+      return t;
+    });
+  }
+  registrar("f-ped", {
+    saida: "r-ped",
+    calcular() {
+      const linhas = lerPedigree("ped-pedigree");
+      const machos = listaIds("ped-machos");
+      const femeas = listaIds("ped-femeas");
+      if (!machos.length) throw new ErroEntrada("Informe pelo menos um macho candidato.");
+      if (!femeas.length) throw new ErroEntrada("Informe pelo menos uma fêmea.");
+      const limite = lerNum("ped-limite", "o limite de F", { min: 0, max: 100 }) / 100;
+      const noPedigree = new Set(linhas.flatMap((l) => l.filter((x) => pa.conhecido(x))));
+      const fora = machos.concat(femeas).filter((a) => !noPedigree.has(a));
+      fora.forEach((a) => { linhas.push([a, "0", "0"]); noPedigree.add(a); });
+      const [A, ids] = pa.matriz_A(linhas);
+      const tab = pa.tabela_F_acasalamentos(linhas, machos, femeas);
+      const pref = pa.escolher_reprodutores(linhas, femeas, machos, limite);
+      const menor = pa.escolher_reprodutores(linhas, femeas, machos, null);
+      const tol = 1e-12;
+      let acima = 0;
+      let pior = null;
+      machos.forEach((m) => femeas.forEach((f) => {
+        const F = tab[m][f];
+        if (F > limite + tol) acima += 1;
+        if (!pior || F > pior.F) pior = { m, f, F };
+      }));
+      const endogamicos = ids.map((a, i) => ({ a, F: A[i][i] - 1 })).filter((x) => x.F > tol);
+      const maisEndogamico = endogamicos.reduce((x, y) => (!x || y.F > x.F ? y : x), null);
+      let html = destaques([
+        destaque("Pares acima do limite", `${acima} de ${machos.length * femeas.length}`, `limite de F de ${pct(limite, 2)}`, true),
+        destaque("Maior F de acasalamento", pct(pior.F, 2), `${esc(pior.m)} × ${esc(pior.f)}`),
+        destaque("Animais endogâmicos", String(endogamicos.length), maisEndogamico ? `o maior é ${esc(maisEndogamico.a)}, com F = ${pct(maisEndogamico.F, 2)}` : `nenhum entre os ${ids.length} do pedigree`),
+      ]);
+      if (fora.length) html += aviso(`${esc(fora.join(", "))} não ${fora.length === 1 ? "está" : "estão"} no pedigree e ${fora.length === 1 ? "entrou" : "entraram"} como fundador${fora.length === 1 ? "" : "es"}, sem parentesco com os demais.`);
+      const celulaF = (F) => ({ h: F < tol ? "0" : pct(F, 2), classe: F > limite + tol ? "alto" : F < tol ? "zero" : "" });
+      html += `<h4 class="sub">F esperado do filho de cada par</h4>`;
+      html += tabela(
+        [{ t: "Macho" }].concat(femeas.map((f) => ({ t: `× ${esc(f)}`, num: true }))).concat([{ t: "Média", num: true }]),
+        machos.map((m) => {
+          const valores = femeas.map((f) => tab[m][f]);
+          return [esc(m)].concat(valores.map(celulaF)).concat([pct(valores.reduce((a, b) => a + b, 0) / valores.length, 2)]);
+        })
+      );
+      html += `<h4 class="sub">Sugestão para cada fêmea</h4>`;
+      html += tabela(
+        [{ t: "Fêmea" }, { t: "Menor F" }, { t: `Primeiro da lista com F até ${pct(limite, 2)}` }],
+        femeas.map((f) => {
+          const [mm, fm] = menor[f];
+          const [mp, fp, ok] = pref[f];
+          return [esc(f), `${esc(mm)} (${fm < tol ? "0" : pct(fm, 2)})`,
+            ok ? `${esc(mp)} (${fp < tol ? "0" : pct(fp, 2)})` : { h: `nenhum; o menor é ${esc(mp)} (${pct(fp, 2)})`, classe: "alto" }];
+        })
+      );
+      const pais = new Map();
+      linhas.forEach(([a, p, m]) => pais.set(a, [p, m]));
+      html += `<details><summary>F de cada animal do pedigree (${ids.length})</summary>` + tabela(
+        [{ t: "Animal" }, { t: "Pai" }, { t: "Mãe" }, { t: "F", num: true }],
+        ids.map((a, i) => {
+          const [p, m] = pais.get(a) || ["0", "0"];
+          const F = A[i][i] - 1;
+          return [esc(a), pa.conhecido(p) ? esc(p) : "—", pa.conhecido(m) ? esc(m) : "—", F < tol ? { h: "0", classe: "zero" } : pct(F, 2)];
+        })
+      ) + `</details>`;
+      if (ids.length <= 30) {
+        html += `<details><summary>Matriz de parentesco A (${ids.length} × ${ids.length})</summary>` + tabela(
+          [{ t: "" }].concat(ids.map((a) => ({ t: esc(a), num: true }))),
+          ids.map((a, i) => [esc(a)].concat(A[i].map((x) => ({ h: x === 0 ? "0" : fmt(x, 4), classe: x === 0 ? "zero" : "" }))))
+        ) + `</details>`;
+      } else {
+        html += nota(`A matriz A só é mostrada até 30 animais; este pedigree tem ${ids.length}.`);
+      }
+      html += nota("F = ½·a_pai,mãe. A lista de machos é a ordem de preferência (por exemplo, por mérito): a segunda coluna dá a cada fêmea o primeiro macho com F até o limite e, se nenhum servir, o de menor F. O limite de 6,25% é alerta, não regra.");
+      return html;
+    },
+  });
+
+  registrar("f-ne", {
+    saida: "r-ne",
+    exemplos: {
+      grande: {
+        texto: "Rebanho de 1.000 cabras com 13 bodes não aparentados por geração (tabela do Exemplo 8)",
+        campos: { "ne-machos": "13", "ne-femeas": "1000" },
+      },
+    },
+    calcular() {
+      const nm = lerNum("ne-machos", "o número de machos", { min: 0, minAberto: true });
+      const nf = lerNum("ne-femeas", "o número de fêmeas", { min: 0, minAberto: true });
+      const L = lerNum("ne-l", "o intervalo de gerações", { min: 0, minAberto: true });
+      const t = lerNum("ne-t", "o número de gerações", { min: 0 });
+      const anos = lerNum("ne-anos", "o número de anos", { min: 0 });
+      const alvo = lerNum("ne-alvo", "o Ne alvo", { min: 0, minAberto: true });
+      const ne = pa.ne_wright(nm, nf);
+      const df = pa.delta_F(ne);
+      let html = destaques([
+        destaque("Ne", fmt(ne, 1), `4·Nm·Nf/(Nm + Nf), com ${textoNum(nm)} × ${textoNum(nf)}`, true),
+        destaque("ΔF por geração", pct(df, df < 0.01 ? 2 : 1), `${pct(df / L, 2)} por ano, com L = ${textoNum(L)} anos`),
+        destaque(`F após ${textoNum(t)} gerações`, pct(pa.F_acumulado(df, t), 1), "F₀ = 0; F_t = 1 − (1 − ΔF)^t"),
+        destaque(`F após ${textoNum(anos)} anos`, pct(pa.F_acumulado(df, anos / L), 1), `${fmt(anos / L, 2)} gerações`),
+      ]);
+      if (alvo >= 4 * nf) {
+        html += aviso(`Com ${textoNum(nf)} fêmeas, o Ne nunca chega a ${textoNum(alvo)}: o máximo, com infinitos machos, é 4·Nf = ${fmt(4 * nf, 0)}.`);
+      } else {
+        const nmAlvo = pa.n_machos_para_ne(alvo, nf);
+        const texto = `Para Ne de ${textoNum(alvo)} (ΔF de ${pct(pa.delta_F(alvo), 2)} por geração) com ${textoNum(nf)} fêmeas, são precisos ${fmt(nmAlvo, 1)} machos não aparentados por geração, isto é, ${Math.ceil(nmAlvo - 1e-9)}.`;
+        html += nmAlvo > nf ? aviso(`${texto} São mais machos que fêmeas: fechado, esse rebanho não chega lá e precisa comprar reprodutores ou sêmen de fora.`) : nota(texto);
+      }
+      html += nota("Wright: Ne = 4·Nm·Nf/(Nm + Nf) e ΔF = 1/(2Ne), que equivale a 1/(8Nm) + 1/(8Nf) da FAO. Supõe acasalamento ao acaso; com seleção, o ΔF real é maior, e os números são um limite inferior.");
+      return html;
+    },
+  });
+
+  // =================================================================================
+  // 5. Taxas: intervalos e tamanho amostral
+  // =================================================================================
+  function barraIc(rotulo, lo, hi, p) {
+    const lim = (x) => Math.min(1, Math.max(0, x));
+    const fora = lo < -1e-12 || hi > 1 + 1e-12;
+    const esq = lim(lo) * 100;
+    const dir = lim(hi) * 100;
+    return `<div class="ic-linha"><span>${rotulo}</span><div class="ic-trilho">` +
+      `<span class="ic-faixa${fora ? " fora" : ""}" style="left:${esq.toFixed(2)}%;width:${Math.max(dir - esq, 0).toFixed(2)}%"></span>` +
+      `<span class="ic-ponto" style="left:${(p * 100).toFixed(2)}%"></span></div></div>`;
+  }
+  registrar("f-ic", {
+    saida: "r-ic",
+    exemplos: {
+      aborto: { texto: "Aborto: 3 de 30 gestações (Exemplo 7 de caprinos); o Wald dá limite negativo", campos: { "tx-x": "3", "tx-n": "30" } },
+    },
+    calcular() {
+      const n = lerNum("tx-n", "o número de animais", { min: 1, inteiro: true });
+      const x = lerNum("tx-x", "o número de eventos", { min: 0, inteiro: true });
+      if (x > n) throw new ErroEntrada("O número de eventos não pode passar o de animais.");
+      const conf = lerNum("tx-conf", "a confiança", { min: 50, max: 100, maxAberto: true }) / 100;
+      const p = x / n;
+      const metodos = [
+        ["Wald", taxas.ic_wald(x, n, conf)],
+        ["Wilson", taxas.ic_wilson(x, n, conf)],
+        ["Exato", taxas.ic_exato(x, n, conf)],
+      ];
+      const [, wi] = metodos[1];
+      const [, ex] = metodos[2];
+      let html = destaques([
+        destaque("Taxa", pct(p, 1), `${x} de ${n}`, true),
+        destaque(`Wilson, ${fmt(conf * 100, 0)}%`, `${pct(wi[0], 1)} a ${pct(wi[1], 1)}`, "o recomendado"),
+        destaque(`Exato, ${fmt(conf * 100, 0)}%`, `${pct(ex[0], 1)} a ${pct(ex[1], 1)}`, "Clopper-Pearson, o conservador"),
+      ]);
+      html += `<div class="ic-graf" aria-hidden="true">${metodos.map(([nome, [lo, hi]]) => barraIc(nome, lo, hi, p)).join("")}` +
+        `<div class="ic-eixo"><span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span></div></div>`;
+      html += tabela(
+        [{ t: "Método" }, { t: "Inferior", num: true }, { t: "Superior", num: true }, { t: "Amplitude", num: true }, { t: "Observação" }],
+        metodos.map(([nome, [lo, hi]]) => {
+          let obs = "";
+          if (nome === "Wald" && (lo < -1e-12 || hi > 1 + 1e-12)) obs = "impossível: limite fora de 0 a 100%";
+          else if (nome === "Wald" && (x === 0 || x === n)) obs = "impossível: amplitude zero";
+          return [nome, { h: pct(lo, 1), classe: lo < -1e-12 ? "alto" : "" }, { h: pct(hi, 1), classe: hi > 1 + 1e-12 ? "alto" : "" }, pct(hi - lo, 1), obs];
+        })
+      );
+      html += nota(`Cada animal vale ${pct(1 / n, 1)} nesta taxa. O Wald, p ± z·√[p(1 − p)/n], aparece só para mostrar por que falha com n pequeno.`);
+      return html;
+    },
+  });
+
+  registrar("f-n", {
+    saida: "r-n",
+    calcular() {
+      const p1 = lerNum("tx-p1", "a taxa do ano 1", { min: 0, minAberto: true, max: 100, maxAberto: true }) / 100;
+      const p2 = lerNum("tx-p2", "a taxa do ano 2", { min: 0, minAberto: true, max: 100, maxAberto: true }) / 100;
+      if (p1 === p2) throw new ErroEntrada("As duas taxas precisam ser diferentes.");
+      const alfa = lerNum("tx-alfa", "a significância", { min: 0, minAberto: true, max: 50 }) / 100;
+      const poder = lerNum("tx-poder", "o poder", { min: 1, max: 100, maxAberto: true }) / 100;
+      const variancia = valorDe("tx-var");
+      const nd = lerNum("tx-ndisp", "o número de animais por ano", { min: 1, inteiro: true });
+      const bruto = taxas.tamanho_amostral_duas_proporcoes(p1, p2, alfa, poder, variancia);
+      const nG = taxas.n_por_grupo(p1, p2, alfa, poder, variancia);
+      const pod = taxas.poder_duas_proporcoes(p1, p2, nd, alfa);
+      let html = destaques([
+        destaque("Animais por ano", fmt(nG, 0), `${fmt(bruto, 1)} sem arredondar; variância ${variancia}`, true),
+        destaque(`Poder com ${nd} por ano`, pct(pod, 0), `para detectar ${pct(p1, 1)} contra ${pct(p2, 1)}`),
+      ]);
+      if (nd < nG) html += aviso(`Com ${nd} animais por ano, o rebanho tem ${pct(pod, 0)} de chance de detectar essa mudança, e não ${pct(poder, 0)}. Agregue anos, use janelas móveis de 12 meses ou acompanhe por CUSUM.`);
+      html += nota(`Teste bilateral de duas proporções com α = ${pct(alfa, 0)} e poder de ${pct(poder, 0)}. A variância agrupada é a forma de Fleiss sem correção de continuidade; a separada, a forma simples do relatório de leite. O poder usa a aproximação normal com a variância agrupada sob H₀.`);
+      return html;
+    },
+  });
+
+  // =================================================================================
+  // 6. Índice econômico de dois reprodutores
+  // =================================================================================
+  const linhasIndice = linhasEditaveis("ie-linhas", "ie", [
+    { chave: "carac", rotulo: "Característica" }, { chave: "ve", rotulo: "Valor econômico", num: true },
+    { chave: "dp", rotulo: "DP da PTA", num: true }, { chave: "pta-a", rotulo: "PTA do reprodutor A", num: true },
+    { chave: "rel-a", rotulo: "REL do reprodutor A", num: true }, { chave: "pta-b", rotulo: "PTA do reprodutor B", num: true },
+    { chave: "rel-b", rotulo: "REL do reprodutor B", num: true },
+  ], 1, 15);
+  const indiceLeite = (veLeite, veDpr) => [
+    ["Leite (kg)", veLeite, "250", "800", "0,95", "320", "0,65"],
+    ["Gordura (kg)", "20", "10", "40", "0,95", "27", "0,65"],
+    ["Proteína (kg)", "28", "7", "27", "0,95", "18", "0,65"],
+    ["Vida produtiva (meses)", "90", "1,5", "0,2", "0,95", "2,0", "0,65"],
+    ["DPR (pontos)", veDpr, "1,2", "-1,5", "0,95", "1,8", "0,65"],
+    ["ECS", "-250", "0,12", "0,12", "0,95", "-0,10", "0,65"],
+  ];
+  registrar("f-ie", {
+    saida: "r-ie",
+    linhas: linhasIndice,
+    exemplos: {
+      padrao: { linhas: indiceLeite("0,05", "60") },
+      solidos: {
+        texto: "Mesmos touros num pagamento por sólidos: leite a −R$ 0,02/kg e DPR a R$ 120 por ponto (relatório de leite)",
+        linhas: indiceLeite("-0,02", "120"),
+      },
+    },
+    calcular() {
+      const nomeA = valorDe("ie-nome-a").trim() || "A";
+      const nomeB = valorDe("ie-nome-b").trim() || "B";
+      const linhas = linhasIndice.ler();
+      if (!linhas.length) throw new ErroEntrada("Preencha pelo menos uma característica.");
+      const rotulos = ["o valor econômico", "o DP da PTA", `a PTA de ${nomeA}`, `a REL de ${nomeA}`, `a PTA de ${nomeB}`, `a REL de ${nomeB}`];
+      const c = linhas.map(({ n, v }) => {
+        const nums = v.slice(1).map((txt, k) => {
+          const x = paraNumero(txt);
+          if (!Number.isFinite(x)) throw new ErroEntrada(`Linha ${n}: preencha ${rotulos[k]} com um número.`);
+          return x;
+        });
+        const [ve, dp, ptaA, relA, ptaB, relB] = nums;
+        if (!(dp > 0)) throw new ErroEntrada(`Linha ${n}: o DP da PTA precisa ser maior que 0.`);
+        if (!(relA >= 0 && relA <= 1) || !(relB >= 0 && relB <= 1)) throw new ErroEntrada(`Linha ${n}: as REL vão de 0 a 1.`);
+        return { nome: v[0] || `Característica ${n}`, ve, dp, ptaA, relA, ptaB, relB };
+      });
+      const ve = c.map((x) => x.ve);
+      const dps = c.map((x) => x.dp);
+      const iA = indices.indice_economico(ve, c.map((x) => x.ptaA));
+      const iB = indices.indice_economico(ve, c.map((x) => x.ptaB));
+      const dpA = indices.dp_erro_indice(ve, c.map((x) => x.relA), dps);
+      const dpB = indices.dp_erro_indice(ve, c.map((x) => x.relB), dps);
+      const pA = indices.prob_superar(iA, iB, dpA, dpB);
+      const enf = ve.every((x) => x === 0) ? ve.map(() => NaN) : indices.enfase_relativa(ve, dps);
+      const lider = iA >= iB ? nomeA : nomeB;
+      const pLider = iA >= iB ? pA : 1 - pA;
+      const reais = (x) => `R$ ${fmt(x, 1)}`;
+      let html = destaques([
+        destaque(`Índice de ${esc(nomeA)}`, reais(iA), `DP do erro: ${reais(dpA)}`, iA >= iB),
+        destaque(`Índice de ${esc(nomeB)}`, reais(iB), `DP do erro: ${reais(dpB)}`, iB > iA),
+        destaque(`${esc(lider)} é de fato melhor`, pct(pLider, 1), `vence por ${reais(Math.abs(iA - iB))}; Φ[(I_A − I_B)/√(DP_A² + DP_B²)]`),
+      ]);
+      const totalLinha = { classe: "total", celulas: ["Índice", "", "", reais(iA), "", reais(iB), ""] };
+      html += tabela(
+        [{ t: "Característica" }, { t: "VE", num: true }, { t: `PTA ${esc(nomeA)}`, num: true }, { t: `${esc(nomeA)} × VE`, num: true },
+          { t: `PTA ${esc(nomeB)}`, num: true }, { t: `${esc(nomeB)} × VE`, num: true }, { t: "Ênfase", num: true }],
+        c.map((x, k) => [esc(x.nome), fmtLivre(x.ve), fmtLivre(x.ptaA, true), fmtSinal(x.ve * x.ptaA, 1), fmtLivre(x.ptaB, true), fmtSinal(x.ve * x.ptaB, 1), pct(enf[k], 1)])
+          .concat([totalLinha])
+      );
+      html += nota("I = Σ VE·PTA. O DP do erro de cada índice é √[Σ VE²·(1 − REL)·DP²], supondo erros independentes entre PTAs. A ênfase relativa é |VE|·DP/Σ|VE|·DP: os percentuais publicados dos índices são ênfases, não pesos brutos.");
+      return html;
+    },
+  });
+
+  // =================================================================================
+  // 7. Lactação padronizada
+  // =================================================================================
+  const controlesCabra = "10   2,63\n40   2,90\n70   3,00\n100  2,66\n130  2,62\n160  2,31\n190  2,04\n220  1,94\n250  1,61\n280  1,51";
+  registrar("f-lac", {
+    saida: "r-lac",
+    exemplos: {
+      ovelha: {
+        texto: "Exemplo 1 de ovinos: ovelha com desmame no dia 30, secagem no dia 200 e controles dos dias 100 e 130 perdidos (TMM)",
+        campos: { "lac-especie": "ovino", "lac-secagem": "200", "lac-separacao": "30", "lac-comprimento": "", "lac-intervalo": "",
+          "lac-controles": "40   2,15\n70   1,73\n160  0,96\n190  0,72" },
+      },
+      vaca: {
+        texto: "Vaca fictícia do relatório de leite: 10 controles, TIM até 305 dias",
+        campos: { "lac-especie": "bovino", "lac-secagem": "", "lac-separacao": "", "lac-comprimento": "305", "lac-intervalo": "",
+          "lac-controles": "12   24,0\n42   29,5\n73   30,2\n101  28,6\n133  27,1\n162  25,0\n194  23,4\n224  21,2\n255  19,5\n286  17,6" },
+      },
+    },
+    calcular() {
+      const especie = valorDe("lac-especie");
+      const unidade = especie === "ovino" ? "L" : "kg";
+      const linhas = linhasDe("lac-controles");
+      if (!linhas.length) throw new ErroEntrada("Escreva os controles: um por linha, com o dia e a produção.");
+      const dias = [];
+      const prod = [];
+      linhas.forEach(({ texto, n }) => {
+        const t = texto.split(/[\s;\t]+/).filter(Boolean).map(paraNumero);
+        if (t.length !== 2 || t.some((x) => !Number.isFinite(x))) throw new ErroEntrada(`Linha ${n} dos controles: escreva o dia e a produção, como “40 2,90”.`);
+        if (t[0] < 0 || t[1] < 0) throw new ErroEntrada(`Linha ${n} dos controles: dia e produção não podem ser negativos.`);
+        dias.push(t[0]);
+        prod.push(t[1]);
+      });
+      for (let i = 1; i < dias.length; i++) {
+        if (!(dias[i] > dias[i - 1])) throw new ErroEntrada(`Os dias dos controles precisam ser crescentes: a linha com o dia ${textoNum(dias[i])} vem depois do dia ${textoNum(dias[i - 1])}.`);
+      }
+      const secagem = lerNum("lac-secagem", "o dia da secagem", { opcional: true, min: 0, minAberto: true });
+      const separacao = lerNum("lac-separacao", "o dia da separação das crias", { opcional: true, min: 0 });
+      const comprimento = lerNum("lac-comprimento", "o comprimento padrão", { opcional: true, min: 0, minAberto: true });
+      const intervalo = lerNum("lac-intervalo", "o intervalo médio", { opcional: true, min: 0, minAberto: true });
+      let res;
+      let inicio = 0;
+      const extras = [];
+      if (especie === "bovino") {
+        const comp = comprimento === null ? 305 : comprimento;
+        const fim = secagem === null ? comp : Math.min(secagem, comp);
+        res = la.fleischmann(dias, prod, fim);
+        if (separacao !== null) extras.push("A separação das crias não se aplica ao TIM de vacas e foi ignorada.");
+      } else {
+        res = la.lactacao_pequenos_ruminantes(dias, prod, especie, secagem, separacao, comprimento, intervalo);
+        if (separacao !== null) inicio = separacao;
+      }
+      const avisos = res.avisos.concat(extras);
+      const listaAvisos = avisos.length ? `<ul class="avisos">${avisos.map((a) => `<li>${esc(a)}</li>`).join("")}</ul>` : "";
+      if (!Number.isFinite(res.total)) {
+        return aviso("A lactação não foi calculada.") + listaAvisos;
+      }
+      const duracao = res.ate_dia - inicio;
+      let html = destaques([
+        destaque(especie === "bovino" ? "Leite na lactação (TIM)" : `Leite na lactação (${res.tipo})`, `${fmt(res.total, 1)} ${unidade}`, `do dia ${textoNum(inicio)} ao dia ${fmt(res.ate_dia, 0)}`, true),
+        destaque("Situação", res.completa ? "Completa" : "Incompleta", res.completa ? `${plural(res.n_controles, "controle", "controles")} no cálculo` : "o cálculo parou num hiato"),
+        destaque("Média no período", `${fmt(duracao > 0 ? res.total / duracao : NaN, 2)} ${unidade}/dia`, `${fmt(duracao, 0)} dias`),
+      ]);
+      html += listaAvisos;
+      const trechos = res.trechos || [];
+      html += tabela(
+        [{ t: "Do dia", num: true }, { t: "Ao dia", num: true }, { t: "Dias", num: true }, { t: `Produção (${unidade}/dia)`, num: true }, { t: unidade, num: true }],
+        trechos.map((t) => [fmt(t.de, 0), fmt(t.ate, 0), fmt(t.dias, 0),
+          Math.abs(t.m_inicio - t.m_fim) < 1e-12 ? fmt(t.m_inicio, 2) : `${fmt(t.m_inicio, 2)} → ${fmt(t.m_fim, 2)}`, fmt(t.kg, 1)])
+          .concat([{ classe: "total", celulas: ["", "", fmt(trechos.reduce((s, t) => s + t.dias, 0), 0), "Total", fmt(res.total, 1)] }])
+      );
+      html += nota(especie === "bovino"
+        ? "TIM da ICAR Procedure 2: do parto ao dia 305 (ou à secagem, se antes). O primeiro trecho repete o 1º controle desde o parto, e o último repete o último controle até o fim."
+        : `Regras da Seção 16 da ICAR: ${res.tipo === "TMM" ? "só a ordenha exclusiva, desde a separação das crias" : "ordenha desde o parto"}; intervalo máximo entre controles de ${fmt(2 * (intervalo === null ? (especie === "caprino" ? 30 : 35) : intervalo), 0)} dias; fim pela secagem ou pelo último controle mais meio intervalo, limitado ao comprimento padrão.`);
+      return html;
+    },
+  });
+
+  // =================================================================================
+  // 8. Ganho genético
+  // =================================================================================
+  const linhasVias = linhasEditaveis("ga-linhas", "ga", [
+    { chave: "via", rotulo: "Via de seleção" }, { chave: "sel", rotulo: "Selecionados (%)", num: true },
+    { chave: "r", rotulo: "Acurácia r", num: true }, { chave: "l", rotulo: "Intervalo de gerações (anos)", num: true },
+  ], 1, 8);
+  registrar("f-ga", {
+    saida: "r-ga",
+    linhas: linhasVias,
+    exemplos: {
+      padrao: {
+        linhas: [
+          ["Pais de bodes", "20", "0,79", "5,5"],
+          ["Pais de cabras", "20", "0,79", "5,5"],
+          ["Mães de bodes", "5", "0,60", "4"],
+          ["Mães de cabras", "80", "0,55", "4"],
+        ],
+      },
+      comercial: {
+        texto: "Exemplo 5 de caprinos: rebanho comercial que compra bodes entre os 15% melhores (REL 0,60, r = 0,775), em 2 vias",
+        linhas: [["Bodes", "15", "0,775", "4"], ["Cabras", "80", "0,55", "4"]],
+      },
+    },
+    calcular() {
+      const sa = lerNum("ga-sa", "o σa", { min: 0, minAberto: true });
+      const unidade = esc(valorDe("ga-unidade").trim());
+      const linhas = linhasVias.ler();
+      if (!linhas.length) throw new ErroEntrada("Preencha pelo menos uma via de seleção.");
+      const vias = linhas.map(({ n, v }) => {
+        const [sel, r, L] = v.slice(1).map(paraNumero);
+        if (!(sel > 0 && sel < 100)) throw new ErroEntrada(`Linha ${n}: a fração selecionada vai de 0 a 100%, sem os extremos.`);
+        if (!(r >= 0 && r <= 1)) throw new ErroEntrada(`Linha ${n}: a acurácia r vai de 0 a 1.`);
+        if (!(L > 0)) throw new ErroEntrada(`Linha ${n}: o intervalo de gerações precisa ser maior que 0.`);
+        const i = ganho.intensidade_selecao(sel / 100);
+        return { nome: v[0] || `Via ${n}`, sel, r, L, i };
+      });
+      const total = ganho.ganho_vias(vias.map((x) => [x.i, x.r, x.L]), sa);
+      const somaIr = vias.reduce((s, x) => s + x.i * x.r, 0);
+      const somaL = vias.reduce((s, x) => s + x.L, 0);
+      const maior = vias.reduce((a, b) => (b.i * b.r > a.i * a.r ? b : a));
+      let html = destaques([
+        destaque("Ganho genético por ano", `${fmt(total, 1)} ${unidade}`, `Σ(i·r)·σa/ΣL = ${fmt(somaIr, 3)} × ${fmt(sa, 2)} / ${fmt(somaL, 1)}`, true),
+        destaque("Por geração", `${fmt(total * somaL / vias.length, 1)} ${unidade}`, `intervalo médio de ${fmt(somaL / vias.length, 2)} anos`),
+        destaque("Via que mais pesa", esc(maior.nome), `${pct(maior.i * maior.r / somaIr, 0)} da soma de i·r`),
+      ]);
+      html += tabela(
+        [{ t: "Via" }, { t: "Selecionados", num: true }, { t: "i", num: true }, { t: "r", num: true }, { t: "L", num: true },
+          { t: "i·r", num: true }, { t: "Parte do ganho", num: true }, { t: `Sozinha (${unidade}/ano)`, num: true }],
+        vias.map((x) => [esc(x.nome), fmtLivre(x.sel) + "%", fmt(x.i, 3), fmt(x.r, 3), fmt(x.L, 1), fmt(x.i * x.r, 3),
+          pct(x.i * x.r / somaIr, 0), fmt(ganho.resposta_selecao(x.i, x.r, sa, x.L), 1)])
+      );
+      html += nota("i = φ(z)/p, com z = Φ⁻¹(1 − p), para seleção por truncamento numa população grande. A última coluna é a equação do criador aplicada à via sozinha (i·r·σa/L); com várias vias, somam-se os i·r e os L, e não os ganhos. Números teóricos: o ganho realizado costuma ficar bem abaixo.");
+      return html;
+    },
+  });
+
+  // ---------- subabas das calculadoras
+  const subtabs = Array.from(document.querySelectorAll(".subtab"));
+  function mostrarCalc(nome) {
+    if (!subtabs.some((b) => b.dataset.calc === nome)) nome = subtabs[0].dataset.calc;
+    subtabs.forEach((b) => {
+      const sel = b.dataset.calc === nome;
+      b.setAttribute("aria-selected", String(sel));
+      b.tabIndex = sel ? 0 : -1;
+      document.getElementById("calc-" + b.dataset.calc).hidden = !sel;
+    });
+    try { localStorage.setItem("central-melhoramento:calc", nome); } catch (e) { /* armazenamento indisponível */ }
+  }
+  subtabs.forEach((b, k) => {
+    b.addEventListener("click", () => mostrarCalc(b.dataset.calc));
+    b.addEventListener("keydown", (ev) => {
+      const passo = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[ev.key];
+      let alvo = null;
+      if (passo) alvo = subtabs[(k + passo + subtabs.length) % subtabs.length];
+      else if (ev.key === "Home") alvo = subtabs[0];
+      else if (ev.key === "End") alvo = subtabs[subtabs.length - 1];
+      if (alvo) {
+        ev.preventDefault();
+        mostrarCalc(alvo.dataset.calc);
+        alvo.focus();
+      }
+    });
+  });
+  let inicial = null;
+  try { inicial = localStorage.getItem("central-melhoramento:calc"); } catch (e) { /* armazenamento indisponível */ }
+  mostrarCalc(inicial || subtabs[0].dataset.calc);
+
+  document.querySelectorAll("[data-ir]").forEach((b) => b.addEventListener("click", () => {
+    mostrarCalc(b.dataset.ir);
+    const suave = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    document.getElementById("calculadoras").scrollIntoView({ behavior: suave ? "smooth" : "auto", block: "start" });
+    document.getElementById("sub-" + b.dataset.ir).focus({ preventScroll: true });
+  }));
+
+  // ---------- "De onde vem": abre o relatório no leitor, na seção citada
+  const RELATORIOS = { corte: DOCS.corte[0], leite: DOCS.leite[0], caprinos: DOCS.caprinos[0], ovinos: DOCS.ovinos[0] };
+  document.querySelectorAll("[data-doc]").forEach((b) => b.addEventListener("click", () => {
+    const [, titulo, caminho] = RELATORIOS[b.dataset.doc];
+    openDoc(titulo, caminho, b.dataset.secao);
+  }));
+})();
 </script>
