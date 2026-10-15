@@ -11,7 +11,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex,nofollow,noarchive">
     <meta name="googlebot" content="noindex,nofollow">
-    <title>Seabra Pequeños Rumiantes — Planes y Valores</title>
+    <title>Seabra — Planes y Valores</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500;6..72,600;6..72,700&family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -27,30 +27,86 @@
             --ocre: #c8813c;
             --ocre-ink: #ffffff;
             --ocre-text: #9f652d; /* ocre escurecido — 4,8:1 sobre branco, o --ocre original só dá 3,15:1 (insuficiente p/ texto normal) */
+            --ocre-on-dark: #f0c493; /* ocre claro para texto sobre o --ink */
             --font-serif: 'Newsreader', Georgia, 'Times New Roman', serif;
             --font-sans: 'Archivo', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         }
 
-        body { font-family: var(--font-sans); line-height: 1.55; color: var(--ink); max-width: 210mm; margin: 0 auto; padding: 15mm 18mm; background: #fff; position: relative; }
+        body {
+            font-family: var(--font-sans);
+            line-height: 1.55;
+            color: var(--ink);
+            max-width: 210mm;
+            margin: 0 auto;
+            padding: 15mm 18mm;
+            background: #fff;
+            position: relative;
+        }
 
-        body::before { content: "Pequeños Rumiantes"; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-30deg); font-family: var(--font-serif); font-size: 90px; color: var(--ink); opacity: 0.025; font-weight: 700; pointer-events: none; z-index: -1; white-space: nowrap; }
+        body::before {
+            content: "Pequeños Rumiantes";
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-30deg);
+            font-family: var(--font-serif);
+            font-size: 90px;
+            color: var(--ink);
+            opacity: 0.025;
+            font-weight: 700;
+            pointer-events: none;
+            z-index: -1;
+            white-space: nowrap;
+        }
+        body[data-seg="bovinos-corte"]::before { content: "Bovinos de Carne"; }
 
         .lang-switcher { position: absolute; top: 18px; right: 18mm; display: flex; gap: 6px; z-index: 10; }
         .lang-switcher .lang-btn { display: inline-block; padding: 4px 11px; border-radius: 4px; font-size: 11px; font-weight: 600; text-decoration: none; color: var(--ink-soft); background: var(--surface); border: 1px solid var(--line); letter-spacing: 0.5px; }
         .lang-switcher .lang-btn.active { background: var(--ocre-text); color: #ffffff; border-color: var(--ocre-text); }
 
-        .header { text-align: center; border-bottom: 2px solid var(--ink); padding-bottom: 22px; margin-bottom: 26px; margin-top: 18px; }
+        .header {
+            text-align: center;
+            border-bottom: 2px solid var(--ink);
+            padding-bottom: 22px;
+            margin-bottom: 26px;
+            margin-top: 18px;
+        }
         .header img { height: 60px; margin-bottom: 14px; }
         .header h1 { font-family: var(--font-serif); color: var(--ink); font-size: 28px; font-weight: 600; letter-spacing: -0.3px; margin-bottom: 6px; }
         .header .subtitle { color: var(--ink-soft); font-size: 14px; }
-        .header .confidential { display: inline-block; color: var(--ink-faint); padding: 4px 0 0; font-size: 11px; font-weight: 600; margin-top: 10px; letter-spacing: 1.5px; text-transform: uppercase; }
+
+        /* ===== SELETOR DE SEGMENTO ===== */
+        .seg-switch { display: flex; width: max-content; max-width: 100%; margin: 18px auto 0; padding: 4px; gap: 2px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); }
+        .seg-switch button { font: inherit; font-size: 13px; font-weight: 600; color: var(--ink-soft); background: transparent; border: 0; border-radius: 999px; padding: 8px 18px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
+        .seg-switch button:hover { color: var(--ink); }
+        .seg-switch button[aria-selected="true"] { background: var(--ink); color: #fff; }
+        .seg-switch button:focus-visible { outline: 2px solid var(--ocre); outline-offset: 2px; }
+        .soon { display: inline-block; font-size: 9.5px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--ocre-text); border: 1px solid currentColor; border-radius: 4px; padding: 1px 6px; line-height: 1.4; }
+        .seg-switch button[aria-selected="true"] .soon { color: var(--ocre-on-dark); }
 
         .intro { font-size: 14px; color: var(--ink-soft); max-width: 640px; margin: 0 auto 26px; text-align: center; }
 
-        h2 { font-family: var(--font-serif); color: var(--ink); font-size: 20px; font-weight: 600; margin: 34px 0 14px 0; padding-bottom: 7px; border-bottom: 1px solid var(--line); }
+        h2 {
+            font-family: var(--font-serif);
+            color: var(--ink);
+            font-size: 20px;
+            font-weight: 600;
+            margin: 34px 0 14px 0;
+            padding-bottom: 7px;
+            border-bottom: 1px solid var(--line);
+        }
 
+        /* ===== TRÊS PLANOS ===== */
         .plans-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-bottom: 8px; }
-        .tier { border: 1px solid var(--line); border-radius: 8px; padding: 20px 18px; background: #fff; display: flex; flex-direction: column; page-break-inside: avoid; }
+        .tier {
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 20px 18px;
+            background: #fff;
+            display: flex;
+            flex-direction: column;
+            page-break-inside: avoid;
+        }
         .tier.featured { border: 1.5px solid var(--ocre); box-shadow: 0 2px 10px rgba(200,129,60,0.12); }
         .tier .tier-flag { font-size: 10px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 10px; height: 13px; }
         .tier.featured .tier-flag { color: var(--ocre-text); }
@@ -66,7 +122,9 @@
         .tier li:first-child { border-top: none; }
         .tier li::before { content: "+"; position: absolute; left: 0; top: 5px; color: var(--ocre); font-weight: 700; }
         .tier .tier-base { font-size: 11.5px; color: var(--ink-faint); font-style: italic; padding: 8px 0 0; }
+        .tier .new { font-size: 9.5px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; color: var(--ocre-text); margin-left: 4px; }
 
+        /* ===== COMPARATIVO ===== */
         .compare-wrap { page-break-inside: auto; }
         table.compare { width: 100%; border-collapse: collapse; font-size: 12.5px; margin-top: 4px; }
         table.compare th, table.compare td { padding: 7px 10px; text-align: left; border-bottom: 1px solid var(--line); }
@@ -79,9 +137,19 @@
         table.compare .val { font-size: 12px; font-weight: 600; color: var(--ink-soft); }
         table.compare tbody tr:hover td { background: var(--surface); }
         table.compare tbody tr.group:hover td { background: var(--surface); }
+        table.compare .new { font-size: 9.5px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; color: var(--ocre-text); margin-left: 6px; }
         .compare-note { font-size: 11.5px; color: var(--ink-faint); margin-top: 8px; }
 
-        .model-card { border: 1px solid var(--line); border-radius: 8px; padding: 20px 24px; margin-bottom: 14px; background: #fff; border-left: 4px solid var(--ocre); page-break-inside: avoid; }
+        /* ===== MODELOS ORGANIZACIONAIS ===== */
+        .model-card {
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 20px 24px;
+            margin-bottom: 14px;
+            background: #fff;
+            border-left: 4px solid var(--ocre);
+            page-break-inside: avoid;
+        }
         .model-card.alt { background: var(--surface); }
         .model-title-row { display: flex; justify-content: space-between; align-items: baseline; gap: 15px; margin-bottom: 8px; }
         .model-title { font-family: var(--font-serif); color: var(--ink); font-size: 18px; font-weight: 600; }
@@ -101,6 +169,21 @@
         .use-cases { background: var(--surface); padding: 11px 15px; border-radius: 6px; margin-top: 11px; font-size: 12.5px; color: var(--ink-soft); }
         .use-cases strong { color: var(--ink); }
 
+        /* ===== BOVINOS DE CORTE ===== */
+        .soon-banner { border: 1px solid var(--line); border-left: 4px solid var(--ocre); border-radius: 0 8px 8px 0; background: var(--surface); padding: 16px 20px; margin: 0 0 22px; font-size: 13.5px; color: var(--ink-soft); }
+        .soon-banner strong { color: var(--ink); }
+        .soon-banner .soon { margin-right: 8px; vertical-align: 1px; }
+        .bc-note { font-size: 12.5px; color: var(--ink-soft); margin-top: 10px; }
+        .bc-note strong { color: var(--ink); }
+        .coming-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        .coming { border: 1px solid var(--line); border-top: 3px solid var(--ocre); border-radius: 8px; padding: 16px 18px; background: #fff; page-break-inside: avoid; }
+        .coming h3 { font-family: var(--font-serif); font-size: 16px; font-weight: 600; color: var(--ink); margin-bottom: 6px; }
+        .coming p { font-size: 12.5px; color: var(--ink-soft); }
+        .bc-cta { text-align: center; margin: 22px 0 6px; }
+        .bc-cta a { display: inline-block; background: var(--ocre-text); color: #fff; text-decoration: none; font-weight: 700; font-size: 14px; padding: 12px 24px; border-radius: 8px; }
+        .bc-cta a:hover { background: #8a5726; }
+
+        /* ===== COMO CONTRATAR ===== */
         .how-to { background: var(--surface); border: 1px solid var(--line); padding: 22px; border-radius: 8px; margin: 28px 0; }
         .how-to h2 { margin: 0 0 14px; border: none; padding: 0; }
         .how-to-steps { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
@@ -109,6 +192,7 @@
         .how-to-step strong { display: block; font-size: 14px; color: var(--ink); margin-bottom: 4px; }
         .how-to-step span { font-size: 12px; color: var(--ink-soft); }
 
+        /* ===== CONTATO ===== */
         .contact { background: linear-gradient(150deg, #0a0a0a 0%, #1a1a1a 55%, #262626 100%); color: #fff; padding: 26px; border-radius: 8px; text-align: center; margin-top: 26px; }
         .contact h2 { font-family: var(--font-serif); color: #fff; border: none; margin: 0 0 6px; padding: 0; font-weight: 600; }
         .contact p { font-size: 14px; opacity: 0.85; margin-bottom: 16px; }
@@ -126,15 +210,37 @@
 
         .page-break { page-break-before: always; }
 
+        @media (max-width: 680px) {
+            body { padding: 14px 16px 28px; }
+            body::before { font-size: 46px; }
+            .lang-switcher { position: static; justify-content: flex-end; }
+            .header { margin-top: 10px; }
+            .header h1 { font-size: 25px; }
+            .seg-switch button { padding: 8px 12px; font-size: 12.5px; gap: 6px; }
+            .plans-grid, .how-to-steps, .coming-grid { grid-template-columns: 1fr; }
+            .tier .tier-for { min-height: 0; }
+            table.compare th, table.compare td { padding: 6px 5px; }
+            table.compare thead th:not(:first-child) { width: auto; font-size: 10.5px; }
+            table.assoc th, table.assoc td { padding: 8px 6px; }
+            .model-card { padding: 18px 16px; }
+            .model-title-row { flex-direction: column; gap: 4px; }
+            .model-price small { text-align: left; }
+            .contact-btn { width: 100%; }
+        }
+
+        @media (max-width: 420px) {
+            .seg-switch .soon { display: none; } /* o aviso "em breve" continua no topo do painel do BC */
+        }
+
         @media print {
             body { padding: 12mm 14mm; }
-            .lang-switcher { display: none; }
-            .tier, .model-card, .how-to-step { page-break-inside: avoid; }
+            .lang-switcher, .seg-switch, .bc-cta { display: none; }
+            .tier, .model-card, .how-to-step, .coming { page-break-inside: avoid; }
             table.compare thead th, .contact { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         }
     </style>
 </head>
-<body>
+<body data-seg="pequenos-ruminantes">
 
 <div class="lang-switcher">
     <a href="/planos" class="lang-btn">PT</a>
@@ -145,42 +251,52 @@
 <div class="header">
     <img src="/docs-seabra/Logo_png.png" alt="Seabra">
     <h1>Planes y Valores</h1>
-    <div class="subtitle">Seabra Pequeños Rumiantes — Sistema de Gestión para Caprinos y Ovinos</div>
+    <div class="subtitle">SeabraApp — Sistema de Gestión de Rebaños</div>
+    <div class="seg-switch" role="tablist" aria-label="Segmento">
+        <button type="button" role="tab" id="tab-pr" data-seg-tab="pequenos-ruminantes" aria-controls="painel-pr" aria-selected="true">Pequeños Rumiantes</button>
+        <button type="button" role="tab" id="tab-bc" data-seg-tab="bovinos-corte" aria-controls="painel-bc" aria-selected="false" tabindex="-1">Bovinos de Carne <span class="soon">próximamente</span></button>
+    </div>
 </div>
 
-<p class="intro">Tres planes para el productor, desde lo esencial de la rutina hasta la gestión completa con inteligencia de datos — más modelos dedicados para asociaciones e instituciones. Elija el ciclo mensual o anual, sin permanencia.</p>
+<!-- ================================================================== -->
+<!-- PEQUEÑOS RUMIANTES                                                 -->
+<!-- ================================================================== -->
+<div id="painel-pr" role="tabpanel" aria-labelledby="tab-pr" data-seg-panel="pequenos-ruminantes">
+
+<p class="intro">Caprinos y ovinos, leche y carne. Tres planes para el productor, desde lo esencial de la rutina hasta la gestión completa con inteligencia de datos — más modelos dedicados para asociaciones e instituciones. Elija el ciclo mensual o anual, sin permanencia.</p>
 
 <!-- ===== TRES PLANES ===== -->
 <div class="plans-grid">
 
     <div class="tier">
         <div class="tier-flag">&nbsp;</div>
-        <div class="tier-name">Iniciante</div>
+        <div class="tier-name">Inicial</div>
         <div class="tier-for">Para quien empieza a digitalizar el rebaño y quiere lo esencial de la rutina siempre a mano.</div>
         <div class="tier-price"><span class="cur">US$</span>5<span class="per">por mes · por establecimiento</span></div>
         <div class="tier-annual">En el plan anual, US$ 4.25/mes <span>(US$ 51/año — ahorre 15%)</span></div>
         <ul>
             <li>Rebaño, ficha y genealogía (pedigrí)</li>
             <li>Control lechero, producción diaria y pesaje (GMD)</li>
-            <li>Identificación electrónica (RFID)</li>
-            <li>Reproducción, nacimientos y eventos de vida</li>
-            <li>Notificaciones en la app y exportación CSV</li>
-            <li>Modo Desempeño y uso offline</li>
+            <li>Reproducción, estación de monta y nacimientos</li>
+            <li>Destete, venta, muerte, descarte y secado</li>
+            <li>PDF, Excel y CSV en todas las listas</li>
+            <li>Dictado por voz, Modo Rendimiento y uso offline</li>
         </ul>
     </div>
 
     <div class="tier">
         <div class="tier-flag">&nbsp;</div>
-        <div class="tier-name">Intermediario</div>
+        <div class="tier-name">Intermedio</div>
         <div class="tier-for">Para quien quiere organizar el rebaño por lotes, seguir indicadores y dividir el trabajo con el equipo.</div>
         <div class="tier-price"><span class="cur">US$</span>15<span class="per">por mes · por establecimiento</span></div>
         <div class="tier-annual">En el plan anual, US$ 12.75/mes <span>(US$ 153/año — ahorre 15%)</span></div>
-        <div class="tier-base">Todo lo de Iniciante, más:</div>
+        <div class="tier-base">Todo lo del Inicial, más:</div>
         <ul>
-            <li>Sector, corral, lote y manejo colectivo</li>
+            <li>Sector, corral, lote, manejo colectivo e historial de ubicación</li>
             <li>Dashboards, gráficos y análisis de producción</li>
+            <li>Aborto, clínica y análisis de leche</li>
             <li>Visitas técnicas y solicitudes</li>
-            <li>Foto en el perfil y lactancias cerradas</li>
+            <li>Asistente zootécnico y soporte humano en WhatsApp</li>
             <li>Hasta 2 colaboradores con permisos</li>
         </ul>
     </div>
@@ -191,14 +307,15 @@
         <div class="tier-for">Para quien decide con datos: genética, finanzas, inteligencia artificial y equipo sin límite.</div>
         <div class="tier-price"><span class="cur">US$</span>29<span class="per">por mes · por establecimiento</span></div>
         <div class="tier-annual">En el plan anual, US$ 24.65/mes <span>(US$ 295.80/año — ahorre 15%)</span></div>
-        <div class="tier-base">Todo lo de Intermediario, más:</div>
+        <div class="tier-base">Todo lo del Intermedio, más:</div>
         <ul>
+            <li>EML por foto: usted fotografía, el equipo Seabra evalúa<span class="new">nuevo</span></li>
             <li>Evaluación Morfológica Lineal, medidas y nutrición</li>
+            <li>Costo por kg producido y pedido de insumos<span class="new">nuevo</span></li>
             <li>Finanzas e historial completo por colaborador</li>
-            <li>Asistente IA con los datos de su rebaño</li>
+            <li>Asistente IA que consulta y registra datos, en la app y en WhatsApp</li>
             <li>Registro por foto, Transferencia de Embriones y títulos</li>
-            <li>Notificaciones por WhatsApp</li>
-            <li>Colaboradores ilimitados</li>
+            <li>Notificaciones por WhatsApp y colaboradores ilimitados</li>
         </ul>
     </div>
 
@@ -213,8 +330,8 @@
     <thead>
         <tr>
             <th>Funcionalidad</th>
-            <th>Iniciante</th>
-            <th>Intermediario</th>
+            <th>Inicial</th>
+            <th>Intermedio</th>
             <th>Pro</th>
         </tr>
     </thead>
@@ -222,48 +339,64 @@
         <tr class="group"><td colspan="4">Rebaño y perfil del animal</td></tr>
         <tr><td>Registro, ficha y edición de animales</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
         <tr><td>Genealogía y revisión de pedigrí</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+        <tr><td>Transferencia de animal a otro productor, por código<span class="new">nuevo</span></td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+        <tr><td>Vitrina de criadores</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
         <tr><td>Foto en el perfil y lactancias cerradas</td><td class="no">–</td><td class="yes">✓</td><td class="yes">✓</td></tr>
-        <tr><td>Registro por foto (lectura de ficha con IA)</td><td class="no">–</td><td class="no">–</td><td class="yes">✓</td></tr>
+        <tr><td>Registro por foto (lectura de ficha por IA)</td><td class="no">–</td><td class="no">–</td><td class="yes">✓</td></tr>
         <tr><td>Compartir perfil y títulos del animal</td><td class="no">–</td><td class="no">–</td><td class="yes">✓</td></tr>
 
         <tr class="group"><td colspan="4">Rutina y producción</td></tr>
-        <tr><td>Control lechero (dos ordeños)</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+        <tr><td>Control lechero (dos ordeños) e informe del control<span class="new">nuevo</span></td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
         <tr><td>Producción diaria y salida de leche</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
         <tr><td>Pesaje, GMD e identificación electrónica</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+        <tr><td>Destete en el manejo, con cambio de categoría<span class="new">nuevo</span></td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+        <tr><td>Dictado por voz en los registros</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
 
         <tr class="group"><td colspan="4">Reproducción y eventos de vida</td></tr>
-        <tr><td>Servicio, monta y diagnóstico gestacional</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
-        <tr><td>Nacimientos, muerte, venta, descarte y secado</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+        <tr><td>Monta, servicio y diagnóstico de gestación</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+        <tr><td>Estación de monta, con el padre sugerido por la fecha del parto<span class="new">nuevo</span></td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+        <tr><td>Nacimientos (con mortinatos), muerte, venta, descarte y secado</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+        <tr><td>Comunicación de nacimientos a la ABCC (caprinos, Brasil)<span class="new">nuevo</span></td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+        <tr><td>Aborto y clínica</td><td class="no">–</td><td class="yes">✓</td><td class="yes">✓</td></tr>
         <tr><td>Transferencia de Embriones (TE)</td><td class="no">–</td><td class="no">–</td><td class="yes">✓</td></tr>
+        <tr><td>Apareamiento: sugerencia de cruzamiento con parentesco</td><td class="no">–</td><td class="no">–</td><td class="yes">✓</td></tr>
 
         <tr class="group"><td colspan="4">Organización del rebaño</td></tr>
         <tr><td>Sector, corral, lote y movimientos</td><td class="no">–</td><td class="yes">✓</td><td class="yes">✓</td></tr>
         <tr><td>Manejo colectivo</td><td class="no">–</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+        <tr><td>Historial de ubicación y conferencia de corrales<span class="new">nuevo</span></td><td class="no">–</td><td class="yes">✓</td><td class="yes">✓</td></tr>
 
         <tr class="group"><td colspan="4">Gestión y decisión</td></tr>
         <tr><td>Dashboards y gráficos</td><td class="no">–</td><td class="yes">✓</td><td class="yes">✓</td></tr>
         <tr><td>Análisis de producción y lactancia</td><td class="no">–</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+        <tr><td>Análisis de leche (CCS, CBT, grasa, proteína)</td><td class="no">–</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+        <tr><td>Paneles de bajas y de clínica<span class="new">nuevo</span></td><td class="no">–</td><td class="no">–</td><td class="yes">✓</td></tr>
         <tr><td>Historial de registros y por colaborador</td><td class="no">–</td><td class="no">–</td><td class="yes">✓</td></tr>
         <tr><td>Finanzas (costos e ingresos)</td><td class="no">–</td><td class="no">–</td><td class="yes">✓</td></tr>
-        <tr><td>Nutrición y costos (dietas e insumos)</td><td class="no">–</td><td class="no">–</td><td class="yes">✓</td></tr>
+        <tr><td>Nutrición y costos (dietas, insumos, costo por litro)</td><td class="no">–</td><td class="no">–</td><td class="yes">✓</td></tr>
+        <tr><td>Pedido de insumos: cuánto comprar, en kg y en bolsas<span class="new">nuevo</span></td><td class="no">–</td><td class="no">–</td><td class="yes">✓</td></tr>
+        <tr><td>Carne: costo por kg producido, metas y ranking de reproductores<span class="new">nuevo</span></td><td class="no">–</td><td class="no">–</td><td class="yes">✓</td></tr>
 
         <tr class="group"><td colspan="4">Evaluación técnica</td></tr>
         <tr><td>Visitas técnicas y solicitudes</td><td class="no">–</td><td class="yes">✓</td><td class="yes">✓</td></tr>
         <tr><td>Evaluación Morfológica Lineal (EML) y medidas</td><td class="no">–</td><td class="no">–</td><td class="yes">✓</td></tr>
+        <tr><td>EML por foto: cámara guiada, evaluación por el equipo Seabra<span class="new">nuevo</span></td><td class="no">–</td><td class="no">–</td><td class="yes">✓</td></tr>
 
         <tr class="group"><td colspan="4">Inteligencia y avisos</td></tr>
-        <tr><td>Asistente IA con los datos del rebaño</td><td class="no">–</td><td class="no">–</td><td class="yes">✓</td></tr>
+        <tr><td>Asistente zootécnico y soporte humano en WhatsApp</td><td class="no">–</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+        <tr><td>Asistente IA que consulta y registra datos del rebaño (app y WhatsApp)</td><td class="no">–</td><td class="no">–</td><td class="yes">✓</td></tr>
         <tr><td>Notificaciones en la app</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
-        <tr><td>Notificaciones por WhatsApp</td><td class="no">–</td><td class="no">–</td><td class="yes">✓</td></tr>
+        <tr><td>Notificaciones y recordatorios por WhatsApp</td><td class="no">–</td><td class="no">–</td><td class="yes">✓</td></tr>
 
         <tr class="group"><td colspan="4">Equipo y datos</td></tr>
         <tr><td>Colaboradores con permisos</td><td class="val">—</td><td class="val">Hasta 2</td><td class="val">Ilimitado</td></tr>
-        <tr><td>Exportación CSV</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
-        <tr><td>Modo Desempeño (carga rápida)</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+        <tr><td>Exportación en PDF, Excel y CSV<span class="new">nuevo</span></td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+        <tr><td>En la computadora: rebaño en planilla y pantalla dividida<span class="new">nuevo</span></td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+        <tr><td>Modo Rendimiento (registro rápido)</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
         <tr><td>Funciona offline, con sincronización</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
     </tbody>
 </table>
-<p class="compare-note">Todos los planes funcionan en Android, iOS y Web sobre la misma base de datos, con backup automático en la nube y actualizaciones incluidas.</p>
+<p class="compare-note">Todos los planes funcionan en Android y en la Web (en iPhone y en la computadora, desde el navegador), sobre la misma base de datos, con respaldo automático en la nube y actualizaciones incluidas.</p>
 </div>
 
 <div class="page-break"></div>
@@ -276,20 +409,20 @@
         <div class="model-title">Asociación</div>
         <div class="model-price">descuento por asociado<small>sobre el plan elegido</small></div>
     </div>
-    <div class="model-subtitle">Para asociaciones con productores asociados, técnicos vinculados y gestión agregada del rebaño. Cada productor asociado contrata el plan que necesita, con descuento progresivo según el tamaño de la asociación.</div>
+    <div class="model-subtitle">Para asociaciones con productores asociados, técnicos vinculados y gestión agregada del rebaño. Cada productor asociado contrata el plan que necesita, con un descuento automático que crece con el número de asociados con suscripción activa.</div>
     <table class="assoc">
         <tr>
             <th>Plan</th>
-            <th>Hasta 30 asociados <span>· 20% off</span></th>
+            <th>Hasta 30 suscriptores <span>· 20% off</span></th>
             <th>Más de 30 <span>· 33% off</span></th>
         </tr>
         <tr>
-            <td>Iniciante</td>
+            <td>Inicial</td>
             <td><strong>US$ 4.00</strong>/mes<span class="ann">anual US$ 3.40/mes</span></td>
             <td><strong>US$ 3.35</strong>/mes<span class="ann">anual US$ 2.85/mes</span></td>
         </tr>
         <tr>
-            <td>Intermediario</td>
+            <td>Intermedio</td>
             <td><strong>US$ 12.00</strong>/mes<span class="ann">anual US$ 10.20/mes</span></td>
             <td><strong>US$ 10.05</strong>/mes<span class="ann">anual US$ 8.54/mes</span></td>
         </tr>
@@ -299,7 +432,7 @@
             <td><strong>US$ 19.43</strong>/mes<span class="ann">anual US$ 16.52/mes</span></td>
         </tr>
     </table>
-    <p class="assoc-note">Los descuentos se suman: el de la asociación se aplica al plan y, en el ciclo anual, se añade un 15% más sobre ese valor. Ej.: Pro con más de 30 asociados queda en US$ 19.43/mes (mensual) o US$ 16.52/mes (anual). Valores en US$ a confirmar.</p>
+    <p class="assoc-note">Los descuentos se suman: el de la asociación se aplica al plan y, en el ciclo anual, se añade un 15% más sobre ese valor. Ej.: Pro con más de 30 suscriptores queda en US$ 19.43/mes (mensual) o US$ 16.52/mes (anual). Valores en US$ a confirmar.</p>
     <strong style="font-size: 13px; color: var(--ink); display: block; margin-top: 12px;">Incluye, además de los planes individuales:</strong>
     <ul>
         <li>Panel administrativo de la asociación</li>
@@ -351,6 +484,76 @@
     </div>
 </div>
 
+</div>
+
+<!-- ================================================================== -->
+<!-- BOVINOS DE CARNE                                                   -->
+<!-- ================================================================== -->
+<div id="painel-bc" role="tabpanel" aria-labelledby="tab-bc" data-seg-panel="bovinos-corte" hidden>
+
+<div class="soon-banner">
+    <span class="soon">próximamente</span><strong>Seabra Bovinos de Carne está llegando a SeabraApp.</strong> Los valores de abajo ya están definidos. Escríbanos para recibir el aviso del lanzamiento.
+</div>
+
+<p class="intro">Un solo plan, con todo incluido. Lo que cambia de un rango a otro es la cantidad de establecimientos que usted administra en la misma cuenta.</p>
+
+<div class="plans-grid">
+
+    <div class="tier">
+        <div class="tier-name">Hasta 3 establecimientos</div>
+        <div class="tier-for">Para la operación de uno a tres establecimientos.</div>
+        <div class="tier-price"><span class="cur">R$</span>370<span class="per">por mes · en reales (BRL)</span></div>
+    </div>
+
+    <div class="tier">
+        <div class="tier-name">4 a 5 establecimientos</div>
+        <div class="tier-for">Para quien administra cuatro o cinco establecimientos.</div>
+        <div class="tier-price"><span class="cur">R$</span>500<span class="per">por mes · en reales (BRL)</span></div>
+    </div>
+
+    <div class="tier">
+        <div class="tier-name">6 a 10 establecimientos</div>
+        <div class="tier-for">Para grupos con seis a diez establecimientos.</div>
+        <div class="tier-price"><span class="cur">R$</span>700<span class="per">por mes · en reales (BRL)</span></div>
+    </div>
+
+</div>
+<p class="bc-note"><strong>Todos los rangos incluyen todas las funcionalidades.</strong> La suscripción de Bovinos de Carne es independiente de la de Pequeños Rumiantes. ¿Más de 10 establecimientos? Escríbanos.</p>
+
+<h2>Lo que trae Bovinos de Carne</h2>
+<div class="coming-grid">
+    <div class="coming">
+        <h3>Rebaño y planilla</h3>
+        <p>Cargue el rebaño completo por planilla (CSV o Excel), con revisión antes de grabar. Lista con filtros, ficha del animal y genealogía, hasta el toro del semen.</p>
+    </div>
+    <div class="coming">
+        <h3>Pesaje y ganancia de peso</h3>
+        <p>Pesaje en la manga al ritmo del manejo, ganancia media diaria por animal y por lote, y operaciones por lote.</p>
+    </div>
+    <div class="coming">
+        <h3>Reproducción</h3>
+        <p>Estación de monta, tacto, IATF y transferencia de embriones, con control de semen y termo, y protocolos que recuerdan la próxima etapa.</p>
+    </div>
+    <div class="coming">
+        <h3>Manejo y ciclo del animal</h3>
+        <p>Sesión de manejo animal por animal, parto, destete con madre y cría vinculadas, y bajas por muerte, venta o descarte.</p>
+    </div>
+    <div class="coming">
+        <h3>Gestión e indicadores</h3>
+        <p>Finanzas, valor de la arroba y nueve paneles de indicadores, exportables en CSV, Excel y PDF. Clínica y pluviómetro en la misma app.</p>
+    </div>
+    <div class="coming">
+        <h3>Varios establecimientos, una cuenta</h3>
+        <p>Hasta 10 establecimientos en la misma suscripción, transferencia de animales entre ellos y colaboradores con acceso propio.</p>
+    </div>
+</div>
+
+<div class="bc-cta">
+    <a href="https://wa.me/5521999366784?text=Quiero%20recibir%20el%20aviso%20del%20lanzamiento%20de%20Seabra%20Bovinos%20de%20Carne">Quiero recibir el aviso del lanzamiento &rarr;</a>
+</div>
+
+</div>
+
 <!-- ===== CÓMO CONTRATAR ===== -->
 <div class="how-to">
     <h2>Cómo contratar</h2>
@@ -391,9 +594,46 @@
 </div>
 
 <div class="footer">
-    <p><strong>Seabra Pequeños Rumiantes</strong> — Sistema de Gestión para Caprinos y Ovinos</p>
+    <p><strong>SeabraApp</strong> — Sistema de Gestión de Rebaños · Pequeños Rumiantes y Bovinos de Carne</p>
     <p>Valores sujetos a cambios sin previo aviso.</p>
 </div>
+
+<script>
+/* Seletor de segmento. O endereço guarda a escolha (#bovinos-corte), para dar
+   para mandar o link já aberto no BC; Pequenos Ruminantes é o padrão, sem hash. */
+(function () {
+    var SEGS = ['pequenos-ruminantes', 'bovinos-corte'];
+    var tabs = [].slice.call(document.querySelectorAll('[data-seg-tab]'));
+    var panels = [].slice.call(document.querySelectorAll('[data-seg-panel]'));
+    var langs = [].slice.call(document.querySelectorAll('.lang-switcher a'));
+
+    function show(seg, updateUrl) {
+        if (SEGS.indexOf(seg) < 0) seg = SEGS[0];
+        document.body.setAttribute('data-seg', seg);
+        tabs.forEach(function (t) {
+            var on = t.getAttribute('data-seg-tab') === seg;
+            t.setAttribute('aria-selected', on ? 'true' : 'false');
+            t.tabIndex = on ? 0 : -1;
+        });
+        panels.forEach(function (p) { p.hidden = p.getAttribute('data-seg-panel') !== seg; });
+        var hash = seg === SEGS[0] ? '' : '#' + seg;
+        langs.forEach(function (a) { a.href = a.getAttribute('href').split('#')[0] + hash; });
+        if (updateUrl) history.replaceState(null, '', location.pathname + location.search + hash);
+    }
+
+    tabs.forEach(function (t, i) {
+        t.addEventListener('click', function () { show(t.getAttribute('data-seg-tab'), true); });
+        t.addEventListener('keydown', function (e) {
+            if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+            var next = tabs[(i + (e.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length];
+            next.focus();
+            show(next.getAttribute('data-seg-tab'), true);
+        });
+    });
+    window.addEventListener('hashchange', function () { show(location.hash.slice(1), false); window.scrollTo(0, 0); });
+    show(location.hash.slice(1), false);
+})();
+</script>
 
 </body>
 </html>
