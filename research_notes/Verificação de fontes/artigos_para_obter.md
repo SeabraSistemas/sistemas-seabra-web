@@ -66,6 +66,20 @@ Segundo o OpenAlex (15/10/2026), estes artigos são de **acesso livre**. O texto
 | Cesarani et al. (2019). Genomic selection of milk fatty acid composition in Sarda dairy sheep. *J. Dairy Sci.* | 10.3168/jds.2018-15333 |
 | Granado-Tajada & Ugarte (2024). Impact of truncating historical data on prediction ability (Latxa). *Animal* | 10.1016/j.animal.2024.101245 |
 
+## Caprinos e leite: pagos que faltavam na lista (acesso UFF)
+
+Itens apontados nas verificações de caprinos e de leite (15/10/2026). DOIs conferidos no Crossref pelas verificações, exceto Elzo (1994), conferido na listagem do periódico (OUP).
+
+| Referência | DOI | Para quê |
+|---|---|---|
+| Paiva RDM et al. (2020). *Small Rumin. Res.* 192:106194 | 10.1016/j.smallrumres.2020.106194 | **Saanen brasileira:** endogamia, Ne e perda de 2,31 kg por 1% de F (só o resumo foi lido). Prioridade para o SeabraApp |
+| Danchin-Burge C et al. (2012). *Small Rumin. Res.* 108(1-3):36–44 | 10.1016/j.smallrumres.2012.03.016 | Ne e ancestrais efetivos de Saanen e Alpina na França |
+| Page ES (1954). Continuous inspection schemes. *Biometrika* 41(1/2):100–115 | 10.2307/2333009 | CUSUM para monitorar taxas (mastite, aborto) no rebanho |
+| Elzo MA (1994). *J. Anim. Sci.* 72(12):3055–3065 | 10.2527/1994.72123055x | REML multirracial (Girolando e cruzados) |
+| Elzo MA (1990). Covariances among sire × breed group of dam interaction effects in multibreed sire evaluation procedures. *J. Anim. Sci.* 68:4079–4099 | DOI não confirmado; buscar pelo título | Teoria multirracial citada no relatório de leite |
+
+Agresti e Coull (1998, *Am. Stat.* 52:119–126, DOI 10.1080/00031305.1998.10480550) não precisa da UFF: o autor mantém o PDF aberto em users.stat.ufl.edu.
+
 ## Ovinos leiteiros: pagos (acesso UFF)
 
 Segundo a verificação de ovinos (15/10/2026), DOIs conferidos no Crossref.
