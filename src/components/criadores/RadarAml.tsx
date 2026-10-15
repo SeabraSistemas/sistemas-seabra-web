@@ -80,6 +80,7 @@ export function RadarAml({
           <circle cx={CENTRO} cy={CENTRO} r={R_MEDALHAO} />
           <text x={CENTRO} y={CENTRO - 3} className="rd-total">
             {totalInt}
+            <tspan className="rd-max">/100</tspan>
           </text>
           <text x={CENTRO} y={CENTRO + 11} className="rd-pontos">
             {t('amlPontosLabel')}

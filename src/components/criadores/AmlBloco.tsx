@@ -40,7 +40,9 @@ export function AmlBloco({ aml }: { aml: AmlData }) {
         )}
         {(aml.totalFmt || aml.dataFmt) && (
           <span className="k">
-            {aml.totalFmt}
+            {/* As escalas não são óbvias para quem lê: nota de 1 a 9 por
+                característica e total de 0 a 100, então o máximo vai junto. */}
+            {aml.totalFmt && `${aml.totalFmt}/100`}
             {aml.totalFmt && aml.dataFmt && ' · '}
             {aml.dataFmt && t('amlAvaliadaEm', { data: aml.dataFmt })}
           </span>
@@ -76,7 +78,10 @@ export function AmlBloco({ aml }: { aml: AmlData }) {
               <span className="bt">
                 <span className={`bf ${faixa(p.valor)}`} style={{ width: `${(p.valor / 9) * 100}%` }} />
               </span>
-              <span className="bv">{p.valor}</span>
+              <span className="bv">
+                {p.valor}
+                <span className="bmax">/9</span>
+              </span>
             </div>
           ))}
         </div>
