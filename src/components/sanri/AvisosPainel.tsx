@@ -3,8 +3,10 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
+  QUANDO_CHEGA,
   ROTULO_SITUACAO,
   ROTULO_TIPO,
+  TIPOS_AVISO,
   linkWhatsapp,
   situacaoDoEnvio,
   type EnvioAviso,
@@ -27,10 +29,11 @@ function horaBR(iso: string): string {
 }
 
 /** Uma mensagem: o texto como vai ao grupo, com Copiar e Abrir no WhatsApp. */
-function CartaoMensagem({ tipo, texto, qtd }: { tipo: TipoAviso; texto: string; qtd: number }) {
+function CartaoMensagem({ tipo, texto, qtd }: { tipo: TipoAviso; texto: string | null; qtd: number }) {
   const [copiado, setCopiado] = useState(false);
 
   async function copiar() {
+    if (!texto) return;
     try {
       await navigator.clipboard.writeText(texto);
       setCopiado(true);
@@ -48,15 +51,22 @@ function CartaoMensagem({ tipo, texto, qtd }: { tipo: TipoAviso; texto: string; 
           {qtd} {qtd === 1 ? 'animal' : 'animais'}
         </span>
       </div>
-      <pre className="max-h-96 overflow-auto whitespace-pre-wrap break-words rounded-campo bg-ink px-4 py-3 font-mono text-sm leading-relaxed text-sage-100">
-        {texto}
-      </pre>
-      <div className="flex flex-wrap gap-2">
-        <PainelBotao onClick={copiar}>{copiado ? 'Copiado' : 'Copiar'}</PainelBotao>
-        <a href={linkWhatsapp(texto)} target="_blank" rel="noopener noreferrer" className={botao.contorno}>
-          Abrir no WhatsApp
-        </a>
-      </div>
+      <p className="-mt-2 text-xs font-medium text-ink-2">{QUANDO_CHEGA[tipo]}</p>
+      {texto ? (
+        <>
+          <pre className="max-h-96 overflow-auto whitespace-pre-wrap break-words rounded-campo bg-ink px-4 py-3 font-mono text-sm leading-relaxed text-sage-100">
+            {texto}
+          </pre>
+          <div className="flex flex-wrap gap-2">
+            <PainelBotao onClick={copiar}>{copiado ? 'Copiado' : 'Copiar'}</PainelBotao>
+            <a href={linkWhatsapp(texto)} target="_blank" rel="noopener noreferrer" className={botao.contorno}>
+              Abrir no WhatsApp
+            </a>
+          </div>
+        </>
+      ) : (
+        <p className="text-sm text-ink-2">{tipo === 'controle' ? 'Sem controle leiteiro neste dia.' : 'Sem pesagem neste dia.'}</p>
+      )}
     </section>
   );
 }
@@ -126,9 +136,10 @@ export function AvisosPainel({
       <div className="flex flex-wrap items-center gap-2">
         <h2 className="text-lg font-semibold text-ink">Avisos do dia</h2>
         <Info>
-          Todo dia às 6h o robô da Seabra manda estas duas mensagens no grupo da Sanri, com os dados lançados no app. O diagnóstico
-          de gestação lista quem tem de {textos?.dgDiasMin ?? 60} a 155 dias de cobertura e ainda não teve DG nela; só vai quando há
-          cabra na lista. Se o envio falhar, ele tenta de novo até as 8h30. Aqui dá para ver a mensagem de qualquer dia e mandar à mão.
+          O robô da Seabra manda estas mensagens no grupo, com os dados lançados no app: manejos todo dia às 6h; diagnóstico de
+          gestação ({textos?.dgDiasMin ?? 60} a 155 dias de cobertura, sem DG nela) e partos da semana na segunda às 6h; controle
+          leiteiro e pesagem às 20h dos dias em que houve — até 15 animais vai a lista de cada um, acima disso o resumo por baia. Se
+          o envio falhar, ele tenta de novo por 2 horas. Aqui dá para ver as mensagens de qualquer dia e mandar à mão.
         </Info>
       </div>
 
@@ -157,8 +168,9 @@ export function AvisosPainel({
 
       {textos ? (
         <div className="grid gap-4 lg:grid-cols-2">
-          <CartaoMensagem tipo="dg" texto={textos.dg} qtd={textos.dgQtd} />
-          <CartaoMensagem tipo="manejos" texto={textos.manejos} qtd={textos.manejosQtd} />
+          {TIPOS_AVISO.map((t) => (
+            <CartaoMensagem key={t} tipo={t} texto={textos[t]} qtd={textos[`${t}Qtd` as const]} />
+          ))}
         </div>
       ) : (
         ok && <Aviso tom="erro">Não foi possível montar os avisos deste dia.</Aviso>

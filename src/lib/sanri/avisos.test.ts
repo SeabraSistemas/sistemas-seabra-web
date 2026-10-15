@@ -41,9 +41,15 @@ test('linkWhatsapp leva o texto inteiro, com * e quebras de linha', () => {
 });
 
 describe('mapTextos', () => {
-  test('jsonb do banco → TextosAviso', () => {
-    const t = mapTextos({ data: '2026-10-15', dg: 'a', dg_qtd: 3, manejos: 'b', manejos_qtd: 2, dg_dias_min: 60 });
-    assert.deepEqual(t, { data: '2026-10-15', dg: 'a', dgQtd: 3, manejos: 'b', manejosQtd: 2, dgDiasMin: 60 });
+  test('jsonb do banco → TextosAviso; controle e pesagem nulos quando não houve', () => {
+    const t = mapTextos({
+      data: '2026-10-15', dg: 'a', dg_qtd: 3, partos: 'p', partos_qtd: 1, manejos: 'b', manejos_qtd: 2,
+      controle: null, controle_qtd: 0, pesagem: 'kg', pesagem_qtd: 4, dg_dias_min: 60,
+    });
+    assert.deepEqual(t, {
+      data: '2026-10-15', dg: 'a', dgQtd: 3, partos: 'p', partosQtd: 1, manejos: 'b', manejosQtd: 2,
+      controle: null, controleQtd: 0, pesagem: 'kg', pesagemQtd: 4, dgDiasMin: 60,
+    });
   });
   test('sem os textos → null', () => {
     assert.equal(mapTextos({ dg_qtd: 1 }), null);

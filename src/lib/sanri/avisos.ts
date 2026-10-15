@@ -2,19 +2,29 @@
  * Avisos diários do grupo de WhatsApp da Sanri — regras puras (sem banco, sem tela).
  *
  * Quem monta e manda as mensagens é o banco do app (aviso_grupo_textos e
- * aviso_grupo_enviar, migration 20261015160000_aviso_grupo_whatsapp_sanri.sql):
- * o robô posta no grupo às 06:00. O painel só mostra o mesmo texto, deixa
- * copiar ou abrir no WhatsApp, e diz se o envio do dia saiu.
+ * aviso_grupo_enviar, migrations 20261015160000 e 20261015180000 do app):
+ * o robô posta no grupo — manejos todo dia às 6h, DG e partos na segunda às
+ * 6h, controle leiteiro e pesagem às 20h dos dias em que houve. Fica à parte
+ * das notificações oficiais do app. O painel só mostra o mesmo texto, deixa
+ * copiar ou abrir no WhatsApp, e diz se o envio saiu.
  */
 
-export type TipoAviso = 'dg' | 'manejos';
+export type TipoAviso = 'manejos' | 'dg' | 'partos' | 'controle' | 'pesagem';
 
 export interface TextosAviso {
   data: string;
   dg: string;
   dgQtd: number;
+  partos: string;
+  partosQtd: number;
   manejos: string;
   manejosQtd: number;
+  /** null = não houve controle leiteiro (do dia ou lançado no dia). */
+  controle: string | null;
+  controleQtd: number;
+  /** null = não houve pesagem (do dia ou lançada no dia). */
+  pesagem: string | null;
+  pesagemQtd: number;
   dgDiasMin: number;
 }
 
@@ -43,9 +53,23 @@ export const ROTULO_SITUACAO: Record<SituacaoEnvio, string> = {
 };
 
 export const ROTULO_TIPO: Record<TipoAviso, string> = {
-  dg: 'Diagnóstico de gestação',
   manejos: 'Manejos do dia',
+  dg: 'Diagnóstico de gestação',
+  partos: 'Partos previstos da semana',
+  controle: 'Controle leiteiro',
+  pesagem: 'Pesagem',
 };
+
+/** Quando cada aviso chega no grupo (o banco decide pelo horário de Brasília). */
+export const QUANDO_CHEGA: Record<TipoAviso, string> = {
+  manejos: 'Todo dia às 6h',
+  dg: 'Toda segunda às 6h',
+  partos: 'Toda segunda às 6h',
+  controle: 'Às 20h, nos dias com controle',
+  pesagem: 'Às 20h, nos dias com pesagem',
+};
+
+export const TIPOS_AVISO: TipoAviso[] = ['manejos', 'dg', 'partos', 'controle', 'pesagem'];
 
 /** Link que abre o WhatsApp com o texto pronto — a pessoa escolhe o grupo. */
 export function linkWhatsapp(texto: string): string {
@@ -69,12 +93,19 @@ export function mapTextos(v: unknown): TextosAviso | null {
   if (!v || typeof v !== 'object') return null;
   const o = v as Record<string, unknown>;
   if (typeof o.dg !== 'string' || typeof o.manejos !== 'string') return null;
+  const texto = (v: unknown) => (typeof v === 'string' && v.trim() ? v : null);
   return {
     data: String(o.data ?? ''),
     dg: o.dg,
     dgQtd: Number(o.dg_qtd) || 0,
+    partos: texto(o.partos) ?? '',
+    partosQtd: Number(o.partos_qtd) || 0,
     manejos: o.manejos,
     manejosQtd: Number(o.manejos_qtd) || 0,
+    controle: texto(o.controle),
+    controleQtd: Number(o.controle_qtd) || 0,
+    pesagem: texto(o.pesagem),
+    pesagemQtd: Number(o.pesagem_qtd) || 0,
     dgDiasMin: Number(o.dg_dias_min) || 60,
   };
 }

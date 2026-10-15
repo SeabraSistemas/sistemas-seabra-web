@@ -1,7 +1,7 @@
 import 'server-only';
 import { publicClient } from '@/lib/adm/supabase-admin';
 import { propriedadeApp } from './config';
-import { mapTextos, type EnvioAviso, type TextosAviso, type TipoAviso } from './avisos';
+import { mapTextos, TIPOS_AVISO, type EnvioAviso, type TextosAviso, type TipoAviso } from './avisos';
 
 export interface LeituraAvisos {
   configurado: boolean;
@@ -40,7 +40,7 @@ export async function getAvisos(data: string): Promise<LeituraAvisos> {
 
     const c = cfg.data as { grupo_jid: string | null; grupo_nome: string | null; ativo: boolean } | null;
     const envios: EnvioAviso[] = ((status.data ?? []) as LinhaStatus[])
-      .filter((l) => l.tipo === 'dg' || l.tipo === 'manejos')
+      .filter((l) => (TIPOS_AVISO as string[]).includes(l.tipo))
       .map((l) => ({
         data: l.data,
         tipo: l.tipo as TipoAviso,
