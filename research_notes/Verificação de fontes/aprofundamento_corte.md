@@ -307,3 +307,110 @@ O texto resume: "Os fatores de correção para o efeito da idade da vaca sobre o
 
 > O BIF padroniza o peso à desmama em 205 dias e a idade da vaca com fatores aditivos: Adj. 205 = [(PD − PN)/idade] × 205 + PN + ajuste de idade da vaca, e, para o sobreano, Adj. 365 = [(Peso final − PD)/dias] × 160 + Adj. 205, com 247 para 452 dias e 345 para 550 dias. A única tabela do BIF (Apêndice 3.1, 9ª ed.) soma, na desmama, +60 lb (machos) e +54 lb (fêmeas) para vacas de 2 anos, +40 e +36 para 3 anos, +20 e +18 para 4 anos e +20 e +18 para 11 anos ou mais (0 entre 5 e 10 anos); para o peso ao nascer, +8, +5, +2 e +3 lb; e o próprio BIF manda substituir esses fatores pelos da raça sempre que existirem. Os programas brasileiros adotam outras idades-padrão (ABCZ: 210, 365 e 450 dias no CDP de 2023, com interpolação entre pesagens; ANCP: 120, 210, 365 e 450 dias, com janelas de ±45 a 90 dias) e tratam a idade da vaca como efeito fixo no modelo, sem publicar fatores. Em Nelore, os fatores publicados (Paz et al., 1999, multiplicativos, base de 8 anos; Bocchi et al., 2004, regressões quadráticas por região) mostram máximo entre 6 e 9 anos e queda após os 12, com diferenças de cerca de 5 a 8 kg entre a vaca de 3 anos e o máximo, bem menores que os 27 kg do BIF para vacas de 2 anos.
 
+---
+
+## Lacuna 3. Possible Change (BIF): fórmula exata e tabela por característica
+
+### 3.1 Fórmula oficial e escala de acurácia
+
+**Fontes:** BIF Guidelines 9ª ed., p. 73 (impressa; PDF p. 75, conferida visualmente) e BIF Guidelines Wiki, página "Possible Change" (`https://guidelines.beefimprovement.org/index.php/Possible_Change`, editada em 12/04/2021 por Bruce L. Golden, a partir de trabalho de Matt Spangler). **O relatório v1 diz que a fórmula "aparece corrompida" nessa página. Ela é recuperável do código LaTeX da página e confere com o livro.**
+
+```
+BIF Accuracy  = 1 − √( Prediction error variance / Additive genetic variance )            (BIF 9, p. 73)
+r(EPD,BV)     = √( (Additive genetic variance − Prediction error variance) / Additive genetic variance )
+r(EPD,BV)     = √( 1 − (1 − BIF)² )          BIF = 1 − √( 1 − r² )
+
+Confidence range:  CR = EPD ± t (1 − accuracy) σA / 2                                      (BIF 9, p. 73)
+Wiki:              PC = t · (1 − a_BIF) · σu / 2
+```
+
+- σA (ou σu) é "the standard deviation of breeding values for the trait" (desvio-padrão aditivo genético), e t é 1 ou 2. O livro: "For most applications t is 1.0 so that the confidence range is equal to the EPD plus and minus the standard error of prediction. This range provides a 68% chance of including the true progeny difference."
+- A wiki: "One standard prediction error means the true value should fall within the range of plus or minus one possible change from the EPD 68% of the time... [with t = 2] 95% of the time." E: "When calculating the possible change table values, inbreeding is assumed to be zero."
+- O livro: "Using accuracy as defined by BIF, the standard error of prediction is linear with respect to the accuracy value", e "Possible change values are different for each trait, reflecting the units of measurement and amount of genetic variation associated with each trait (the σA)". A wiki recomenda "that possible change tables should be clearly labelled as representing 68% or 95% confidence ranges".
+- A divisão por 2 existe porque a DEP é metade do valor genético. Como PC = t·(1−a)·σA/2, a tabela é linear na acurácia BIF, e o valor em acurácia zero é σA/2.
+- **Não existe tabela unificada do BIF.** A wiki diz que "Organizations involved in producing EPDs will often provide a table of 'possible change' values", e cada organização usa seus σA.
+
+### 3.2 Tabela por característica de fonte oficial: Red Angus Association (EUA)
+
+Fonte: `https://redangus.org/genetics/epd-possible-change/` (lida em 15/10/2026). O texto diz que "the true genetic value of each genetic prediction would be expected to fall within (plus or minus) one standard deviation 2/3 of the time". Exemplo da própria página: "a 60 lb yearling weight EPD had an accuracy of .30... between 42 and 78 lbs two-thirds of the time (60 lb YW EPD +/- possible change of 18)". Linhas copiadas (unidades em libras para pesos; STAY em %; MARB, YG e BF em unidades próprias):
+
+| ACC | CED | BW | WW | YW | MILK | STAY | CW | REA |
+|---|---|---|---|---|---|---|---|---|
+| 0,0 | 7,8 | 3 | 16,3 | 25,9 | 11,9 | 11,7 | 20,5 | 0,36 |
+| 0,3 | 5,5 | 2,1 | 11,4 | 18,1 | 8,3 | 8,2 | 14,3 | 0,25 |
+| 0,5 | 3,9 | 1,5 | 8,1 | 12,9 | 6 | 5,8 | 10,2 | 0,18 |
+| 0,7 | 2,4 | 0,9 | 4,9 | 7,8 | 3,6 | 3,5 | 6,1 | 0,11 |
+| 0,9 | 0,8 | 0,3 | 1,6 | 2,6 | 1,2 | 1,2 | 2,0 | 0,04 |
+
+**Verificação numérica minha:** todas as colunas contínuas seguem PC(a) = (1 − a)·PC(0), com erro máximo de 0,3 a 0,5 só nas colunas de valores inteiros arredondados (ME, HPG). Logo, a tabela é BIF e linear. Para YW, 25,9 × 0,7 = 18,1 e 25,9 × 0,2 = 5,2. Os σA implícitos são o dobro da linha 0,0: WW 32,6 lb, YW 51,8 lb, BW 6,0 lb e MILK 23,8 lb.
+
+A página da American Angus Association (`angus.org/.../accuracy-and-possible-change`) respondeu 403 para a rotina de coleta. A cópia salva numa tentativa anterior só tinha o menu do site, sem a tabela.
+
+### 3.3 Tabela da ANCP (sumário 2026, PDF p. 105): é a única brasileira, e usa outra escala
+
+- O texto da ANCP: "A possível mudança é uma forma simples de expressar o intervalo de confiança da DEP para uma dada probabilidade... A possível mudança depende diretamente da acurácia e da variância genética de uma determinada característica." Nível "de 68% de probabilidade". Colunas: DIPP (meses), MP120, MP210, DP365, DP450 (kg), DPE365 (cm) e DAOL (cm²).
+- Linhas copiadas:
+
+| Acurácia (%) | DIPP | MP120 | MP210 | DP365 | DP450 | DPE365 | DAOL |
+|---|---|---|---|---|---|---|---|
+| 5 | ±0,32 | ±1,00 | ±3,02 | ±5,18 | ±8,23 | ±0,539 | ±1,47 |
+| 30 | ±0,28 | ±0,95 | ±2,88 | ±4,95 | ±7,86 | ±0,515 | ±1,40 |
+| 50 | ±0,26 | ±0,87 | ±2,62 | ±4,50 | ±7,14 | ±0,47 | ±1,27 |
+| 70 | ±0,22 | ±0,71 | ±2,16 | ±3,71 | ±5,88 | ±0,39 | ±1,05 |
+| 90 | ±0,13 | ±0,44 | ±1,32 | ±2,26 | ±3,59 | ±0,24 | ±0,64 |
+| 99 | ±0,04 | ±0,14 | ±0,43 | ±0,73 | ±1,16 | ±0,08 | ±0,21 |
+
+- **Teste numérico (meu):** as sete colunas reproduzem **PC = σ·√(1 − a²)** (a escala "r"), com σ = 0,32 (DIPP), 1,00 (MP120), 3,02 (MP210), 5,19 (DP365), 8,24 (DP450), 0,54 (DPE365) e 1,47 (DAOL); erro máximo de 0,005 (0,026 no DIPP, por arredondamento). Já a fórmula BIF, com os mesmos σ, daria PC = (1 − a)·σ, ou seja, 4,12 para DP450 a 50% e 0,08 a 99%. Se a "Acurácia" do sumário for a BIF, como a própria ANCP declara, a tabela de possível mudança **subestima a incerteza de animais de acurácia alta e superestima a de acurácia média**. **[INFERÊNCIA]** Não sei qual das duas está errada (o texto ou a tabela), e isso precisa ser perguntado à ANCP.
+- A ANCP não publica a tabela para as demais DEPs (STAY, 3P, PE450, ACAB etc.). A ABCZ não publica possível mudança. A GenSys usa classes A, B e C de acurácia. A Geneplus não publica.
+- Observação sobre texto da ANCP: "o cálculo é o recomendado pela BIF, que varia linearmente de acordo com o número de filhos avaliados". O que é linear na escala BIF é o erro-padrão de predição em função da acurácia (BIF 9, p. 73), e não a acurácia em função do número de filhos.
+
+### 3.4 O que continua em aberto
+- Escala efetiva da acurácia nos sumários da ANCP, da ABCZ/Embrapa, da Geneplus e da GenSys (BIF ou r), e o tratamento do fator (1 + F).
+- σA por característica de Nelore publicados por programa, para montar uma tabela brasileira em escala BIF (a ANCP só publica a tabela pronta; os σA implícitos da tabela dela estão acima).
+- Acurácia de animais genotipados no ssGBLUP: a ANCP diz que ela mede "capacidade preditiva" e que "não é diretamente comparável" à tradicional, de modo que a fórmula de PC pode não valer para eles.
+
+### 3.5 Sugestão de texto para o relatório (substitui o trecho "A fórmula de PC do BIF aparece corrompida...")
+
+> A "Possible Change" do BIF é PC = t·(1 − a_BIF)·σA/2, em que σA é o desvio-padrão aditivo genético da característica, a_BIF = 1 − √(PEV/σ²A) e t vale 1 (intervalo de 68%) ou 2 (95%); a conversão para a correlação é r = √(1 − (1 − a_BIF)²) (BIF Guidelines, 9ª ed., p. 73). Como a_BIF entra linearmente, a tabela de cada raça é uma reta em (1 − a). Não há tabela única do BIF: cada associação publica a sua, como a Red Angus (YW: ±25,9 lb em acurácia 0, ±12,9 em 0,5 e ±2,6 em 0,9). No Brasil, só a ANCP publica a tabela (DP450: ±8,23 kg em 5% e ±1,16 kg em 99%), e os números dela seguem σ·√(1 − a²), não a fórmula BIF, o que exige confirmar com a ANCP qual é a escala da coluna "Acurácia". Para um produto, o cálculo deve ser feito pela fórmula, com a escala declarada na tela.
+
+---
+
+## Lacuna 4. Repetibilidade do peso à desmama em vacas de corte (MPPA)
+
+**Resultado principal:** a literatura aberta que consegui ler dá valores **entre 0,22 e 0,52**, acima da faixa de 0,15 a 0,35 que o relatório usa no MPPA. Há uma única estimativa direta para Nelore (0,33). Para taurinos, os números diretos vêm de artigos pagos, e eu só obtive um (NZ, 0,51). Para cada estimativa, indico se é **direta** (feita pelo autor) ou **derivada** (calculada por mim a partir de componentes de variância).
+
+### 4.1 Estimativas
+
+| Rebanho | Estimativa | Tipo e fonte |
+|---|---|---|
+| Nelore, a pasto, Fazenda Tapirus (SP), 899 bezerros, peso ajustado a 270 dias | **0,33 ± 0,04** (PD); 0,31 ± 0,04 (GMD nascimento-desmama); 0,19 ± 0,03 (PN) | **Direta.** Souza JC, Brulé AO, Ferraz Filho PB, Oliveira JAL, Alencar MM (1994). *R. Bras. Zootec.* 23(1):133–139 (Embrapa Infoteca, `https://www.infoteca.cnptia.embrapa.br/infoteca/bitstream/doc/40526/1/Repetibilidade.pdf`; sem DOI no Crossref). Método: correlação intraclasse de meios-irmãos maternos, com ano, época, sexo e ordem de parto como efeitos fixos. "Resultados muito semelhantes foram obtidos com os dois métodos de ajustamento para peso aos 270 dias" |
+| Teste de progênie comercial da Beef + Lamb New Zealand Genetics, cinco fazendas de morro, 6.978 pesos à desmama (só vacas que pariram todo ano ficaram nos dados) | **0,51 ± 0,03** (peso à desmama), com h²d = 0,14 ± 0,02 e h²m = 0,20 ± 0,07 | **Direta.** Weik F et al. (2021), *Animals* 11(9):2509, DOI 10.3390/ani11092509, Tabela 4 (PMC8467944). Modelo animal com efeitos direto, materno, ambiente permanente e covariância; ASReml. Componentes: σ²a 84,37, σ²m 122,38, σam −53,77, σ²me 187,87, σ²e 235,03. O texto: "The permanent environmental effect of the dam on WWT was high (0.51)" e cita Meyer et al., para Hereford australiano, com 0,20 |
+| Composto tropical Montana (Brasil), peso à desmama, modelos M1 a M10 | **0,22 a 0,24** (bezerros de touros diferentes) e **0,27 a 0,30** (mesmo touro) | **Derivada** (cálculo meu) dos componentes da Tabela 4 de Medeiros et al. (2026), *Genes* 17(2):173, DOI 10.3390/genes17020173 (PMC12940800). Por exemplo, M1: σ²a 181,73, σ²m 107,21, σam −63,57, σ²mpe 100,76, σ²e 468,08, soma 794,2, e r = (0,25 × 181,73 + 107,21 − 63,57 + 100,76)/794,2 = 0,239. M10: 0,222 |
+| Exemplo do próprio relatório v1 (σ²a 100, σ²m 40, σam −15, σ²p 30, σ²e 230) | 0,21 (touros diferentes) a 0,23 (mesmo touro) | **Derivada** (cálculo meu). Mostra que o conjunto de parâmetros do exemplo implica repetibilidade de cerca de 0,2 |
+| Hereford e Angus americanos | 0,42 (Hereford), 0,52 (Angus), 0,42 (conjunto) | **Não verificada.** Vem de um trecho de busca do resumo de Minyard JA & Dinkel CA (1965), *J. Anim. Sci.* 24:1072–1074, DOI 10.2527/jas1965.2441072x (866 bezerros de 378 vacas). O site da OUP bloqueou o acesso (403). Listada nos pagos |
+
+**Fórmula usada nas estimativas derivadas [INFERÊNCIA, álgebra padrão de modelo direto-materno]:** a covariância entre os pesos à desmama de dois bezerros da mesma vaca é 0,25·σ²a (meios-irmãos, touros diferentes; 0,5·σ²a se for o mesmo touro) + σ²m + σam + σ²pe, porque cov(a do bezerro, m da vaca) = 0,5·σam e aparece duas vezes. A variância fenotípica é σ²P = σ²a + σ²m + σam + σ²pe + σ²e. A repetibilidade é essa covariância dividida por σ²P.
+
+**Observação importante.** A repetibilidade depende de quanto a estrutura de dados separa "efeito da vaca" de "efeito de bezerro": no Composto Montana, o próprio artigo alerta que a média de bezerros por vaca (1,77) limita a separação entre σ²m e σ²pe, e por isso os componentes mudam de 107 para 69 entre modelos. A repetibilidade derivada varia menos (0,22 a 0,24) do que os componentes, e esse é um argumento a favor de usá-la direto no MPPA.
+
+### 4.2 Resultado para o MPPA (cálculo com a fórmula do relatório, MPPA = fator × desvio, com fator = n·r/(1 + (n−1)·r))
+
+| r | 1 cria | 2 crias | 3 crias | 4 crias | 6 crias |
+|---|---|---|---|---|---|
+| 0,20 | 0,200 | 0,333 | 0,429 | 0,500 | 0,600 |
+| 0,30 | 0,300 | 0,462 | 0,562 | 0,632 | 0,720 |
+| 0,40 | 0,400 | 0,571 | 0,667 | 0,727 | 0,800 |
+| 0,50 | 0,500 | 0,667 | 0,750 | 0,800 | 0,857 |
+
+Os números mostram que passar de r = 0,25 para r = 0,33 (Souza et al., 1994) eleva o fator de uma cria de 0,25 para 0,33, e o de quatro crias de 0,57 para 0,66. O ranking das vacas muda pouco, mas o valor de MPPA esperado muda.
+
+### 4.3 O que continua em aberto
+- Estimativas **diretas** recentes (últimos 20 anos) de repetibilidade do peso à desmama em Nelore e em taurinos tropicais: não achei nenhuma em acesso aberto além das acima.
+- O BIF 9 define MPPA no glossário ("An estimate of a cow's future superiority or inferiority for a repeatable trait (such as progeny weaning weight) based upon the cow's past production in comparison to her contemporaries, her number of past records, and the repeatability of the trait") mas **não dá fórmula nem valor de repetibilidade**.
+- Artigos de Kress & Burfening (1972), *J. Anim. Sci.* 35:327–335 (DOI 10.2527/jas1972.352327x, MPPA em vacas Hereford) e Vanmiddlesworth, Brown & Johnson (1977), *J. Anim. Sci.* 45:1247–1253 (DOI 10.2527/jas1977.4561247x, repetibilidade do peso do bezerro em Hereford e Angus) são os mais úteis para taurinos e estão pagos. Também Kilkenny (1968), *Animal Science* 10:483–486, DOI 10.1017/s0003356100026507 (Cambridge exige acesso).
+- ANCP publica **PAC (kg de bezerro desmamado por vaca por ano)** com média de 174,04 kg para Nelore (sumário 2026, PDF p. 106), que é uma medida de produtividade da vaca, mas o sumário não publica a repetibilidade dela.
+
+### 4.4 Sugestão de texto para o relatório (substitui "As notas não encontraram a repetibilidade do peso à desmama para vacas de corte")
+
+> A repetibilidade do peso à desmama de bezerros da mesma vaca é, em Nelore, de 0,33 ± 0,04 (Souza et al., 1994, 899 bezerros a pasto, peso a 270 dias). Em bovinos comerciais da Nova Zelândia, ficou em 0,51 ± 0,03 (Weik et al., 2021), e componentes de variância do composto tropical Montana implicam 0,22 a 0,30, conforme os bezerros sejam de touros diferentes ou do mesmo. Como o MPPA depende de r, o relatório deve rodar r = 0,2; 0,3 e 0,5, em vez de 0,15 a 0,35, e usar 0,3 como valor central para Nelore até haver estimativa da própria população.
+
