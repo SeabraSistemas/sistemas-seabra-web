@@ -1,6 +1,6 @@
 # Artigos pagos para obter pelo acesso institucional
 
-Esta lista reúne as fontes primárias dos relatórios de **corte** e **leite** que **não têm acesso livre**. O status foi conferido no OpenAlex em 15/10/2026, e os metadados (ano, periódico, volume e páginas) no Crossref.
+Esta lista reúne as fontes primárias dos quatro relatórios que **não têm acesso livre** (pagas, para o acesso da UFF) e, no fim, os **documentos bloqueados para robôs**, que abrem no navegador sem acesso institucional. O status foi conferido no OpenAlex em 15/10/2026, e os metadados (ano, periódico, volume e páginas) no Crossref.
 
 Todas as outras referências centrais dos dois relatórios estão abertas e serão lidas diretamente. Entre elas: VanRaden 2008, Legarra et al. 2009, Aguilar et al. 2010, Christensen & Lund 2010, Misztal et al. 2014, Gianola & Foulley 1983, Meuwissen & Luo 1992, Meuwissen et al. 2001, Daetwyler et al. 2008, Garrick et al. 2009, Legarra & Reverter 2018, Jamrozik & Schaeffer 1997, Swalve 2000, VanRaden 1997, VanRaden et al. 2004 e 2009, Schaeffer 1994 (MACE), Ravagnolo & Misztal 2000, Van Tassell et al. 2003, Hazel 1943 (PMC1209225) e Dempster & Lerner 1950 (PMC1209482).
 
@@ -65,7 +65,34 @@ Segundo o OpenAlex (15/10/2026), estes artigos são de **acesso livre**. O texto
 | Cesarani et al. (2019). Genomic selection of milk fatty acid composition in Sarda dairy sheep. *J. Dairy Sci.* | 10.3168/jds.2018-15333 |
 | Granado-Tajada & Ugarte (2024). Impact of truncating historical data on prediction ability (Latxa). *Animal* | 10.1016/j.animal.2024.101245 |
 
+## Ovinos leiteiros: pagos (acesso UFF)
+
+Segundo a verificação de ovinos (15/10/2026), DOIs conferidos no Crossref.
+
+| Referência | DOI | Para quê |
+|---|---|---|
+| Gutiérrez JP et al. (2007). *Small Rumin. Res.* 70(2-3):233–238 | 10.1016/j.smallrumres.2006.03.009 | Herdabilidades da Assaf |
+| de la Fuente LF et al. (1996). *Livest. Prod. Sci.* 45(2-3):171–178 | 10.1016/0301-6226(96)00003-6 | Escala linear de úbere em ovelhas |
+| Rendel JM, Robertson A (1950). *J. Genet.* 50(1):1–8 | 10.1007/bf02986789 | Ganho genético por vias de seleção |
+| Wilson EB (1927). *J. Am. Stat. Assoc.* 22(158):209–212 | 10.1080/01621459.1927.10502953 | Intervalo de Wilson para taxas |
+| Brown LD, Cai TT, DasGupta A (2001). *Stat. Sci.* 16(2):101–133 | 10.1214/ss/1009213286 | Comparação de intervalos para proporções (Project Euclid bloqueou robôs; pode estar aberto no navegador) |
+| Falconer DS, Mackay TFC. *Introduction to Quantitative Genetics* (livro) | sem DOI | Índice de seleção; checar a biblioteca da UFF |
+
 Barillet (2007, *Small Rumin. Res.*, DOI 10.1016/j.smallrumres.2007.01.004) e Ramón et al. (2010, *J. Dairy Sci.* 93:3303) aparecem nas notas de ovinos como pagos ou sem versão aberta encontrada.
+
+## Documentos bloqueados para robôs (baixar no navegador, sem acesso UFF)
+
+Os servidores destes documentos recusaram o acesso automatizado (certificado inválido, desafio anti-robô ou página de bloqueio). Nada foi contornado. Abertos no navegador, devem baixar normalmente.
+
+| Documento | Onde | Para quê |
+|---|---|---|
+| Fórmula oficial do ISOL em pontos (Lacaune) | Idele (idele.fr), dossiês da avaliação genética e da genômica ovina | Confirmar a fórmula do índice; hoje só há um trecho de busca, não usado nos exemplos |
+| Programa de melhoramento Latxa-Carranzana | MAPA da Espanha (mapa.gob.es), página dos programas de raças ovinas | Ganho de 2,5% a 3% ao ano e genotipagem dos machos |
+| Relatório MAPA/INIA sobre avaliação genética de ovinos de leite | MAPA da Espanha (mapa.gob.es) | Genômica da Assaf e da Manchega |
+| Catálogo 2025 da Latxa Cara Negra (ASLANA/INTIA) | https://intiasa.es/web/sites/default/files/assets/images/LCN-NA%20-%20Cat%C3%A1logo%202025%20ARDI.pdf | Pesos do índice da Latxa |
+| Astruc et al., ICAR Bled 2024 (slides) | https://old.icar.org/Documents/Bled-2024/PPTs/S7_2_Astruc_ICAR2024_Bled_Session7_PARASITES.pdf | Resistência a parasitas na Lacaune |
+| Baloche et al., WCGALP 2014 (HAL) | https://hal.inrae.fr/hal-02742682/file/2014_Baloche_10WCGALP_Vancouver_1.pdf | Genômica da Lacaune |
+| Regulamento (CE) 853/2004, versão consolidada | EUR-Lex | Conferir a versão vigente (a verificação usou o texto original de 2004) |
 
 ## Como enviar
 Baixe os PDFs pelo acesso da UFF (Portal de Periódicos CAPES via CAFe) e anexe-os na conversa da sessão "Modelos estatísticos". Eles são lidos para conferir as equações e não são salvos no repositório.
