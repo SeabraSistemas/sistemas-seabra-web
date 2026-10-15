@@ -614,3 +614,88 @@ Sem equações. Tema: populações de referência pequenas e formadas sobretudo 
 
 > As revisões de referência para o ssGBLUP que a ANCP usa são Misztal et al. (2020, J. Anim. Sci. 98:skaa101) e Lourenco et al. (2020, Genes 11:790). O BLUPF90 mistura G com A22 por padrão em α = 0,95 e β = 0,05 e escala G pelo método de Chen et al. (média da diagonal e dos elementos fora da diagonal); o parâmetro ω de H⁻¹ = A⁻¹ + [0 0; 0 τG⁻¹ − ωA22⁻¹] tem padrão 1 e foi usado em 0,7 em avaliações de corte e leite antes de a endogamia entrar em A⁻¹; a inversa de G pelo APY, em bovinos, usa um núcleo da ordem do posto de G, cerca de 15 mil animais, e essa rotina não vem no pacote gratuito. Para zebuínos, a revisão de Ogunbawo et al. (2024) mostra que painéis de taurinos geram homozigose artificial e que há painéis específicos (de 12 mil a 75 mil SNPs) usados com imputação. A revisão de Nelore (Fernandes Júnior et al. 2022) não é aberta.
 
+---
+
+## Lacuna 8. Interbeef e outras avaliações internacionais de corte: modelo e situação atual
+
+**Resultado principal:** o Interbeef usa um modelo animal multicaracterística em que o mesmo caráter em cada país é um caráter diferente (AMACI), com dados brutos e pedigree, **sem genômica até a rodada de janeiro de 2026**. O Interbull diz que a primeira avaliação genômica de rotina está prevista para **2027**. O número "12 países" do relatório v1 **não se sustenta** nas fontes que li. As fontes oficiais abaixo foram baixadas e lidas por inteiro; a de Phocas et al. (2005) foi lida em texto completo (PDF aberto da revista) e traz as equações do modelo.
+
+### 8.1 Situação em 2025–2026
+
+| Item | O que a fonte diz [LIDO] | Fonte, página |
+|---|---|---|
+| Rodadas | "conducting genetic evaluations three times yearly, consisting of one test run and two routine runs." As publicações oficiais saem em março e outubro. | Roadmap (fev/2025), PDF p. 5; página "Beef Services" do Interbull |
+| Raças | "Aberdeen-Angus, Charolais, Hereford, Limousin, Simmental" | Roadmap, p. 5 |
+| Características | Peso à desmama ajustado (adww) e peso animal à desmama (aww); partos (calv): peso ao nascer (bwt) e facilidade de parto (cae), com efeitos direto e materno; carcaça (carc): conformação (cco), gordura (cfa) e peso (cwe) | Roadmap, p. 5 |
+| Primeira avaliação | "The first Interbeef evaluation was carried out by Interbull Centre in 2015" | Página "Beef Services" do Interbull |
+| Participação em janeiro de 2026 | "The January 2026 Routine Genetic Interbeef Evaluation was carried out with the participation of five countries: Estonia, Great Britain, Ireland, Latvia and Norway." | Interbull Executive Summary 2026-1, PDF p. 4 |
+| Genômica | "Work is ongoing on the development towards multi-breed single step genomic evaluation. Initial research runs are planned during 2026 for the breeds and traits currently under evaluation, with the aim of running the first routine genomic evaluation in 2027." | Executive Summary 2026-1, PDF p. 4 |
+| Cronograma anterior (fev/2025) | Serviço de avaliação genômica de uma raça, uma característica, vários países, "could be launched in the second half of 2026". A longo prazo (2030+): "multi-breed multi-trait multi-country single-step genomic evaluations" ("may be possible to launch before 2030"). | Roadmap, p. 6 e p. 8–9 |
+| Projeto M3GE (WUR, com AHDB, ICBF, FedANA, ICAR e Interbull) | Em 2026: "perform a pilot/research run and to work towards a pipeline in place for the inclusion of a multi-breed, multi-trait, multi-country evaluation." | Interbull AOP 2026, PDF p. 5 e 11 |
+
+**[INFERÊNCIA]** O cronograma deslizou: o roadmap de fevereiro de 2025 falava em lançar o serviço genômico de uma raça no segundo semestre de 2026, e o resumo de 2026 fala em rodadas de pesquisa em 2026 e primeira rodada genômica de rotina em 2027. Isso é leitura minha de dois documentos, não uma declaração do Interbull.
+
+### 8.2 Modelo (AMACI)
+
+**Fonte primária de Phocas, Donoghue & Graser (2005)**, *Genet. Sel. Evol.* 37(5):361–380, DOI 10.1186/1297-9686-37-5-361 (aberto; PDF da revista; o DOI impresso no cabeçalho do PDF, 10.1051/gse:2005006, **não foi achado no Crossref**, e por isso cito só o primeiro). Seção 2.2, p. 366–368 impressas (PDF p. 6–8):
+
+```
+(1)  AMWC (dentro do país):  y_i = Xb + Z_d u_d + Z_m u_m + W_m e_m + e
+        efeitos fixos: grupo contemporâneo, mês de nascimento e idade da vaca;  u_d, u_m: efeitos genéticos direto e materno;
+        e_m: ambiente permanente materno;   var[u_d; u_m] = G0 ⊗ A,   G0 = [ σ²d  σdm ; σdm  σ²m ],   var[e_m] = I σ²em,   var[e] = I σ²e
+(2)  AMACI (entre países):  y = Xb + Z_d u_d + Z_m u_m + W_m e_m + e
+        y' = (y1', y2'); b contém o GC e o mês dentro de país e as interações entre país e idade da vaca;
+        Var(e) = ⊕ I_ni σ²ei ;  Var(e_m) = ⊕ I_ni σ²emi ;  Var(u) = G_C ⊗ A ;  u' = (u_d1, u_m1, u_d2, u_m2)
+        G_C = [ σ²d1  σd1m1  σd1d2  σd1m2 ;  ·  σ²m1  σd2m1  σm1m2 ;  ·  ·  σ²d2  σd2m2 ;  ·  ·  ·  σ²m2 ]
+(3)  PAMAC (dados pré-corrigidos):  y − Xb_e = Kυ + Z_d u_d + Z_m u_m + W_m e_m + e         υ: médias fixas por país
+```
+
+Pontos lidos no texto:
+- "a single-trait Animal Model accounting for Across-Country Interactions (AMACI) with fixed or genetic effects was fitted to the data and was mathematically equivalent to a bi-trait model" (p. 367).
+- "all across-country genetic evaluation models presented in this paper assumed that WW was a different trait across countries" e "considering WW as the same trait across countries (i.e. applying a single-trait animal model) is not a satisfactory strategy when direct-maternal correlations are not close to zero within and across countries" (p. 366). **Isso importa para o Nelore**: o argumento é que a covariância direto-materno importa para o modelo.
+- CG definido como "herd-year-season-management group-sex of the calf"; a idade da vaca entrou como efeito fixo, em **11 classes** ("< 28 months; 28–30 months; 31–33 months; 34–36 months; 37–42 months; 43–48 months; 49–60 months; 61–108 months; 109–144 months; 145–156 months; > 156 months") definidas pelas médias de quadrados mínimos dos dados franceses (p. 367).
+- Resultado do resumo: correlações genéticas entre França e bloco Trans-Tasman de 0,86 (direto) e 0,80 (materno); herdabilidade direta 0,31 (França) e 0,22 (Trans-Tasman); correlação direto-materna −0,21 e −0,10; correlações entre EBV nacional e internacional sempre acima de 0,90 para touros.
+
+**Descrição atual do serviço** (tese de Bonifazi 2022, Univ. Wageningen, PDF p. 20–21 e 34): "The AMACI model is equivalent to a multi-trait animal model in which phenotypes of the same trait but from different countries are modelled as different correlated traits." E, sobre os parâmetros: "For each country, genetic and environmental variances in the international model were fixed at the national estimates (Bonifazi et al. 2020b)." Herdabilidade do peso à desmama ajustado: de 0,11 a 0,36 (direta) e de 0,05 a 0,15 (materna). "Currently, genomic data are not used in Interbeef." (PDF p. 21). Software: MiX99, com gradiente conjugado pré-condicionado (PCG) e confiabilidades aproximadas pelo apax99 (método de Tier e Meyer 2004) (PDF p. 35).
+
+**Correlações genéticas entre países** (Tabela 2.2 da tese, PDF p. 36, copiada de Bonifazi et al. 2020b; oito populações: CZE, DFS, ESP, GBR, IRL, FRA, DEU, CHE): **direto**, de 0,62 (DEU com IRL) a 0,94 (ESP com GBR e DEU com DFS); **materno**, de 0,65 a 0,87 entre países. As correlações entre efeito direto e efeito materno **dentro** do país (diagonal do bloco inferior esquerdo da tabela) vão de −0,33 (FRA) a +0,40 (CHE) [leitura minha do layout da tabela]. Ou seja, o Interbeef usa **covariância direto-materna diferente de zero**, ao contrário da suposição σam = 0 que a ANCP declara (lacuna 1).
+
+### 8.3 Regras de publicação (Bonifazi 2022, PDF p. 35–36 e 96)
+- Direto: "REL ≥ 0.5 on at least one country scale" e "≥ 25 recorded progeny across all countries".
+- Materno: EBV direto publicável, "REL ≥ 0.3 on at least one country scale", "≥ 15 daughters with recorded progeny" e "≥ 25 recorded grand-progeny from daughters across all countries". Regras em vigor desde 2013.
+- "In Interbeef, direct and maternal EBVINT are distributed as two separate sets of EBVINT." Os valores genéticos saem na escala de cada país.
+
+### 8.4 Correção ao relatório v1: o número de países
+O relatório diz "Interbeef com 12 países e cinco raças" e cita `icbf.com/international-beef-evaluation-interbeef/`. **Em 15/10/2026 essa URL devolve "404: Page Not Found".** O que as fontes que li dizem:
+- Página do ICAR "Interbeef at a glance": "The current membership (at December 2020) includes 14 countries, 5 breeds (Charolais, Limousin, Simmental, Angus and Hereford), with a total of 42 million phenotypes in our services."
+- Tese de Bonifazi (2022): "international pedigree-based genetic evaluations for 15 countries worldwide (Australia, Czech Republic, Denmark, Estonia, Finland, France, Germany, Ireland, Italy, Latvia, Slovenia, South Africa, Sweden, Switzerland, United Kingdom), five breeds ... and three traits" (PDF p. 20).
+- Executive Summary 2026-1: cinco países na rodada de janeiro de 2026 (Estônia, Grã-Bretanha, Irlanda, Letônia e Noruega). O documento não explica a diferença para os 14 ou 15 países anteriores. **[NÃO ESCLARECIDO]**; não achei se os demais continuam no serviço sem participar da rodada, ou se saíram.
+- O roadmap (Apêndice 1, PDF p. 17–19) lista 45 países como usuários anteriores, atuais ou potenciais, com as categorias marcadas só por cor (que se perdeu na extração). O **Brasil não consta** nessa lista; constam México e Uruguai.
+
+**Sugestão:** trocar "12 países" por "14 países em dezembro de 2020 (ICAR), 15 na tese de 2022 e cinco na rodada de janeiro de 2026 (Interbull)", citando as três fontes, ou simplesmente retirar o número.
+
+### 8.5 Outras avaliações de corte lidas, relevantes para o desenho de um sistema pequeno
+
+**(a) BREEDPLAN, Austrália** (Boerner & Johnston 2019, *Genet. Sel. Evol.* 51:57, DOI 10.1186/s12711-019-0499-x, aberto; seção "Data"). Modelo de produção do Angus australiano: 35 características, 9.565.814 registros, 2.621.403 animais no pedigree, 58.705 genotipados (imputados a 56.009 SNP). "The BREEDPLAN multi-trait model included pre-corrected phenotypes, a single fixed factor per trait, 27 correlated random genetic factors (including direct and maternal), 27 correlated random genetic group factors with 19 genetic groups (including direct and maternal), 3 correlated random maternal permanent environmental factors and 22 correlated random sire-by-herd interaction factors." E "the pedigree ... allowed for more than one pair of parents per animal if necessary", por causa da monta natural com lotes de touros. Total de 76.823.378 equações. Dois pontos práticos: os fenótipos entram **pré-corrigidos** (idade da vaca e idade do bezerro tirados antes) e há **interação touro × rebanho** como efeito aleatório.
+
+**(b) American Angus (AAA), EUA.** Dois documentos abertos:
+- Lourenco et al., *Proc. BIF 2015*, p. 78–91 (PDF do congresso): ssGBLUP em Angus com 6.890.625 registros de peso à desmama e 51.830 genotipados com registro; G = 0,95·ZDZ' + 0,05·A22; "zero covariance between direct and maternal effects (to reduce computing costs)" (p. 86–87).
+- Jang, Lourenco & Miller (2022), *J. Anim. Sci.* 100(3):skac057, DOI 10.1093/jas/skac057 (aberto): "All WW were pre-adjusted for the age of dam and age of calf using the adjustment factors from the standard AAA national cattle evaluation." CG: "animals of the same sex, born and weaned in the same herd, in the same year, and part of the same management group within that herd". APY com "19,019" animais de núcleo, "which has been used for routine genomic evaluations by the AAA". O modelo de referência "mimicking the current procedure in the AAA evaluations" é o M5: igual ao M1, "except for the covariance between direct and maternal effects was zeroed after the VC estimation". Resultado central (Tabela 2, REML, unidade lb²): M1 (sem touro × rebanho, σam livre): σ²a = 1.069,60; σ²m = 415,66; σ²mpe = 372,08; σ²e = 1.623,96; σam = −251,76; correlação −0,38. M2 (com touro × rebanho, σ²sh = 150,90): σ²a = 467,63; σ²m = 266,11; σam = +42,34; correlação +0,12. Citação do resumo: "Under REML, when the S×H interaction effect was added to the model, both direct and maternal genetic variances were greatly reduced, and the negative covariance became positive". A validação LR (Tabela 3, acurácia direta com variâncias do REML): M1 0,72; M2 0,95; M5 0,71. O artigo diz que o BREEDPLAN inclui a interação touro × rebanho "since 1999", citando outro trabalho.
+  **Relevância:** é o melhor argumento aberto que achei para a suposição σam = 0 e também contra ela. Uma covariância direto-materna fortemente negativa pode ser em parte artefato de variância de touro × rebanho não modelada. O artigo não é de zebuínos e não testa a ANCP.
+
+**(c) IGS/BOLT** (perguntas frequentes da IGS, PDF aberto). "uses a subset of weighted markers" baseado em estudo de Saatchi e Garrick, e acurácia por amostragem. Não achei equação nem documentação metodológica completa.
+
+**(d) Integração de EBV internacionais em avaliação nacional** (Adekale et al. 2025, *Genet. Sel. Evol.* 57:37, DOI 10.1186/s12711-025-00982-2, aberto; só resumo lido aqui): na avaliação alemã de corte (Angus, Charolais, Limousin e Simmental), misturar EBV do Interbeef de janeiro de 2023 via desregressão melhorou a acurácia e reduziu o viés de dispersão no peso aos 200 dias. A desregressão matricial teve correlação "> 0.99" contra "0.75–0.99" das escalares.
+
+**(e) Multirracial tropical sem pedigree** (Hayes et al. 2023, *Genet. Sel. Evol.* 55:71, DOI 10.1186/s12711-023-00847-6, aberto; só resumo lido): 29.391 animais de raças puras, cruzados e compostos; efeitos de raça aleatórios deram GEBV mais acurados que fixos; acurácias de 0,30 a 0,43; BayesR rendeu 3% a mais em rebanhos sem dados na referência. Interessa se o Seabra tiver rebanhos mestiços sem pedigree.
+
+### 8.6 O que continua em aberto
+- Nenhum documento sobre Interbeef trata do Brasil ou de zebuínos. **[NÃO ENCONTRADO]** Não achei registro de participação brasileira.
+- Não achei o "Code of Practice" do Interbeef nem o documento técnico atual do modelo (as equações de G_C em 2025–2026).
+- A equação (2) de Phocas é de 2005 (dois países); o modelo atual tem de 8 a 15 populações (Bonifazi) e o texto da tese não permitiu copiar a equação, porque as fontes matemáticas saíram ilegíveis na extração do PDF. A estrutura está descrita em palavras no item 8.2, a partir da legenda da tese.
+- Não achei documentação pública do modelo atual do American Angus (só os artigos de pesquisa).
+
+### 8.7 Sugestão de texto para o relatório (substitui o trecho do Interbeef na tabela de programas)
+
+> O Interbeef (ICAR/Interbull Centre, Uppsala) avalia cinco raças (Aberdeen-Angus, Charolais, Hereford, Limousin e Simmental) em três grupos de características (peso à desmama, partos e carcaça), com rodadas de teste e duas rodadas oficiais por ano (março e outubro). O modelo é o AMACI (Phocas et al. 2005): modelo animal com efeito materno em que o mesmo caráter em cada país é um caráter diferente, com dados brutos e pedigree, variâncias fixadas nas estimativas nacionais, covariância direto-materna diferente de zero e correlações genéticas entre países estimadas (de 0,62 a 0,94 para o efeito direto no peso à desmama, segundo Bonifazi 2022). Até a rodada de janeiro de 2026 o serviço não usava dados genômicos; o Interbull planeja a primeira avaliação genômica de rotina (single-step multirracial) para 2027, dentro do projeto M3GE. O número de países varia conforme a fonte (14 em dezembro de 2020, 15 em 2022 e cinco na rodada de janeiro de 2026). Não há participação brasileira documentada.
+
