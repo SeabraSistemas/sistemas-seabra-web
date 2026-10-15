@@ -1,0 +1,600 @@
+<title>Central de Melhoramento Seabra</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+/* Layout: cabeçalho no estilo de sumário de touros, faixa de status, abas por segmento; grades que viram uma coluna no celular */
+:root {
+  --bg: #f4f6f2;
+  --surface: #ffffff;
+  --sunken: #e9ede6;
+  --ink: #18201b;
+  --muted: #56625a;
+  --line: #d3dacf;
+  --accent: #2c6a43;
+  --accent-soft: #dcebe0;
+  --accent-ink: #ffffff;
+  --ochre: #9a6312;
+  --ochre-soft: #f5e7cf;
+  --slate: #44606f;
+  --slate-soft: #dde8ee;
+  --font-display: "IBM Plex Sans Condensed", "Arial Narrow", "Roboto Condensed", sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111613; --surface: #18201b; --sunken: #1f2923; --ink: #e5ece6; --muted: #9eaca2; --line: #2e3a32;
+    --accent: #6cc28a; --accent-soft: #1f3a29; --accent-ink: #0d1a12;
+    --ochre: #e0a54a; --ochre-soft: #3a2c14; --slate: #8fb3c6; --slate-soft: #1d2d36;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111613; --surface: #18201b; --sunken: #1f2923; --ink: #e5ece6; --muted: #9eaca2; --line: #2e3a32;
+  --accent: #6cc28a; --accent-soft: #1f3a29; --accent-ink: #0d1a12;
+  --ochre: #e0a54a; --ochre-soft: #3a2c14; --slate: #8fb3c6; --slate-soft: #1d2d36;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.55; }
+.wrap { max-width: 1120px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 56px; display: grid; gap: 24px; }
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; margin: 0; line-height: 1.15; }
+h1 { font-size: clamp(30px, 5vw, 44px); font-weight: 700; letter-spacing: -0.01em; }
+h2 { font-size: 24px; font-weight: 600; }
+h3 { font-size: 17px; font-weight: 600; }
+p { margin: 0; }
+a { color: var(--accent); text-underline-offset: 2px; }
+.eyebrow { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.lede { max-width: 68ch; color: var(--muted); font-size: 16px; }
+
+/* Cabeçalho */
+.masthead { display: grid; gap: 14px; border-bottom: 2px solid var(--ink); padding-bottom: 18px; }
+.masthead .row { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: baseline; justify-content: space-between; }
+.status-strip { display: flex; flex-wrap: wrap; gap: 10px 22px; align-items: center; background: var(--ochre-soft); border: 1px solid color-mix(in srgb, var(--ochre) 35%, transparent); border-radius: 8px; padding: 12px 14px; }
+.status-strip strong { color: var(--ochre); font-family: var(--font-display); font-size: 16px; letter-spacing: 0.02em; text-transform: uppercase; }
+.status-strip span { color: var(--ink); }
+
+/* Abas */
+.tabs { display: flex; gap: 4px; overflow-x: auto; border-bottom: 1px solid var(--line); scrollbar-width: thin; }
+.tab { appearance: none; border: 0; background: none; color: var(--muted); font: 500 14px var(--font-body); padding: 10px 12px; border-bottom: 3px solid transparent; cursor: pointer; white-space: nowrap; }
+.tab:hover { color: var(--ink); }
+.tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); font-weight: 600; }
+.tab:focus-visible, button:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+.panel { display: grid; gap: 22px; }
+
+/* Grades e blocos */
+.grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+.grid > * { min-width: 0; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; display: grid; gap: 10px; align-content: start; }
+.seg-card { position: relative; }
+.seg-code { font-family: var(--font-mono); font-size: 12px; font-weight: 500; letter-spacing: 0.06em; color: var(--muted); }
+.chip { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; padding: 2px 9px; border-radius: 999px; width: fit-content; }
+.chip::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.chip.done { background: var(--accent-soft); color: var(--accent); }
+.chip.paused { background: var(--ochre-soft); color: var(--ochre); }
+.chip.next { background: var(--slate-soft); color: var(--slate); }
+.chip.plan { background: var(--sunken); color: var(--muted); }
+.kv { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; font-size: 14px; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; font-variant-numeric: tabular-nums; }
+ul.clean { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.section-head { display: grid; gap: 6px; }
+
+/* Tabelas */
+.table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-family: var(--font-display); font-weight: 600; font-size: 13px; letter-spacing: 0.03em; text-transform: uppercase; color: var(--muted); background: var(--sunken); white-space: nowrap; }
+tr:last-child td { border-bottom: 0; }
+td.fit { text-align: center; font-family: var(--font-mono); font-weight: 500; white-space: nowrap; }
+.yes { color: var(--accent); }
+.part { color: var(--ochre); }
+.no { color: var(--muted); }
+.mono { font-family: var(--font-mono); font-size: 13px; }
+
+/* Documentos */
+.doclist { display: grid; gap: 8px; }
+.docbtn { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; text-align: left; width: 100%; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; color: var(--ink); font: inherit; cursor: pointer; }
+.docbtn:hover { border-color: var(--accent); }
+.docbtn .tag { font-family: var(--font-mono); font-size: 11px; font-weight: 500; letter-spacing: 0.05em; color: var(--accent); background: var(--accent-soft); padding: 2px 7px; border-radius: 4px; }
+.docbtn .meta { color: var(--muted); font-size: 13px; white-space: nowrap; }
+.docbtn .title { min-width: 0; }
+
+/* Fluxos */
+.flow { display: grid; gap: 0; counter-reset: passo; }
+.flow li { list-style: none; display: grid; grid-template-columns: 34px 1fr; gap: 12px; padding: 10px 0; border-top: 1px dashed var(--line); }
+.flow li:first-child { border-top: 0; }
+.flow li::before { counter-increment: passo; content: counter(passo); font-family: var(--font-mono); font-weight: 500; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: var(--sunken); color: var(--ink); font-size: 13px; }
+.flow { margin: 0; padding: 0; }
+
+/* Leitor */
+.reader { display: grid; gap: 14px; }
+.reader-bar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; position: sticky; top: env(safe-area-inset-top, 0px); background: var(--bg); padding-block: 10px; border-bottom: 1px solid var(--line); z-index: 2; }
+.btn { appearance: none; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: 500 14px var(--font-body); padding: 7px 12px; border-radius: 6px; cursor: pointer; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.md { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: clamp(16px, 3vw, 32px); min-width: 0; overflow-wrap: anywhere; }
+.md > * + * { margin-top: 0.8em; }
+.md h1 { font-size: 30px; } .md h2 { font-size: 22px; margin-top: 1.6em; } .md h3 { font-size: 17px; margin-top: 1.3em; }
+.md p, .md li { max-width: 78ch; }
+.md pre { background: var(--sunken); border-radius: 8px; padding: 12px 14px; overflow-x: auto; font-family: var(--font-mono); font-size: 13px; line-height: 1.5; }
+.md code { font-family: var(--font-mono); font-size: 0.92em; }
+.md table { display: block; overflow-x: auto; max-width: 100%; }
+.md blockquote { margin: 0; padding-left: 14px; border-left: 3px solid var(--line); color: var(--muted); }
+.note { font-size: 13px; color: var(--muted); }
+@media (max-width: 560px) {
+  .docbtn { grid-template-columns: 1fr; }
+  .docbtn .meta { white-space: normal; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .panel { animation: fade 160ms ease-out; }
+  @keyframes fade { from { opacity: 0.6; } to { opacity: 1; } }
+}
+</style>
+
+<div class="wrap">
+  <header class="masthead">
+    <div class="row">
+      <span class="eyebrow">Sistema Seabra · Melhoramento genético</span>
+      <span class="eyebrow">Atualizado em 15/10/2026</span>
+    </div>
+    <h1>Central de Melhoramento Seabra</h1>
+    <p class="lede">Modelos estatísticos, pesquisas e indicadores para avaliação genética, organizados por segmento. Cada modelo é aplicado conforme a demanda: associações com milhões de registros ou produtores com o próprio rebanho. Os modelos são testados aqui antes de chegarem ao SeabraApp.</p>
+    <div class="status-strip" role="status">
+      <strong>Pausado</strong>
+      <span>Verificação dos relatórios com texto completo interrompida em 15/10/2026, a pedido. Próximo passo: reiniciar as três frentes de verificação e enviar os PDFs pagos.</span>
+    </div>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="Seções da central">
+    <button class="tab" role="tab" id="tab-visao" data-tab="visao" aria-selected="true">Visão geral</button>
+    <button class="tab" role="tab" id="tab-corte" data-tab="corte">Bovinos de corte</button>
+    <button class="tab" role="tab" id="tab-leite" data-tab="leite">Bovinos leiteiros</button>
+    <button class="tab" role="tab" id="tab-caprinos" data-tab="caprinos">Caprinos leiteiros</button>
+    <button class="tab" role="tab" id="tab-ovinos" data-tab="ovinos">Ovinos leiteiros</button>
+    <button class="tab" role="tab" id="tab-modelos" data-tab="modelos">Modelos</button>
+    <button class="tab" role="tab" id="tab-equipe" data-tab="equipe">Equipe de IA</button>
+    <button class="tab" role="tab" id="tab-lab" data-tab="lab">Laboratório</button>
+    <button class="tab" role="tab" id="tab-fontes" data-tab="fontes">Fontes</button>
+  </nav>
+
+  <!-- VISÃO GERAL -->
+  <section class="panel" id="visao" role="tabpanel" aria-labelledby="tab-visao">
+    <div class="grid">
+      <article class="card seg-card">
+        <span class="seg-code">CORTE</span>
+        <h3>Bovinos de corte</h3>
+        <span class="chip paused">Relatório v1 · verificação pausada</span>
+        <p class="note">BLUP de modelo animal, direto-materno, limiar, STAY, ssGBLUP. Programas ANCP, ABCZ, Geneplus, Angus, BREEDPLAN.</p>
+      </article>
+      <article class="card seg-card">
+        <span class="seg-code">LEITE · BOV</span>
+        <h3>Bovinos leiteiros</h3>
+        <span class="chip paused">Relatório v1 · verificação pausada</span>
+        <p class="note">Lactação de 305 dias, dia de controle com regressão aleatória, funcionais, MACE, NM$. Gir, Girolando, Guzerá, Holandês.</p>
+      </article>
+      <article class="card seg-card">
+        <span class="seg-code">LEITE · CAP</span>
+        <h3>Caprinos leiteiros</h3>
+        <span class="chip next">Próximo segmento</span>
+        <p class="note">Foco do SeabraApp. Captação já com texto completo desde o início.</p>
+      </article>
+      <article class="card seg-card">
+        <span class="seg-code">LEITE · OVI</span>
+        <h3>Ovinos leiteiros</h3>
+        <span class="chip plan">Planejado</span>
+        <p class="note">Lacaune, Assaf, Sarda e Latxa como referências internacionais.</p>
+      </article>
+    </div>
+
+    <div class="grid">
+      <article class="card">
+        <span class="eyebrow">Demanda de associação</span>
+        <h3>N grande: avaliação da população</h3>
+        <ol class="flow">
+          <li><span>Padronizar registros, grupos de contemporâneos e pedigree de todo o programa.</span></li>
+          <li><span>Estimar variâncias por REML ou Gibbs com os dados da raça.</span></li>
+          <li><span>Rodar o modelo animal multicaracterística com genômica (ssGBLUP, APY acima de ~100 mil genotipados).</span></li>
+          <li><span>Publicar DEP/PTA com acurácia, percentis e índice econômico.</span></li>
+          <li><span>Validar (método LR) e acompanhar a tendência genética.</span></li>
+        </ol>
+      </article>
+      <article class="card">
+        <span class="eyebrow">Demanda de produtor</span>
+        <h3>N menor: decisões dentro do rebanho</h3>
+        <ol class="flow">
+          <li><span>Registrar dados completos: todos os animais do grupo, datas e eventos padronizados.</span></li>
+          <li><span>Calcular indicadores com intervalo de confiança e comparar com as contemporâneas.</span></li>
+          <li><span>Ranquear: razão intra-grupo, MPPA e BLUP intra-rebanho com variâncias da literatura.</span></li>
+          <li><span>Conectar o rebanho a um programa: IA com touros provados e genotipagem de reposição.</span></li>
+          <li><span>Definir metas por categoria e controlar a endogamia acasalamento a acasalamento.</span></li>
+        </ol>
+      </article>
+    </div>
+
+    <article class="card">
+      <span class="eyebrow">Como retomar</span>
+      <h3>Próximos passos, na ordem</h3>
+      <ol class="flow">
+        <li><span>Abrir a sessão "Modelos estatísticos" e escrever <strong>retomar a pesquisa</strong>.</span></li>
+        <li><span>Conferir que o ambiente "Default" continua com rede <strong>Completo</strong>.</span></li>
+        <li><span>Reiniciar a verificação com texto completo: corte, leite e aprofundamento de corte.</span></li>
+        <li><span>Anexar os PDFs dos 13 artigos pagos (acesso UFF/CAPES), listados na aba Fontes.</span></li>
+        <li><span>Aplicar as correções nos dois relatórios e iniciar caprinos leiteiros.</span></li>
+        <li><span>Ao final da pesquisa, voltar a rede do ambiente para <strong>Confiável</strong>.</span></li>
+      </ol>
+    </article>
+  </section>
+
+  <!-- CORTE -->
+  <section class="panel" id="corte" role="tabpanel" aria-labelledby="tab-corte" hidden>
+    <div class="section-head">
+      <span class="eyebrow">Segmento CORTE</span>
+      <h2>Bovinos de corte</h2>
+      <p class="lede">Como pesagens e pedigree viram DEPs. Inclui os modelos de N grande dos programas e a estratégia para rebanhos de 100 a 5.000 vacas.</p>
+    </div>
+    <div class="grid">
+      <article class="card">
+        <h3>Situação</h3>
+        <span class="chip paused">Relatório v1 · verificação pausada</span>
+        <dl class="kv">
+          <dt>Relatório</dt><dd>~13 mil palavras</dd>
+          <dt>Exemplos</dt><dd>conferidos em numpy (Apêndice A)</dd>
+          <dt>Captação</dt><dd>6 frentes, só busca web</dd>
+          <dt>Pendente</dt><dd>verificação com texto completo; 8 artigos pagos</dd>
+        </dl>
+      </article>
+      <article class="card">
+        <h3>Modelos centrais</h3>
+        <ul class="clean">
+          <li>BLUP de modelo animal: MME e A⁻¹ com endogamia</li>
+          <li>Direto-materno (DEP materna e TMD)</li>
+          <li>Multicaracterística contra o viés de seleção</li>
+          <li>Limiar para parto e prenhez; STAY e Weibull</li>
+          <li>Regressão aleatória para pesagens seriadas</li>
+          <li>GBLUP, ssGBLUP (H⁻¹), APY, validação LR</li>
+        </ul>
+      </article>
+      <article class="card">
+        <h3>Indicadores</h3>
+        <ul class="clean">
+          <li>DEPs: PN, P120, P210, P365, P450, MP, STAY, IPP, PE365, AOL, EGS</li>
+          <li>Índices: MGTe, iABCZ, IQG, $Values, $Index</li>
+          <li>Rebanho: prenhez, desmama, IEP, IPP, kg desmamados por vaca exposta</li>
+          <li>Manejo: razão BIF, MPPA, Ne e ΔF</li>
+        </ul>
+      </article>
+    </div>
+    <div class="section-head"><h3>Documentos</h3></div>
+    <div class="doclist" data-docs="corte"></div>
+  </section>
+
+  <!-- LEITE -->
+  <section class="panel" id="leite" role="tabpanel" aria-labelledby="tab-leite" hidden>
+    <div class="section-head">
+      <span class="eyebrow">Segmento LEITE · BOV</span>
+      <h2>Bovinos leiteiros</h2>
+      <p class="lede">Como controles leiteiros viram PTAs e metas. Também é a base metodológica para caprinos e ovinos leiteiros.</p>
+    </div>
+    <div class="grid">
+      <article class="card">
+        <h3>Situação</h3>
+        <span class="chip paused">Relatório v1 · verificação pausada</span>
+        <dl class="kv">
+          <dt>Relatório</dt><dd>~18,6 mil palavras</dd>
+          <dt>Exemplos</dt><dd>conferidos em numpy (Apêndice A)</dd>
+          <dt>Captação</dt><dd>6 frentes, só busca web</dd>
+          <dt>Pendente</dt><dd>verificação com texto completo; 5 artigos pagos</dd>
+        </dl>
+      </article>
+      <article class="card">
+        <h3>Modelos centrais</h3>
+        <ul class="clean">
+          <li>Lactação de 305 dias (TIM e best prediction) e repetibilidade</li>
+          <li>Curvas de Wood, Wilmink, Ali-Schaeffer e Legendre</li>
+          <li>Dia de controle com HTD e regressão aleatória</li>
+          <li>Funcionais: DPR, SMGS, Weibull, saúde, calor (THI)</li>
+          <li>Genômica multi-step e single-step; MACE</li>
+          <li>REL = DE/(DE + k); índices NM$, TPI, IPGL, IPG</li>
+        </ul>
+      </article>
+      <article class="card">
+        <h3>Indicadores</h3>
+        <ul class="clean">
+          <li>PTAs: leite, gordura, proteína, ECS, DPR, CCR, HCR, VP, tipo</li>
+          <li>Produção: 305 d, pico, persistência, ECM, CCS e CBT do tanque</li>
+          <li>Reprodução: IEP, dias abertos, taxa de serviço, concepção, prenhez em 21 dias</li>
+          <li>Metas por categoria: bezerras, novilhas, primíparas, vacas, touros</li>
+        </ul>
+      </article>
+    </div>
+    <div class="section-head"><h3>Documentos</h3></div>
+    <div class="doclist" data-docs="leite"></div>
+  </section>
+
+  <!-- CAPRINOS -->
+  <section class="panel" id="caprinos" role="tabpanel" aria-labelledby="tab-caprinos" hidden>
+    <div class="section-head">
+      <span class="eyebrow">Segmento LEITE · CAP</span>
+      <h2>Caprinos leiteiros</h2>
+      <p class="lede">Próximo segmento da pesquisa e foco do SeabraApp. Vai reaproveitar a metodologia do relatório de bovinos leiteiros e adaptar ao tamanho dos rebanhos e às raças caprinas.</p>
+    </div>
+    <div class="grid">
+      <article class="card">
+        <h3>Situação</h3>
+        <span class="chip next">Próximo segmento</span>
+        <p class="note">Captação já com texto completo (Haiku e Sonnet), síntese em Opus.</p>
+      </article>
+      <article class="card">
+        <h3>Frentes planejadas</h3>
+        <ul class="clean">
+          <li>Modelos de produção: lactação e dia de controle em cabras</li>
+          <li>Avaliações nacionais: França (Capgènes), Espanha, Itália, EUA e Brasil</li>
+          <li>Genômica em populações pequenas (Alpina, Saanen)</li>
+          <li>Funcionais: prolificidade, sobrevivência, conformação do úbere</li>
+          <li>Indicadores e metas de rebanho; rebanhos com N pequeno</li>
+          <li>Programas e raças no Brasil</li>
+        </ul>
+      </article>
+    </div>
+  </section>
+
+  <!-- OVINOS -->
+  <section class="panel" id="ovinos" role="tabpanel" aria-labelledby="tab-ovinos" hidden>
+    <div class="section-head">
+      <span class="eyebrow">Segmento LEITE · OVI</span>
+      <h2>Ovinos leiteiros</h2>
+      <p class="lede">Planejado para depois de caprinos, no mesmo fluxo: captação, verificação com texto completo, síntese e exemplos verificados.</p>
+    </div>
+    <div class="grid">
+      <article class="card">
+        <h3>Situação</h3>
+        <span class="chip plan">Planejado</span>
+      </article>
+      <article class="card">
+        <h3>Referências a cobrir</h3>
+        <ul class="clean">
+          <li>Lacaune (França) e genômica single-step</li>
+          <li>Assaf e Churra (Espanha), Latxa e Manech (País Basco)</li>
+          <li>Sarda (Itália), East Friesian e Awassi</li>
+          <li>Ovinos leiteiros no Brasil (Lacaune no Sul)</li>
+        </ul>
+      </article>
+    </div>
+  </section>
+
+  <!-- MODELOS -->
+  <section class="panel" id="modelos" role="tabpanel" aria-labelledby="tab-modelos" hidden>
+    <div class="section-head">
+      <span class="eyebrow">Catálogo</span>
+      <h2>Modelos e onde cada um se aplica</h2>
+      <p class="lede">Os modelos vêm dos dois relatórios. A coluna de cada demanda indica onde o modelo funciona bem (●), onde funciona com ressalvas (◐) e onde não se aplica (○).</p>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Modelo</th><th>O que resolve</th><th>Associação</th><th>Produtor</th><th>Segmentos</th><th>Documentado em</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>BLUP de modelo animal (MME, A⁻¹)</td><td>Valor genético corrigido por ambiente e parentesco</td><td class="fit yes">●</td><td class="fit part">◐</td><td>Todos</td><td>Corte, cap. 1</td></tr>
+          <tr><td>Direto-materno</td><td>Separa genes do animal e habilidade materna</td><td class="fit yes">●</td><td class="fit part">◐</td><td>Corte; caprinos e ovinos (cria)</td><td>Corte, cap. 2</td></tr>
+          <tr><td>Multicaracterística</td><td>Corrige o viés da seleção em etapas</td><td class="fit yes">●</td><td class="fit part">◐</td><td>Todos</td><td>Corte, cap. 2</td></tr>
+          <tr><td>Limiar (probit)</td><td>Parto, prenhez, escores, saúde</td><td class="fit yes">●</td><td class="fit no">○</td><td>Todos</td><td>Corte e leite</td></tr>
+          <tr><td>Sobrevivência (Weibull) e STAY</td><td>Longevidade e permanência</td><td class="fit yes">●</td><td class="fit no">○</td><td>Corte, leite</td><td>Corte e leite</td></tr>
+          <tr><td>Lactação de 305 d com repetibilidade</td><td>Produção padronizada por lactação</td><td class="fit yes">●</td><td class="fit yes">●</td><td>Leite (bov, cap, ovi)</td><td>Leite, cap. 2</td></tr>
+          <tr><td>Dia de controle com regressão aleatória</td><td>Curva individual, persistência, compara no mesmo dia</td><td class="fit yes">●</td><td class="fit part">◐</td><td>Leite (bov, cap, ovi)</td><td>Leite, cap. 3</td></tr>
+          <tr><td>GBLUP, ssGBLUP (H⁻¹), APY</td><td>Genômica com e sem genotipados</td><td class="fit yes">●</td><td class="fit part">◐ via programa</td><td>Todos</td><td>Corte, cap. 3; leite, cap. 5</td></tr>
+          <tr><td>MACE</td><td>Provas internacionais na escala do país</td><td class="fit yes">●</td><td class="fit part">◐ usar provas</td><td>Leite</td><td>Leite, cap. 5</td></tr>
+          <tr><td>Índice Smith-Hazel e econômico</td><td>Junta DEPs/PTAs numa decisão</td><td class="fit yes">●</td><td class="fit yes">●</td><td>Todos</td><td>Corte, cap. 4; leite, cap. 6</td></tr>
+          <tr><td>Razão intra-grupo e MPPA</td><td>Ranking e descarte dentro do rebanho</td><td class="fit no">○</td><td class="fit yes">●</td><td>Todos</td><td>Corte e leite, rebanhos com N menor</td></tr>
+          <tr><td>Intervalos de confiança e CUSUM</td><td>Indicadores honestos com poucos animais</td><td class="fit no">○</td><td class="fit yes">●</td><td>Todos</td><td>Leite, rebanhos com N menor</td></tr>
+          <tr><td>Endogamia por acasalamento, Ne e ΔF</td><td>Escolha do touro para cada fêmea</td><td class="fit yes">●</td><td class="fit yes">●</td><td>Todos</td><td>Corte e leite</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- EQUIPE -->
+  <section class="panel" id="equipe" role="tabpanel" aria-labelledby="tab-equipe" hidden>
+    <div class="section-head">
+      <span class="eyebrow">Equipe de IA</span>
+      <h2>Skills, agentes e subagentes</h2>
+      <p class="lede">Cada fase usa o modelo adequado: um modelo leve para captar documentos e um modelo mais forte para analisar e escrever. Os subagentes recebem o modelo definido pela sessão principal, então não é preciso trocar nada.</p>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Fase</th><th>Modelo</th><th>Quem faz</th><th>Saída</th></tr></thead>
+        <tbody>
+          <tr><td>Captação de documentos</td><td class="mono">Haiku 5.5</td><td>6 subagentes general-purpose em paralelo, um por frente (skill deep-research)</td><td>Notas com citação por segmento</td></tr>
+          <tr><td>Verificação e leitura de texto completo</td><td class="mono">Sonnet 5.5</td><td>3 subagentes: verificar cada relatório e aprofundar lacunas</td><td>Tabelas de verificação com evidência literal</td></tr>
+          <tr><td>Síntese, correções e exemplos</td><td class="mono">Opus 5.5</td><td>Sessão principal e subagente redator</td><td>Relatório por segmento com exemplos em numpy</td></tr>
+          <tr><td>Revisão independente (opcional)</td><td class="mono">Fable 5.1</td><td>Subagente revisor, sem acesso às conclusões da síntese</td><td>Lista de discordâncias</td></tr>
+          <tr><td>Escala maior (opcional)</td><td class="mono">Workflow</td><td>Orquestração multiagente, só quando pedida ("use um workflow")</td><td>Mais frentes e verificação cruzada</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="grid">
+      <article class="card">
+        <h3>Skills em uso</h3>
+        <ul class="clean">
+          <li><span class="mono">deep-research</span>: coordena captação e redação</li>
+          <li><span class="mono">dataviz</span>: tendência genética, acurácia × número de filhas</li>
+          <li><span class="mono">docx</span> e <span class="mono">pdf</span>: exportar relatórios</li>
+          <li><span class="mono">artifact-design</span> e <span class="mono">artifact-capabilities</span>: esta central e o laboratório</li>
+          <li><span class="mono">statistical-analysis</span>: testes do laboratório</li>
+        </ul>
+      </article>
+      <article class="card">
+        <h3>Regras de fonte</h3>
+        <ul class="clean">
+          <li>Busca acadêmica por OpenAlex, Crossref, Europe PMC, PMC e SciELO</li>
+          <li>Leitura de texto completo só de fontes abertas ou enviadas pelo usuário</li>
+          <li>Artigos pagos pelo acesso institucional (UFF/CAPES); sem Sci-Hub</li>
+          <li>Toda equação e todo número citados com fonte; o que não foi conferido fica marcado</li>
+        </ul>
+      </article>
+    </div>
+  </section>
+
+  <!-- LABORATÓRIO -->
+  <section class="panel" id="lab" role="tabpanel" aria-labelledby="tab-lab" hidden>
+    <div class="section-head">
+      <span class="eyebrow">Ambiente de teste</span>
+      <h2>Laboratório de modelos</h2>
+      <p class="lede">Aqui os modelos são testados com dados de exemplo e, depois, com dados anonimizados do SeabraApp. Só depois de validados eles vão para os apps.</p>
+    </div>
+    <div class="grid">
+      <article class="card">
+        <span class="chip done">Disponível</span>
+        <h3>Scripts verificados</h3>
+        <p class="note">Os apêndices dos dois relatórios trazem scripts em numpy que reproduzem todos os exemplos.</p>
+        <ul class="clean">
+          <li>Corte: A⁻¹, MME, direto-materno, multicaracterística, ssGBLUP, APY, índices, MPPA, Ne</li>
+          <li>Leite: TIM, Wood e Wilmink, dia de controle com regressão aleatória, DE e REL, DPR, intervalos, endogamia</li>
+        </ul>
+      </article>
+      <article class="card">
+        <span class="chip next">Próximo</span>
+        <h3>Calculadoras nesta central</h3>
+        <ul class="clean">
+          <li>MPPA e ranking de vacas</li>
+          <li>Confiabilidade a partir de filhas-equivalentes</li>
+          <li>Acurácia BIF a partir da PEV</li>
+          <li>Ne e ΔF do rebanho; F por acasalamento</li>
+          <li>Intervalo de confiança de taxas reprodutivas</li>
+          <li>Índice econômico de touros</li>
+        </ul>
+      </article>
+      <article class="card">
+        <span class="chip plan">Depois</span>
+        <h3>Motor de avaliação</h3>
+        <p class="note">BLUP intra-rebanho com variâncias da literatura, testado com dados anonimizados do SeabraApp (Supabase). Com resultados validados, o motor é portado para os apps.</p>
+      </article>
+    </div>
+  </section>
+
+  <!-- FONTES -->
+  <section class="panel" id="fontes" role="tabpanel" aria-labelledby="tab-fontes" hidden>
+    <div class="section-head">
+      <span class="eyebrow">Fontes</span>
+      <h2>Artigos pagos e registro da pesquisa</h2>
+      <p class="lede">Os DOIs foram conferidos no Crossref e o status de acesso no OpenAlex. Baixe pelo acesso da UFF e anexe os PDFs na conversa "Modelos estatísticos".</p>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Artigo</th><th>DOI</th><th>Segmento</th></tr></thead>
+        <tbody>
+          <tr><td>Henderson 1975, Biometrics 31:423</td><td class="mono">10.2307/2529430</td><td>Corte e leite</td></tr>
+          <tr><td>Henderson 1976, Biometrics 32:69</td><td class="mono">10.2307/2529339</td><td>Corte</td></tr>
+          <tr><td>Quaas 1976, Biometrics 32:949</td><td class="mono">10.2307/2529279</td><td>Corte</td></tr>
+          <tr><td>Gilmour, Thompson e Cullis 1995, Biometrics 51:1440</td><td class="mono">10.2307/2533274</td><td>Corte e leite</td></tr>
+          <tr><td>Willham 1972, J. Anim. Sci. 35:1288</td><td class="mono">10.2527/jas1972.3561288x</td><td>Corte</td></tr>
+          <tr><td>Quaas e Pollak 1980, J. Anim. Sci. 51:1277</td><td class="mono">10.2527/jas1981.5161277x</td><td>Corte</td></tr>
+          <tr><td>Kennedy e Trus 1993, J. Anim. Sci. 71:2341</td><td class="mono">10.2527/1993.7192341x</td><td>Corte e leite</td></tr>
+          <tr><td>Wood 1967, Nature 216:164</td><td class="mono">10.1038/216164a0</td><td>Leite</td></tr>
+          <tr><td>Wilmink 1987, Livest. Prod. Sci. 16:335</td><td class="mono">10.1016/0301-6226(87)90003-0</td><td>Leite</td></tr>
+          <tr><td>Ali e Schaeffer 1987, Can. J. Anim. Sci. 67:637</td><td class="mono">10.4141/cjas87-067</td><td>Leite</td></tr>
+          <tr><td>Ptak e Schaeffer 1993, Livest. Prod. Sci. 34:23</td><td class="mono">10.1016/0301-6226(93)90033-E</td><td>Leite</td></tr>
+          <tr><td>Schaeffer 2004, Livest. Prod. Sci. 86:35</td><td class="mono">10.1016/S0301-6226(03)00151-9</td><td>Leite e corte</td></tr>
+          <tr><td>Rojas de Oliveira et al. 2018, Anim. Prod. Sci. 58:1575</td><td class="mono">10.1071/AN16712</td><td>Corte</td></tr>
+          <tr><td>Mrode 2014, livro (CABI), 3ª ed.</td><td class="mono">10.1079/9781780643915.0000</td><td>Todos</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="section-head"><h3>Documentos de registro</h3></div>
+    <div class="doclist" data-docs="fontes"></div>
+  </section>
+
+  <!-- LEITOR -->
+  <section class="reader" id="leitor" hidden>
+    <div class="reader-bar">
+      <button class="btn" id="voltar" type="button">← Voltar</button>
+      <span class="eyebrow" id="leitor-titulo"></span>
+    </div>
+    <article class="md" id="leitor-conteudo"><p class="note">Carregando o documento…</p></article>
+  </section>
+
+  <footer class="note">Repositório: SeabraSistemas/sistemas-seabra-web, branch claude/wizardly-dirac-q4tdzd. Os relatórios ficam em <span class="mono">reports/</span>, as notas em <span class="mono">research_notes/</span> e esta página em <span class="mono">central-melhoramento/</span>.</footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.3.0/marked.min.js"></script>
+<script>
+const DOCS = {
+  corte: [
+    ["Relatório", "Como pesagens e pedigree viram DEPs confiáveis", "docs/corte/relatorio.md", "~13 mil palavras"],
+    ["Nota 01", "Fundamentos: BLUP e modelo animal", "docs/corte/01_fundamentos_blup_modelo_animal.md", "captação"],
+    ["Nota 02", "Modelos por característica", "docs/corte/02_modelos_por_caracteristica.md", "captação"],
+    ["Nota 03", "Genômica e avaliação em larga escala", "docs/corte/03_genomica_e_larga_escala.md", "captação"],
+    ["Nota 04", "Acurácia, tendência e índices", "docs/corte/04_acuracia_tendencia_indices.md", "captação"],
+    ["Nota 05", "Programas de avaliação no Brasil e no mundo", "docs/corte/05_programas_avaliacao_brasil_mundo.md", "captação"],
+    ["Nota 06", "Indicadores de rebanho e N pequeno", "docs/corte/06_indicadores_rebanho_n_pequeno.md", "captação"]
+  ],
+  leite: [
+    ["Relatório", "Como controles leiteiros viram PTAs e metas", "docs/leite/relatorio.md", "~18,6 mil palavras"],
+    ["Nota 01", "Modelos de produção de leite", "docs/leite/01_modelos_producao_leite.md", "captação"],
+    ["Nota 02", "Características funcionais", "docs/leite/02_caracteristicas_funcionais.md", "captação"],
+    ["Nota 03", "Genômica e avaliação internacional", "docs/leite/03_genomica_e_avaliacao_internacional.md", "captação"],
+    ["Nota 04", "PTA, confiabilidade e índices", "docs/leite/04_pta_confiabilidade_indices.md", "captação"],
+    ["Nota 05", "Programas e cruzamentos", "docs/leite/05_programas_e_cruzamentos.md", "captação"],
+    ["Nota 06", "Indicadores de rebanho e N menor", "docs/leite/06_indicadores_rebanho_n_menor.md", "captação"]
+  ],
+  fontes: [
+    ["Registro", "Estado da pesquisa e como retomar", "docs/estado.md", "15/10/2026"],
+    ["Fontes", "Artigos pagos para obter, com DOIs", "docs/artigos-pagos.md", "13 artigos e 1 livro"]
+  ]
+};
+
+const tabs = Array.from(document.querySelectorAll(".tab"));
+const panels = Array.from(document.querySelectorAll(".panel"));
+const reader = document.getElementById("leitor");
+const readerBody = document.getElementById("leitor-conteudo");
+const readerTitle = document.getElementById("leitor-titulo");
+let lastTab = "visao";
+
+function showTab(id) {
+  if (!document.getElementById(id) || !document.getElementById(id).classList.contains("panel")) id = "visao";
+  lastTab = id;
+  reader.hidden = true;
+  panels.forEach(p => { p.hidden = p.id !== id; });
+  tabs.forEach(t => t.setAttribute("aria-selected", String(t.dataset.tab === id)));
+  if (location.hash !== "#" + id) history.replaceState(null, "", "#" + id);
+}
+
+tabs.forEach(t => t.addEventListener("click", () => showTab(t.dataset.tab)));
+
+document.querySelectorAll("[data-docs]").forEach(box => {
+  (DOCS[box.dataset.docs] || []).forEach(([tag, title, path, meta]) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "docbtn";
+    b.innerHTML = `<span class="tag"></span><span class="title"></span><span class="meta"></span>`;
+    b.querySelector(".tag").textContent = tag;
+    b.querySelector(".title").textContent = title;
+    b.querySelector(".meta").textContent = meta;
+    b.addEventListener("click", () => openDoc(title, path));
+    box.appendChild(b);
+  });
+});
+
+async function openDoc(title, path) {
+  panels.forEach(p => { p.hidden = true; });
+  reader.hidden = false;
+  readerTitle.textContent = title;
+  readerBody.innerHTML = '<p class="note">Carregando o documento…</p>';
+  window.scrollTo(0, 0);
+  try {
+    const r = await fetch(path);
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    const md = await r.text();
+    readerBody.innerHTML = window.marked ? marked.parse(md) : "<pre></pre>";
+    if (!window.marked) readerBody.querySelector("pre").textContent = md;
+    readerBody.querySelectorAll("a[href^='http']").forEach(a => { a.target = "_blank"; a.rel = "noopener"; });
+  } catch (e) {
+    readerBody.innerHTML = '<p>Não foi possível abrir este documento agora. Ele também está no repositório, em reports/ ou research_notes/.</p>';
+  }
+}
+
+document.getElementById("voltar").addEventListener("click", () => showTab(lastTab));
+showTab((location.hash || "#visao").slice(1));
+</script>
