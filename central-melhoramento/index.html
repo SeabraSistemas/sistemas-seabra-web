@@ -183,8 +183,8 @@ td.fit { text-align: center; font-family: var(--font-mono); font-weight: 500; wh
       <article class="card seg-card">
         <span class="seg-code">LEITE · OVI</span>
         <h3>Ovinos leiteiros</h3>
-        <span class="chip next">Em captação</span>
-        <p class="note">Lacaune, Assaf, Sarda e Latxa como referências internacionais.</p>
+        <span class="chip done">Relatório v1 · texto completo</span>
+        <p class="note">ICAR para ovelhas, modelo francês com variância heterogênea, ssGBLUP da Lacaune, ISOL. O Brasil não tem avaliação genética.</p>
       </article>
     </div>
 
@@ -362,24 +362,42 @@ td.fit { text-align: center; font-family: var(--font-mono); font-weight: 500; wh
     <div class="section-head">
       <span class="eyebrow">Segmento LEITE · OVI</span>
       <h2>Ovinos leiteiros</h2>
-      <p class="lede">Último segmento da série, no mesmo fluxo de caprinos: captação com texto completo, síntese em Opus e exemplos verificados.</p>
+      <p class="lede">Ovelhas leiteiras ganham EBVs importando conexão genética. Sem avaliação genética no Brasil, a precisão de um rebanho vem de sêmen importado com EBV, de troca de carneiros entre rebanhos e de registro padronizado.</p>
     </div>
     <div class="grid">
       <article class="card">
         <h3>Situação</h3>
-        <span class="chip next">Em captação</span>
-        <p class="note">6 frentes: produção, programas, genômica, funcionais, índices e esquemas, indicadores de rebanho.</p>
+        <span class="chip done">Relatório v1 · texto completo</span>
+        <dl class="kv">
+          <dt>Relatório</dt><dd>~28,1 mil palavras</dd>
+          <dt>Captação</dt><dd>6 frentes com leitura de texto completo</dd>
+          <dt>Exemplos</dt><dd>8 exemplos conferidos em numpy</dd>
+          <dt>Pendente</dt><dd>verificação independente; fórmula oficial do ISOL; documentos MAPA/INIA</dd>
+        </dl>
       </article>
       <article class="card">
-        <h3>Referências a cobrir</h3>
+        <h3>Modelos centrais</h3>
         <ul class="clean">
-          <li>Lacaune (França) e genômica single-step</li>
-          <li>Assaf e Churra (Espanha), Latxa e Manech (País Basco)</li>
-          <li>Sarda (Itália), East Friesian e Awassi</li>
-          <li>Ovinos leiteiros no Brasil (Lacaune no Sul)</li>
+          <li>Leite da ordenha exclusiva (TMM) por Fleischmann; controles AT e AC</li>
+          <li>Modelo animal de repetibilidade com variância heterogênea por rebanho × ano × parto (França)</li>
+          <li>Dia de controle: repetibilidade ajustou melhor que Legendre (White Maritza)</li>
+          <li>ssGBLUP da Lacaune com metafundadores; gene SOCS2 (células)</li>
+          <li>ISOL: 50% produção e 50% células e úbere (pesos oficiais não verificados)</li>
+          <li>Funcionais: úbere, ordenhabilidade, fertilidade, verminose, scrapie (PRNP)</li>
+        </ul>
+      </article>
+      <article class="card">
+        <h3>Indicadores e metas</h3>
+        <ul class="clean">
+          <li>Leite por ovelha na ordenha, duração da ordenha, gordura e proteína (rendimento de queijo)</li>
+          <li>Fertilidade, prolificidade, mortalidade e cordeiros desmamados por ovelha</li>
+          <li>Regulação: sem RTIQ de leite de ovelha; RIISPOA e IN 76 "no que couber"</li>
+          <li>Metas por categoria: borregas, primíparas, adultas e carneiros</li>
         </ul>
       </article>
     </div>
+    <div class="section-head"><h3>Documentos</h3></div>
+    <div class="doclist" data-docs="ovinos"></div>
   </section>
 
   <!-- MODELOS -->
@@ -471,6 +489,7 @@ td.fit { text-align: center; font-family: var(--font-mono); font-weight: 500; wh
           <li>Corte: A⁻¹, MME, direto-materno, multicaracterística, ssGBLUP, APY, índices, MPPA, Possible Change, idade da vaca, Ne</li>
           <li>Leite: TIM, Wood e Wilmink, dia de controle com regressão aleatória, DE e REL com k_d, DPR, intervalos, endogamia</li>
           <li>Caprinos: lactação com 4 a 10 controles, confiabilidade de bodes, ICC e MFP$, ganho genético, MPPA, taxas com 30 cabras, rebanho fechado</li>
+          <li>Ovinos: Fleischmann da ordenha exclusiva, variância heterogênea, índice de carneiros, confiabilidade, MPPA, taxas com 40 ovelhas, endogamia com troca de carneiros, ganho com sêmen importado</li>
         </ul>
       </article>
       <article class="card">
@@ -569,6 +588,15 @@ const DOCS = {
     ["Nota 04", "Características funcionais", "docs/caprinos/04_caracteristicas_funcionais.md", "texto completo"],
     ["Nota 05", "Índices, acurácia e esquemas", "docs/caprinos/05_indices_acuracia_esquemas.md", "texto completo"],
     ["Nota 06", "Indicadores de rebanho e N pequeno", "docs/caprinos/06_indicadores_rebanho_n_pequeno.md", "texto completo"]
+  ],
+  ovinos: [
+    ["Relatório", "Ovelhas leiteiras ganham EBVs importando conexão genética", "docs/ovinos/relatorio.md", "~28,1 mil palavras"],
+    ["Nota 01", "Modelos de produção", "docs/ovinos/01_modelos_producao.md", "texto completo"],
+    ["Nota 02", "Programas de avaliação", "docs/ovinos/02_programas_avaliacao.md", "texto completo"],
+    ["Nota 03", "Genômica", "docs/ovinos/03_genomica.md", "texto completo"],
+    ["Nota 04", "Características funcionais", "docs/ovinos/04_caracteristicas_funcionais.md", "texto completo"],
+    ["Nota 05", "Índices e esquemas", "docs/ovinos/05_indices_esquemas.md", "texto completo"],
+    ["Nota 06", "Indicadores de rebanho e N pequeno", "docs/ovinos/06_indicadores_rebanho_n_pequeno.md", "texto completo"]
   ],
   fontes: [
     ["Registro", "Estado da pesquisa e próximos passos", "docs/estado.md", "15/10/2026"],
