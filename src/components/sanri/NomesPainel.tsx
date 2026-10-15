@@ -18,6 +18,7 @@ import {
 } from '@/lib/sanri/nomes';
 import { cn } from '@/lib/utils';
 import { Aviso, PainelBotao, PainelCampo } from './Controles';
+import { Info } from './Info';
 import { EstadoApp } from './EstadoApp';
 
 /** "2026-10-15" -> "15/10/2026". */
@@ -31,25 +32,6 @@ async function chamar(metodo: 'POST' | 'PATCH' | 'DELETE', corpo: unknown): Prom
   const res = await fetch('/sanri/api/nomes', { method: metodo, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(corpo) });
   const dados = (await res.json().catch(() => ({}))) as Record<string, unknown>;
   return { ok: res.ok, dados };
-}
-
-/** Botão "i": a explicação mora aqui, não solta na tela. */
-function Info({ children }: { children: React.ReactNode }) {
-  const [aberto, setAberto] = useState(false);
-  return (
-    <>
-      <button
-        type="button"
-        aria-expanded={aberto}
-        aria-label="Como funciona"
-        onClick={() => setAberto(!aberto)}
-        className="inline-flex size-6 shrink-0 items-center justify-center rounded-full border border-rule-strong text-xs font-bold italic text-ink-1 hover:bg-paper-2"
-      >
-        i
-      </button>
-      {aberto && <div className="basis-full rounded-campo bg-paper-2 px-3 py-2 text-sm text-ink-1">{children}</div>}
-    </>
-  );
 }
 
 // ---------------------------------------------------------------- um nome livre

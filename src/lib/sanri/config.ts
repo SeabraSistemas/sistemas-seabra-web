@@ -17,6 +17,8 @@ export const ABA_DIETA = 'dieta_baia';
 export const LINKS: NavLink[] = [
   // Régua e Saídas moram dentro de Produção (sub-abas); as rotas continuam as mesmas.
   { href: '/sanri/producao', label: 'Produção', tambem: ['/sanri/regua', '/sanri/saidas'] },
+  // Os mesmos avisos que o robô manda no grupo do WhatsApp às 6h (15/10/2026).
+  { href: '/sanri/avisos', label: 'Avisos' },
   { href: '/sanri/dieta', label: 'Dieta' },
   // Conferência, Reprodução e Lactações saíram em 15/10/2026: a equipe passou a
   // lançar no app, e essas abas liam a planilha aposentada.
