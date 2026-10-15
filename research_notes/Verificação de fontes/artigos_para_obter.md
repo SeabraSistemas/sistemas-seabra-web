@@ -27,6 +27,7 @@ Todas as outras referências centrais dos dois relatórios estão abertas e ser�
 | Referência | DOI | Observação |
 |---|---|---|
 | Mrode RA (2014). *Linear Models for the Prediction of Animal Breeding Values*, 3ª ed. CABI | 10.1079/9781780643915.0000 | Livro-texto de referência, com exemplos resolvidos de todos os modelos. Vale checar a biblioteca da UFF |
+| Mrode R, Pocrnić I, Gorjanc G, Thompson R (2023). *Linear Models for the Prediction of the Genetic Merit of Animals*, 4ª ed. CABI (ISBN 9781800620483) | 10.1079/9781800620506.0000 | **Edição atual, que substitui a 3ª.** Título novo; cada capítulo tem DOI próprio (…0003 parentesco, …0005 efeitos ambientais aleatórios, …0006 multicaracterística, …0016 sobrevivência). Código oficial dos exemplos, aberto: github.com/MrodesBook (Examples_R e Examples_BLUPF90). Registros de capítulos no CGSpace (repositório do ILRI), a conferir no navegador |
 | Koots KR et al. (1994). Analyses of published genetic parameter estimates for beef production traits. 1. Heritability. *Animal Breeding Abstracts* 62:309–338 | sem DOI | Meta-análise clássica de herdabilidades em corte |
 | Snelling WM, Golden BL, Bourdon RM (1995). Within-herd genetic analyses of stayability of beef females. *J. Anim. Sci.* 73:993–1001 | 10.2527/1995.734993x | Fechado na editora, mas há PDF público no site do USDA-ARS, já citado no relatório. Não precisa obter |
 
