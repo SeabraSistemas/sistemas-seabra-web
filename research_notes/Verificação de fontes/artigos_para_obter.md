@@ -30,5 +30,24 @@ Todas as outras referências centrais dos dois relatórios estão abertas e ser�
 | Koots KR et al. (1994). Analyses of published genetic parameter estimates for beef production traits. 1. Heritability. *Animal Breeding Abstracts* 62:309–338 | sem DOI | Meta-análise clássica de herdabilidades em corte |
 | Snelling WM, Golden BL, Bourdon RM (1995). Within-herd genetic analyses of stayability of beef females. *J. Anim. Sci.* 73:993–1001 | 10.2527/1995.734993x | Fechado na editora, mas há PDF público no site do USDA-ARS, já citado no relatório. Não precisa obter |
 
+## Segunda prioridade (encontrados no aprofundamento de corte, 15/10/2026)
+
+DOIs conferidos no Crossref. O conteúdo destes artigos não foi lido.
+
+| Referência | DOI | Para quê |
+|---|---|---|
+| Fernandes Júnior GA et al. (2022). Current applications and perspectives of genomic selection in Bos indicus (Nellore) cattle. *Livest. Sci.* 263:105001 | 10.1016/j.livsci.2022.105001 | Única revisão de seleção genômica em Nelore |
+| Garrick DJ, Golden BL (2009). Producing and using genetic evaluations in the United States beef industry of today. *J. Anim. Sci.* 87(suppl_14):E11–E18 | 10.2527/jas.2008-1431 | Fluxo da avaliação nacional de corte dos EUA |
+| Montaldo HH et al. (2012). Opportunities and challenges from the use of genomic selection for beef cattle breeding in Latin America. *Animal Frontiers* 2(1):23–29 | 10.2527/af.2011-0029 | Panorama latino-americano |
+| Cundiff LV, Willham RL, Pratt CA (1966). Additive versus multiplicative correction factors for weaning weight in beef cattle. *J. Anim. Sci.* 25(4):983–987 | 10.2527/jas1966.254983x | Fatores de idade da vaca: aditivos ou multiplicativos |
+| Nelsen TC, Kress DD (1981). Additive and multiplicative correction factors for sex and age of dam in beef cattle weaning weight. *J. Anim. Sci.* 53(5):1217–1224 | 10.2527/jas1981.5351217x | Mesma questão |
+| Northcutt SL, Wilson DE, Hoekstra JW (1994). Effect of positive genetic trend for mature size on age-of-dam adjustment factors for weaning weight. *J. Anim. Sci.* 72(4):828–832 | 10.2527/1994.724828x | Por que os fatores de idade da vaca envelhecem |
+| Minyard JA, Dinkel CA (1965). Heritability and repeatability of weaning weight in beef cattle. *J. Anim. Sci.* 24(4):1072–1074 | 10.2527/jas1965.2441072x | Repetibilidade do peso à desmama (MPPA) |
+| Kress DD, Burfening PJ (1972). Weaning weight related to subsequent most probable producing ability in Hereford cows. *J. Anim. Sci.* 35(2):327–335 | 10.2527/jas1972.352327x | MPPA |
+| Vanmiddlesworth LL, Brown CJ, Johnson ZB (1977). Repeatability of calf weight and ratio of calf weight to cow weight in Hereford and Angus. *J. Anim. Sci.* 45(6):1247–1253 | 10.2527/jas1977.4561247x | Repetibilidade |
+| Kilkenny JB (1968). A note on estimates of the repeatability of weaning weight in beef cattle. *Animal Science* 10(4):483–486 | 10.1017/s0003356100026507 | Repetibilidade |
+| Nardone A, Valentini A (1989). Effect of errors in genetic and environmental variances on the BLUP estimates of sire breeding values. *Ann. Zootech.* 38(4):315–319 | 10.1051/animres:19890309 | Efeito de usar variâncias erradas no BLUP (rebanhos pequenos) |
+| Maniatis N, Pollott GE (2003). The impact of data structure on genetic (co)variance components of early growth in sheep, estimated using an animal model with maternal effects. *J. Anim. Sci.* 81(1):101–108 | 10.2527/2003.811101x | Estrutura de dados e efeito materno (útil também para ovinos) |
+
 ## Como enviar
 Baixe os PDFs pelo acesso da UFF (Portal de Periódicos CAPES via CAFe) e anexe-os na conversa da sessão "Modelos estatísticos". Eles são lidos para conferir as equações e não são salvos no repositório.
