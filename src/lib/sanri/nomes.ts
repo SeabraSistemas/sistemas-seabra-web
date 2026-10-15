@@ -27,8 +27,13 @@ export interface NomeLista {
   ano: number;
   sexo: Sexo;
   nome: string;
-  /** Animal da fazenda que tem este nome (derivado do rebanho). null = livre. */
+  /** Animal da fazenda ligado a este nome (derivado do rebanho). null = livre. */
   animal: { id: number; numero: string | null; nome: string | null; nascimento: string | null; ativo: boolean } | null;
+  /**
+   * 'dado' = o sistema deu a uma cria; 'existe' = parecido com um nome do
+   * rebanho (palavra igual ou 1 letra de diferença) — não será usado; null = livre.
+   */
+  situacao: 'dado' | 'existe' | null;
 }
 
 export interface CriaSemNome {
@@ -97,6 +102,11 @@ export function traduzirErro(erro: { message?: string; code?: string } | null | 
     return m ? `em ${m[1]} os nomes começam com ${m[2]}` : 'letra errada para o ano';
   }
   if (msg.startsWith('NOME_EM_USO')) return 'já foi dado a um animal — não pode ser alterado nem excluído';
+  if (msg.startsWith('NOME_JA_EXISTE')) {
+    // "NOME_JA_EXISTE: AMORAS parece com AMORA SANRI (nº 123), que já está no rebanho"
+    const m = /parece com .*$/.exec(msg);
+    return m ? m[0] : 'parece com um nome que já está no rebanho';
+  }
   return 'não foi possível gravar';
 }
 
@@ -109,6 +119,8 @@ export function nomeCompleto(nome: string, sufixo: string): string {
 export interface ResumoSexo {
   livres: NomeLista[];
   usados: NomeLista[];
+  /** Parecidos com nomes do rebanho: ficam de fora (dá para excluir). */
+  conflitos: NomeLista[];
   /** O próximo a sair: o primeiro livre em ordem alfabética (mesma ordem do banco). */
   proximo: NomeLista | null;
 }
@@ -124,9 +136,10 @@ export function ordenar(nomes: NomeLista[]): NomeLista[] {
 
 export function resumir(nomes: NomeLista[], ano: number, sexo: Sexo): ResumoSexo {
   const doGrupo = ordenar(nomes.filter((n) => n.ano === ano && n.sexo === sexo));
-  const livres = doGrupo.filter((n) => n.animal == null);
-  const usados = doGrupo.filter((n) => n.animal != null);
-  return { livres, usados, proximo: livres[0] ?? null };
+  const livres = doGrupo.filter((n) => n.situacao == null);
+  const usados = doGrupo.filter((n) => n.situacao === 'dado');
+  const conflitos = doGrupo.filter((n) => n.situacao === 'existe');
+  return { livres, usados, conflitos, proximo: livres[0] ?? null };
 }
 
 /**

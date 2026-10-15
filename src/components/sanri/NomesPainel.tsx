@@ -118,6 +118,38 @@ function LinhaLivre({ item, ano, config, proximo }: { item: NomeLista; ano: numb
   );
 }
 
+// ---------------------------------------------------------------- nome parecido com o rebanho
+
+function LinhaConflito({ item }: { item: NomeLista }) {
+  const router = useRouter();
+  const [ocupado, setOcupado] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
+
+  async function apagar() {
+    setOcupado(true);
+    setErro(null);
+    const r = await chamar('DELETE', { id: item.id });
+    setOcupado(false);
+    if (!r.ok) return setErro(`Não excluiu: ${String(r.dados.erro ?? 'tente de novo')}.`);
+    router.refresh();
+  }
+
+  return (
+    <li className="flex flex-col gap-1 border-t border-rule py-2 text-sm first:border-t-0">
+      <div className="flex items-center justify-between gap-2">
+        <span className="min-w-0">
+          <span className="font-semibold text-ink">{item.nome}</span>
+          <span className="text-xs text-ink-2"> · parece com {item.animal?.nome ?? '—'} (nº {item.animal?.numero ?? '—'})</span>
+        </span>
+        <PainelBotao variante="perigo" onClick={apagar} disabled={ocupado}>
+          {ocupado ? 'Excluindo…' : 'Excluir'}
+        </PainelBotao>
+      </div>
+      {erro && <Aviso tom="erro">{erro}</Aviso>}
+    </li>
+  );
+}
+
 // ---------------------------------------------------------------- acrescentar
 
 function Acrescentar({ ano, sexo, config, plural }: { ano: number; sexo: Sexo; config: ConfigNomes; plural: string }) {
@@ -195,7 +227,7 @@ function ColunaSexo({
   config: ConfigNomes;
   semNome: CriaSemNome[];
 }) {
-  const { livres, usados, proximo } = useMemo(() => resumir(nomes, ano, sexo), [nomes, ano, sexo]);
+  const { livres, usados, conflitos, proximo } = useMemo(() => resumir(nomes, ano, sexo), [nomes, ano, sexo]);
 
   return (
     <section aria-label={plural} className="flex flex-col gap-4 rounded-card border border-rule bg-paper p-4 shadow-card">
@@ -229,6 +261,17 @@ function ColunaSexo({
             ))}
           </ul>
         </div>
+      )}
+
+      {conflitos.length > 0 && (
+        <details open>
+          <summary className="cursor-pointer text-sm font-semibold text-aviso">Parecidos com o rebanho — não serão usados ({conflitos.length})</summary>
+          <ul className="mt-1">
+            {conflitos.map((n) => (
+              <LinhaConflito key={n.id} item={n} />
+            ))}
+          </ul>
+        </details>
       )}
 
       {usados.length > 0 && (
@@ -293,7 +336,8 @@ export function NomesPainel({
         <h2 className="text-lg font-semibold text-ink">Nomes das crias</h2>
         <Info>
           A cria lançada no app sem nome recebe o primeiro nome livre, em ordem alfabética, da lista do ano em que nasceu e do
-          sexo dela, com {config.sufixo ? `"${config.sufixo}"` : 'o sufixo'} no fim. Cada ano tem uma letra. Nome já dado não muda nem sai
+          sexo dela, com {config.sufixo ? `"${config.sufixo}"` : 'o sufixo'} no fim. Cada ano tem uma letra. Nome igual ou muito parecido com o de um animal da
+          fazenda (uma palavra igual, ou 1 letra de diferença) não entra e não é usado. Nome já dado não muda nem sai
           da lista. Se a lista acabar, a cria fica sem nome e recebe assim que você acrescentar mais.
         </Info>
       </div>

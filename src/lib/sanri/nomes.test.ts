@@ -18,7 +18,7 @@ import {
 const SANRI: ConfigNomes = { sufixo: 'SANRI', anoBase: 2026, letraBase: 'A' };
 
 function item(id: number, nome: string, extra: Partial<NomeLista> = {}): NomeLista {
-  return { id, ano: 2026, sexo: 'fêmea', nome, animal: null, ...extra };
+  return { id, ano: 2026, sexo: 'fêmea', nome, animal: null, situacao: null, ...extra };
 }
 
 describe('letraDoAno', () => {
@@ -66,6 +66,10 @@ describe('traduzirErro', () => {
     assert.equal(traduzirErro({ message: 'NOME_UMA_PALAVRA: "ANA CLARA" — …' }), 'tem de ser uma palavra só, sem espaço, número ou símbolo');
     assert.equal(traduzirErro({ message: 'NOME_LETRA_ERRADA: em 2026 os nomes começam com A' }), 'em 2026 os nomes começam com A');
     assert.match(traduzirErro({ message: 'NOME_EM_USO: AMORA já foi dado…' }), /já foi dado a um animal/);
+    assert.equal(
+      traduzirErro({ message: 'NOME_JA_EXISTE: BENTO parece com Chico Bento Sanri (nº 1421326011), que já está no rebanho' }),
+      'parece com Chico Bento Sanri (nº 1421326011), que já está no rebanho',
+    );
   });
   test('índice único (23505) = já está na lista', () => {
     assert.equal(traduzirErro({ code: '23505', message: 'duplicate key value violates unique constraint' }), 'já está na lista');
@@ -78,7 +82,8 @@ describe('traduzirErro', () => {
 describe('resumir', () => {
   const nomes = [
     item(1, 'ZEBRA'),
-    item(2, 'ÁGATA', { animal: { id: 9, numero: '1421326171', nome: 'ÁGATA SANRI', nascimento: '2026-03-01', ativo: true } }),
+    item(2, 'ÁGATA', { situacao: 'dado', animal: { id: 9, numero: '1421326171', nome: 'ÁGATA SANRI', nascimento: '2026-03-01', ativo: true } }),
+    item(7, 'ALÇA', { situacao: 'existe', animal: { id: 8, numero: '1421325252', nome: 'ALÇA SANRI', nascimento: null, ativo: false } }),
     item(3, 'ABELHA'),
     item(4, 'ACÁCIA'),
     item(5, 'ATLAS', { sexo: 'macho' }),
@@ -89,9 +94,11 @@ describe('resumir', () => {
     assert.deepEqual(r.livres.map((n) => n.nome), ['ABELHA', 'ACÁCIA', 'ZEBRA']);
     assert.equal(r.proximo?.nome, 'ABELHA');
   });
-  test('nome com animal é "dado", não livre', () => {
+  test('nome dado pelo sistema é "dado"; parecido com o rebanho é conflito — nenhum dos dois é livre', () => {
     const r = resumir(nomes, 2026, 'fêmea');
     assert.deepEqual(r.usados.map((n) => n.nome), ['ÁGATA']);
+    assert.deepEqual(r.conflitos.map((n) => n.nome), ['ALÇA']);
+    assert.ok(!r.livres.some((n) => n.nome === 'ALÇA'));
   });
   test('separa por sexo e por ano', () => {
     assert.deepEqual(resumir(nomes, 2026, 'macho').livres.map((n) => n.nome), ['ATLAS']);

@@ -29,6 +29,7 @@ interface LinhaStatus {
   nome_animal: string | null;
   data_de_nascimento: string | null;
   status_animal: string | null;
+  situacao: string | null;
 }
 
 interface LinhaCria {
@@ -79,7 +80,7 @@ export async function getNomes(): Promise<LeituraNomes> {
       paginar<LinhaStatus>((de, ate) =>
         supa
           .from('nome_automatico_lista_status')
-          .select('id, ano, sexo, nome, animal_id, numero_animal, nome_animal, data_de_nascimento, status_animal')
+          .select('id, ano, sexo, nome, animal_id, numero_animal, nome_animal, data_de_nascimento, status_animal, situacao')
           .eq('propriedade_id', propriedade)
           .order('id')
           .range(de, ate),
@@ -113,6 +114,7 @@ export async function getNomes(): Promise<LeituraNomes> {
           l.animal_id == null
             ? null
             : { id: l.animal_id, numero: l.numero_animal, nome: l.nome_animal, nascimento: l.data_de_nascimento, ativo: l.status_animal === 'ativo' },
+        situacao: l.situacao === 'dado' || l.situacao === 'existe' ? l.situacao : null,
       });
     }
 
