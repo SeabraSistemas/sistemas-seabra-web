@@ -405,7 +405,7 @@ Quatro escolhas separam os programas. A primeira é a **lactação de referênci
 
 ### Os indicadores do rebanho e como calculá-los
 
-Os indicadores zootécnicos usam fórmulas padrão, definidas pelas notas como definições operacionais, porque nenhuma norma brasileira as fixa para caprinos. O app deve calculá-las sempre com numerador e denominador visíveis, para permitir o intervalo de confiança.
+Os indicadores zootécnicos abaixo são definições operacionais de uso corrente, adotadas aqui porque nenhuma norma brasileira as fixa para caprinos. O app deve calculá-las sempre com numerador e denominador visíveis, para permitir o intervalo de confiança.
 
 ```
 Produção
@@ -744,6 +744,8 @@ for n in (10, 30, 50, 100):
     print(f"   formula n/(n+k): n={n:3d} -> {n/(n+k_touro):.3f} (k=19) | {n/(n+k_d):.3f} (k_d=18) | h2=0,30: {n/(n+(4-0.6)/0.3):.3f} (k_d=11,33)")
 for R in (0.50, 0.70):
     print(f"   REL {R:.2f} exige DE = k_d R/(1-R) = {k_d*R/(1-R):.1f} filhas-equivalentes (h2 0,20)")
+print(f"   SZZV: meias-amplitudes 700/126 = {700/126:.2f}; sqrt(1-0,38)/sqrt(1-0,98) = {math.sqrt(0.62)/math.sqrt(0.02):.2f}")
+print(f"   Media de lactacoes por GC na Alpina 2021: 1.072/153 = {1072/153:.2f}")
 
 print("=" * 100)
 # ---------------------------------------------------------------------------------------------
