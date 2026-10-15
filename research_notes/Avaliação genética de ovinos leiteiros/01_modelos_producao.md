@@ -434,7 +434,7 @@ Legarra & Ugarte (2005, [DOI](https://doi.org/10.3168/jds.s0022-0302(05)72899-x)
 
 #### Inferences
 - A avaliação do Latxa depende de programas de teste de progênie e de muitos rebanhos pequenos (média de 410 ovelhas por rebanho na LRF). A conectividade é o gargalo, como o próprio Granado-Tajada & Ugarte (2018) mostram em slides de conectividade (título da sessão 26).
-- A escolha de 180 dias no Assaf espanhol mostra que o padrão de lactação varia entre raças espanholas, e não é o de 150 dias do texto francês.
+- Os comprimentos usados nas fontes lidas são diferentes: 180 dias (Assaf espanhol), 130 dias após o desmame (NZ) e a média observada de 165 dias da ordenha francesa. Não há padrão comum entre as fontes.
 
 #### Gaps
 - Não consegui o texto integral de Gutiérrez et al. (2007), Ruiz et al. (2000), Legarra & Ugarte (2005) ou Bittante et al. (2017). Os números acima são de trecho de busca.
@@ -527,7 +527,7 @@ A contagem de células somáticas (SCC) é transformada em escore (SCS = log2(SC
 - Ovelhas Valle del Belice (Itália), teste-dia com repetibilidade: h² de SCS de 0,14; correlações com produção de leite de 0,16 a 0,31 (fonte não identificada).
 
 ### Inferences
-- O uso do escore como caráter de lactação, com amostragem de 2 a 6 medidas por vida, dá herdabilidade baixa. Isso combina com a queda de precisão descrita por Astruc et al. (2023) para gordura.
+- Para composição, Astruc et al. (2023, p. 203) relatam de 2 a 6 medidas por vida e queda de herdabilidade da gordura de 0,50 para 0,35 com amostragem parcial. Para o escore, a média de lactação já tem herdabilidade baixa (0,13 a 0,15). [INFERÊNCIA: a amostragem parcial tende a reduzir a precisão também para o escore; não testei isso nas fontes lidas.]
 - A antagonia de SCC com leite no fim da lactação e a favorável no início (Barillet et al. 2001) sugere que a escolha de momento de amostragem influencia a interpretação genética. Não há valor de correção definido nas fontes lidas.
 - Um limiar individual de mastite para ovelhas não pode ser fixado a partir das fontes lidas. O escore de SCS (classes da seção 5, acima) é a escala de referência.
 
@@ -564,13 +564,13 @@ Os valores mais confiáveis de herdabilidade do leite e da composição em ovino
 | Sarda, Itália | Gordura / proteína | ≈ 0,48 / ≈ 0,55 | — | — | idem | NÃO VERIFICADO |
 | Churra, Espanha (2002, médias de lactação) | Leite / P% / caseína / LILCY / CCS | 0,26 / 0,31 / 0,30 / 0,09 / 0,11 | — | — | [SNIPPET, sem fonte verificada] | NÃO VERIFICADO |
 | Latxa, Espanha | Úbere, CCS e leite | não extraído | — | — | [Legarra & Ugarte 2005](https://doi.org/10.3168/jds.s0022-0302(05)72899-x) | Só metadados |
-| Churra da Terra Quente, Portugal | Leite (regressão aleatória) | pico ≈ 0,34 por volta do dia 60 | — | — | [SNIPPET](https://bibliotecadigital.ipb.pt/handle/10198/11303) | SNIPPET |
+| Churra da Terra Quente, Portugal | Leite (regressão aleatória, Legendre ordem 3) | máximo por volta do dia 60 (valor não extraído) | — | — | [SNIPPET](https://bibliotecadigital.ipb.pt/handle/10198/11303) | SNIPPET |
 
 Outras estimativas citadas em Zhelyazkova et al. (2023) e não lidas nas fontes originais: Komprej et al. (2011), h² de 0,10 a 0,23 por mês de lactação (Bovec e Pramenka da Ístria); Oravcová & Peskovicová (2008), h² de 0,19 (Tsigai), 0,10 (Valachian melhorado) e 0,15 (Lacaune), por teste-dia; Jawasreh & Khasawneh (2007), h² de 0,26 a 0,27 (Awassi).
 
 ### Inferences
 - A diferença de herdabilidade do leite entre a França de 2011 (0,30) e a França de 2019-2022 (0,24) pode vir de mudança de dados (produção de ordenha em vez de lactação), de modelo (teste-dia ou lactação) e de amostragem. As fontes não permitem separar esses fatores.
-- A herdabilidade da proteína é a mais alta nas duas fontes francesas (0,45 e 0,52 de composição). Isso é coerente com o padrão de composição de ovelha, de 50 a 55 g/L, com menor variação ambiental relativa do que a da quantidade.
+- A herdabilidade da proteína é a mais alta nas duas fontes francesas (0,45 e 0,52 de composição, contra 0,24 a 0,30 para a quantidade). A causa não é tratada nas fontes lidas. [INFERÊNCIA não testada.]
 - Fora da França, as herdabilidades de leite das raças espanholas e búlgaras estão no mesmo intervalo (0,13 a 0,36). Para comparar com bovinos, o intervalo de ovinos parece menor, mas não há base para afirmar isso com as fontes lidas.
 
 ### Gaps
@@ -607,11 +607,11 @@ A literatura brasileira sobre ovelhas leiteiras é de produção e composição,
 - Programa de melhoramento de caprinos leiteiros com controle leiteiro próprio, e primeiro teste de progênie de reprodutores caprinos em 2005. Objetivo de estimar a estrutura genética das raças e de criar um arquivo zootécnico nacional de caprinos leiteiros. É caprino, não ovino.
 
 **Teses e dissertações (metadados Crossref)**
-- Santa Inês em lactação com óleo de canola ou soja, e produção de leite de ovelhas Santa Inês e F1 com Lacaune (USP, ESALQ/FMVZ). Só títulos e DOIs de teses. Não lidas.
+- Títulos de teses do repositório USP sobre Santa Inês com óleo de canola ou soja e sobre cruzas F1 com Lacaune. Só títulos. Não lidas.
 
 ### Inferences
-- A pesquisa brasileira sobre ovelhas leiteiras usa rebanhos pequenos e não cria dados de rebanho para avaliação genética. O resultado mais útil para um modelo é o de Ticiani et al. (2013): mostra que a curva de lactação em pasto tem perda rápida de produção e que a Lacaune produz mais, com menor persistência.
-- Com o tamanho típico de rebanho brasileiro, o modelo de rebanho x ano x parição (França) ou de rebanho x ano x dia de teste (Bulgária) não se sustenta sem conectividade entre rebanhos. A recomendação de Vouraki et al. (2025) sobre conectividade vale aqui.
+- A pesquisa brasileira sobre ovelhas leiteiras usa rebanhos pequenos e não cria dados de rebanho para avaliação genética. O resultado mais útil para um modelo é o de Ticiani et al. (2013): a equação de PL cai cerca de 0,02 kg por dia (East Friesian) e 0,08 kg por dia (Lacaune) ao longo de 92 dias em pasto.
+- [INFERÊNCIA] Em rebanhos pequenos e isolados, o modelo de rebanho x ano x parição (França) ou de rebanho x ano x dia de teste (Bulgária) depende de conectividade entre rebanhos. O problema de conectividade descrito por Vouraki et al. (2025) se aplica.
 
 ### Gaps
 - Nenhum estudo brasileiro de herdabilidade de leite de ovelhas foi lido em texto completo.
@@ -624,7 +624,7 @@ A literatura brasileira sobre ovelhas leiteiras é de produção e composição,
 
 1. **Campos mínimos do controle.** Para usar qualquer modelo acima, cada ovelha precisa de: data do parto, data do desmame (real ou calculada), data da secagem, número de cordeiros, parição, data do primeiro controle e modo de ordenha (uma ou duas vezes ao dia). São os efeitos fixos das fontes lidas.
 2. **Escolha da lactação de referência.** Declarar o critério é obrigatório pelo ICAR. Recomendo registrar os três números em paralelo: produção da ordenha exclusiva (TMM), total da lactação (TMY pelo Fleischmann) e produção padronizada (por exemplo, 130 dias, como na NZ, ou 180 dias, como no Assaf), mais o número de controles usados.
-3. **Método de controle.** AT e AC são o padrão europeu. Um rebanho brasileiro que controle uma vez por dia em AT precisa de conferência de viés do tanque (AC), porque o ICAR tem regra própria para essa correção.
+3. **Método de controle.** AT e AC são os métodos simplificados mais usados na Europa. AT alterna a ordenha medida a cada controle. AC corrige a ordenha medida pelo volume total do tanque do rebanho nas duas ordenhas, e o ICAR dá regras próprias para esse cálculo (Seção 16, Anexo 1).
 4. **Células somáticas.** Usar o escore de SCS como nas classes de Heddi et al. (2026). Não usar o limiar de mastite sem fonte: não há um validado nas fontes lidas.
 5. **Pequenos rebanhos.** A conectividade (pais e avós em comum) é o limite de qualquer avaliação entre rebanhos. Antes de propor um índice intra-rebanho, verificar a conectividade.
 6. **Fórmulas com conflito.** Ver seção 9 antes de publicar qualquer fórmula de AIC/BIC ou de correção de acurácia.
@@ -653,7 +653,7 @@ A literatura brasileira sobre ovelhas leiteiras é de produção e composição,
 3. **Limiar de mastite em ovelhas.** Não há fonte aberta lida com valor validado.
 4. **Herdabilidade e correlação de leite e gordura para Sarda, Churra e Latxa.** Só trechos de busca.
 5. **Correlações genéticas entre lactações.** Não encontradas em fonte lida.
-6. **Avaliação oficial espanhola e italiana.** Documentos do MAPA e da AIA não lidos por erro de certificado TLS, que não foi contornado. Os documentos do IDELE recebidos pelo outro processo da pasta eram HTML de bloqueio.
+6. **Avaliação oficial espanhola e italiana.** Documentos do MAPA não lidos por erro de certificado TLS, que não foi contornado. Os documentos do IDELE listados na pasta eram HTML de bloqueio.
 7. **Texto completo de Barillet et al. (2001), Rupp et al. (2003), Gutiérrez et al. (2007), Ruiz et al. (2000), Legarra & Ugarte (2005), Bittante et al. (2017), Ticiani et al. (2013) e Ferreira et al. (2011).** Ver lista de artigos a obter.
 8. **Brasil.** Nenhuma avaliação genética de ovinos leiteiros encontrada.
 9. **Forma das equações (3) e (11)** em Vouraki et al. (2025) e Zhelyazkova et al. (2023), respectivamente, ilegíveis na extração. Conferir no PDF.
@@ -664,25 +664,25 @@ A literatura brasileira sobre ovelhas leiteiras é de produção e composição,
 
 | Referência | DOI | Verificação |
 |---|---|---|
-| Barillet F., Rupp R., Mignon-Grasteau S., Astruc J.M. (2001). Genetic analysis for mastitis resistance and milk somatic cell score in French Lacaune dairy sheep. *Genet. Sel. Evol.* 33:397 | [10.1186/1297-9686-33-4-397](https://doi.org/10.1186/1297-9686-33-4-397) | Crossref (título, autores, volume). Resumo lido em Europe PMC (PMC2705413) |
+| Barillet, Rupp, Mignon-Grasteau, Astruc (2001). Genetic analysis for mastitis resistance and milk somatic cell score in French Lacaune dairy sheep. *Genet. Sel. Evol.* 33:397 | [10.1186/1297-9686-33-4-397](https://doi.org/10.1186/1297-9686-33-4-397) | Crossref (título, autores, volume). Resumo lido em Europe PMC (PMC2705413) |
 | Vouraki S., Astruc J.M., Lagriffoul G., Rupp R., Banos G., Arsenos G., Ciotola F. (2025). Genotype-by-environment interactions and response to selection for milk production traits in Lacaune sheep from Greece and France. *Vet. Sci.* 12:194 | [10.3390/vetsci12030194](https://doi.org/10.3390/vetsci12030194) | Texto completo (PMC11946213) |
 | Zhelyazkova P., Dimov D., Andonov S. (2023). Genetic-parameter estimation of milk yield in White Maritza sheep breed using different test day models. *Arch. Anim. Breed.* 66:253 | [10.5194/aab-66-253-2023](https://doi.org/10.5194/aab-66-253-2023) | Texto completo (PMC10654608) |
 | Marshall A.C., Lopez-Villalobos N., Loveday S.M., Ellis A., McNabb W. (2023). Modelling lactation curves for dairy sheep in a New Zealand flock. *Animals* 13:349 | [10.3390/ani13030349](https://doi.org/10.3390/ani13030349) | Texto completo (PMC9913856) |
 | Guevara L., Lopez-Villalobos N., Pollott G.E., Albarrán-Portillo B., Fernandes A.M., Salinas-Martínez J.A., Angeles-Hernandez J.C. (2025). Evaluation of empirical and mechanistic models and sampling intervals to model the lactation curves of F1 dairy sheep. *Trop. Anim. Health Prod.* | [10.1007/s11250-025-04365-z](https://doi.org/10.1007/s11250-025-04365-z) | Texto completo (PMC11906548) |
 | Kuchtík J., Kalhotka L., Šustová K., Kopec T. (2025). The evaluation of somatic cell count, microbiological quality and basic composition of sheep milk. *Arch. Anim. Breed.* 68:691 | [10.5194/aab-68-691-2025](https://doi.org/10.5194/aab-68-691-2025) | Texto completo (PMC13524230) |
 | Heddi I., Caballero-Villalobos J., Amalfitano N., Martínez F., Cantarero-Aparicio M.Á., Cecchinato A., Ramón M., Garzón A., Arias R., Moatsou G. (2026). Effect of somatic cell count on milk production... Manchega dairy sheep. *Foods* 15:1527 | [10.3390/foods15091527](https://doi.org/10.3390/foods15091527) | Texto completo (PMC13164286) |
-| Astruc J.M., Baloche G., Buisson D. et al. (2016). La sélection génomique des ovins laitiers en France. *INRA Prod. Anim.* 29(1):41-56 | [10.20870/productions-animales.2016.29.1.2515](https://doi.org/10.20870/productions-animales.2016.29.1.2515) | Texto completo do PDF aberto (productions-animales.org/article/download/2515/7657). Autores parciais conferidos no Crossref |
-| Ticiani R.? Sandri, Souza, Batistel, Oliveira (2013). Persistência da lactação e composição do leite em ovelhas leiteiras das raças Lacaune e East Friesian. *Ciência Rural* 43(9):1650-1653 | [10.1590/s0103-84782013000900018](https://doi.org/10.1590/s0103-84782013000900018) | Crossref (título, autores, abstract). Resumo lido |
-| Ruiz F.A., Oregui L.M., Herrero M. (2000). Comparison of models for describing the lactation curve of Latxa sheep and an analysis of factors affecting milk yield. *J. Dairy Sci.* 83:2709-2719 | [10.3168/jds.s0022-0302(00)75165-4](https://doi.org/10.3168/jds.s0022-0302(00)75165-4) | Crossref (metadados). Resumo via trecho de busca |
-| Gutiérrez J.P., Legaz E., Goyache F. (2007). Genetic parameters affecting 180-days standardised milk yield, test-day milk yield and lactation length in Spanish Assaf (Assaf.E) dairy sheep. *Small Rumin. Res.* 70:233-238 | [10.1016/j.smallrumres.2006.03.009](https://doi.org/10.1016/j.smallrumres.2006.03.009) | Crossref (título, metadados). Resultados via trecho |
+| Astruc, Baloche, Buisson et al. (2016). La sélection génomique des ovins laitiers en France. *INRA Prod. Anim.* 29(1):41-56 | [10.20870/productions-animales.2016.29.1.2515](https://doi.org/10.20870/productions-animales.2016.29.1.2515) | Texto completo do PDF aberto (productions-animales.org/article/download/2515/7657). O Crossref traz ano 2019 para o mesmo DOI; o PDF diz 2016 |
+| Ticiani, Sandri, Souza, Batistel, Oliveira (2013). Persistência da lactação e composição do leite em ovelhas leiteiras das raças Lacaune e East Friesian. *Ciência Rural* 43(9):1650-1653 | [10.1590/s0103-84782013000900018](https://doi.org/10.1590/s0103-84782013000900018) | Crossref (título, autores, abstract). Resumo lido |
+| Ruiz, Oregui, Herrero (2000). Comparison of models for describing the lactation curve of Latxa sheep and an analysis of factors affecting milk yield. *J. Dairy Sci.* 83:2709-2719 | [10.3168/jds.s0022-0302(00)75165-4](https://doi.org/10.3168/jds.s0022-0302(00)75165-4) | Crossref (metadados). Resumo via trecho de busca |
+| Gutiérrez, Legaz, Goyache (2007). Genetic parameters affecting 180-days standardised milk yield, test-day milk yield and lactation length in Spanish Assaf (Assaf.E) dairy sheep. *Small Rumin. Res.* 70:233-238 | [10.1016/j.smallrumres.2006.03.009](https://doi.org/10.1016/j.smallrumres.2006.03.009) | Crossref (título, metadados). Resultados via trecho |
 | Legarra A., Ugarte E. (2005). Genetic parameters of udder traits, somatic cell score, and milk yield in Latxa sheep. *J. Dairy Sci.* | [10.3168/jds.s0022-0302(05)72899-x](https://doi.org/10.3168/jds.s0022-0302(05)72899-x) | Crossref (metadados) |
-| Bittante G., Cipolat-Gotet C., Pazzola M. (2017). Genetic analysis of coagulation properties, curd firming modeling, milk yield, composition, and acidity in Sarda dairy sheep. *J. Dairy Sci.* | [10.3168/jds.2016-11212](https://doi.org/10.3168/jds.2016-11212) | Crossref (metadados). Resultados via trecho |
-| Carta A., Sanna S., Rosati A. (1996). Milk yield adjustments for milking length and age-parity-month of lambing interaction in the Sarda dairy sheep breed. *Performance Recording of Animals* | [10.1163/9789004684249_052](https://doi.org/10.1163/9789004684249_052) | Crossref (título) |
+| Bittante, Cipolat-Gotet, Pazzola (2017). Genetic analysis of coagulation properties, curd firming modeling, milk yield, composition, and acidity in Sarda dairy sheep. *J. Dairy Sci.* | [10.3168/jds.2016-11212](https://doi.org/10.3168/jds.2016-11212) | Crossref (metadados). Resultados via trecho |
+| Carta, Sanna, Rosati (1996). Milk yield adjustments for milking length and age-parity-month of lambing interaction in the Sarda dairy sheep breed. *Performance Recording of Animals* | [10.1163/9789004684249_052](https://doi.org/10.1163/9789004684249_052) | Crossref (título) |
 | Rupp R. et al. (2003). Genetic parameters for milk somatic cell scores and relationships with production traits in French Lacaune dairy sheep. *J. Dairy Sci.* | [10.3168/jds.s0022-0302(03)73732-1](https://doi.org/10.3168/jds.s0022-0302(03)73732-1) | Crossref (título, ano). Conteúdo por trecho de busca |
 | Ferreira et al. (2011). Produção e composição do leite de ovelhas Santa Inês e mestiças Lacaune... *Arq. Bras. Med. Vet. Zootec.* | [10.1590/s0102-09352011000200040](https://doi.org/10.1590/s0102-09352011000200040) | Crossref (título). Não lido |
 | Fava et al. (2014). Rendimento de coalhada obtida a partir de leite fresco, resfriado e congelado de ovelhas da raça Lacaune... *Ciência Rural* | [10.1590/s0103-84782014000500028](https://doi.org/10.1590/s0103-84782014000500028) | Crossref (título). Não lido |
 
-Outras referências com DOI verificado no Crossref e não lidas (leads): Gutiérrez? não; Lacaune e fertilidade (Carta? autoria a confirmar), [10.3168/jds.2008-1113](https://doi.org/10.3168/jds.2008-1113); MIR em Lacaune francesa, [10.3168/jds.2024-25127](https://doi.org/10.3168/jds.2024-25127); persistência em Boutsico, [10.5713/ajas.2002.315](https://doi.org/10.5713/ajas.2002.315).
+Outras referências com DOI verificado no Crossref e não lidas (leads): Lacaune, correlação genética entre fertilidade feminina e produção de leite, [10.3168/jds.2008-1113](https://doi.org/10.3168/jds.2008-1113) (autoria não conferida); MIR em Lacaune francesa, [10.3168/jds.2024-25127](https://doi.org/10.3168/jds.2024-25127); persistência em Boutsico, [10.5713/ajas.2002.315](https://doi.org/10.5713/ajas.2002.315).
 
 ## Artigos pagos ou sem texto aberto para obter pelo acesso institucional
 

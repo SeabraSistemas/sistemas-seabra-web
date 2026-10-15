@@ -225,3 +225,228 @@ A Grécia tem dois programas com núcleo de seleção (Karagouniko, em Tessália
 - Números atuais de controle leiteiro (os dados são de 1999).
 - Ano de publicação do relatório ICAR de Georgoudis & Ligda (não identificado no extrato lido).
 - Número de béliers testados por ano na Karagouniko e na Chios.
+
+---
+
+## Q5. Israel: Assaf e Awassi
+
+### Takeaway
+Não encontrei, nas fontes lidas, um programa nacional israelense de controle leiteiro e avaliação genética para ovinos (nem da Assaf nem da Awassi). Os dados disponíveis são de rebanhos de pesquisa (ARO/Volcani) e de estudos regionais. A Assaf (cruzamento Awassi × East Friesian) é a raça leiteira de referência em Israel, segundo as fontes de busca, e tem genômica de pesquisa (Afec-Assaf). A herdabilidade do leite é baixa nos rebanhos estudados. Tudo o que está abaixo é histórico ou de pesquisa; nenhuma fonte dá número de béliers testados ou frequência de avaliação.
+
+### Cited Findings
+
+**Assaf e Awassi, histórico (trechos de busca; fontes parcialmente identificadas)**
+- A Assaf é um cruzamento estável de Awassi com East Friesian e substituiu a Awassi como raça leiteira preferida em Israel ([trecho de busca, ResearchGate, Assaf/Awassi, "Mini review: Breeding Awassi and Assaf sheep for diverse management conditions"](https://link.springer.com/article/10.1007/s11250-011-9852-y) [trecho]).
+- Um programa de melhoramento da Assaf começou em 1955 na Israeli Agricultural Research Organization, inicialmente voltado à fecundidade ([trecho de busca; atribuição à mini-revisão de 2011 não confirmada](https://link.springer.com/article/10.1007/s11250-011-9852-y) [trecho]).
+- A Awassi melhorada (dairy type) produz mais de 500 L/ovelha/ano sob manejo intensivo, segundo a revisão de Awassi sobre recursos genéticos ([ScienceDirect S0921448808001454](https://www.sciencedirect.com/science/article/abs/pii/S0921448808001454) [trecho]).
+
+**Rebanho de pesquisa (Ein Harod, 1993–1999)**
+- 1 360 matrizes Improved Awassi com registros mensais de controle no dia do teste, ordenhadas do parto até cair para 0,5 L/dia, sem período de amamentação. Herdabilidade da produção total de lactação de 0,10 e repetibilidade de 0,46. Os autores concluíram que a variação genética aditiva é baixa ([ScienceDirect S0301622601002391, "A genetic analysis of complete lactation milk production in Improved Awassi sheep"](https://www.sciencedirect.com/science/article/abs/pii/S0301622601002391) [trecho de busca]).
+- Uma revisão posterior diz que estimativas mais recentes mostram herdabilidade ainda menor e maior papel de efeitos não aditivos [trecho de busca; fonte não identificada].
+
+**Estudo regional (Cisjordânia, não Israel)**
+- 3 682 registros de 1 837 matrizes em fazendas de demonstração da Cisjordânia (2005–2010), publicado em 2024. Herdabilidade do leite de 0,00 em cruzas Awassi × Assaf a 0,11 na Awassi ([Springer, 10.1007/s11250-024-04146-0](https://link.springer.com/article/10.1007/s11250-024-04146-0) [trecho de busca]).
+
+**Genômica de pesquisa**
+- Regiões genômicas que distinguem a Afec-Assaf da Awassi parental, com base no rebanho experimental do Volcani ([Springer, 10.1186/s12711-017-0296-3](https://link.springer.com/article/10.1186/s12711-017-0296-3) [trecho de busca]).
+
+**Registro (trecho de busca, fonte não confirmada)**
+- Identificação eletrônica e controle leiteiro diário computadorizado nos rebanhos leiteiros de Assaf, em um artigo de pesquisa ([ResearchGate, "Reproductive Performance and Milk Production of Assaf Sheep in an Intensive Management System"](https://www.researchgate.net/publication/8233468_Reproductive_Performance_and_Milk_Production_of_Assaf_Sheep_in_an_Intensive_Management_System) [trecho]).
+
+**Fontes descartadas**
+- Um artigo do M2 Magazine descreve avaliações genéticas "com touros" e avaliações duas vezes ao ano. Essa descrição é de bovinos e não se aplica aos ovinos (trecho de busca). Não usei.
+- Um site de escola de laticínios dá a produção média subindo de 40 L/ano (1930) para 550 L hoje. Não é fonte revisada e não usei.
+
+### Inferences
+- A ausência de programa nacional documentado e a herdabilidade baixa do leite em Israel sugerem que o ganho genético por seleção de rebanho fechado é limitado, e que a Assaf depende mais de manejo e de cruzamento do que de avaliação genética formal. Isso é inferência; não há dado de ganho genético israelense lido.
+
+### Gaps
+- Programa nacional de controle leiteiro e avaliação genética da Assaf/Awassi (ARO/Volcani, associação de criadores); nenhum documento lido.
+- Número de béliers testados por ano, frequência de avaliação, modelo e software em Israel.
+- Genômica de rotina em Israel (só pesquisa encontrada).
+
+---
+
+## Q6. Alemanha: Ostfriesisches Milchschaf (East Friesian)
+
+### Takeaway
+A raça alemã é tratada em programas estaduais, coordenados pela VDL (Fachausschuss Milchschafe). O programa da Baixa Saxônia (LSV Niedersachsen, versão 2025) lido na íntegra mostra que a avaliação genética formal (feita pela vit Verden) cobre reprodução (tamanho de ninhada), exterior e crescimento diário, mas não a produção de leite. A produção de leite entra só como exigência para os filhos de matrizes testadas, ou seja, na triagem dos béliers. A população registrada na Baixa Saxônia era de 18 béliers e 685 matrizes em 11 rebanhos (01/01/2021). Não encontrei avaliação nacional alemã publicada.
+
+### Cited Findings
+
+**Programa da Baixa Saxônia (LSV Niedersachsen, 2025, PDF lido na íntegra)**
+- **Organização:** Landesschafzuchtverband Niedersachsen e.V. Zona de criação: área da antiga Landwirtschaftskammer Hannover. Cooperação nacional: VDL-Fachausschuss Milchschafe ("bundesweite Zuchtkooperation") ([LSV Niedersachsen, Zuchtprogramm OMS 2025](https://www.schafzucht-niedersachsen.de/Schafzucht-Verbaende-Niedersachsen/images/Inhalte/Schaf-Rassen/Milchschafe/250212_ZP-OMS-2025-LSV-NDS.pdf), arquivo lido).
+- **População:** "Zum 01.01.2021 sind 18 Böcke und 685 Mutterschafe in 11 Betrieben eingetragen" (mesmo documento).
+- **Status da raça:** "gefährdet" (ameaçada), de origem nacional, categoria de raça leiteira (mesmo documento).
+- **Produção de leite (padrão de raça):** 400 a 600 kg de leite em 150 dias, com 5 a 6% de gordura e 4 a 5% de proteína. O objetivo de seleção cita cerca de 600 kg com esses teores (mesmo documento).
+- **Controle de desempenho:** feito como controle de campo, conforme a diretriz VDL de Leistungsprüfungen. A "Milchleistungsprüfung von Bockmüttern" (controle leiteiro das mães dos béliers) é obrigatória para a licença de reprodução (Körung) dos filhos (mesmo documento).
+- **Avaliação genética (Zuchtwertschätzung):** conduzida por vit Verden segundo as diretrizes VDL. Três grupos de características, cada um com valor genético e um Gesamtzuchtwert ponderado:
+  - Reprodução (tamanho de ninhada, "Wurfgröße"): 30%.
+  - Exterior (qualidade de lã 10%, musculatura 10%, aparência externa 25%).
+  - Crescimento diário (ganho diário de peso): 25%.
+  - **Leite não entra na avaliação genética de rotina nesse programa.** O documento não lista produção de leite como parâmetro.
+- **Exterior e classes:** a avaliação de exterior determina a classe de valor genético (Zuchtwertklasse) para as classes de registro A, C e D (mesmo documento).
+- **Publicação:** resultados da avaliação ficam no herd book (Zuchtbuch) (mesmo documento).
+
+**Outros programas estaduais (trechos de busca, não baixados)**
+- Saxônia-Anhalt (versão de 2019): a avaliação também inclui crescimento diário; o controle leiteiro pode ser feito em campo ou em estação ([Landesschafzuchtverband Sachsen-Anhalt, 2019](https://www.lsv-st.de/landesschafzuchtverband/userfiles/downloads/Schafrassen/Zuchtprogramm%20OMS%2014.08.2019.pdf) [trecho de busca]).
+- Um trecho de busca de uma dissertação de 2003 (TiHo Hannover) diz que um programa de criação existe desde 1986 e inclui metade dos rebanhos ([dissertação, arquivo wesselsg_2003.pdf, TiHo Hannover](https://elib.tiho-hannover.de/servlets/MCRFileNodeServlet/etd_derivate_00002617/wesselsg_2003.pdf) [trecho de busca; data antiga]).
+- Um trecho de busca de publicação saxã dá cerca de 20 mil ovelhas leiteiras na Alemanha, e diz que o Ostfriesisches Milchschaf seria cerca de 1,25% de cerca de 1,6 milhão de matrizes (dados antigos; trecho ambíguo; fonte não baixada) ([publikationen.sachsen.de](https://publikationen.sachsen.de/bdb/artikel/25873/documents/43088) [trecho de busca; data não identificada]).
+
+### Inferences
+- A avaliação alemã de rotina (pelo menos na Baixa Saxônia) não usa o leite como critério de seleção, o que é uma diferença grande em relação a França, Espanha e Itália. Para um programa de leite, esse é um ponto de atenção sobre o que o criador seleciona.
+- Com 685 matrizes e 18 béliers em uma região, a base de referência é muito pequena para genômica. Não há indício de genômica nos documentos lidos.
+
+### Gaps
+- Avaliação nacional alemã de leite (VDL ou FGE): nenhum documento lido; o programa da Baixa Saxônia não a inclui.
+- Número atual de matrizes controladas e de béliers testados por ano na Alemanha.
+- Modelo, software e frequência da avaliação genética de vit Verden para o OMS.
+
+---
+
+## Q7. Outros países: Turquia, Nova Zelândia, EUA e Canadá
+
+### Takeaway
+Nenhum desses países tem um programa nacional de avaliação genética de ovinos leiteiros documentado nas fontes lidas. Turquia: histórico de seleção da Awassi leiteira (dados de décadas atrás). Nova Zelândia: rebanhos comerciais East Friesian, com avaliação local em rebanhos de pesquisa e um apelo por programa nacional. EUA: sem organização que mantenha pedigree ou avaliação genética de ovinos leiteiros, segundo um resumo da ADSA de 2017; no Canadá, a avaliação começou com a GenOvis e a CLRC.
+
+### Cited Findings
+
+**Turquia**
+- Seleção e cruzamento de Awassi leiteira em sete anos elevaram a produção média de leite das matrizes de 67 para 152 kg ([FAO, "The Awassi sheep with special reference to the improved dairy type"](https://www.fao.org/4/aj003e/aj003e04.htm) [trecho de busca; data não identificada]).
+- Duração da lactação: cerca de 120 dias para a Awassi na Turquia, contra 300 dias para a East Friesian na Alemanha. O mesmo trecho adverte que as comparações entre raças são confundidas pelo manejo (mesmo documento).
+- Nenhum programa turco atual foi encontrado. A busca em inglês não trouxe documentos turcos recentes [não verificado].
+
+**Nova Zelândia**
+- Base genética: East Friesian (principal), com linhagens de Coopworth e Border Leicester; Awassi e Lacaune introduzidas por empresas em alguns rebanhos ([Taylor & Francis, 2024, "Estimation of genetic parameters for production, composition and processability of milk from dairy sheep in a New Zealand flock", 10.1080/00288233.2024.2368505](https://www.tandfonline.com/doi/full/10.1080/00288233.2024.2368505) [trecho de busca]).
+- Avaliação local: modelo de avaliação genética para um rebanho comercial de 2018, com 479 testes mensais de 123 matrizes mestiças na temporada 2015/2016 ([Taylor & Francis, 2018, 10.1080/00288233.2017.1393757](https://www.tandfonline.com/doi/full/10.1080/00288233.2017.1393757) [trecho de busca]).
+- Um estudo de curvas de lactação recomenda um programa nacional de melhoramento para ovinos leiteiros ([PMC9913856, "Modelling Lactation Curves for Dairy Sheep in a New Zealand Flock"](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC9913856/) [trecho de busca]).
+- Uma empresa (Southern Cross Dairy Sheep, "Maui Milk NZ Genetics Programme") afirma que a França criou um sistema nacional de registro de desempenho e avaliação genética que tornou a Lacaune a primeira raça leiteira do país e a primeira raça leiteira ovina a ter seleção genômica ([página da empresa](https://www.southerncrossdairysheep.co.nz/) [trecho de busca; fonte comercial, não usada como prova]).
+
+**EUA e Canadá**
+- Um resumo da ADSA de 2017 diz que, naquela data, nenhuma organização dos EUA mantinha pedigree ou calculava avaliação genética para ovinos leiteiros. No Canadá, avaliações começaram com a GenOvis em cooperação com a CLRC ([ADSA 2017, abstract #120](https://m.adsa.org/2017/abs/t/69816) [trecho de busca]).
+- Uma pesquisa da Montana State University (trecho de busca, sem URL lida) afirma que muitos rebanhos leiteiros dos EUA não fazem controle leiteiro rotineiro, o que deve manter o ganho genético nacional abaixo do de rebanhos de pesquisa.
+- Um artigo da *Sheep & Goat Research Journal* (Kochendoerfer et al., 2022, SheepUSA) estima a produção média de lactação nos EUA em 178 kg por ovelha, contra até 504 kg em rebanhos comerciais de East Friesian e Lacaune na Europa; o cruzamento com raças de corte (Dorset, Finnsheep) é usado há muitos anos ([SGRJ V37, 2022](https://www.sheepusa.org/wp-content/uploads/2022/03/SGRJ_V37_1-7_Kochendoefer_2-18Final.pdf) [trecho de busca]).
+
+### Inferences
+- Nos três casos (EUA, Nova Zelândia e Brasil), a base genética depende de importação e de poucos animais, e não há controle leiteiro em escala. Isso sugere que a avaliação genética formal de ovinos leiteiros fora da Europa depende de um núcleo de rebanhos com registros completos (inferência a partir dos trechos lidos).
+
+### Gaps
+- Turquia: programa oficial e atual, medidas de controle leiteiro e frequência de avaliação.
+- Nova Zelândia: confirmação de programa nacional e da situação atual da Lacaune no país (não foi possível confirmar a empresa citada na busca).
+- EUA: programas de registro genealógico ligados ao USDA (NSIP) e de controle leiteiro (não encontrados).
+
+---
+
+## Q8. Brasil: ovinos leiteiros (Lacaune e East Friesian)
+
+### Takeaway
+A ovinocultura leiteira brasileira é recente e pequena. A base genética vem de importações: Lacaune em 1992 (França, via Cabanha Dedo Verde, RS), East Friesian entre 2006 e 2010 (embriões da Austrália, reprodutores do Uruguai, sêmen da Nova Zelândia) e nova entrada de sêmen Lacaune da França em 2012. Não encontrei, nas fontes lidas, nenhum programa brasileiro de controle leiteiro oficial, progênie de béliers, avaliação genética ou sumário de touros para ovinos leiteiros. A ARCO mantém o registro genealógico (inclusive Lacaune e East Friesian, com livro aberto para a Lacaune nas variedades coloridas), mas o registro não inclui produção de leite. Estudos acadêmicos (UFSM, UFPR, UFLA) usam dados de rebanhos locais para curvas de lactação e para modelos com covariáveis climáticas.
+
+### Cited Findings
+
+**Importação e base genética (Rossi, Embrapa, doc. 983050, lido)**
+- Em 1992, a primeira importação de sêmen e animais da raça francesa Lacaune foi feita pela Cabanha Dedo Verde (Viamão, RS). "Até o ano de 2007 o estabelecimento detinha 100% da genética ovina selecionada para produção leiteira no Brasil", e a entrada de material genético de caprinos e ovinos da Europa ficou impedida por quase vinte anos ([Rossi, Embrapa, CNPC2009Producao.pdf](https://www.alice.cnptia.embrapa.br/alice/bitstream/doc/983050/1/CNPC2009Producao.pdf), arquivo lido). Nota: o nome do arquivo diz 2009, mas o texto cita "somente no ano de 2012" para a volta da Lacaune; a data de elaboração do texto é posterior a 2012.
+- Em 2007, embriões de East Friesian da Austrália; em 2008, reprodutores e matrizes de East Friesian do Uruguai; em 2010, sêmen de East Friesian da Nova Zelândia; em 2012, sêmen de Lacaune da França ([Rossi, Embrapa](https://www.alice.cnptia.embrapa.br/alice/bitstream/doc/983050/1/CNPC2009Producao.pdf), arquivo lido).
+- Em 1984, uma pequena importação de Lacaune (França) foi feita para Minas Gerais, sem expansão. Depois de 1992, a Lacaune ficou por longo período sem renovação de material genético, por interrupção das importações por razões sanitárias, e só em 2012 produtores trouxeram sêmen de Lacaune em quantidade significativa ([Bianchi et al., texto publicado pela Embrapa em 2016 e reproduzido pelo MilkPoint em 2017, arquivo lido](https://www.milkpoint.com.br/radar-tecnico/ovinos-e-caprinos/caracterizacao-dos-sistemas-produtivos-de-ovinos-de-leite-no-brasil-102577n.aspx)).
+
+**Estrutura da produção (Bianchi et al., dados de 2015; ABCOL e LAPOC-UFPR; tese de doutorado em curso na UFPR; arquivo lido)**
+- O estudo foi feito com visitas e coleta de dados em todo o ano de 2015 nos estados com relato de produção comercial. A atividade é descrita como "incipiente" (24 anos de produção comercial).
+- **RS:** 7 rebanhos especializados; um deles (ligado à empresa Casa da Ovelha, que também compra leite de produtores da região) tem cerca de 2 000 matrizes; produção de 270 mil L/ano.
+- **SC:** 4 produtores, o maior rebanho do país (cerca de 2 400 matrizes; dois produtores com mais de 600 matrizes); produção de 315 mil L/ano.
+- **MG:** 950 matrizes; 130 mil L/ano; crescimento recente de rebanhos e produtores.
+- **PR:** 2 rebanhos; 15 mil L/ano; parte da produção voltada também ao corte.
+- **SP, RJ e DF:** 11 rebanhos; cerca de 1 050 matrizes; 110 mil L/ano.
+- O documento diz que faltam dados técnicos oficiais sobre a ovinocultura leiteira brasileira (mesmo documento).
+
+**Registro genealógico (ARCO, Regulamento do Registro Genealógico de Ovinos; título da busca indica 2020; arquivo lido)**
+- A ARCO mantém livro de registro genealógico para a Lacaune e para a East Friesian, entre as raças exóticas. A Lacaune está também entre as raças com livro aberto nas "Variedades naturalmente coloridas" ([ARCO, RGO, arquivo lido](https://www.arcoovinos.com.br/ArquivosIndividuais/GetPDF/20)).
+- O regulamento trata de registro (PO, PS, PC) e não prevê avaliação genética ou controle leiteiro para produção de leite (texto lido).
+- Um trecho de busca de notícia da Assessoria Agropecuária (2022) diz que o maior rebanho registrado de Lacaune está em Santa Catarina, seguido de Minas Gerais, segundo a superintendente de registro da ARCO ([trecho de busca, notícia de 09/08/2022](http://www.assessoriaagropecuaria.com.br/noticia/2022/08/09/arco-ovelhas-lacaune-voltam-depois-de-dez-anos-longe-da-expointer) [trecho]).
+- Um material de provas zootécnicas da UNESP (trecho de busca) lista as provas "ARCO e Colaboradores" ligadas a lã e carne, e diz que o teste de progênie em estações centrais está desativado (desde 1997) ([UNESP, Profa. Sandra Aidar de Queiroz](https://www.fcav.unesp.br/Home/departamentos/zootecnia/SANDRAAIDARDEQUEIROZ/melhoramentoovinos.pdf) [trecho de busca]).
+
+**Entidades e órgãos**
+- **ABCOL** (Associação Brasileira de Criadores de Ovinos de Leite): aparece como parceira do LAPOC/UFPR no estudo de 2015. Consta como associação privada ativa no cadastro federal de CNPJ ([Casa dos Dados, CNPJ 12.250.711/0001-01](https://casadosdados.com.br/solucao/cnpj/associacao-brasileira-de-criadores-de-ovinos-leiteiros-abcol-12250711000101) [trecho de busca]). Não encontrei programa de controle leiteiro da ABCOL.
+- **ABCZ (PMGZ):** o programa de controle leiteiro da ABCZ é para zebuínos (bovinos). Não se aplica aos ovinos ([ABCZ, manual PMGZ](https://www.abcz.org.br/pmgz/pmgz-leite/controle-leiteiro/manual) [trecho de busca]).
+- **MAPA:** autoriza provas zootécnicas de controle leiteiro e de avaliação genética de animais de aptidão leiteira, com registro no órgão ([gov.br, "Autorizar registro de provas zootécnicas"](https://www.gov.br/pt-br/servicos/autorizar-registro-de-provas-zootecnicas) [trecho de busca]). Não encontrei prova registrada para ovinos leiteiros.
+- **Embrapa Caprinos e Ovinos:** o GENECOC é o programa de registro zootécnico para caprinos e ovinos de corte, segundo notícia da Embrapa sobre a Câmara Setorial de melhoramento de caprinos e ovinos. A mesma notícia diz que a importação de genética leiteira tem procedimentos complicados e que produtores de leite têm dificuldade de acesso a serviços de sexagem de animais. Também cita a intenção de uma futura equação de predição genômica ([Embrapa, notícia sobre a Câmara Setorial](https://www.embrapa.br/en/busca-de-noticias/-/noticia/102901006/camara-setorial-debate-desafios-para-melhoramento-genetico-de-caprinos-e-ovinos) [trecho de busca; data e conteúdo não lidos na íntegra]).
+
+**Pesquisa acadêmica**
+- Ticiani et al. (2013), *Ciência Rural* 43(9):1650–1653, DOI 10.1590/s0103-84782013000900018 (DOI verificado no Crossref; arquivo lido): 46 matrizes Lacaune e 21 East Friesian, com 44 ± 7,2 dias em lactação, em pasto de *Panicum maximum* cv. Aruana em rotação, por 92 dias. A Lacaune teve menor persistência e maior produção por dia: leite 1,67 contra 1,35 kg; gordura 114,80 contra 102,85 g; proteína 82,82 contra 73,10 g (P < 0,001). A East Friesian teve maiores teores de gordura (7,31 contra 6,86%) e de proteína (5,18 contra 4,93%). Equações de lactação: Lacaune PL = 2,03 − 0,08 × DEL (r² = 0,22); East Friesian PL = 1,42 − 0,02 × DEL (r² = 0,20) ([Ciência Rural, Redalyc](https://www.redalyc.org/pdf/331/33127850018.pdf)).
+- Atena Editora (2020, capítulo do livro *Geração e Difusão de Conhecimento Científico na Zootecnia*, DOI 10.22533/at.ed.1942020084; resumo lido): "Inclusão do índice de temperatura e umidade (ITU) na avaliação genética de ovinos leiteiros". Dados de 367 matrizes Lacaune de um rebanho do Sul do Brasil. Três modelos de curva de lactação (padrão, ITU como efeito fixo e ITU como covariável); o modelo com ITU como covariável teve melhor AIC e herdabilidade maior do parâmetro c, que descreve a queda após o pico. Os autores concluem que variáveis bioclimáticas são necessárias nessas avaliações ([Atena Editora](https://atenaeditora.com.br/catalogo/post/inclusao-do-indice-de-temperatura-e-umidade-itu-na-avaliacao-genetica-de-ovinos-leiteiros)).
+- Dissertação da UFLA sobre modelos para curvas de lactação (trecho de busca, não lida): [repositório UFLA](https://repositorio.ufla.br/server/api/core/bitstreams/53a0da85-fe9a-450e-b435-8927b0bc95f1/content) [trecho].
+- Milk Point, "Sistema agroindustrial do leite de ovelha, parte II" (trecho de busca, cerca de 10 anos): diz que a Lacaune é a raça leiteira mais usada no Brasil, seguida da East Friesian ([trecho](https://www.milkpoint.com.br/artigos/producao-de-leite/sistema-agroindustrial-do-leite-de-ovelha-parte-ii-de-ii-102097/)).
+
+### Inferences
+- A base genética brasileira é restrita a um pequeno número de animais importados em 1992 e 2012, o que limita a variabilidade para qualquer programa de avaliação. Rossi (Embrapa) diz isso expressamente.
+- Sem controle leiteiro oficial e sem progênie de béliers, uma avaliação genética nos moldes franceses não é possível hoje. Os estudos acadêmicos avaliam rebanhos isolados. A opção realista de curto prazo é o controle leiteiro em rebanhos de núcleo com registros completos, o que é uma proposta, não um resultado das fontes.
+
+### Gaps
+- Programa de controle leiteiro para ovinos (ABCOL, ARCO, MAPA, Embrapa): nenhum encontrado.
+- Número de matrizes Lacaune e East Friesian controladas em 2024–2026; dados de 2015 são os mais recentes.
+- Sumário de béliers, progênie, avaliação genética e genômica: nada encontrado. Embrapa diz que há intenção de equação genômica (trecho de busca, não verificado).
+- Status das importações de sêmen e embriões de Lacaune (França) a partir de 2012 (procedimentos citados como complicados, sem detalhe).
+- Teses da UFPR (Bianchi, em curso) e da UFLA; não lidas.
+
+---
+
+## Q9. Catálogo comparativo dos programas (resumo das seções Q1 a Q8)
+
+Cada célula resume um fato das seções anteriores, onde está a fonte completa. "n.d." = não encontrado nas fontes lidas. Datas entre parênteses são as da fonte.
+
+| Programa (responsável) | Raças | Tamanho (data) | Testagem de machos por ano | Características, EBV e índice | Modelo, software e frequência | Genômica | Ver |
+|---|---|---|---|---|---|---|---|
+| Lacaune, França (UPRA Lacaune; Confédération Générale de Roquefort; Coopérative Ovi-Test) | Lacaune | 890 mil matrizes; núcleo 172 mil (2014); 185 mil em 373 rebanhos (2019); 334 685 em controle oficial (2020–21) | 440 béliers de IA (2014) | ISOL: 50% qualidade (leite, TB, TP), 50% funcional (CCS, morfologia); ganho 0,23 σg/ano (2005–2015) | ssGBLUP de rotina desde 2015; BLUPf90 (blupf90iod2, pregsf90, accf90); frequência n.d. | Sim, desde 2015; 8 305 béliers genotipados (2015); >10 mil de referência (2026); todos os cordeiros de IA genotipados | Q1 |
+| ROLP: MTR, MTN, BB (OS ROLP; CDEO, Ordiarp) | Manech tête rousse, Manech tête noire, Basco-Béarnaise | MTR 274 mil (2014), 84 mil sob CDEO (2023); MTN 80 mil; BB 80 mil | MTR 150; MTN 30; BB 50 (2014) | ISOL (mesmo esquema), com CCS e morfologia no ISOL desde 2016–2018 | n.d. (BLUP clássico até 2017) | Sim, desde 2017 (plano GENOPYR); 4 700 béliers genotipados (CDEO 2023) | Q1 |
+| Corse | Corse | 83 mil (2014) | 30 (2014) | Quantidade de leite na ordenha; ganho 0,10σg/ano (1995–2015) | n.d. | Genotipagem de béliers (2015); sem avaliação genômica operacional documentada | Q1 |
+| Latxa (CONFELAC; ASLANA; INTIA; Neiker) | Latxa Red Faced; Latxa Black Faced (BC e NA) | ~431 mil matrizes em 2018 (LRF 210 mil; LBF BC 121 mil; LBF NA 100 mil) | n.d. | Produção, gordura, proteína, morfologia; índice combinado (2008) | BLUP animal; ssGBLUP com metafounders em pesquisa (JDS 2020) | Pesquisa; 429 machos genotipados (2018); sem ganho claro de acurácia | Q2 |
+| Churra (ANCHE) | Churra | n.d. (ICAR: parte de 256 480 matrizes em controle oficial na Espanha, 2020–21) | n.d. | Esquema de valoração de béliers desde 1998 (trecho); CCS no controle | n.d. | Fase inicial (MAPA, trecho); 981 matrizes em estudo (2022) | Q2 |
+| Assaf (ASSAF.E) | Assaf | Matrizes n.d.; morfologia de úbere com 465 811 registros (2025) | n.d. | ICOP (gordura e proteína genômicas); índice de úbere; L150, G150, P150 e mamite | BLUPF90; imputação entre dois chips; frequência n.d. | Sim, desde setembro de 2018; valor genômico direto para béliers jovens; índices combinados (2022) | Q2 |
+| Manchega (AGRAMA) | Manchega | n.d. | n.d. | Produção de leite; composição opcional; tendência +4 kg/ano (trecho) | BLUP (trecho); frequência n.d. | Avaliação genômica de rotina (trecho MAPA) | Q2 |
+| Sarda (Asso.Na.Pa.; AGRIS; AARS) | Sarda | 161 711 matrizes em controle oficial (Itália, 2020–21; sem separação) | n.d. | Avaliação nacional divulgada em nov/2025 (características n.d.) | Esquema piramidal; modelo n.d. | Planejada em 2020 (AGI); não confirmada | Q3 |
+| Comisana (Asso.Na.Pa.; Centro Genetico di Asciano) | Comisana | n.d. | n.d. | Produção de leite | Núcleo fechado; avaliação de rotina para leite (2022) | n.d. | Q3 |
+| Chios (Estação de Pesquisa, Chalkidiki; programa de norte da Grécia) | Chios | Puros: <7 mil (5 398 controlados, 1999) | n.d. | Produção de leite comercial, tamanho e peso de ninhada; índice de mérito total | Índice de mérito total (1999) | Pesquisa (317 matrizes, 2023) | Q4 |
+| Karagouniko (Karditsa) | Karagouniko | 200 mil (15 467 controlados, 1999); núcleo 18 mil em 270 rebanhos | Progênie a partir de 1986 (trecho) | Leite (lambs como subproduto) | n.d. | Não | Q4 |
+| Lacaune na Grécia (SMARTER; Aristotle Univ.) | Lacaune | 1 658 matrizes (2021–22) | n.d. | Leite e composição; correlação entre países de 0,86 (leite) e 0,88 (proteína) | REML; avaliação conjunta França–Grécia | Não | Q4 |
+| Israel: Assaf e Awassi (ARO/Volcani; pesquisa) | Assaf; Improved Awassi | 1 360 matrizes (1993–99, pesquisa) | n.d. | Herdabilidade do leite de 0,10 (Awassi, pesquisa) | n.d. | Pesquisa (Afec-Assaf) | Q5 |
+| Alemanha: Ostfriesisches Milchschaf (LSV Niedersachsen; vit Verden; VDL) | East Friesian (OMS) | 685 matrizes e 18 béliers em 11 rebanhos (2021, Baixa Saxônia) | Controle de matrizes dos béliers é pré-requisito (não contado) | Zuchtwert: reprodução 30%, exterior 50%, crescimento 25%. Leite não entra | vit Verden, diretriz VDL; frequência n.d. | Não encontrada | Q6 |
+| Turquia (Awassi leiteira) | Awassi | n.d. | n.d. | Leite médio de 67 para 152 kg em 7 anos (histórico) | n.d. | n.d. | Q7 |
+| Nova Zelândia (empresas e rebanhos de pesquisa) | East Friesian (principal); Coopworth; Border Leicester; Awassi e Lacaune (empresas) | 479 testes de 123 matrizes (2015–16, pesquisa) | n.d. | Leite, gordura, proteína, CCS | Modelo de rebanho (2018) | Não encontrada | Q7 |
+| EUA e Canadá | East Friesian, Lacaune (vários) | n.d.; EUA: 178 kg/ovelha (média, 2022) | n.d. | n.d. | Canadá: GenOvis com CLRC (2017); EUA: sem avaliação formal (2017) | n.d. | Q7 |
+| Brasil (ABCOL, ARCO, Embrapa, universidades) | Lacaune; East Friesian | Algumas centenas a ~2 400 matrizes por rebanho; produção de 15 a 315 mil L/ano por estado (2015) | n.d. | Registro genealógico (ARCO), sem avaliação de leite | n.d. | Não encontrada | Q8 |
+
+---
+
+## Q10. Fontes: o que foi lido, bloqueado ou só visto em busca
+
+**Arquivos lidos integralmente (pasta fontes/ovinos, com manifesto em MANIFESTO_fontes.tsv quando baixados por mim):**
+- productions_animales_amelioration_ovins_laitiers.pdf (Astruc et al. 2016; https://productions-animales.org/article/download/2515/7657; DOI 10.20870/productions-animales.2016.29.1.2515).
+- barillet2016_objetivos_selecao_productions_animales.pdf (Barillet et al. 2016; https://productions-animales.org/article/download/2514/7656; DOI 10.20870/productions-animales.2016.29.1.2514; Tabela 3 lida como imagem em barillet_p7-07.png).
+- upra_lacaune_brochure_en.pdf (https://www.race-lacaune.fr/uploads/2022/01/La-race-Lacaune-Lait-ANGLAIS.pdf).
+- smarter_cdeo_slides_2023.pdf (https://smarterproject.eu/wp-content/uploads/2023/08/CDEO_23_06_30_SMARTER_MS22_Definition-of-efficiency-and-resilience-traits-resul.pdf).
+- Granado_EAAP2018_S26_09.pdf (apresentação; URL de origem não registrada).
+- Lasarte_SERAM2018.pdf (apresentação; URL de origem não registrada).
+- eaap2024_m221_S02T11.pdf (apresentação EAAP 2024; URL de origem não registrada) e PMC11946213 (Vouraki et al. 2025, versão publicada; https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11946213/).
+- icar2023_astruc_sheep.pdf (Astruc et al. 2023, Proc. ICAR Toledo; URL de origem não registrada).
+- Astruc_ICAR_Riga.pdf (Astruc et al. 2010, Proc. ICAR Riga; URL de origem não registrada; usado só para contexto histórico).
+- icar_greece_small_ruminant_programmes_georgoudis.pdf (https://www.icar.org/Documents/technical_series/ICAR-Technical-Series-no-3-Bella/Georgoudis.pdf).
+- ostfriesisch_niedersachsen_zp_2025.pdf (https://www.schafzucht-niedersachsen.de/Schafzucht-Verbaende-Niedersachsen/images/Inhalte/Schaf-Rassen/Milchschafe/250212_ZP-OMS-2025-LSV-NDS.pdf).
+- embrapa2016_caracterizacao_ovinos_leite.pdf (https://www.infoteca.cnptia.embrapa.br/infoteca/bitstream/doc/1073171/1/CNPC2016Caracterizacaodossistemas.pdf; impressão MilkPoint de 26/07/2017 com dados de 2015).
+- embrapa2009_producao_leite_ovelha_rossi.pdf (https://www.alice.cnptia.embrapa.br/alice/bitstream/doc/983050/1/CNPC2009Producao.pdf).
+- arco_rgo_2020.pdf (https://www.arcoovinos.com.br/ArquivosIndividuais/GetPDF/20).
+- lacaune_vs_friesian_redalyc.pdf (Ticiani et al. 2013; DOI 10.1590/s0103-84782013000900018; https://www.redalyc.org/pdf/331/33127850018.pdf).
+- Resumos de JDS (Europe PMC): DOI 10.3168/jds.2019-18033; 10.3168/jds.2020-19978; 10.3168/jds.2021-21601; 10.3168/jds.2022-23114; 10.3168/jds.2022-23009; 10.3168/jds.2025-27638.
+- Texto completo de Cortellari et al. 2022 (Animals 12:2828; DOI 10.3390/ani12202828; https://pmc.ncbi.nlm.nih.gov/articles/PMC9597836), lido na Europe PMC.
+- Páginas da Asso.Na.Pa. (https://www.assonapa.it/news), consultada em 15/10/2026.
+- DOIs verificados no Crossref: 10.3168/jds.2013-7135 (Baloche et al. 2014, título e data conferidos); 10.3168/jds.2022-23114; 10.3168/jds.2025-27638; 10.20870/productions-animales.2016.29.1.2514; 10.20870/productions-animales.2016.29.1.2515; 10.1590/s0103-84782013000900018; 10.3168/jds.2021-21601 (título e data conferidos); 10.1016/j.animal.2023.100772 (Breeding options for nematode resistance in Lacaune dairy sheep, animal 2023; não lido).
+- Literatura de referência encontrada e não lida: 10.3390/ani14182659 (Caprine and Ovine Genomic Selection, Animals 2024, PMC11428554); 10.1016/j.animal.2024.101245 (truncagem de dados em ovinos leiteiros, animal 2024); 10.3168/jds.2021-20860 (metafounders na Lacaune, JDS 2022).
+
+**Bloqueados ou não acessados:**
+- MAPA/INIA (www.mapa.gob.es): relatório "Informe sobre la evaluación genómica en razas ovinas de producción lechera", "Informe INIA situación partida ovino leche", e "Programa de mejora de las razas ovinas Latxa y Carranzana". Erro de certificado TLS ("self-signed certificate in certificate chain") mesmo com /root/.ccr/ca-bundle.crt. A verificação TLS não foi desativada. Esses documentos são a fonte mais importante para a Espanha e deveriam ser baixados pelo usuário ou por outro caminho.
+- Idele (idele.fr): "Evaluation génétique des ovins laitiers en France" e "Dossier Web sélection génomique ovins laitiers" devolveram desafio anti-robô (HTML de verificação).
+- journalofdairyscience.org (403): os artigos completos de Latxa, Churra/Assaf e Lacaune não foram lidos. Europe PMC informa que não têm cópia de acesso aberto no PMC (OA = N).
+- HAL e Baloche WCGALP 2014 (arquivos da pasta com páginas de bloqueio): descartados.
+- Arquivos da pasta que não usei: Laborde 2019 (bovinos, Uruguai), Cornell (manejo de ordenha, EUA), AgResearch NZ (composição do leite, marketing), crosbi (página institucional), ICAR Section 16 (wiki, só para contexto), e dois PMC que estavam com bloqueio.
+
+**Como o usuário pode fechar as lacunas com acesso institucional (sem contornos):**
+- Os artigos JDS listados acima (DOIs de Lacaune, Latxa e Assaf/Churra) são candidatos a entrar em research_notes/Verificação de fontes/artigos_para_obter.md, para download pelo acesso UFF/CAPES.
+- Os PDFs do MAPA e do Idele podem ser baixados pelo navegador do usuário e anexados à sessão, se o usuário quiser.
