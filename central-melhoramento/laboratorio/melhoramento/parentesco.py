@@ -5,6 +5,7 @@ Conteúdo:
 * coeficientes de endogamia F;
 * A⁻¹ montada direto do pedigree pelas regras de Henderson (1976), com a correção de
   Quaas (1976) para pais endogâmicos;
+* A* com grupos de pais desconhecidos (Quaas 1988), para o modelo animal com grupos;
 * parentesco entre dois animais e F de um acasalamento planejado (F = ½·a_pai,mãe);
 * escolha, para cada fêmea, do reprodutor de menor F (ou o preferido abaixo de um limite);
 * tamanho efetivo de Wright, ΔF = 1/(2Ne), F acumulado após t gerações e número efetivo
@@ -19,8 +20,10 @@ ordenar_pedigree reordena (e mantém a ordem original quando ela já é válida)
 Fontes: relatório de corte, "Passo 1: do pedigree a A, F e A⁻¹" e "Endogamia e tamanho
 efetivo"; relatório de leite, "Endogamia: decidir por par, não por touro"; relatório de
 caprinos, Exemplo 8; relatório de ovinos, Exemplo 7. Henderson (1976, Biometrics 32:69);
-Quaas (1976, Biometrics 32:949); Nilforooshan, Garrick e Harris (2021, Front. Genet.
-12:655638); Wright (1931, Genetics 16:97); FAO (1998, Secondary Guidelines, §4.1).
+Quaas (1976, Biometrics 32:949); Quaas (1988, J. Dairy Sci. 71:1338); Nilforooshan, Garrick e
+Harris (2021, Front. Genet. 12:655638); Wright (1931, Genetics 16:97); FAO (1998, Secondary
+Guidelines, §4.1); Mrode, Pocrnić, Gorjanc e Thompson (2023, 4ª ed., CABI), Exemplo 4.4.
+A, A⁻¹, F e A* conferem com os scripts oficiais do livro (tests/test_mrode.py).
 """
 
 from __future__ import annotations
@@ -164,6 +167,55 @@ def inversa_A(ped: dict, F: dict | None = None,
             for q, cq in zip(posicoes, coef):
                 Ainv[p, q] += alfa * cp * cq
     return Ainv, ids
+
+
+def pedigree_sem_grupos(ped: dict, grupos) -> dict:
+    """Cópia do pedigree com cada rótulo de grupo de pais desconhecidos trocado por None."""
+    gs = set(grupos)
+    return {a: tuple(None if p in gs else p for p in pais) for a, pais in ped.items() if a not in gs}
+
+
+def inversa_A_grupos(ped: dict, grupos: list) -> tuple[np.ndarray, list, list]:
+    """A⁻¹ com grupos de pais desconhecidos: a matriz A* de Quaas (1988).
+
+    No pedigree, cada pai ou mãe desconhecido é trocado pelo rótulo do seu grupo (origem, raça,
+    época de nascimento dos pais desconhecidos); `grupos` lista esses rótulos. Cada animal soma
+    α_i·t_i·t_i', com t_i = 1 na posição de i e −½ na de cada pai OU grupo, e o mesmo α_i de
+    inversa_A: o grupo conta como pai desconhecido. O resultado é
+
+        A* = [  A⁻¹     −A⁻¹Q  ]      Q = fração dos genes de cada animal vinda de cada grupo
+             [ −Q'A⁻¹   Q'A⁻¹Q ]
+
+    e, nas MME, o bloco λ·A* sobre [animais; grupos] dá â* = Qĝ + â, o valor genético que já
+    inclui o efeito do grupo (transformação QP de Quaas e Pollak 1981).
+
+    Devolve (A*, ids, grupos): os animais na ordem de ids e os grupos no fim, na ordem dada.
+    Exemplo: Mrode et al. (2023), 4ª ed., Exemplo 4.4 (script Chapter_04_3.R), pedigree do
+    Exemplo 4.1 com os pais desconhecidos no grupo 9 e as mães no grupo 10: bloco dos grupos
+    [[0,750; 0,750]; [0,750; 1,083]].
+    """
+    grupos = list(grupos)
+    sem = pedigree_sem_grupos(ped, grupos)
+    A, ids = matriz_A(sem)
+    F = np.diag(A) - 1.0
+    n = len(ids)
+    pos = {a: i for i, a in enumerate(ids)}
+    pos.update({g: n + j for j, g in enumerate(grupos)})
+    Ast = np.zeros((n + len(grupos), n + len(grupos)))
+    for a in ids:
+        posicoes, coef, di = [pos[a]], [1.0], 1.0
+        for p in ped.get(a, (None, None)):
+            if not conhecido(p):
+                continue
+            posicoes.append(pos[p])
+            coef.append(-0.5)
+            if pos[p] < n:                                # pai conhecido; grupo não muda d_i
+                di -= 0.25 * (1.0 + F[pos[p]])
+        alfa = 1.0 / di
+        for p, cp in zip(posicoes, coef):
+            for q, cq in zip(posicoes, coef):
+                Ast[p, q] += alfa * cp * cq
+    return Ast, ids, grupos
 
 
 def parentesco(ped: dict, x, y) -> float:

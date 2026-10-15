@@ -16,9 +16,11 @@ Cada relatório traz, no Apêndice A, um script numpy com exemplos numéricos j�
 ```
 laboratorio/
 ├── melhoramento/
-│   ├── parentesco.py      A tabular, F, A⁻¹ (Henderson + Quaas), F por par, escolha de reprodutor, Ne, ΔF
-│   ├── blup.py            MME: modelo animal (+ ambiente permanente), direto-materno, multicaracterística,
-│   │                      modelo de touro; PEV, REL com (1 + F), acurácia, acurácia BIF, DEP, Possible Change
+│   ├── parentesco.py      A tabular, F, A⁻¹ (Henderson + Quaas), A* com grupos de pais desconhecidos,
+│   │                      F por par, escolha de reprodutor, Ne, ΔF
+│   ├── blup.py            MME: modelo animal (+ ambiente permanente ou comum, grupos de pais desconhecidos),
+│   │                      direto-materno, multicaracterística, modelo de touro; Gauss-Seidel; PEV, REL com
+│   │                      (1 + F), acurácia, acurácia BIF, DEP, Possible Change
 │   ├── lactacao.py        TIM/Fleischmann (TMY e TMM, regras ICAR), Wood, Wilmink, FCM, ECM, ECS
 │   ├── confiabilidade.py  REL = DE/(DE + k), filhas-equivalentes, Daetwyler, conversões r ↔ REL ↔ a_BIF
 │   ├── indices.py         Smith-Hazel, índice econômico, P(superar), MPPA, índice da fêmea
@@ -27,8 +29,10 @@ laboratorio/
 │   └── rebanho.py         pipeline de exemplo para um rebanho de cabras (CSV → relatório)
 ├── exemplos/rebanho_caprino_exemplo.csv   rebanho fictício (30 cabras, 2 lactações)
 ├── tests/                 unittest; cada teste diz de que relatório e exemplo vem o número
+│                          (test_mrode.py: saída dos scripts R oficiais de Mrode et al. 2023)
+├── validacao_mrode/       shim de pedigreemm/nadiv em R, rodar_scripts.sh e comparar.py
 ├── gerar_vetores_teste.py gera vetores_teste.json
-└── vetores_teste.json     128 pares entrada → saída para validar as calculadoras em JS/TS e Dart
+└── vetores_teste.json     133 pares entrada → saída para validar as calculadoras em JS/TS e Dart
 ```
 
 Requisitos: Python 3.13 e numpy. Não há outras dependências (nem scipy, nem pytest).
@@ -38,7 +42,8 @@ Requisitos: Python 3.13 e numpy. Não há outras dependências (nem scipy, nem p
 Todos os comandos rodam dentro de `central-melhoramento/laboratorio/`.
 
 ```bash
-python3 -m unittest discover -s tests        # 110 testes, cerca de 800 números publicados conferidos
+python3 -m unittest discover -s tests        # 128 testes: cerca de 800 números dos relatórios e
+                                              # 18 testes com a saída dos scripts de Mrode et al. (2023)
 python3 -m melhoramento.rebanho               # pipeline com o CSV de exemplo
 python3 -m melhoramento.rebanho outro.csv     # o mesmo pipeline com outro arquivo no mesmo formato
 python3 gerar_vetores_teste.py                # regrava vetores_teste.json depois de mudar uma função
@@ -80,6 +85,7 @@ Abreviações: **Corte**, **Leite**, **Caprinos** e **Ovinos** são os quatro re
 | `matriz_A` | método tabular: A_ij = ½(A_j,pai + A_j,mãe); A_ii = 1 + ½A_pai,mãe | Corte, Passo 1 |
 | `coeficientes_F` | F_i = A_ii − 1 | Corte, Passo 1 (F₆ = 0,125) |
 | `inversa_A` | regras de Henderson com d_i de Quaas: ½ − ¼(F_s + F_d); ¾ − ¼F_s; 1 | Corte, Passo 1 (pedigree estendido) |
+| `inversa_A_grupos`, `pedigree_sem_grupos` | A* de Quaas (1988): pai ou mãe desconhecido vira o rótulo de um grupo; animais primeiro, grupos no fim | Corte, "Equação, pressupostos e efeitos"; Ovinos, "Equação, pressupostos e solução"; Mrode et al. (2023), Ex. 4.4 |
 | `parentesco`, `F_acasalamento` | a_xy e F do filho = ½·a_pai,mãe | Leite, "Endogamia: decidir por par"; Caprinos, Ex. 8; Ovinos, Ex. 7 |
 | `tabela_F_acasalamentos` | F de todos os pares macho × fêmea | idem |
 | `escolher_reprodutor(es)` | menor F, ou o primeiro da preferência abaixo de um limite | Leite (alocação B1–B4); Caprinos, Ex. 8 (limite de 6,25%) |
@@ -93,16 +99,17 @@ Abreviações: **Corte**, **Leite**, **Caprinos** e **Ovinos** são os quatro re
 | Função | O que faz | Seção do relatório |
 |---|---|---|
 | `incidencia`, `montar_X` | X com GC, outros fatores (1º nível = 0) e covariáveis | Corte, Passo 2 |
-| `resolver_mme` | MME de Henderson com λa·A⁻¹ e λpe·I; devolve solução e C | Corte, Passo 2 |
-| `modelo_animal` | modelo animal completo: efeitos fixos, EBV, PEV = c^ii·σ²e, REL com (1 + F), r, a_BIF, DEP, SEP; ambiente permanente opcional | Corte, Passos 2 e 3 |
+| `montar_mme`, `resolver_mme` | MME de Henderson com λa·A⁻¹ e λpe·I; montar devolve LHS e RHS, resolver devolve solução e C | Corte, Passo 2 |
+| `gauss_seidel` | Gauss-Seidel sobre as MME, sem inversa; para em Σ(Δx)²/Σx² ≤ tolerância | Corte, Passo 2; Mrode et al. (2023), Ex. 19.2 |
+| `modelo_animal` | modelo animal completo: efeitos fixos, EBV, PEV = c^ii·σ²e, REL com (1 + F), r, a_BIF, DEP, SEP; opcionais: ambiente permanente, ambiente comum de irmãos (`rotulos_pe`) e grupos de pais desconhecidos (`grupos_geneticos`, 1º grupo = 0) | Corte, Passos 2 e 3; Mrode et al. (2023), Ex. 4.1, 4.4, 5.1, 5.2 e 9.1 |
 | `blup_gls` | forma GLS para conferir as MME | Corte, Passo 2 |
 | `dep_de_ebv` | DEP/PTA = EBV/2 | Corte, Passo 3 |
 | `possible_change` | PC = t(1 − a_BIF)σA/2 (BIF, 9ª ed., p. 73) | Corte, Passo 3 |
 | `possible_change_de_r` | t·(σA/2)·√(1 − r²), a conta da tabela da ANCP | Corte, Passo 3 |
-| `modelo_direto_materno` | G₀ ⊗ A⁻¹, ambiente permanente materno, TMD = DEPm + ½DEPd | Corte, "Pesos até a desmama" |
+| `modelo_direto_materno` | G₀ ⊗ A⁻¹, ambiente permanente materno, TMD = DEPm + ½DEPd; GC, outros fatores e covariáveis fixos | Corte, "Pesos até a desmama"; Mrode et al. (2023), Ex. 8.1 |
 | `repetibilidade_direto_materno` | (a_ij·σ²a + σ²m + σam + σ²pe)/σ²P | idem |
-| `modelo_multicaracteristica` | G₀ ⊗ A⁻¹ e R₀ por animal, com característica ausente | Corte, "Pesos depois da desmama" |
-| `modelo_touro` | y = GC + s + e, λ = (4 − h²)/h², prova externa como DE, fator de escala | Ovinos, Ex. 2 |
+| `modelo_multicaracteristica` | G₀ ⊗ A⁻¹ e R₀ por animal, com característica ausente | Corte, "Pesos depois da desmama"; Mrode et al. (2023), Ex. 6.1 |
+| `modelo_touro` | y = GC + s + e com touros não aparentados (A_s = I), λ = (4 − h²)/h², prova externa como DE, fator de escala | Ovinos, Ex. 2 |
 | `rel_exata_modelo_touro` | REL exata de um reprodutor a partir do desenho (filhas por rebanho) | Caprinos, Ex. 3; Ovinos, Ex. 4 |
 | `padronizar_variancia` | y* = y·σ₀/σ_k (razões constantes, modelo francês) | Ovinos, Ex. 2 |
 | `ajuste_hva` | HVA do USDA (Wiggans e VanRaden 1991) | Leite, "Modelo de lactação" |
@@ -203,13 +210,84 @@ As três diferenças estavam na v1 do relatório de ovinos e tinham a mesma orig
 
 O tamanho amostral para 90% contra 95% de fertilidade é 434,4 sem arredondar. O relatório publica **435 ovelhas por ano** (arredondado para cima, como deve ser), e o pacote devolve os dois valores: `tamanho_amostral_duas_proporcoes` dá o bruto e `n_por_grupo`, o inteiro.
 
+## Validação contra Mrode et al. (2023)
+
+O livro de referência dos exemplos resolvidos é Mrode, Pocrnić, Gorjanc e Thompson (2023), *Linear Models for the Prediction of the Genetic Merit of Animals*, 4ª ed., CABI, [DOI 10.1079/9781800620506.0000](https://doi.org/10.1079/9781800620506.0000). O código R oficial dos exemplos está em [github.com/MrodesBook/Examples_R](https://github.com/MrodesBook/Examples_R): 24 scripts dos capítulos 4 a 19, com os dados embutidos. Em 15/10/2026 os 24 rodaram até o fim, sem erro nem aviso, e o motor foi conferido contra cada exemplo que tem função equivalente.
+
+**Como foi rodado.** Usamos o R 4.3.3 do apt do Ubuntu, com Matrix, MASS, tidyverse e orthopolynom. Os pacotes `pedigreemm` e `nadiv` não estão no apt, e o CRAN estava bloqueado. Por isso um shim em R (`validacao_mrode/shim_pedigreemm_nadiv.R`) os substitui, instalado como dois pacotes mínimos com os mesmos nomes. Ele implementa só o que os scripts chamam:
+
+- do pedigreemm, `pedigree`, `getA` e `getAInv`;
+- do nadiv, `makeAinv` (com e sem grupos), `ggcontrib` e `makeD`.
+
+O shim calcula A pelo método tabular e A⁻¹ por T⁻ᵀD⁻¹T⁻¹, um caminho diferente do motor, e confere em cada chamada que A⁻¹·A = I. Todo o resto, inclusive a montagem e a solução das MME, é o código oficial, sem alteração. Os scripts rodam numa cópia de trabalho, e os objetos numéricos de cada um são gravados com 17 algarismos. Para repetir, em cerca de um minuto:
+
+```bash
+git clone https://github.com/MrodesBook/Examples_R /tmp/Examples_R     # leia os scripts antes
+bash validacao_mrode/rodar_scripts.sh /tmp/Examples_R /tmp/mrode        # roda numa cópia de trabalho
+python3 -B validacao_mrode/comparar.py /tmp/mrode/saidas                # tabela da comparação
+```
+
+**Resultado.** O critério é |motor − R| ≤ 10⁻⁹ × máx(1, |R|) em cada valor. Bateram 44 comparações, com 3.146 valores e diferença máxima de 8,5 × 10⁻¹⁴. Uma comparação divergiu, por convenção.
+
+| Exemplo (script) | Função do motor | Valores | Maior diferença | Resultado |
+|---|---|---|---|---|
+| A⁻¹ de 9 pedigrees de 3 a 26 animais: Ex. 4.1, 4.2 (touros), 5.1, 5.2, 8.1, 9.1, 11.6, 13.1 e 15.1 | `inversa_A` | 1.619 | 0 | OK |
+| A dos Ex. 12.1 (26 animais) e 17.7 (`getA`) | `matriz_A` | 740 | 0 | OK |
+| F de 9 pedigrees: diag(A) do R ou, quando o script só tem A⁻¹, diag((A⁻¹)⁻¹) − 1 | `coeficientes_F` | 132 | 5,6 × 10⁻¹⁶ | OK |
+| A* com os grupos 9 e 10, Ex. 4.4 (`makeAinv(ggroups = 2)`) | `inversa_A_grupos` | 100 | 0 | OK |
+| Modelo animal, Ex. 4.1, 17.7 e 18.1: efeitos fixos, EBV e resíduos | `modelo_animal` | 35 | 1,1 × 10⁻¹⁶ | OK |
+| Acurácia, Ex. 4.1 e 17.7: c^ii, r², r e SEP | `modelo_animal` (`pev`, `confiabilidade`, `acuracia`) | 40 | 1,3 × 10⁻¹⁵ | OK |
+| Modelo animal reduzido, Ex. 4.3 (`Chapter_04_2.R`) | `modelo_animal` (completo) | 10 | 4,4 × 10⁻¹⁶ | OK |
+| Repetibilidade, Ex. 5.1: EBV, p̂ e parte fixa Xb de cada registro | `modelo_animal(sigma2_pe)` | 23 | 8,5 × 10⁻¹⁴ | OK |
+| Ambiente comum, Ex. 5.2 (família) e 9.1 sem efeitos associativos (leitegada) | `modelo_animal(rotulos_pe)` | 42 | 1,4 × 10⁻¹⁴ | OK |
+| Multicaracterística, Ex. 6.1 | `modelo_multicaracteristica` | 20 | 6,4 × 10⁻¹⁵ | OK |
+| Direto-materno, Ex. 8.1 | `modelo_direto_materno` | 36 | 1,4 × 10⁻¹⁴ | OK |
+| Grupos de pais desconhecidos, Ex. 4.4 (transformação QP) | `modelo_animal(grupos_geneticos)` | 11 | 1,8 × 10⁻¹⁴ | OK |
+| Gauss-Seidel, Ex. 19.2: MME, 20 voltas e o critério de cada volta | `montar_mme`, `gauss_seidel` | 330 | 1,8 × 10⁻¹⁵ | OK |
+| Modelo de touro, Ex. 4.2 (`Chapter_04_1.R`) | `modelo_touro` | 5 | 0,032 | divergente (convenção) |
+| O mesmo modelo com A_s = I, numa variante no R (`variante_touro_sem_parentesco.R`) | `modelo_touro` (ŝ e REL) | 8 | 1,7 × 10⁻¹⁸ | OK |
+
+**Divergência e convenções.**
+
+- **Modelo de touro (Ex. 4.2).** O script usa A_s⁻¹ entre os touros, porque o touro 4 é filho do touro 1. Já `modelo_touro` supõe touros não aparentados (A_s = I), como nos Exemplos 3 de caprinos e 2 e 4 de ovinos. Com A_s = I no próprio R, soluções e REL batem com o motor; a diferença é de premissa, não de conta. O motor devolve EBV = 2ŝ, e o script imprime ŝ.
+- **SEP.** O `SEP` do script é √PEV, o erro do EBV. O `sep_dep` do motor é √PEV/2, o erro da DEP.
+- **r².** O script calcula r² = 1 − c^ii·α, sem o fator (1 + F), enquanto o motor divide a PEV por (1 + F)σ²a. No Ex. 4.1 os dois coincidem, porque nenhum animal é endogâmico.
+- **Ex. 5.1.** A paridade está aninhada no HYS: os HYS 1 e 2 só têm primeira lactação, e os 3 e 4 só segunda. O script desfaz a dependência retirando a coluna hys3. O motor exige X de posto completo e, com os dois fatores, para com "Singular matrix". Por isso a comparação usou só o HYS, que gera o mesmo espaço de colunas. EBV, p̂ e a parte fixa de cada registro saem idênticos.
+- **Correção de Quaas.** Ela não é exercitada aqui: nenhum pedigree dos scripts tem pai endogâmico. Há animais endogâmicos, como a vaca 8 do Ex. 5.1, mas eles não têm filhos. A correção continua coberta pelo pedigree estendido do relatório de corte.
+- **A⁻¹ do lado do R.** A A⁻¹ vem do shim, não do pedigreemm. A comparação confere o motor contra uma segunda implementação, independente e checada por A⁻¹·A = I. Já as soluções das MME que usam essa A⁻¹ saem do código oficial.
+
+**Problemas nos scripts.** Nenhum dos dois muda os números impressos:
+
+- em `threshold_fja.R`, linha 175, `length(s)` lê o `s` do ambiente global. Funciona porque `Chapter_15_1.R` define `s` com os 4 touros; chamado de outro lugar, quebra ou usa o tamanho errado;
+- em `Chapter_18.R`, a média condicional do Gibbs subtrai `LHS[i,i]*theta[i]` quando deveria somar, porque é preciso tirar o termo da diagonal de LHS[i,]·θ. Isso não afeta a única volta do script, que parte de θ = 0, mas erraria a partir da segunda.
+
+**Testes.** `tests/test_mrode.py` tem 18 testes, que fixam os casos que batem. Os valores esperados são a saída impressa dos scripts (round de 3 ou 4 casas, com tolerância de meia unidade). Para A⁻¹, A, A* e o Ex. 4.1, os testes também usam 10 a 12 algarismos, com tolerância de 10⁻⁹. Cada teste cita o exemplo e o script.
+
+**O que entrou no motor com a validação:**
+
+- `parentesco.inversa_A_grupos` e a opção `grupos_geneticos` de `modelo_animal`, para grupos de pais desconhecidos (Ex. 4.4), citados no modelo francês de ovinos e na base genética do relatório de corte;
+- a opção `rotulos_pe` de `modelo_animal`, para o ambiente comum de irmãos de leitegada ou parto (Ex. 5.2 e 9.1);
+- `outros_fatores` em `modelo_direto_materno`, como já havia em `modelo_animal` (Ex. 8.1);
+- `montar_mme` e `gauss_seidel`, conferido volta a volta com o Ex. 19.2;
+- cinco vetores novos em `vetores_teste.json`.
+
+Nenhuma conta antiga mudou. Os 110 testes anteriores continuam passando, e o único vetor alterado, `blup.modelo_animal_corte`, só ganhou a chave `grupos_geneticos: null`.
+
+**Ainda fora do motor:**
+
+- **Modelo animal reduzido (Ex. 4.3).** Dá as mesmas soluções do modelo completo, como a tabela mostra, e só economiza memória em avaliações grandes.
+- **Modelo de touro com parentesco entre touros (Ex. 4.2).** É o próximo passo simples: A_s⁻¹ no lugar de I em `modelo_touro`. Ficou para depois porque `calculadoras.js` replica a assinatura atual da função.
+- **Colunas dependentes em `montar_X` (Ex. 5.1).** Falta detectá-las e dizer o nome de cada uma, em vez de parar com "Singular matrix".
+- **Os demais exemplos dos scripts**, que continuam fora, como diz "Limites": efeitos associativos (9.1), regressão fixa e aleatória (10), modelos genômicos (11, 12 e 14), dominância e epistasia (13), limiar (15), REML (17) e Gibbs (18).
+
 ## Limites
 
 - **As variâncias vêm da literatura.** h², repetibilidade, σP, G₀ e R₀ são parâmetros de entrada, nunca estimados com os dados do rebanho. O relatório de corte mostra por quê: 100 registros estimam h² com desvio-padrão de 0,30. Todo resultado deve vir com o parâmetro usado e, quando a fonte deixa dúvida, com uma análise de sensibilidade (o pipeline faz isso para a repetibilidade).
 - **O pacote não substitui uma avaliação nacional** (Capragene, ANCP, PMGZ, Geneplus, controle leiteiro oficial). Um rebanho isolado não tem conexão com a população: as PTAs internas só se comparam entre si e não se comparam com as de um sumário. Os Exemplos 3 de caprinos e 4 de ovinos mostram que filhas sem contemporâneas de outro pai não avaliam o pai.
 - **O pacote serve para ranquear dentro do rebanho:** quem descartar (MPPA), de quem guardar filhas (EBV com a PTA do pai), que par evitar (F) e se uma taxa mudou de fato (intervalo de confiança).
-- **Matrizes densas.** A, A⁻¹ e as MME são montadas por inteiro, o que serve para até alguns milhares de animais. Avaliações grandes usam Meuwissen e Luo para F, iteração sobre os dados (Gauss-Seidel, PCG) e PEV aproximada.
-- **Fora do escopo:** ssGBLUP, GBLUP e APY; regressão aleatória (dia de controle); modelos de limiar; estimação de variâncias (REML, Gibbs); grupos de pais desconhecidos; melhor predição (BP) da lactação. Os relatórios descrevem esses métodos, mas eles não entram neste motor.
+- **Matrizes densas.** A, A⁻¹ e as MME são montadas por inteiro, o que serve para até alguns milhares de animais. Avaliações grandes usam Meuwissen e Luo para F, iteração sobre os dados (Gauss-Seidel, PCG) e PEV aproximada. O motor tem Gauss-Seidel sobre as MME já montadas (`gauss_seidel`), mas não a iteração sobre os dados.
+- **X de posto completo.** Fatores fixos aninhados ou confundidos (por exemplo, a paridade dentro do HYS) param com "Singular matrix"; use só o fator mais fino.
+- **Fora do escopo:** ssGBLUP, GBLUP e APY; regressão aleatória (dia de controle); modelos de limiar; estimação de variâncias (REML, Gibbs); efeitos associativos e não aditivos; modelo de touro com parentesco entre touros; melhor predição (BP) da lactação. Os relatórios descrevem esses métodos, mas eles não entram neste motor. Grupos de pais desconhecidos entraram em 15/10/2026 (veja "Validação contra Mrode et al. (2023)").
 
 ## Roteiro para portar ao SeabraApp
 
@@ -225,7 +303,7 @@ O núcleo numérico de `taxas.py` (`log_gama`, `erfc`, `norm_cdf`, `norm_ppf`, `
 
 **2. Modelos matriciais, em TypeScript numa Edge Function do Supabase** (ou num worker Python, se a Edge Function não bastar):
 - `matriz_A`, `inversa_A`, `modelo_animal`, `modelo_direto_materno`, `modelo_multicaracteristica` e `rel_exata_modelo_touro`;
-- as MME são simétricas e positivas definidas: use Cholesky (algumas dezenas de linhas) em vez de inversa geral; a diagonal de C, necessária para a PEV, sai resolvendo os sistemas com a mesma fatoração;
+- as MME são simétricas e positivas definidas: use Cholesky (algumas dezenas de linhas) em vez de inversa geral; a diagonal de C, necessária para a PEV, sai resolvendo os sistemas com a mesma fatoração. Quando a matriz não couber na memória, `gauss_seidel` resolve sem inversa e já está conferido volta a volta com o Exemplo 19.2 de Mrode et al. (2023);
 - rode por rebanho, sob demanda ou em lote noturno, e grave os resultados (EBV, REL, data do cálculo, parâmetros usados) numa tabela própria.
 
 **Passos sugeridos:**

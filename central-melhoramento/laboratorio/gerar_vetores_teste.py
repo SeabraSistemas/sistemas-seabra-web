@@ -25,6 +25,7 @@ from pathlib import Path
 import numpy as np
 
 import melhoramento
+from melhoramento import blup, parentesco
 from melhoramento.ganho import intensidade_selecao
 
 ARQUIVO = Path(__file__).resolve().parent / "vetores_teste.json"
@@ -32,6 +33,7 @@ TOLERANCIA_RELATIVA = 1e-9
 
 CORTE, LEITE = "relatório de bovinos de corte", "relatório de bovinos leiteiros"
 CAPRINOS, OVINOS = "relatório de caprinos leiteiros", "relatório de ovinos leiteiros"
+MRODE = "Mrode et al. (2023), 4ª ed., script oficial"
 
 # Pedigrees com identificadores em texto e "0" para pai ou mãe desconhecidos.
 PED_CORTE = {"1": ["0", "0"], "2": ["0", "0"], "3": ["0", "0"], "4": ["1", "2"], "5": ["1", "3"],
@@ -108,6 +110,36 @@ def casos() -> list[dict]:
     caso("blup.pc_r", "blup.possible_change_de_r", f"{CORTE}, tabela da ANCP", r=0.70, sigma_a=16.48)
     caso("blup.hva", "blup.ajuste_hva", f"{LEITE}, ajuste de variância heterogênea",
          desvio=900, dp_rebanho=1800, dp_base=1500)
+
+    # --- Mrode et al. (2023): casos conferidos contra os scripts R oficiais (tests/test_mrode.py)
+    ped4 = {"1": ["0", "0"], "2": ["0", "0"], "3": ["0", "0"], "4": ["1", "0"], "5": ["3", "2"],
+            "6": ["1", "2"], "7": ["4", "5"], "8": ["3", "6"]}
+    ped4_grupos = {**ped4, "1": ["G9", "G10"], "2": ["G9", "G10"], "3": ["G9", "G10"], "4": ["1", "G10"]}
+    ped5 = {"1": ["0", "0"], "2": ["0", "0"], "3": ["0", "0"], "4": ["1", "2"], "5": ["3", "2"],
+            "6": ["1", "5"], "7": ["3", "4"], "8": ["1", "7"]}
+    ped52 = {**{str(i): ["0", "0"] for i in range(1, 6)},
+             **{str(i): ["1", "2"] for i in (6, 7, 8)}, **{str(i): ["3", "4"] for i in (9, 10, 11, 12)},
+             **{str(i): ["1", "5"] for i in (13, 14, 15)}}
+    animais4, sexo4, wwg4 = ["4", "5", "6", "7", "8"], ["M", "F", "F", "M", "M"], [4.5, 2.9, 3.9, 3.5, 5.0]
+    caso("parentesco.Ainv_mrode_5_1", "parentesco.inversa_A", f"{MRODE}, Exemplo 5.1 (Chapter_05_1.R)",
+         ped=ped5)
+    caso("parentesco.Ainv_grupos_mrode_4_4", "parentesco.inversa_A_grupos",
+         f"{MRODE}, Exemplo 4.4 (Chapter_04_3.R)", ped=ped4_grupos, grupos=["G9", "G10"])
+    caso("blup.modelo_animal_grupos_mrode_4_4", "blup.modelo_animal", f"{MRODE}, Exemplo 4.4 (Chapter_04_3.R)",
+         ped=ped4_grupos, animais=animais4, y=wwg4, grupos=sexo4, sigma2_a=20.0, sigma2_e=40.0,
+         grupos_geneticos=["G9", "G10"])
+    caso("blup.modelo_animal_familia_mrode_5_2", "blup.modelo_animal", f"{MRODE}, Exemplo 5.2 (Chapter_05_2.R)",
+         ped=ped52, animais=[str(i) for i in range(6, 16)], y=[90, 70, 65, 98, 106, 60, 80, 100, 85, 68],
+         grupos=["M", "F", "F", "F", "M", "F", "F", "M", "F", "M"], sigma2_a=20.0, sigma2_e=65.0,
+         sigma2_pe=15.0, rotulos_pe=["1", "1", "1", "2", "2", "2", "2", "3", "3", "3"])
+    X4, _ = blup.montar_X(sexo4)
+    Ainv4, ids4 = parentesco.inversa_A(ped4)
+    Z4, _ = blup.incidencia(animais4, ids4)
+    LHS4, RHS4 = blup.montar_mme(X4, Z4, np.array(wwg4), Ainv4, 2.0)
+    caso("blup.gauss_seidel_mrode_19_2", "blup.gauss_seidel", f"{MRODE}, Exemplo 19.2 (Chapter_19.R)",
+         LHS=LHS4.tolist(), RHS=RHS4.tolist(),
+         x0=[4.333, 3.400, 0.0, 0.0, 0.0, 0.167, -0.500, 0.500, -0.833, 0.667],
+         iteracoes_max=20, tolerancia=0.0, guardar_historico=True)
 
     # --- lactacao
     caso("lactacao.tim_vaca", "lactacao.tim", f"{LEITE}, TIM", dias=DEL_VACA, producoes=LEITE_VACA)

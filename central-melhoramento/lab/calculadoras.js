@@ -6,7 +6,7 @@
  * (log-gama, erfc, normal, beta incompleta, t de Student). O pacote Python é a referência: cada
  * função tem o mesmo nome, os mesmos argumentos, na mesma ordem, e devolve a mesma forma que o JSON
  * de vetores_teste.json (dataclass → objeto com os mesmos campos; tupla → array; dict → objeto).
- * O script lab/testar_calculadoras.mjs confere esta porta contra os 128 vetores.
+ * O script lab/testar_calculadoras.mjs confere esta porta contra os vetores de vetores_teste.json.
  *
  * Uso no navegador:  <script src="lab/calculadoras.js"></script>  →  window.LabSeabra
  * Uso no Node:       const LabSeabra = require("./calculadoras.js")

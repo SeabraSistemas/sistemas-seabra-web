@@ -10,7 +10,7 @@ Este guia liga a demanda de um cliente ao modelo, aos dados e aos indicadores. P
 |---|---|
 | **Corte**, **Leite**, **Caprinos**, **Ovinos** | os quatro relatórios em `reports/` (*Avaliação genética de bovinos de corte*, *de bovinos leiteiros*, *de caprinos leiteiros*, *de ovinos leiteiros*); entre aspas, o título da seção; "Ex. n", o exemplo numérico n |
 | **Verif. ovinos** | `research_notes/Verificação de fontes/verificacao_ovinos.md`. O relatório de ovinos v2 (15/10/2026) já incorpora a verificação; "correção n" e "conflito" remetem às seções dela |
-| `módulo.função` | função do pacote `melhoramento`, em `central-melhoramento/laboratorio/` (110 testes) |
+| `módulo.função` | função do pacote `melhoramento`, em `central-melhoramento/laboratorio/` (128 testes, 18 deles contra os exemplos oficiais de Mrode et al. 2023) |
 | **README** | `central-melhoramento/laboratorio/README.md` |
 | **[proposta]** | meta ou regra proposta pelo relatório citado, sem fonte primária que a fixe |
 | **[equipe]** | recomendação da equipe Seabra feita neste guia, sem fonte nos relatórios |
@@ -208,7 +208,7 @@ REL = 1 − PEV/[(1 + F)·σ²a] ;  PTA (DEP) = EBV/2
 7. **Genômica, se houver genotipagem:** ssGBLUP (fora do motor) e expectativa de acurácia pela fórmula de Daetwyler (Caprinos, "Uma referência de centenas de animais rende acurácia de 0,3 a 0,6").
 8. **Validação** dos rankings com dados futuros pelo método LR (Corte, "Validação e tamanho da população de referência"), fora do motor.
 
-**Limites.** O motor resolve as MME por matriz densa; avaliações grandes usam métodos iterativos e PEV aproximada, e REML, Gibbs, ssGBLUP, regressão aleatória, limiar, sobrevivência e grupos de pais desconhecidos estão fora dele (README, "Limites"); para eles, a Central precisa de software de terceiros ou de parceiro [a definir]. Referência genômica pequena rende pouco (seção 8.3, C6). Em raças com programa nacional, uma avaliação paralela gera PTAs incompatíveis com as oficiais: a recomendação é reforçar a conexão e o fluxo de dados para o programa existente [equipe].
+**Limites.** O motor resolve as MME por matriz densa; avaliações grandes usam métodos iterativos e PEV aproximada, e REML, Gibbs, ssGBLUP, regressão aleatória, limiar e sobrevivência estão fora dele (README, "Limites"); grupos de pais desconhecidos e Gauss-Seidel entraram na validação contra Mrode et al. (2023); para eles, a Central precisa de software de terceiros ou de parceiro [a definir]. Referência genômica pequena rende pouco (seção 8.3, C6). Em raças com programa nacional, uma avaliação paralela gera PTAs incompatíveis com as oficiais: a recomendação é reforçar a conexão e o fluxo de dados para o programa existente [equipe].
 
 **Funções do motor.** Linhas de nível 3 do quadro 3.5, mais `blup.modelo_touro`, `blup.repetibilidade_direto_materno` e `parentesco.ne_de_delta_F`.
 
@@ -502,7 +502,7 @@ O motor foi escrito para ser traduzido: funções curtas, sem dependências alé
 
 ### 6.2 Os vetores de teste
 
-`vetores_teste.json` tem 128 vetores: 39 de `taxas`, 17 de `lactacao`, 16 de `parentesco`, 15 de `confiabilidade`, 15 de `indices`, 15 de `ganho` e 11 de `blup`. Cada um traz `id`, `funcao`, `entrada`, `saida` e `fonte`, e a porta precisa reproduzir `saida` com erro relativo de até 1 × 10⁻⁹. As convenções do arquivo valem também para as tabelas do app: taxas, confiabilidades, acurácias e F em fração, não em porcentagem; pedigree como {animal: [pai, mãe]}, com "0" para desconhecido; PTA e DEP iguais a EBV/2; CCS em mil células/mL; dias contados do parto (cabeçalho de `vetores_teste.json`).
+`vetores_teste.json` tem 133 vetores: 39 de `taxas`, 18 de `parentesco`, 17 de `lactacao`, 15 de `confiabilidade`, 15 de `indices`, 15 de `ganho` e 14 de `blup`. Cada um traz `id`, `funcao`, `entrada`, `saida` e `fonte`, e a porta precisa reproduzir `saida` com erro relativo de até 1 × 10⁻⁹. As convenções do arquivo valem também para as tabelas do app: taxas, confiabilidades, acurácias e F em fração, não em porcentagem; pedigree como {animal: [pai, mãe]}, com "0" para desconhecido; PTA e DEP iguais a EBV/2; CCS em mil células/mL; dias contados do parto (cabeçalho de `vetores_teste.json`).
 
 ### 6.3 O que roda no app e o que roda no servidor
 
@@ -511,8 +511,8 @@ O motor foi escrito para ser traduzido: funções curtas, sem dependências alé
 | **App (Dart), offline** | `taxas` (intervalos, tamanho amostral, poder, CUSUM), `confiabilidade`, `ganho`; `lactacao.fleischmann` e `lactacao.lactacao_pequenos_ruminantes`, `lactacao.ecs`, `lactacao.ccs_media_geometrica`, `lactacao.ecm`, `lactacao.fcm4`; `indices.mppa` e `indices.indice_femea`; F de um par | fórmulas fechadas, sem álgebra linear além de 2 × 2 (README, camada 1) |
 | **Núcleo numérico (Dart e TypeScript)** | `taxas.log_gama`, `taxas.erfc`, `taxas.norm_cdf`, `taxas.norm_ppf`, `taxas.beta_incompleta_regularizada`, `taxas.beta_quantil`, `taxas.t_quantil` | Dart e JavaScript não têm `erf` nem `lgamma` nativos; tradução linha a linha (README) |
 | **F de um par no celular** | a_xy = ½(a_x,pai(y) + a_x,mãe(y)), com y o mais novo, recursiva, só sobre os ancestrais dos dois, com memoização; validada contra os vetores de `parentesco.F_acasalamento` | evita montar A inteira (README) |
-| **Servidor (Edge Function em TypeScript, ou worker Python)** | `parentesco.matriz_A`, `parentesco.inversa_A`, `blup.modelo_animal`, `blup.modelo_direto_materno`, `blup.modelo_multicaracteristica`, `blup.rel_exata_modelo_touro` | MME simétricas e positivas definidas: Cholesky, e a diagonal de C, para a PEV, sai da mesma fatoração; por rebanho, sob demanda ou em lote noturno (README, camada 2) |
-| **Fora do motor** | REML, Gibbs, ssGBLUP, GBLUP, APY, regressão aleatória, limiar, sobrevivência, grupos de pais desconhecidos, melhor predição da lactação, CACO, GC aleatório | descritos nos relatórios, não implementados (README, "Limites") |
+| **Servidor (Edge Function em TypeScript, ou worker Python)** | `parentesco.matriz_A`, `parentesco.inversa_A`, `blup.modelo_animal`, `blup.modelo_direto_materno`, `blup.modelo_multicaracteristica`, `blup.rel_exata_modelo_touro`; `parentesco.inversa_A_grupos` e `blup.gauss_seidel` (grupos de pais desconhecidos e solução iterativa, validados contra Mrode et al. 2023) | MME simétricas e positivas definidas: Cholesky, e a diagonal de C, para a PEV, sai da mesma fatoração; por rebanho, sob demanda ou em lote noturno (README, camada 2) |
+| **Fora do motor** | REML, Gibbs, ssGBLUP, GBLUP, APY, regressão aleatória, limiar, sobrevivência, melhor predição da lactação, CACO, GC aleatório | descritos nos relatórios, não implementados (README, "Limites") |
 
 **Rebanho grande.** Matrizes densas servem até alguns milhares de animais; acima disso, Gauss-Seidel ou PCG e PEV aproximada (README, "Limites"). O porte em que a Edge Function deixa de bastar deve ser medido com rebanhos de teste de 500, 1.000 e 5.000 animais [equipe; a definir].
 
@@ -526,7 +526,7 @@ Do mais simples ao mais pesado (README, "Passos sugeridos"): (1) `taxas`, `confi
 
 ### 6.6 As calculadoras da central
 
-Antes da porta em Dart, a aba Laboratório da central já roda oito calculadoras em JavaScript (`central-melhoramento/lab/calculadoras.js`): MPPA e índice da fêmea, confiabilidade, acurácia BIF e Possible Change, parentesco e endogamia, taxas, índice econômico, lactação ICAR e ganho genético. Elas são a primeira porta do motor: `node lab/testar_calculadoras.mjs` confere 120 dos 128 vetores (os 8 restantes são funções que nenhuma calculadora usa: BLUP matricial, variância heterogênea, ajustes de Wood e Wilmink e Smith-Hazel) e 112 números impressos nos relatórios (`central-melhoramento/lab/README.md`). Servem para demonstrar uma análise na triagem, com os números do próprio cliente, e como referência de tela para o app. Os exemplos que vêm preenchidos são fictícios.
+Antes da porta em Dart, a aba Laboratório da central já roda oito calculadoras em JavaScript (`central-melhoramento/lab/calculadoras.js`): MPPA e índice da fêmea, confiabilidade, acurácia BIF e Possible Change, parentesco e endogamia, taxas, índice econômico, lactação ICAR e ganho genético. Elas são a primeira porta do motor: `node lab/testar_calculadoras.mjs` confere 121 dos 133 vetores (os 12 restantes são funções que nenhuma calculadora usa: BLUP matricial, grupos de pais desconhecidos, Gauss-Seidel, variância heterogênea, ajustes de Wood e Wilmink e Smith-Hazel) e 112 números impressos nos relatórios (`central-melhoramento/lab/README.md`). Servem para demonstrar uma análise na triagem, com os números do próprio cliente, e como referência de tela para o app. Os exemplos que vêm preenchidos são fictícios.
 
 ---
 
@@ -771,7 +771,7 @@ A razão BIF (D2) é conta direta, sem função no motor.
 ### 9.1 Limites
 
 - **Faltam parâmetros brasileiros:** repetibilidade de lactação de Gir e Girolando, σP dentro do GC em caprinos, h² de leite de ovelhas brasileiras, parâmetros de verminose, longevidade e tipo em cabras brasileiras (seções de parâmetros de Leite, Caprinos e Ovinos). O guia usa valores estrangeiros ou hipotéticos e manda rodar sensibilidade.
-- **O motor não faz tudo:** REML, Gibbs, ssGBLUP, regressão aleatória, limiar, sobrevivência, grupos de pais desconhecidos e GC aleatório estão fora (README, "Limites").
+- **O motor não faz tudo:** REML, Gibbs, ssGBLUP, regressão aleatória, limiar, sobrevivência e GC aleatório estão fora (README, "Limites").
 - **Ovinos:** a seção 4.4 foi reconferida com o relatório v2 em 15/10/2026; os conflitos que seguem abertos (Ne de 370 contra 188, os 5,4 L/ano da brochura, 0,62 contra 0,51 desvio do ISOL) aparecem lado a lado.
 - **Metas são, em boa parte, propostas:** o guia separa referência com fonte de [proposta] e de [equipe].
 - **Dados fictícios:** os exemplos ilustram contas e decisões; não são benchmarks.
@@ -807,7 +807,7 @@ A razão BIF (D2) é conta direta, sem função no motor.
 
 ## Apêndice A: script dos exemplos
 
-O script gera todos os números da seção 8 e o bloco E (conferências de ovinos da seção 4.4). Salve-o como `central-melhoramento/laboratorio/casos_guia.py` e rode `python3 casos_guia.py` nessa pasta; ele usa só o pacote `melhoramento`, numpy e a biblioteca padrão. Conferido em 15/10/2026 com o motor na versão 0.1.0 (110 testes passando).
+O script gera todos os números da seção 8 e o bloco E (conferências de ovinos da seção 4.4). Salve-o como `central-melhoramento/laboratorio/casos_guia.py` e rode `python3 casos_guia.py` nessa pasta; ele usa só o pacote `melhoramento`, numpy e a biblioteca padrão. Conferido em 15/10/2026 com o motor na versão 0.1.0 (128 testes passando, inclusive a validação contra Mrode et al. 2023).
 
 ```python
 # Casos FICTICIOS do Guia de aplicacao por demanda (Central de Melhoramento Seabra).

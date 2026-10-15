@@ -5,9 +5,10 @@ Implementa, com numpy e a biblioteca padrão, os modelos documentados nos quatro
 testá-los antes de levá-los ao SeabraApp.
 
 Módulos:
-    parentesco      matriz A, F, A⁻¹ (Henderson + Quaas), F de acasalamentos, Ne e ΔF
-    blup            MME do modelo animal, direto-materno, multicaracterística e de touro; PEV,
-                    confiabilidade, acurácia, acurácia BIF, DEP/PTA e Possible Change
+    parentesco      matriz A, F, A⁻¹ (Henderson + Quaas), A* com grupos de pais desconhecidos,
+                    F de acasalamentos, Ne e ΔF
+    blup            MME do modelo animal, direto-materno, multicaracterística e de touro; Gauss-Seidel;
+                    PEV, confiabilidade, acurácia, acurácia BIF, DEP/PTA e Possible Change
     lactacao        TIM/Fleischmann (TMY e TMM), Wood, Wilmink, FCM, ECM e ECS
     confiabilidade  REL = DE/(DE + k), filhas-equivalentes, Daetwyler e conversões de escala
     indices         Smith-Hazel, índice econômico, probabilidade de superar, MPPA e índice da fêmea

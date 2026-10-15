@@ -5,7 +5,8 @@ estimadas com os dados do rebanho (relatório de corte, "Estimar parâmetros den
 quase sempre ruído"):
 
 * modelo_animal: y = Xb + Za + Wp + e, com grupos de contemporâneos e covariáveis fixos,
-  efeito animal aleatório com A⁻¹ e, opcionalmente, ambiente permanente p (repetibilidade);
+  efeito animal aleatório com A⁻¹ e, opcionalmente, ambiente permanente p (repetibilidade) ou
+  ambiente comum de irmãos (rotulos_pe) e grupos de pais desconhecidos (A* de Quaas);
 * modelo_direto_materno: y = Xb + Z₁a + Z₂m + Wp + e (Willham 1972), com G₀ ⊗ A;
 * modelo_multicaracteristica: duas ou mais características com G₀ ⊗ A e R₀ por animal,
   tolerando característica ausente (animal vendido antes da pesagem);
@@ -13,13 +14,16 @@ quase sempre ruído"):
   filhas e para o ajuste de variância heterogênea.
 
 E as medidas derivadas: PEV, confiabilidade com (1 + F), acurácia, acurácia BIF, DEP/PTA = EBV/2,
-erro-padrão da DEP e Possible Change (BIF).
+erro-padrão da DEP e Possible Change (BIF). As MME também podem ser montadas à parte (montar_mme)
+e resolvidas por Gauss-Seidel (gauss_seidel), sem inversa.
 
 Fontes: relatório de corte, "Passo 2: montar e resolver as MME", "Passo 3: da PEV à acurácia e à
 DEP", "Pesos até a desmama: modelo direto-materno" e "Pesos depois da desmama: multicaracterística";
 relatório de caprinos, Exemplo 3; relatório de ovinos, Exemplos 2 e 4; relatório de leite, ajuste
 de variância heterogênea (HVA). Henderson (1975, Biometrics 31:423); Phocas, Donoghue e Graser
-(2005, GSE 37:361, eq. 1); BIF Guidelines, 9ª ed., p. 73.
+(2005, GSE 37:361, eq. 1); BIF Guidelines, 9ª ed., p. 73; Quaas e Pollak (1981, J. Dairy Sci.
+64:1868). Os modelos conferem com os scripts R oficiais de Mrode, Pocrnić, Gorjanc e Thompson
+(2023, 4ª ed., CABI; github.com/MrodesBook/Examples_R), em tests/test_mrode.py.
 
 As matrizes são densas e invertidas por inteiro: o objetivo é ranquear dentro de um rebanho de
 até alguns milhares de animais e mostrar as contas. Avaliações nacionais usam métodos iterativos
@@ -33,7 +37,7 @@ from dataclasses import dataclass
 import numpy as np
 
 from .confiabilidade import bif_de_rel, k_touro, rel_de_pev
-from .parentesco import conhecido, inversa_A, matriz_A
+from .parentesco import conhecido, inversa_A, inversa_A_grupos, matriz_A, pedigree_sem_grupos
 
 
 # ---------------------------------------------------------------------------------------
@@ -86,17 +90,17 @@ def _pedigree_com_registros(ped: dict, *listas) -> dict:
     return completo
 
 
-def resolver_mme(X: np.ndarray, Z: np.ndarray, y: np.ndarray, Ainv: np.ndarray,
-                 lambda_a: float, W: np.ndarray | None = None,
-                 lambda_pe: float | None = None) -> tuple[np.ndarray, np.ndarray]:
-    """Monta e resolve as MME de Henderson do modelo animal (com ambiente permanente opcional):
+def montar_mme(X: np.ndarray, Z: np.ndarray, y: np.ndarray, Ainv: np.ndarray,
+               lambda_a: float, W: np.ndarray | None = None,
+               lambda_pe: float | None = None) -> tuple[np.ndarray, np.ndarray]:
+    """Monta as MME de Henderson do modelo animal (com ambiente permanente opcional):
 
         [ X'X   X'Z             X'W            ] [b̂]   [X'y]
         [ Z'X   Z'Z + λa·A⁻¹    Z'W            ] [â] = [Z'y]       λa = σ²e/σ²a
         [ W'X   W'Z             W'W + λpe·I    ] [p̂]   [W'y]       λpe = σ²e/σ²pe
 
-    Devolve (solução, C), com C = inversa da matriz de coeficientes; a PEV de cada efeito
-    aleatório é c^ii·σ²e. A ordem da solução é [b, a, p].
+    Devolve (LHS, RHS), na ordem [b, a, p]. Exemplo: Mrode et al. (2023), Exemplo 4.1 (as mesmas
+    MME que o Chapter_19.R resolve por Gauss-Seidel).
     """
     blocos = [X, Z] if W is None else [X, Z, W]
     T = np.hstack(blocos)
@@ -107,9 +111,60 @@ def resolver_mme(X: np.ndarray, Z: np.ndarray, y: np.ndarray, Ainv: np.ndarray,
         nw = W.shape[1]
         LHS[nx + nz:, nx + nz:] += lambda_pe * np.eye(nw)
     RHS = T.T @ np.asarray(y, dtype=float)
+    return LHS, RHS
+
+
+def resolver_mme(X: np.ndarray, Z: np.ndarray, y: np.ndarray, Ainv: np.ndarray,
+                 lambda_a: float, W: np.ndarray | None = None,
+                 lambda_pe: float | None = None) -> tuple[np.ndarray, np.ndarray]:
+    """Monta (montar_mme) e resolve as MME. Devolve (solução, C), com C = inversa da matriz de
+    coeficientes; a PEV de cada efeito aleatório é c^ii·σ²e. A ordem da solução é [b, a, p].
+    """
+    LHS, RHS = montar_mme(X, Z, y, Ainv, lambda_a, W, lambda_pe)
     solucao = np.linalg.solve(LHS, RHS)
     C = np.linalg.inv(LHS)
     return solucao, C
+
+
+@dataclass
+class ResultadoGaussSeidel:
+    solucao: np.ndarray
+    iteracoes: int
+    convergencia: list               # Σ(x_novo − x_velho)²/Σx_novo² em cada volta
+    historico: list | None = None    # solução ao fim de cada volta (com guardar_historico=True)
+
+
+def gauss_seidel(LHS, RHS, x0=None, iteracoes_max: int = 1000, tolerancia: float = 1e-12,
+                 guardar_historico: bool = False) -> ResultadoGaussSeidel:
+    """Resolve LHS·x = RHS por Gauss-Seidel, uma equação de cada vez:
+
+        x_j ← (RHS_j − Σ_{k≠j} LHS_jk·x_k) / LHS_jj      (com os x_k já atualizados nesta volta)
+
+    e para quando Σ(x_novo − x_velho)²/Σx_novo² ≤ tolerancia, o critério de Mrode et al. (2023),
+    Cap. 19. Converge quando LHS é simétrica e positiva definida, como as MME de posto completo.
+    Não precisa da inversa, e por isso é o caminho para matrizes grandes numa porta em Dart ou
+    TypeScript; a PEV, porém, continua exigindo C ou uma aproximação.
+
+    Exemplo: Mrode et al. (2023), Exemplo 19.2 (Chapter_19.R): MME do Exemplo 4.1 (montar_mme),
+    partida dada no livro e 20 voltas (iteracoes_max=20, tolerancia=0).
+    """
+    LHS = np.asarray(LHS, dtype=float)
+    RHS = np.asarray(RHS, dtype=float).ravel()
+    x = np.zeros(len(RHS)) if x0 is None else np.array(x0, dtype=float)
+    convergencia: list = []
+    historico: list = []
+    volta = 0
+    for volta in range(1, iteracoes_max + 1):
+        anterior = x.copy()
+        for j in range(len(x)):
+            x[j] = (RHS[j] - LHS[j] @ x + LHS[j, j] * x[j]) / LHS[j, j]
+        convergencia.append(float(np.sum((x - anterior) ** 2) / np.sum(x ** 2)))
+        if guardar_historico:
+            historico.append(x.copy())
+        if convergencia[-1] <= tolerancia:
+            break
+    return ResultadoGaussSeidel(solucao=x, iteracoes=volta, convergencia=convergencia,
+                                historico=historico if guardar_historico else None)
 
 
 def blup_gls(X: np.ndarray, Z: np.ndarray, y: np.ndarray, A: np.ndarray,
@@ -174,7 +229,8 @@ class ResultadoModeloAnimal:
     acuracia_bif: np.ndarray       # 1 − √(1 − REL)
     dep: np.ndarray                # DEP/PTA = EBV/2
     sep_dep: np.ndarray            # erro-padrão da DEP = √PEV/2
-    ambiente_permanente: dict | None = None   # animal → p̂ (só com sigma2_pe)
+    ambiente_permanente: dict | None = None   # animal (ou rótulo de rotulos_pe) → p̂ (só com sigma2_pe)
+    grupos_geneticos: dict | None = None      # grupo → ĝ, com o primeiro grupo = 0 (só com grupos)
 
     def animal(self, identificador) -> dict:
         """Resultados de um animal como dicionário (útil para relatórios e para JSON)."""
@@ -187,7 +243,8 @@ class ResultadoModeloAnimal:
 
 def modelo_animal(ped: dict, animais: list, y, grupos: list, sigma2_a: float, sigma2_e: float,
                   sigma2_pe: float | None = None, covariaveis: dict | None = None,
-                  outros_fatores: dict | None = None) -> ResultadoModeloAnimal:
+                  outros_fatores: dict | None = None, rotulos_pe: list | None = None,
+                  grupos_geneticos: list | None = None) -> ResultadoModeloAnimal:
     """Modelo animal unicaracterística (relatório de corte, Passos 2 e 3):
 
         y = Xb + Za + Wp + e ;  a ~ N(0, A·σ²a) ;  p ~ N(0, I·σ²pe) ;  e ~ N(0, I·σ²e)
@@ -196,34 +253,60 @@ def modelo_animal(ped: dict, animais: list, y, grupos: list, sigma2_a: float, si
     repetir se houver ambiente permanente). Animais com registro fora do pedigree entram como
     fundadores. Com sigma2_pe = None, o modelo não tem p e supõe um registro por animal.
 
+    rotulos_pe: rótulo de p em cada registro. O padrão é o próprio animal (ambiente permanente,
+      registros repetidos). Com o parto ou a leitegada, p vira o ambiente comum dos irmãos e
+      sigma2_pe a sua variância (Mrode et al. 2023, Exemplos 5.2 e 9.2).
+    grupos_geneticos: rótulos dos grupos de pais desconhecidos que o pedigree usa no lugar de pai
+      ou mãe desconhecidos (veja parentesco.inversa_A_grupos); todo pai desconhecido precisa de
+      um grupo. O primeiro grupo é fixado em zero, porque a soma dos grupos se confunde com os
+      GCs. O ebv já inclui o grupo (â* = Qĝ + â) e se compara entre grupos (Mrode et al. 2023,
+      Exemplo 4.4). Com grupos, a PEV inclui o erro do contraste com o primeiro grupo.
+
     Exemplo do relatório de corte: 8 animais, P205 de 5 bezerros em 2 GCs, σ²a = 100 e σ²e = 300
     (λ = 3) → GC 2022 = 203,71 kg; GC 2024 = 207,56 kg; EBV do animal 6 = +3,59 kg (r = 0,304).
     """
     ped_c = _pedigree_com_registros(ped, animais)
-    Ainv, ids = inversa_A(ped_c)
-    A, _ = matriz_A(ped_c)
+    gg = list(grupos_geneticos or [])
+    if gg:
+        Ainv, ids, _ = inversa_A_grupos(ped_c, gg)
+        sem_grupo = [a for a in ids if not all(conhecido(p) for p in ped_c.get(a, (None, None)))]
+        if sem_grupo:
+            raise ValueError(f"com grupos_geneticos, todo pai desconhecido precisa de um grupo: {sem_grupo}")
+        A, _ = matriz_A(pedigree_sem_grupos(ped_c, gg))
+    else:
+        Ainv, ids = inversa_A(ped_c)
+        A, _ = matriz_A(ped_c)
     F = np.diag(A) - 1.0
     y = np.asarray(y, dtype=float)
     X, nomes_fixos = montar_X(grupos, outros_fatores, covariaveis)
+    nx, n = X.shape[1], len(ids)
     Z, _ = incidencia(animais, ids)
+    if gg:                                   # colunas dos grupos 2..k; o 1º grupo sai (= 0)
+        Z = np.hstack([Z, np.zeros((len(y), len(gg) - 1))])
+        Ainv = np.delete(np.delete(Ainv, n, axis=0), n, axis=1)
     W = None
     lambda_pe = None
     niveis_pe: list = []
+    if rotulos_pe is not None and sigma2_pe is None:
+        raise ValueError("rotulos_pe exige sigma2_pe")
     if sigma2_pe is not None:
-        W, niveis_pe = incidencia(animais)
+        W, niveis_pe = incidencia(animais if rotulos_pe is None else rotulos_pe)
         lambda_pe = sigma2_e / sigma2_pe
     sol, C = resolver_mme(X, Z, y, Ainv, sigma2_e / sigma2_a, W, lambda_pe)
-    nx, n = X.shape[1], len(ids)
+    nz = Z.shape[1]
     ebv = sol[nx:nx + n]
     pev = np.diag(C)[nx:nx + n] * sigma2_e
     rel = np.clip(rel_de_pev(pev, sigma2_a, F), 0.0, 1.0)   # corta o −0,000 de arredondamento
     pe = None
     if W is not None:
-        pe = {a: float(v) for a, v in zip(niveis_pe, sol[nx + n:])}
+        pe = {a: float(v) for a, v in zip(niveis_pe, sol[nx + nz:])}
+    grupos_sol = None
+    if gg:
+        grupos_sol = {gg[0]: 0.0, **{g: float(v) for g, v in zip(gg[1:], sol[nx + n:nx + nz])}}
     return ResultadoModeloAnimal(
         ids=ids, efeitos_fixos=dict(zip(nomes_fixos, map(float, sol[:nx]))), ebv=ebv, pev=pev, F=F,
         confiabilidade=rel, acuracia=np.sqrt(rel), acuracia_bif=bif_de_rel(rel), dep=ebv / 2.0,
-        sep_dep=np.sqrt(pev) / 2.0, ambiente_permanente=pe)
+        sep_dep=np.sqrt(pev) / 2.0, ambiente_permanente=pe, grupos_geneticos=grupos_sol)
 
 
 # ---------------------------------------------------------------------------------------
@@ -251,7 +334,8 @@ class ResultadoDiretoMaterno:
 
 def modelo_direto_materno(ped: dict, animais: list, maes: list, y, grupos: list,
                           G0, sigma2_pe: float, sigma2_e: float,
-                          covariaveis: dict | None = None) -> ResultadoDiretoMaterno:
+                          covariaveis: dict | None = None,
+                          outros_fatores: dict | None = None) -> ResultadoDiretoMaterno:
     """Modelo direto-materno com ambiente permanente materno (Willham 1972; Phocas et al. 2005):
 
         y = Xb + Z₁a + Z₂m + Wp + e
@@ -262,8 +346,11 @@ def modelo_direto_materno(ped: dict, animais: list, maes: list, y, grupos: list,
     desconhecida). σ²P = σ²a + σ²m + σam + σ²pe + σ²e para bezerro não endogâmico: a covariância
     entre o direto do bezerro e o materno da mãe é ½σam e entra duas vezes (relatório de corte).
 
+    outros_fatores: {nome: rótulos por registro}, como em modelo_animal (primeiro nível = 0).
+
     Exemplo do relatório de corte: G₀ = [[100, −15], [−15, 40]], σ²pe = 30, σ²e = 230 →
-    σ²P = 385; animal 6 com DEP direta 1,75, materna 0,28 e TMD 1,16.
+    σ²P = 385; animal 6 com DEP direta 1,75, materna 0,28 e TMD 1,16. Confere com Mrode et al.
+    (2023), Exemplo 8.1 (Chapter_08.R: baia e rebanho fixos).
     """
     ped_c = _pedigree_com_registros(ped, animais, maes)
     Ainv, ids = inversa_A(ped_c)
@@ -273,7 +360,7 @@ def modelo_direto_materno(ped: dict, animais: list, maes: list, y, grupos: list,
     y = np.asarray(y, dtype=float)
     n = len(ids)
     pos = {a: i for i, a in enumerate(ids)}
-    X, nomes_fixos = montar_X(grupos, covariaveis=covariaveis)
+    X, nomes_fixos = montar_X(grupos, outros_fatores, covariaveis)
     Z1, _ = incidencia(animais, ids)
     Z2 = np.zeros((len(y), n))
     niveis_pe = [a for a in ids if any(conhecido(m) and m == a for m in maes)]
