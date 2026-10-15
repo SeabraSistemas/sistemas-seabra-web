@@ -205,7 +205,7 @@ tr.total td { font-weight: 600; border-top: 2px solid var(--line); }
     <p class="lede">Modelos estatísticos, pesquisas e indicadores para avaliação genética, organizados por segmento. Cada modelo é aplicado conforme a demanda: associações com milhões de registros ou produtores com o próprio rebanho. Os modelos são testados aqui antes de chegarem ao SeabraApp.</p>
     <div class="status-strip" role="status">
       <strong>Série completa</strong>
-      <span>Os quatro relatórios estão prontos em 15/10/2026: corte, leite bovino e caprinos verificados com texto completo (v2); ovinos leiteiros v1, com a verificação feita e a v2 em revisão. O Laboratório já tem o motor em Python e oito calculadoras.</span>
+      <span>Os quatro relatórios estão prontos em 15/10/2026, todos na v2: corte, leite bovino, caprinos e ovinos leiteiros. Os quatro estão verificados com texto completo. O Laboratório já tem o motor em Python e oito calculadoras.</span>
     </div>
   </header>
 
@@ -245,7 +245,7 @@ tr.total td { font-weight: 600; border-top: 2px solid var(--line); }
       <article class="card seg-card">
         <span class="seg-code">LEITE · OVI</span>
         <h3>Ovinos leiteiros</h3>
-        <span class="chip done">Relatório v1 · texto completo</span>
+        <span class="chip done">Relatório v2 · verificado</span>
         <p class="note">ICAR para ovelhas, modelo francês com variância heterogênea, ssGBLUP da Lacaune, ISOL. O Brasil não tem avaliação genética.</p>
       </article>
     </div>
@@ -279,7 +279,6 @@ tr.total td { font-weight: 600; border-top: 2px solid var(--line); }
       <span class="eyebrow">Próximos passos</span>
       <h3>Na ordem</h3>
       <ol class="flow">
-        <li><span>Aplicar ao relatório de ovinos as correções da verificação (v2).</span></li>
         <li><span>Guia de aplicação por demanda: do pedido do produtor ou da associação ao modelo, aos dados e aos indicadores.</span></li>
         <li><span>Ler os PDFs dos artigos pagos (acesso UFF/CAPES) à medida que forem anexados e confirmar as equações clássicas.</span></li>
         <li><span>Laboratório: rodar o motor com dados anonimizados do SeabraApp.</span></li>
@@ -429,12 +428,13 @@ tr.total td { font-weight: 600; border-top: 2px solid var(--line); }
     <div class="grid">
       <article class="card">
         <h3>Situação</h3>
-        <span class="chip done">Relatório v1 · texto completo</span>
+        <span class="chip done">Relatório v2 · verificado</span>
         <dl class="kv">
-          <dt>Relatório</dt><dd>~28,1 mil palavras</dd>
+          <dt>Relatório</dt><dd>~33 mil palavras</dd>
+          <dt>Verificação</dt><dd>290 itens: 232 confirmados, 31 corrigidos, 24 não confirmados, 3 pagos</dd>
           <dt>Captação</dt><dd>6 frentes com leitura de texto completo</dd>
           <dt>Exemplos</dt><dd>8 exemplos conferidos em numpy</dd>
-          <dt>Pendente</dt><dd>verificação independente; fórmula oficial do ISOL; documentos MAPA/INIA</dd>
+          <dt>Pendente</dt><dd>fórmula oficial do ISOL; Ne da Lacaune (370 × 188); 5,4 L/ano da brochura; documentos MAPA/INIA, Idele, HAL e ASLANA</dd>
         </dl>
       </article>
       <article class="card">
@@ -939,7 +939,7 @@ const DOCS = {
     ["Nota 06", "Indicadores de rebanho e N pequeno", "docs/caprinos/06_indicadores_rebanho_n_pequeno.md", "texto completo"]
   ],
   ovinos: [
-    ["Relatório", "Ovelhas leiteiras ganham EBVs importando conexão genética", "docs/ovinos/relatorio.md", "~28,1 mil palavras"],
+    ["Relatório v2", "Ovelhas leiteiras ganham EBVs importando conexão genética", "docs/ovinos/relatorio.md", "~33 mil palavras"],
     ["Verificação", "Verificação do relatório de ovinos contra as fontes", "docs/verificacao/ovinos.md", "290 itens"],
     ["Nota 01", "Modelos de produção", "docs/ovinos/01_modelos_producao.md", "texto completo"],
     ["Nota 02", "Programas de avaliação", "docs/ovinos/02_programas_avaliacao.md", "texto completo"],
