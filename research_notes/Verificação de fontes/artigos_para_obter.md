@@ -49,5 +49,23 @@ DOIs conferidos no Crossref. O conteúdo destes artigos não foi lido.
 | Nardone A, Valentini A (1989). Effect of errors in genetic and environmental variances on the BLUP estimates of sire breeding values. *Ann. Zootech.* 38(4):315–319 | 10.1051/animres:19890309 | Efeito de usar variâncias erradas no BLUP (rebanhos pequenos) |
 | Maniatis N, Pollott GE (2003). The impact of data structure on genetic (co)variance components of early growth in sheep, estimated using an animal model with maternal effects. *J. Anim. Sci.* 81(1):101–108 | 10.2527/2003.811101x | Estrutura de dados e efeito materno (útil também para ovinos) |
 
+## Ovinos leiteiros: abertos, mas bloqueados para robôs (opcional)
+
+Segundo o OpenAlex (15/10/2026), estes artigos são de **acesso livre**. O texto completo não foi baixado porque o site das revistas bloqueia acesso automatizado. Não precisa do acesso da UFF: basta baixar no navegador e anexar, se quiser que as equações sejam conferidas no original.
+
+| Referência | DOI |
+|---|---|
+| Duchemin et al. (2012). Genomic selection in the French Lacaune dairy sheep breed. *J. Dairy Sci.* | 10.3168/jds.2011-4980 |
+| Baloche et al. (2014). Assessment of accuracy of genomic prediction for French Lacaune dairy sheep. *J. Dairy Sci.* 97:1107 | 10.3168/jds.2013-7135 |
+| Legarra et al. (2014). Within- and across-breed genomic predictions and genomic relationships (Western Pyrenees dairy sheep). *J. Dairy Sci.* | 10.3168/jds.2013-7745 |
+| Macedo et al. (2022). Removing data and using metafounders alleviates biases (Lacaune). *J. Dairy Sci.* | 10.3168/jds.2021-20860 |
+| Wicki et al. (2023). Effect of subdivision of the Lacaune dairy sheep breed. *J. Dairy Sci.* | 10.3168/jds.2022-23114 |
+| De Laet & Raoul (2026). Benefit of including female genotypes in the Lacaune evaluation. *J. Dairy Sci.* | 10.3168/jds.2025-27638 |
+| Rodríguez-Ramilo et al. (2019). Inbreeding and effective population size in French dairy sheep. *J. Dairy Sci.* | 10.3168/jds.2018-15405 |
+| Cesarani et al. (2019). Genomic selection of milk fatty acid composition in Sarda dairy sheep. *J. Dairy Sci.* | 10.3168/jds.2018-15333 |
+| Granado-Tajada & Ugarte (2024). Impact of truncating historical data on prediction ability (Latxa). *Animal* | 10.1016/j.animal.2024.101245 |
+
+Barillet (2007, *Small Rumin. Res.*, DOI 10.1016/j.smallrumres.2007.01.004) e Ramón et al. (2010, *J. Dairy Sci.* 93:3303) aparecem nas notas de ovinos como pagos ou sem versão aberta encontrada.
+
 ## Como enviar
 Baixe os PDFs pelo acesso da UFF (Portal de Periódicos CAPES via CAFe) e anexe-os na conversa da sessão "Modelos estatísticos". Eles são lidos para conferir as equações e não são salvos no repositório.
