@@ -300,3 +300,280 @@ Quadro de benchmarks (valor, fonte, status de leitura):
 - Referencial INOSYS/Idele para ovinos leite: não acessado.
 - Valores absolutos de litros por ovelha em Navarra: não extraídos do gráfico.
 - Benchmark de cordeiros desmamados por ovelha (França, Espanha, Brasil): não localizado.
+
+---
+
+## 8. Padronização de lactações e comparação com contemporâneas
+
+### Takeaway
+O método de referência é o do ICAR: a produção de cada ovelha é calculada pelo método de Fleischmann, com duração real ou calculada declarada. Para comparar ovelhas, o caminho mais defensável é comparar dentro de grupos contemporâneos (mesma categoria de idade ou ordem de lactação, mesma época de parto, mesmo estágio) com modelo misto. Ticiani et al. (2013) mostra um exemplo de análise com medidas repetidas, mas com amostra pequena. Não localizei fator de padronização entre comprimentos de lactação para ovelhas.
+
+### Cited Findings
+- **ICAR, Section 16** [TL]. A produção de referência é definida por raça e categoria (idade ou número de lactação), e o comprimento-padrão usado deve ser declarado na publicação. Recomenda-se publicar também os dados brutos, sem ajuste por fatores de variação, além dos ajustados.
+- **ICAR, Section 16** [TL]. "The minimum number of valid monthly tests per ewe needed for the lactation calculation is not set; it must, therefore, be described for each breed and category of ewe considered (first lactation, second and more)."
+- **ICAR, Section 16, método D** [TL]. O ranqueamento pode usar média de controle ou lactação calculada, "which may or may not be corrected for variation factors such as lactation number, age, or month of lambing".
+- **ICAR, glossário "Standard lactation"** [TL, https://wiki.icar.org/index.php/Glossary:_Standard_lactation]. Definição de lactação-padrão para bovinos (do parto à secagem ou até o dia 305). Não se aplica a ovinos; a definição ovina está na Section 16.
+- **Ticiani et al. (2013)** [TL]. Análise por PROC MIXED do SAS para medidas repetidas (produção, proteína, gordura, lactose e CCS), regressões por GLM e REG, e comparação de interceptos e inclinações de duas equações conforme Neter & Wasserman (1996), com nível de significância de 5%. Resultados na seção 1.
+- **Quaas & Pollak (1980), "Mixed Model Methodology for Farm and Ranch Beef Cattle Testing Programs"**, J. Anim. Sci. 51:1277-1287, DOI 10.2527/jas1981.5161277x [metadados Crossref; texto não lido]. Referência clássica de BLUP em programa de teste de rebanho, em corte.
+
+**Fórmulas**
+- Produção padronizada para comprimento-padrão L: não há fórmula ICAR entre rebanhos. O ICAR exige declarar L, sem fixar o método [TL]. Método a definir [NV].
+- Modelo de contemporâneos (exemplo genérico): y_ijk = μ + grupo_i + animal_j + e_ijk, com grupo_i = ano-mês de parto × ordem de lactação × categoria [NV, modelo padrão, sem fonte primária consultada].
+- Repetibilidade: r = (σ²_a + σ²_pe) ÷ σ²_f [NV].
+
+### Inferences
+- Em rebanho pequeno, o grupo "ano-mês de parto × ordem de lactação" pode ficar com poucas ovelhas. Agrupe por trimestre e junte ordens 2 ou mais (inferência nossa).
+- Como o ICAR não fixa número mínimo de provas, o analista precisa declarar esse número por categoria e aplicar o mesmo critério em todos os anos (inferência nossa, com base no texto ICAR).
+
+### Gaps
+- Fator de padronização entre lactações de 120, 150, 180 e 305 dias para ovelhas: não localizado em fonte verificada.
+- Modelo de curva de lactação (Wood, Wilmink ou similar) aplicado a ovinos leiteiros: não lido nesta busca [NV]. Cappio-Borlino et al. (1997), citado em Ticiani et al. (2013), é a pista (Valle del Belice; DOI não conferido).
+
+---
+
+## 9. MPPA e repetibilidade em ovelhas
+
+### Takeaway
+MPPA é um índice de capacidade produtiva que usa desempenho passado da fêmea, número de registros e repetibilidade. A fórmula clássica citada em fonte secundária é MPPA = nr/(1+(n−1)r) × desvio médio. O artigo original (Ptak & Schaeffer) não foi localizado, e a sigla tem mais de uma expansão nas fontes. Não encontrei repetibilidade publicada para produção de leite de ovelha. A repetibilidade precisa ser estimada no próprio rebanho ou tomada de outra espécie com cautela.
+
+### Cited Findings
+- **Definição de MPPA** [RB, CattleMax Help Center, "MPPA is the Most Probable Producing Ability", https://help.cattlemax.com/article/537-mppa]. Estima a superioridade ou inferioridade futura de uma fêmea para característica repetível, com base no desempenho passado em relação aos contemporâneos, no número de registros e na repetibilidade. Fonte de empresa, não acadêmica.
+- **Expansões da sigla** [RB]. Outras fontes da busca expandem MPPA como "Expected Production Ability" e ERPA como "estimated real producing ability". Não há consenso nas fontes encontradas.
+- **Fórmula clássica de MPPA** [RB, artigo de leite citado em resumo de busca, não identificado]: MPPA = nr/(1+[n−1]r) × desvio médio. A mesma fonte diz que repetibilidade e MPPA refletem efeito genético mais efeito ambiental permanente.
+- **Repetibilidade da produção de leite em Holandesas pequenas, Indonésia** [RB]. Correlação interclasse de 0,43 ± 0,1 e intraclasse de 0,15 ± 0,05. As duas correlações têm interpretações diferentes; confira no original antes de usar.
+- **Ptak & Schaeffer (1993)** [NV]. Citado como origem de MPPA em fontes de bovino. Artigo original não localizado.
+- **Larroque et al. (2011), slides EAAP** [TL]. A avaliação genética francesa de Lacaune usa "repeatability animal model", com grupos genéticos para pais desconhecidos. URL de origem não registrada no arquivo.
+- **Ticiani et al. (2013)** [TL]. Regressões de produção sobre dias em lactação com r² de 0,02 a 0,22 (seção 1). Não é repetibilidade, mas mostra o ajuste fraco em 92 dias e 67 ovelhas.
+
+**Fórmulas**
+- MPPA = [n·r ÷ (1 + (n−1)·r)] × desvio médio dos registros da fêmea em relação aos contemporâneos [RB, forma citada em fonte secundária].
+- Repetibilidade pelo modelo de medidas repetidas: r = (σ²_a + σ²_pe) ÷ σ²_f, em que σ²_a é a variância genética aditiva, σ²_pe a variância ambiental permanente e σ²_f a variância fenotípica [NV, padrão; sem fonte primária consultada].
+- Confiabilidade do MPPA com n registros: não derivada. Use a fórmula do modelo de repetibilidade escolhido [NV].
+
+### Inferences
+- Com 20 a 50 ovelhas e dois ou três controles por lactação, uma repetibilidade estimada teria intervalo de confiança muito largo (inferência nossa). Qualquer MPPA calculado com r de outra espécie ou raça deve ser tratado como exploratório.
+- Para seleção ou descarte dentro de rebanho pequeno, o MPPA serve como ranqueamento interno, não como EBV de população (inferência nossa, sustentada pelo uso descrito em [RB]).
+
+### Gaps
+- Repetibilidade da produção de leite de ovelhas (Lacaune, East Friesian, Latxa, Manech) em fonte primária: não localizada.
+- Artigo original de Ptak & Schaeffer e fórmula exata: não localizados.
+- Expansão oficial da sigla MPPA para ovinos: sem consenso nas fontes encontradas.
+
+---
+
+## 10. Combinar registros da ovelha com o EBV do pai e BLUP dentro do rebanho, com componentes de variância da literatura
+
+### Takeaway
+A avaliação francesa combina registros de controle com genealogia em modelo animal (BLUP) e, na Lacaune, usa genômica desde 2015. Para rebanho pequeno, a fonte de EBV mais útil é o do carneiro publicado pela associação ou pelo centro de IA, com a acurácia declarada. Os componentes de variância específicos para ovinos leiteiros não foram obtidos em texto completo. A fonte que a literatura indica para isso (Barillet, 2007) não foi lida.
+
+### Cited Findings
+- **Larroque et al. (2011), "National genetic evaluations in dairy sheep and goats in France"**, EAAP Stavanger, slides [TL]. Modelo: "BLUP single trait, repeatability animal model, unknown parents genetic groups", para produção de leite e CCS (LSCS). Lacaune: 4.278.634 registros de produção de leite e 1.392.483 animais em pedigree. Avaliação em base contínua ("rolling base"). Valores de variância e repetibilidade não aparecem no trecho extraído. URL de origem não registrada no arquivo.
+- **Baloche et al. (2011), "Work in progress on genomic evaluation using GBLUP in French Lacaune dairy sheep breed"**, EAAP, slides [TL]. GBLUP com progênie testada (DYD), genealogia e SNP. Dados: 174.000 ovelhas registradas em 2010 em rebanhos de núcleo. Chip SNP50 disponível desde 2009. Controle de qualidade: 43.929 SNP de 54.241 mantidos. URL de origem não registrada no arquivo.
+- **Astruc et al. (2016), "La sélection génomique des ovins laitiers en France"**, INRA Prod. Anim. 29(1):41-56 [TL, resumo]. Seleção genômica implantada na Lacaune em 2015. https://productions-animales.org/article/download/2515/7657
+- **UPRA Lacaune (2019)** [TL]. Desde 2015, a seleção genômica prevê o valor genético de carneiros genotipados jovens. Todos os cordeiros de Lacaune que entram nos centros de IA são genotipados. A brochura declara aumento de 30% na eficiência do esquema. Índice sintético: metade para qualidade do leite (gordura, proteína e CCS), metade para características funcionais (morfologia do úbere e outras).
+- **Astruc et al. (2010)** [TL]. Tabela 3 do texto: 9.100 carneiros de IA com progênie testada no total das raças francesas (ano não claro no texto). Tabela 1: 445 carneiros de IA com progênie testada na Lacaune em 2009. O texto diz que a Lacaune inclui características funcionais em 50% do índice desde 2005.
+- **Legarra et al. (2007), "Economic weights of fertility, prolificacy, milk yield and longevity in dairy sheep"**, Animal, DOI 10.1017/s1751731107657814 [RB, resumo de busca]. Pesos econômicos medianos, em Latxa: €138,60 por parto; €40,00 por cordeiro; €1,18 por litro; €1,66 por ano de longevidade. Texto não aberto.
+- **Oget et al. (2019)** [TL, resumo]. Modelo com mutação causal (SOCS2) melhorou a acurácia da predição genômica, com 1.503.148 fenótipos. Útil para incluir marcadores de gene maior em rebanho pequeno (inferência nossa).
+- **Martin, Raoul & Bodin (2014)** [TL, resumo]. Modelo genético linear ou de limiar (ASReml) estimou o efeito do gene FecL sobre prolificidade e mostrou viés no EBV de prolificidade quando o gene é ignorado (seção 4).
+- **Vouraki et al. (2024), EAAP Florença, slides** [TL]. Avaliação conjunta da Lacaune na Grécia e na França (seção 7). Resultados não lidos.
+- **Barillet (2007), "Genetic improvement for dairy production in sheep and goats"**, Small Ruminant Research 70:60-75, DOI 10.1016/j.smallrumres.2007.01.004 [Crossref; texto não lido]. Citado em Figueira et al. (2018): ganho anual de 6 kg de leite e 0,19 g/L de proteína e de gordura. Não confirmado no original.
+- **Maniatis & Pollott (2003), "The impact of data structure on genetic (co)variance components of early growth in sheep, estimated using an animal model with maternal effects"**, J. Anim. Sci. 81:101-108, DOI 10.2527/2003.811101x [DOI conforme `Verificação de fontes/artigos_para_obter.md`; não conferido no Crossref nem lido; artigo pago]. Útil para componentes de variância em ovinos com efeito materno.
+
+**Fórmulas**
+- Modelo animal (BLUP) em forma matricial: y = Xb + Zu + e, com var(u) = Aσ²_a e var(e) = Iσ²_e [NV, padrão de Henderson; sem fonte primária consultada].
+- Herdabilidade: h² = σ²_a ÷ σ²_f [NV].
+- EBV do pai como índice para a ovelha sem registros próprios: EBV_ovelha ≈ ½ EBV_pai [NV, padrão]. Não ficou claro se a avaliação francesa usa esse índice.
+- Acurácia de EBV de carneiro com progênie testada: função do número de filhas. Fórmula exata não localizada [NV].
+- Ganho genético anual = i·r·σ_a ÷ L [NV, padrão]. Valores observados: Lacaune 6,4 L/ano (Astruc et al., 2010, Tabela 2, 1995 a 2007) e 5,4 L/ano (UPRA, 2019), ambos [TL].
+
+### Inferences
+- Para rebanho pequeno, a combinação prática é: EBV publicado do carneiro, com acurácia, mais os registros de controle da ovelha, num índice simples (inferência nossa). Esse é o caminho candidato para o laboratório do projeto. O BLUP intra-rebanho completo precisa de componentes de variância que não foram obtidos nesta sessão.
+- Como a acurácia do EBV de carneiro jovem é baixa, o peso do EBV do pai no índice deve ser menor que o de uma ovelha com registros repetidos de controle (inferência nossa).
+
+### Gaps
+- Componentes de variância (h² e repetibilidade) de produção de leite, gordura, proteína e CCS para Lacaune ou East Friesian em fonte verificada: não localizados. Barillet (2007) não foi lido.
+- Acurácia típica de EBV de carneiro jovem genotipado (Lacaune, desde 2015): não extraída do PDF de Astruc et al. (2016).
+- Índice sintético francês em fórmula exata: não lido.
+- Avaliação genética de ovinos leiteiros no Brasil: não localizada.
+
+---
+
+## 11. Intervalos de confiança para taxas com poucos animais e controle estatístico de processo
+
+### Takeaway
+Com 20 a 300 ovelhas, uma taxa de parto ou de mortalidade tem intervalo de confiança largo. Para proporções, Brown, Cai & DasGupta (2001) recomendam intervalos de Wilson ou Agresti-Coull no lugar do intervalo de Wald. O texto integral não foi aberto, então essa recomendação é [NV]. Para controle de processo, a fonte mais próxima para leite é a carta de indivíduos (Shewhart) aplicada à CCS de tanque, com exemplos em rebanhos bovinos (Lukas et al., 2005). Para leite de ovelha, não há evidência de CUSUM ou EWMA nas fontes encontradas.
+
+### Cited Findings
+- **Brown, Cai & DasGupta (2001), "Interval Estimation for a Binomial Proportion"**, Statistical Science 16(2), DOI 10.1214/ss/1009213286 [DOI confirmado no Crossref; página do editor bloqueada; texto não lido].
+- **Goulet & Castonguay (2002)** [TL]. Com 39 e 40 ovelhas, P de 0,06 e 0,11 para diferenças de taxa de parto. Exemplo de que diferenças de 15 a 20 pontos percentuais em amostra pequena nem sempre são significativas pelo teste convencional (leitura nossa dos próprios P dos autores).
+- **Ticiani et al. (2013)** [TL]. Erros-padrão dos coeficientes de regressão de 0,0005 a 0,035 com 67 ovelhas e 92 dias (seção 1).
+- **FAMACHA, Embrapa Circular 52** [TL]. Intervalo de confiança de 95% para a proporção mensal de acertos, com 177 a 277 animais por mês. Exemplo de IC aplicado a classificação visual.
+- **Lukas, Hawkins, Kinsel & Reneau (2005), "Bulk tank somatic cell counts analyzed by statistical process control tools to identify and monitor subclinical mastitis incidence"**, J. Dairy Sci., DOI 10.3168/jds.s0022-0302(05)73080-0 [metadados Europe PMC; texto não lido]. Trecho de busca: 275 rebanhos de Upper Midwest, carta de indivíduos com amplitude móvel (procedimento SAS); CCS de tanque ligada à prevalência de mastite subclínica, com R² perto de 0,8 [RB]. Rebanhos bovinos.
+- **Outros usos de SPC em CCS** [RB]. Estudo tailandês com SPC em tanques de fazendas pequenas; análise de 1.501 rebanhos bovinos com índices de consistência. A comparação entre CUSUM e EWMA veio de suínos, não de leite.
+
+**Fórmulas**
+- Intervalo de Wald: p ± z·√(p(1−p)/n). Padrão [NV]. Brown et al. (2001) recomendam não usá-lo com n pequeno [NV].
+- Intervalo de Wilson: [p + z²/(2n) ± z·√(p(1−p)/n + z²/(4n²))] ÷ (1 + z²/n). Padrão [NV].
+- Limites da carta de indivíduos: média ± 3·(amplitude móvel média ÷ 1,128) [NV, padrão].
+- CUSUM (forma inferior): S_t = máx(0; S_{t−1} + (x_t − μ₀) − k) [NV, padrão].
+- Média geométrica trimestral de CCS (IN 76) [TL, regra; equação na seção 2].
+- [CALC] Exemplo: 5 mortes em 50 cordeiros nascidos (10%). Intervalo de Wilson de 95%: 4,3% a 21,4%. Intervalo de Wald de 95%: 1,7% a 18,3%. A diferença mostra por que o Wald não serve para n pequeno.
+
+### Inferences
+- Comparação de mortalidade ou de taxa de parto entre anos, em rebanho pequeno, exige intervalo de confiança. A diferença bruta entre dois anos pode não ser significativa (inferência nossa, com o exemplo acima).
+- Para controle de CCS de tanque de rebanho pequeno, a carta de indivíduos com CCS mensal é factível e alinha-se com a média trimestral da IN 76 (inferência nossa). Costuma-se usar ao menos 20 pontos de referência, em período sem problema, para fixar os limites [NV].
+
+### Gaps
+- Conteúdo de Brown et al. (2001) não lido. Recomendação de Wilson ou Agresti-Coull: [NV] nesta sessão.
+- Carta de controle aplicada a CCS de ovelha individual ou de tanque de rebanho ovino: não localizada.
+- Comparação direta entre Shewhart e CUSUM para CCS de leite: não localizada.
+
+---
+
+## 12. Metas por categoria: borregas, primíparas, ovelhas adultas e carneiros
+
+### Takeaway
+Há números para ovelhas adultas e primíparas (fertilidade, prolificidade, partos por ano, renovação), mas não localizei metas verificadas separadas para borregas e carneiros de rebanho leiteiro. Os pontos de partida são: UPRA 2019 para o rebanho de controle, Goulet & Castonguay (2002) para primíparas em época de contra-estação, e o FAMACHA para o estado sanitário individual.
+
+### Cited Findings
+- **Borregas (cobertura)**: ver seção 6. Sem meta verificada para Lacaune ou East Friesian (peso relativo ou idade).
+- **Primíparas**: Goulet & Castonguay (2002) [TL]. Peso ao acasalamento de 49 a 50 kg; condição corporal de 2,7 a 3,1; taxa de parto de 64% a 80%; cordeiros nascidos por ovelha tratada de 1,05 a 1,50 (tendências, P entre 0,06 e 0,13).
+- **Adultas**: UPRA 2019 [TL] (fertilidade 94,9%; prolificidade 1,56; renovação 28%; 330 L em 173 dias). Pesantez-Pacheco et al. (2018) [TL] (1,30 a 1,42 partos por ovelha por ano; intervalo de 283 a 302 dias; descarte de 35% a 43%).
+- **Carneiros**: UPRA 2019 [TL]. Todos os carneiros da raça são homozigotos ARR/ARR desde 2003 (resistência à scrapie). Carneiros de IA têm progênie testada. Sem meta de fertilidade de carneiro ou de qualidade de sêmen nas fontes lidas.
+- **Categorias no modelo de contemporâneos**: ICAR, Section 16 [TL]. A organização define a referência por categoria (idade ou ordem de lactação) e o número mínimo de provas por categoria deve ser descrito.
+
+### Inferences
+- A tabela de metas de um rebanho pequeno deve partir das faixas de UPRA e Pesantez, com faixa de confiança do próprio rebanho (inferência nossa).
+- Para carneiros, o indicador mais útil no rebanho pequeno é a prole dos carneiros em uso (cordeiros por parto e CCS das filhas), porque a estrutura de progênie permite essa comparação (inferência nossa).
+
+### Gaps
+- Metas de borregas (peso à cobertura, percentual do adulto, idade ao primeiro parto): não localizadas em fonte verificada.
+- Metas de fertilidade e de qualidade de sêmen de carneiros de Lacaune: não localizadas.
+- Meta de CCS por categoria (borregas, primíparas, adultas): não localizada.
+
+---
+
+## 13. Consanguinidade e tamanho efetivo em rebanho pequeno
+
+### Takeaway
+A consanguinidade é um problema documentado para a Lacaune no Brasil: a introdução de East Friesian foi motivada pelo aumento do coeficiente de endogamia (Ticiani et al., 2013), e a base genética da raça foi descrita como restrita (Embrapa, 2009, citado). O método de tamanho efetivo pelo incremento individual de consanguinidade (Gutiérrez et al., 2008) tem software (ENDOG). As fórmulas básicas de Ne e ΔF são padrão, mas não tenho fonte primária verificada para elas.
+
+### Cited Findings
+- **Ticiani et al. (2013), introdução** [TL]. "devido ao aumento do coeficiente de endogamia, outras raças como a East Friesian ... vêm sendo introduzidas devido à rusticidade, boa produção de leite e número de cordeiros desmamados."
+- **Figueira et al. (2018)** [TL]. Lacaune introduzida na década de 1990; o Brasil recebeu novo material genético da raça em 2012. Não há índice de endogamia no texto.
+- **Embrapa 2009, "CNPC2009Producao.pdf"** [RB, resumo de busca]. Base genética restrita, com animais puros caros. Entradas de East Friesian entre 2006 e 2009, vindas de Uruguai, Argentina, Nova Zelândia e Austrália. Não aberto.
+- **Gutiérrez, Cervantes, Molina & Valera (2008), "Individual increase in inbreeding allows estimating effective sizes from pedigrees"**, Genetics Selection Evolution 40(4):359-378, DOI 10.1051/gse:2008008 [autoria e DOI confirmados no Crossref; conteúdo pelo resumo de busca].
+- **ENDOG, Gutiérrez & Goyache (2005)**, J. Anim. Breed. Genet. 122(3):172-176 [RB; DOI não conferido]. Software para consanguinidade individual, parentesco médio, intervalos de geração e Ne por vários métodos.
+
+**Fórmulas**
+- Ne a partir de Nm machos e Nf fêmeas reprodutores efetivos: Ne = 4·Nm·Nf ÷ (Nm + Nf) [NV, padrão].
+- Incremento de consanguinidade por geração: ΔF = 1 ÷ (2·Ne) [NV, padrão].
+- Coeficiente de consanguinidade de Wright: F_x = Σ (½)^(n1+n2+1)·(1 + F_A), somando as cadeias de parentesco comuns [NV, padrão].
+- Incremento individual: ΔF_i = 1 − (1 − F_i)^(1/t), com t o número de gerações completas [RB, forma citada no resumo de Gutiérrez et al., 2008].
+- [CALC] Exemplo de rebanho com 4 carneiros reprodutores efetivos e 50 matrizes: Ne = 4·4·50 ÷ 54 = 14,8; ΔF ≈ 1 ÷ (2·14,8) = 3,4% por geração.
+
+### Inferences
+- O exemplo de 4 carneiros e 50 matrizes dá Ne de 14,8 e ΔF de cerca de 3,4% por geração, o que é alto (inferência nossa, com a conta acima).
+- Para limitar a consanguinidade, o rebanho pequeno deve reduzir o número de fêmeas por carneiro, alternar linhagens de carneiros e usar genealogia para evitar parentes próximos (inferência nossa).
+
+### Gaps
+- Limite recomendado de ΔF por geração para ovinos leiteiros: não localizado.
+- Estudo brasileiro de consanguinidade em Lacaune com número de animais e pedigree: não localizado.
+- Fontes primárias das fórmulas de Ne e de Wright: não verificadas nesta sessão.
+
+---
+
+## 14. Conexão com a avaliação genética: sêmen importado, troca de reprodutores e registro associativo
+
+### Takeaway
+O Brasil recebeu Lacaune em 1992 (RS) e novo material genético em 2012 (França). Não há avaliação genética nacional de ovinos leiteiros nas fontes localizadas. A França tem avaliação com registros de controle e, na Lacaune, genômica desde 2015. Para rebanho pequeno, as opções práticas são: usar carneiros de IA com EBV publicado, trocar reprodutores com outro rebanho do mesmo programa e participar de controle leiteiro associativo (método D ou E do ICAR).
+
+### Cited Findings
+- **Figueira et al. (2018)** [TL]. Lacaune importada em 1992 pelo RS, base dos rebanhos atuais. Novo material genético só em 2012, quando alguns produtores trouxeram quantidade maior de material.
+- **Embrapa 2016 (Bianchi et al.)** [TL]. A ABCOL (Associação Brasileira de Criadores de Ovinos) forneceu dados das propriedades para o estudo.
+- **ICAR, Section 16, métodos D e E** [TL]. Ver seção 1.
+- **UPRA Lacaune (2019)** [TL]. Inseminação em 86,6% das ovelhas do rebanho de referência; seleção genômica desde 2015; todos os cordeiros que entram nos centros de IA são genotipados.
+- **Lasarte et al. (2018), slides** [TL]. Programa Latxa com centro de IA e catálogo de melhores carneiros. O catálogo mostra o formato de EBV publicado: índice combinado, valor genético de leite, gordura e proteína, repetibilidade (74% no exemplo) e número de filhas e de rebanhos.
+- **Ticiani et al. (2013)** [TL]. As ovelhas vieram de um rebanho maior, selecionadas por peso e produção prévia, sem histórico genético declarado no texto. Isso limita a leitura de herdabilidade e de raça (inferência nossa).
+- **Larroque et al. (2011), slides** [TL]. Esquema francês com "assortative matings" e "progeny tested AI males".
+- **Vouraki et al. (2024), slides** [TL]. Avaliação conjunta da Lacaune na Grécia e na França (seção 10).
+
+Fórmulas: não aplicável nesta seção. Ver seções 10 e 13.
+
+### Inferences
+- Um rebanho pequeno pode entrar numa avaliação maior por dois caminhos: (a) usar sêmen de carneiros com progênie testada e EBV publicado, sem avaliação própria; (b) enviar registros de controle à associação, em método D ou E, se houver. O método D não permite cálculo de lactação completa, o que limita seu uso para avaliação formal (inferência nossa, do texto ICAR).
+- A conexão com o SeabraApp exige que os registros de controle (data, ordenha, litros, CCS e composição) sigam o padrão de registro ICAR desde o início. Isso é recomendação de arquitetura de dados (inferência nossa).
+
+### Gaps
+- Programa brasileiro de avaliação genética para ovinos leiteiros: não localizado.
+- Regras de importação de sêmen ovino da França e da Espanha para o Brasil (sanitárias e MAPA): não pesquisadas.
+- Associação de criadores com registro de controle leiteiro, além da ABCOL: não localizada.
+- Ano e origem da entrada de East Friesian (2006 a 2009): só em resumo de busca, não lido.
+
+---
+
+## Registro de fontes e status de leitura
+
+### Takeaway
+As fontes com texto completo lido (TL) sustentam os números principais. As fontes RB servem de pista e não devem ser citadas como número sem conferência. Os arquivos de outra sessão na pasta foram conferidos antes de uso.
+
+### Cited Findings
+**TL (texto completo lido nesta sessão)**
+- Ticiani, E.; Sandri, E.C.; Souza, J.; Batistel, F.; Oliveira, D.E. (2013). Persistência da lactação e composição do leite em ovelhas leiteiras das raças Lacaune e East Friesian. Ciência Rural 43(9):1650-1653. DOI 10.1590/s0103-84782013000900018. https://www.redalyc.org/pdf/331/33127850018.pdf
+- Goulet, F.; Castonguay, F.W. (2002). Influence of lambing-to-rebreeding interval on ewe reproductive performance in anestrous season. Can. J. Anim. Sci. 82:453-456. DOI 10.4141/a01-098. https://ovins.fsaa.ulaval.ca/fileadmin/centre_recherche/publications/documents/GOULET2002.pdf
+- Figueira, L.M.; Alves, N.G.; Fonseca, J.F. (2018). Produção de leite ovino: a raça Lacaune. 15º Workshop Produção de Caprinos na Região da Mata Atlântica. https://www.alice.cnptia.embrapa.br/alice/bitstream/doc/1093280/1/CNPC2018Producao.pdf
+- Bianchi, A.E.; Monteiro, A.L.G.; Sobral, O.R.M.; Francisco, R.B.; Debortoli, E.C. (2016/2017). Caracterização dos sistemas produtivos de ovinos de leite no Brasil. Embrapa; reimpressão no MilkPoint (2017). https://www.infoteca.cnptia.embrapa.br/infoteca/bitstream/doc/1073171/1/CNPC2016Caracterizacaodossistemas.pdf e https://www.milkpoint.com.br/radar-tecnico/ovinos-e-caprinos/caracterizacao-dos-sistemas-produtivos-de-ovinos-de-leite-no-brasil-102577n.aspx
+- Pesantez-Pacheco, J.-L. et al. (2018). Efficiency and demographics of a high-yield dairy ewe farm with two managing systems involving five or 10 lambings per year. Animal 12(10). DOI 10.1017/s175173111700369x. https://resolve.cambridge.org/core/journals/animal/article/abs/efficiency-and-demographics-of-a-highyield-dairy-ewe-farm-with-two-managing-systems-involving-five-or-10-lambings-per-year/EA752B981A46375BD6C7E71BB1BF8D73
+- Martin, Raoul & Bodin (2014). Effects of the FecL major gene in the Lacaune meat sheep population. Genet. Sel. Evol. 46:48. DOI 10.1186/1297-9686-46-48. https://doi.org/10.1186/1297-9686-46-48
+- Drouilhet, L. et al. (2013). The Highly Prolific Phenotype of Lacaune Sheep Is Associated with an Ectopic Expression of the B4GALNT2 Gene within the Ovary. PLoS Genetics. DOI 10.1371/journal.pgen.1003809.
+- Oget, C. et al. (2019). Alternative methods improve the accuracy of genomic prediction using information from a causal point mutation in a dairy sheep model. BMC Genomics. DOI 10.1186/s12864-019-6068-4.
+- Instrução Normativa MAPA nº 76, de 26/11/2018 (D.O.U. 30/11/2018), com alterações das INs 55/2020 e 58/2019 no texto. https://wikisda.agricultura.gov.br/dipoa_baselegal/in_76-2018_rtiq_leite.pdf
+- Decreto nº 9.013/2017 (RIISPOA), Arts. 234 e 235. https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2017/decreto/d9013.htm
+- UPRA Lacaune (2019), brochura "The Lacaune dairy". https://www.race-lacaune.fr/uploads/2022/01/La-race-Lacaune-Lait-ANGLAIS.pdf
+- Astruc, J.M. et al. (2010). Use of genomic data in French dairy sheep breeding programs: results and prospects. Proc. ICAR 37th Annual Meeting, Riga. URL de origem não registrada no arquivo.
+- Astruc, J.M. et al. (2016). La sélection génomique des ovins laitiers en France. INRA Prod. Anim. 29(1):41-56. https://productions-animales.org/article/download/2515/7657
+- Astruc, J.M. et al. (2023). Milk recording in sheep and goats: state of the art and materials used for recording and sampling. Proc. ICAR. URL de origem não registrada no arquivo.
+- ICAR, Section 16, Dairy Sheep and Goats (wiki). https://wiki.icar.org/index.php/Dairy_Sheep_and_Goats
+- ICAR, Glossary: Standard lactation (wiki). https://wiki.icar.org/index.php/Glossary:_Standard_lactation
+- AgResearch, NZ Sheep Milk Nutritional Composition (fact sheet). https://www.agresearch.co.nz/assets/Uploads/NZ_Sheep_Milk_Nutritional_Composition.pdf
+- Wendorff, B. Milk composition and cheese yield (slides, Univ. Wisconsin-Madison; ano original não consta). https://blogs.cornell.edu/smallruminantdairy/files/2017/09/MILK-COMPOSITION-AND-CHEESE-YIELD-13twv28.pdf
+- Kochendoerfer, N.; Thonney, M. (2017). Management and Nutrition for Milking Sheep in Short and Frequent Lactations (slides, CNC 2017). https://blogs.cornell.edu/smallruminantdairy/files/2017/09/Kochendoerfer-CNC2017-2j84o4i.pdf
+- Embrapa Pecuária Sudeste, Circular Técnica 52, Método Famacha© (Molento, M.B.). https://www.infoteca.cnptia.embrapa.br/bitstream/doc/37734/1/Circular52.pdf
+- Penn State Extension, "Review your sheep records". https://extension.psu.edu/review-your-sheep-records
+- Baloche, G. et al. (2011); Larroque, H. et al. (2011), slides EAAP; Lasarte, M. et al. (2018), slides SERAM; Vouraki, S. et al. (2024), slides EAAP; Granado-Tajada, I.; Ugarte, E. (2018), slides EAAP. URL de origem não registrada no arquivo.
+
+**RB (resumo ou trecho de busca; não lido integralmente)**
+- Carvalho, Santos, Priskas & Carreira (2025). Economic Impact of Accelerated Lambing in Lacaune Ewes in Greece. Ruminants 5(4):49. DOI 10.3390/ruminants5040049 (MDPI devolveu HTTP 403).
+- Thomas, Berger, McKusick & Mikolayunas (2014). Dairy sheep production research at the University of Wisconsin-Madison, USA: a review. J. Anim. Sci. Biotechnol. DOI 10.1186/2049-1891-5-22 (Springer e JASBSci devolveram verificação de navegador).
+- Barillet, F. (2007). Genetic improvement for dairy production in sheep and goats. Small Ruminant Research 70:60-75. DOI 10.1016/j.smallrumres.2007.01.004 (texto não lido).
+- Legarra, A. et al. (2007). Economic weights of fertility, prolificacy, milk yield and longevity in dairy sheep. Animal. DOI 10.1017/s1751731107657814.
+- Lukas, J.M. et al. (2005). DOI 10.3168/jds.s0022-0302(05)73080-0 (metadados Europe PMC).
+- Gutiérrez, J.P.; Goyache, F. (2005). ENDOG. J. Anim. Breed. Genet. 122(3):172-176. DOI não conferido.
+- AHDB, Selecting ewe lambs for breeding. https://ahdb.org.uk/knowledge-library/selecting-ewe-lambs-for-breeding (página não aberta).
+- MLA, relatório e.pds.1415. https://www.mla.com.au/globalassets/mla-corporate/research-and-development/final-reports/2014/e.pds.1415-final-report.pdf (não aberto).
+- CattleMax, "MPPA". https://help.cattlemax.com/article/537-mppa
+- Quaas, R.L.; Pollak, E.J. (1980). Mixed model methodology for farm and ranch beef cattle testing programs. J. Anim. Sci. 51:1277-1287. DOI 10.2527/jas1981.5161277x (metadados Crossref; texto não lido).
+- Brown, L.D.; Cai, T.T.; DasGupta, A. (2001). Interval estimation for a binomial proportion. Statistical Science 16(2). DOI 10.1214/ss/1009213286 (metadados Crossref; texto não lido).
+- Maniatis, N.; Pollott, G.E. (2003). DOI 10.2527/2003.811101x (conforme arquivo irmão; não conferido).
+- Universidade Federal do Rio Grande do Sul, tese (2015), mastite subclínica em ovinos leiteiros. https://lume.ufrgs.br/handle/10183/128886 (falha de conexão na coleta).
+- Idele, enquete com 14 selecionadores de prolificidade e Idele/INOSYS (resumos de busca; URLs não registradas).
+- Estudo de leite ovino de SC e RS avaliado contra a IN 62/2011 (citado em resumo; artigo não identificado).
+
+**Não lido e não usado**
+- Pays de la Loire (2023), referencial técnico-econômico ovinos leite: HTTP 404 no link da busca.
+- Arquivos `idele_*` na pasta: páginas de verificação de navegador, não documentos.
+- EUR-Lex, Regulamento (CE) 853/2004: HTTP 202 com corpo vazio.
+- MAPA, `regulamentacao-do-leite-ovino.pdf` (gov.br): página sem o texto do PDF.
+- `mapa_inia_*` e `mapa_programa_mejora_latxa_carranzana.pdf` (Espanha): constam em `MANIFESTO_fontes.tsv`, mas não estão na pasta. Não baixados.
+- Laborde et al. (2019): índice de vacas de corte e leite no Uruguai, fora do escopo (bovino).
+- SMARTER CDEO (2023), slides sobre eficiência e resiliência: não lidos em detalhe.
+- `crosbi_795872_landing.html` e `HAL_*`: páginas de verificação, não documentos.
+
+### Inferences
+- A base brasileira em texto completo é de 2013 a 2018. Os dados de Embrapa são de 2016. Atualize se houver levantamento mais recente (inferência nossa).
+
+### Gaps
+- Várias fontes da pasta (Astruc 2010, Larroque 2011, Baloche 2011, Vouraki 2024, Lasarte 2018, Granado 2018) não têm URL de origem registrada. Recuperar antes de citar em documento final.
+- Ticiani et al. (2013): resumo e corpo com equações diferentes. Confirmar no PDF original.
+- Pesantez-Pacheco et al. (2018): ordem dos pares no resumo. Confirmar na tabela do artigo.
+- Carvalho et al. (2025): só resumo. Confirmar valores econômicos no texto completo antes de usar.
