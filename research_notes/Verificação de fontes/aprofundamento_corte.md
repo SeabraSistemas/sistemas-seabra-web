@@ -158,3 +158,152 @@ Um indício indireto sobre as práticas do grupo Geneplus: a tese de doutorado d
 
 **O que continua em aberto na lacuna 1:** documentação oficial do PAINT; efeitos fixos adicionais, componentes de variância e critério de GC de 2026 da ANCP; escala da acurácia da GenSys, da Geneplus e do PAINT; e se a covariância direto-materna da ABCZ/Embrapa é zero ou livre.
 
+---
+
+## Lacuna 2. Ajustes de idade da vaca e idade-padrão (P205, P365, P550)
+
+### 2.1 BIF: fórmulas e fatores (fonte primária, 9ª edição)
+
+**Fonte.** *Guidelines for Uniform Beef Improvement Programs*, 9ª edição (BIF, 2016), PDF `https://beefimprovement.org/wp-content/uploads/2013/07/BIFGuidelinesFinal_updated0916.pdf`. As páginas citadas são as **impressas**, no rodapé "BIF Guidelines n". O texto foi lido por extração de PDF, e a página 73 foi conferida visualmente.
+
+**Fórmulas, p. 21 a 23 (seção "Rate and Efficiency of Gain"):**
+
+```
+Adj. Birth Wt. = Birth Wt. + Age of dam Adj.                                   (p. 21)
+
+Adj. 205-Day Wean Wt. = [(Wean Wt. – Birth Wt.) / Weaning Age] × 205 + Birth Wt + Age of dam Adj.   (p. 22)
+
+Adj. 365-day Yrlg. Wt. = [(Final Wt – Weaning Wt) / No. of Days Between Wts.] × 160 + 205-day Adj. Weaning Wt.   (p. 23)
+Adj. 452-day Yrlg. Wt. = [(Final Wt – Weaning Wt) / No. of Days Between Wts.] × 247 + 205-day Adj. Weaning Wt.
+Adj. 550-day Yrlg. Wt. = [(Final Wt – Weaning Wt) / No. of Days Between Wts.] × 345 + 205-day Adj. Weaning Wt.
+Razão:  Adj. 205-Day Weaning Wt. Ratio = (Individual Adj. 205-day Weaning Wt. / Group Average Adj. 205-day Weaning Wt.) × 100
+```
+
+Os multiplicadores 160, 247 e 345 são 365−205, 452−205 e 550−205 [conferido por aritmética]. Condições do texto original:
+- Peso à desmama entre **160 e 250 dias** de idade, com o grupo médio perto de 205. Fora dessa faixa, "should be given a special management code and handled as a separate management group. They should not be adjusted for age of dam, because appropriate correction factors are not available."
+- Peso de 365 dias: pesagem final entre 320 e 410 dias, pelo menos 70 dias depois da desmama, com o número de dias entre pesagens igual para todo o GC.
+- Peso de 452 dias: animais com pelo menos 400 dias na pesagem final e GC com média de pelo menos 452. Peso de 550 dias: pelo menos 500 dias e média de pelo menos 550.
+- Se o peso ao nascer real não existe, "the appropriate standard birth weight designated by the respective breed association ... may be used". Os pesos-padrão do BIF são **75 lb para machos e 70 lb para fêmeas** (Apêndice 3.1, nota 1).
+- "BIF recommends the use of additive rather than multiplicative age of dam adjustment factors for weaning weight, because research indicates that they are more appropriate." E: "Birth and weaning weight adjustments for age of dam can differ from one breed to another. Some breed associations have developed adjustments using their own data. These should be substituted for the BIF standard whenever possible."
+- O Glossário do BIF (verbete "Multiplicative adjustment factors") define o fator multiplicativo e avisa que ele "affects variability in the trait after adjustment, inflating it when the multiplicative factor is greater than 1.0".
+
+**Classes de idade da vaca do BIF** (p. 21):
+
+| Idade da vaca ao parto (dias) | Classe (anos) |
+|---|---|
+| menos de 1.004 | 2 |
+| 1.004 a 1.369 | 3 |
+| 1.370 a 1.734 | 4 |
+| 1.735 a 3.560 | 5 a 9 |
+| 3.561 a 3.925 | 10 |
+| 3.926 a 4.291 | 11 |
+| 4.292 a 4.656 | 12 |
+| mais de 4.656 | 13 |
+
+**Fatores aditivos padrão do BIF** (Apêndice 3.1, p. 135 impressa; PDF p. 137), em libras como no original. A coluna em kg é minha conversão (× 0,45359):
+
+| Idade da vaca | Peso ao nascer (lb, kg) | Desmama, machos (lb, kg) | Desmama, fêmeas (lb, kg) |
+|---|---|---|---|
+| 2 anos | +8 (3,6) | +60 (27,2) | +54 (24,5) |
+| 3 anos | +5 (2,3) | +40 (18,1) | +36 (16,3) |
+| 4 anos | +2 (0,9) | +20 (9,1) | +18 (8,2) |
+| 5 a 10 anos | 0 | 0 | 0 |
+| 11 anos ou mais | +3 (1,4) | +20 (9,1) | +18 (8,2) |
+
+Nota 2 do apêndice: "Breed specific adjustment factors have been developed by individual breed associations from breed data... Contact the respective breed association."
+
+**Exemplo numérico** (uso das fórmulas acima; o bezerro é fictício): macho com 32 kg ao nascer, 190 kg aos 190 dias e mãe de 2 anos. GMD = (190 − 32)/190 = 0,8316 kg/dia; P205 bruto = 0,8316 × 205 + 32 = 202,5 kg; ajustado = 202,5 + 27,2 = 229,7 kg.
+
+**Versão online (BIF Guidelines Wiki, atualizada em 2021)** confirma o essencial:
+- `.../index.php/Weaning_Weight`: "The standard age for adjustment is 205 days... To calculate this adjusted weight, the ADG from birth to weaning is multiplied by 205, and then birth weight is added." E: "These adjustments are typically different for each breed and may change over time as genetic progress is made in growth to weaning." A faixa recomendada é de 160 a 250 dias, e o GC "weaned and weighed on the same day".
+- `.../index.php/Yearling_Weight`: "Adj 365-day Wt = (Yearling Wt − Weaning Wt)/(Number of days between weights) × 160 + Adj 205-day Wt", com pesagem entre 320 e 410 dias e intervalo sugerido de 160 dias desde a desmama.
+- `.../index.php/Birth_Weight`: "Both sex of calf and age of dam influence birth weight... BIF recommends the use of additive rather than multiplicative age of dam adjustment factors". A wiki recomenda ainda "that birth weights be adjusted for sex by age-of-dam and these factors not be fit in the genetic evaluation" por causa de pesos ao nascer estimados e não pesados.
+- **A wiki não traz tabela numérica de fatores.** A tabela do Apêndice 3.1 é a única do BIF, e é de raças taurinas americanas.
+
+**Perímetro escrotal** (p. 31–32 do BIF 9): "Adj. 365-Day Yearling Scrotal Circumference = YSC + [(365 – Age) × Age Adj. Factor]". Os fatores são por raça (Angus 0,0374; Brangus 0,0708; Hereford 0,0425...). Fonte: Geske et al. (1995), Kansas State Rep. of Progress 727:99. **Não há fator para zebuínos** nessa tabela.
+
+### 2.2 Idade-padrão e fórmulas no Brasil
+
+**ABCZ, Regulamento do CDP 2023** (`https://www.abcz.org.br/common/uploads/secao/a66183db97120042234f2b57a42cdb7a.pdf`, PDF p. 4 a 6, Art. 20 a 25). As idades-padrão são **210, 365 e 450 dias**, não 205 e 550:
+- Faixas: 210 dias com "pesagens entre 150 e 270 dias"; 365 dias com "pesagens entre 305 e 425 dias"; 450 dias com "pesagens entre 390 e 510 dias". "Para o ajuste de peso a qualquer uma das idades padrão, é necessário que pelo menos uma das pesagens esteja dentro das faixas."
+- Fórmulas copiadas:
+
+```
+§ 1º  Peso aos 210 dias:  PC = PN + (G × N)
+      PC = peso calculado para a idade-padrão; PN = peso ao nascimento;
+      G = ganho médio diário entre o nascimento e a pesagem mais próxima da idade-padrão (dentro da faixa do Art. 20);
+      N = idade-padrão considerada
+§ 2º  PC365 = PC210 + [G1 × (ID210 − 210)] + [G2 × (365 − ID210)]
+§ 3º  PC450 = PC210 + [G1 × (ID210 − 210)] + [G2 × (450 − ID210)]
+      G1 = GMD entre o nascimento e a pesagem usada no PC210; G2 = GMD entre a pesagem usada no PC210 e a pesagem mais próxima de 365 (ou 450) dias;
+      ID210 = idade do animal na pesagem usada para o PC210
+Art. 24  GMD = (PC2 − PC1) / n      Art. 25  GPD = (PC − PN) / D
+```
+
+- O §4º diz apenas: "Todos os pesos calculados serão corrigidos para efeitos sistemáticos não genéticos." **Os fatores de correção não estão no regulamento.** Sem peso ao nascer, o Art. 5º manda usar "o peso médio da raça, obtido pelo CDP, considerando-se também o sexo". O peso ao nascer deve ser tomado "nas primeiras 24 horas".
+
+**ABCZ em 2002 e PMGRN** (as duas fórmulas históricas, em Lôbo & Martins Filho 2002, *R. Bras. Zootec.* 31(4):1695–1706, DOI 10.1590/S1516-35982002000700012, PDF aberto em Embrapa Alice `https://www.alice.cnptia.embrapa.br/alice/bitstream/doc/529428/1/APIAvaliacaodemetodosdepadronizacaodospesoscorporais.pdf`, p. 1696 a 1697):
+
+```
+MET1 (ABCZ, 2002):  GMDd = (peso à desmama − peso ao nascer) / idade na pesagem de desmama
+   "realizam-se quatro ajustes: ajusta-se o GMDd para a época do ano da desmama, a idade do bezerro na pesagem, a idade da mãe e o sexo do animal"
+   P205 = [GMDd ajustado × 205 dias] + peso ao nascer
+   GMDp = (pesagem atual − P205) / (idade na pesagem pós-desmama − 205);   GMDpa = média de GMDd e GMDp
+   P365 = P205 + (GMDpa × 160 dias);   P550 = P205 + (GMDpa × 345 dias)
+MET5 (PMGRN, depois ANCP; Lôbo 1992):  Pp = Pa + GMD × da, quando da < ds;   Pp = Ps − GMD × ds, quando da > ds
+   Pa = peso anterior à idade-padrão; Ps = peso seguinte; da = dias entre a pesagem anterior e a idade-padrão; ds = dias entre a pesagem posterior e a idade-padrão
+   GMD = (Ps − Pa) / dias entre as duas pesagens  (interpolação linear entre as duas pesagens vizinhas)
+```
+
+Resultados do estudo (34.558 informações de Nelore do Nordeste, 18.196 animais com todos os métodos, 10.751 após a edição): as médias de P205 diferiram em até cerca de 7% entre métodos (MET1 163,92 kg; MET5 164,69 kg; Richards 162,33 kg), as de P365 em até 4% e as de P550 em menos de 4%; as correlações de Pearson entre métodos foram de 0,89 a 0,99 (Tabela 2); "apenas os métodos em execução no Brasil (MET1 e MET5) conseguem aproximar-se da estimativa considerada mais adequada" no P550. O artigo conclui que, "apesar das altas correlações genéticas e de classificação dos animais por seus valores genéticos, as diferenças nesta classificação podem influenciar o processo de seleção". O mesmo artigo assumiu "A covariância entre os efeitos genéticos direto e materno... igual a zero, segundo recomendação de Schaeffer (1996)", que é a origem provável da hipótese que a ANCP mantém hoje.
+
+**ANCP** (sumário 2026, PDF p. 101–102): não publica fórmula de padronização, só as janelas (ver lacuna 1.1): 120 dias (70 a 165), 210 dias (165 a 255), 365 dias (320 a 410) e 450 dias (405 a 495). Nome das características: P120, P210, P365, P450. O glossário do sumário usa "Número de Filhos e Rebanhos com Peso padronizado aos 210 dias de idade" (NF210, PDF p. 110), o que confirma que o peso é padronizado antes da análise.
+
+**Geneplus**: a tese Senepol (UFMS 2024) relata "P120, PD e PS foram ajustados, dentro do grupo de contemporâneos, para as idades padrão de 120, 240 e 540 dias". É Senepol, mas é a única descrição recente de idade-padrão da equipe Embrapa-Geneplus. Para Nelore, o documento ABCZ–Embrapa fala em PD aos 210 dias, PA aos 365 e PS aos 450.
+
+**Quadro de idades-padrão em uso (cada programa usa um conjunto próprio; não misturar):**
+
+| Fonte | Desmama | Ano | Sobreano | Pesagens aceitas |
+|---|---|---|---|---|
+| BIF (EUA) | 205 | 365 | 452 ou 550 | 160 a 250; 320 a 410; ≥ 400 / ≥ 500 |
+| ABCZ, CDP 2023 | 210 | 365 | 450 | 150 a 270; 305 a 425; 390 a 510 |
+| ABCZ, 2002 (histórico) | 205 | 365 | 550 | pesagens trimestrais |
+| ANCP, 2026 | 210 (e 120) | 365 | 450 | 165 a 255; 320 a 410; 405 a 495 |
+| Geneplus, Senepol (tese 2024) | 240 (e 120) | não citado | 540 | não citado |
+
+### 2.3 Ajuste de idade da vaca em zebuínos: o que há publicado
+
+**Os programas brasileiros não publicam tabelas.** A ABCZ (PDF p. 2) trata a idade da vaca como **efeito fixo dentro do modelo** ("efeitos fixos de grupo contemporâneo e de idade da vaca/sexo do produto"). A GenSys pré-ajusta o fenótipo por "idade do produto, idade da vaca e época do nascimento do produto" sem publicar fatores. A ANCP não descreve o tratamento da idade da vaca. **[NÃO ENCONTRADO]** tabela de fatores de idade da vaca de ANCP, ABCZ ou Geneplus.
+
+**Estudos científicos em Nelore (abertos):**
+1. **Paz CCP, Albuquerque LG, Fries LA (1999).** *R. Bras. Zootec.* 28(1):65–73, DOI 10.1590/S1516-35981999000100009 (SciELO: `https://www.scielo.br/j/rbz/a/txz7TZYq5CjkXj9K7j4yy5x/`). Dados: 18.772 bezerros Nelore de 1984 a 1994, filhos de 7.619 vacas e 109 touros, da Granja Rezende S.A. (Uberlândia, MG), com registros da GenSys. Modelo animal por REML com GC fixo, idade da vaca, idade do bezerro e data juliana como covariáveis. Mães com menos de 4 e mais de 15 anos foram excluídas (as de 3 anos foram retiradas por manejo diferenciado não codificado). **Fatores multiplicativos** para o GMD do nascimento à desmama, calculados como "FCX = gmd base / gmd X", com **base na vaca de 8 anos**. Os autores justificam: "No presente estudo o ganho médio diário de peso pré-desmame apresentou grande variação (variou de 0,2690 a 1,3840 kg/dia). Assim, neste estudo foram preferidos os fatores de correção multiplicativos." A Tabela 2 (p. 70), copiada:
+
+| Idade da vaca (anos) | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Fator, bezerros machos | 1,00367 | 0,99570 | 0,99246 | 0,99389 | 1,00000 | 1,00926 | 1,02008 | 1,03256 | 1,04680 | 1,06296 | 1,08117 | 1,10164 |
+| Fator, bezerros fêmeas | 1,00002 | 0,99882 | 0,99842 | 0,99881 | 1,00000 | 1,00322 | 1,00974 | 1,01970 | 1,03329 | 1,05081 | 1,07264 | 1,09928 |
+
+O texto resume: "Os fatores de correção para o efeito da idade da vaca sobre o ganho médio diário de peso pré-desmame variaram de 0,99246 a 1,10164, para machos, e de 0,99842 a 1,09928, para fêmeas." O resumo diz que "as vacas atingiram a maturidade entre o 5º e 7º ano de idade". O GMD predito é máximo na vaca de 6 anos (0,72476 kg/dia nos machos e 0,64101 nas fêmeas). **Atenção:** é um fator sobre o GMD e não sobre o peso, vale para uma fazenda, e a variação entre classes de 4 a 8 anos é inferior a 1%. O artigo diz que o BIF recomendava fatores aditivos "para as condições dos Estados Unidos, em que a variação dos registros de produção é pequena".
+2. **Bocchi AL, Teixeira RA, Albuquerque LG (2004).** *Acta Scientiarum. Animal Sciences* 26(4):475–482, DOI 10.4025/actascianimsci.v26i4.1724 (`https://periodicos.uem.br/ojs/index.php/ActaSciAnimSci/article/download/1724/1161`). Dados: 333.259 Nelore da ABCZ, mínimos quadrados, por região e sexo. A idade da vaca ao parto (IDV, em anos) entra como regressão quadrática no P205 predito (kg). Equações copiadas (p. 479 impressa, PDF p. 5):
+
+| Região | Machos | Fêmeas |
+|---|---|---|
+| Centro-Oeste | 165,94 + 4,2851344·IDV − 0,2483338·IDV² | 165,94 + 3,3046839·IDV − 0,1935391·IDV² |
+| Sudeste | 162,46 + 3,8290361·IDV − 0,2264371·IDV² | 162,46 + 3,2362733·IDV − 0,1870361·IDV² |
+| Sul | 167,99 + 5,2697710·IDV − 0,3033255·IDV² | 157,08 + 4,5140056·IDV − 0,2636961·IDV² |
+| Nordeste | 162,04 + 3,4821773·IDV − 0,2232814·IDV² | 162,04 + 3,1308286·IDV − 0,2004256·IDV² |
+
+   O texto: "Vacas a partir de certa idade começaram a parir bezerros mais leves que as novilhas (16 anos de IDV para as regiões CO, S e SE; e 14 anos de IDV para a região NE). Esses resultados mostram a necessidade do descarte de vacas mais velhas anualmente". Recomenda "o cálculo de fatores de correção" específicos por região, porque o efeito difere significativamente entre elas. **Cálculo meu a partir dessas equações [INFERÊNCIA]:** o máximo ocorre em IDV = −b1/(2·b2), que dá 8,6 anos (Centro-Oeste, machos), 8,5 (CO, fêmeas), 8,7 (Sul, machos), 8,5 (Sudeste, machos) e 7,8 (Nordeste). No Centro-Oeste, a diferença entre uma vaca de 3 anos e o máximo é de **−7,8 kg para machos e −5,9 kg para fêmeas** (−5,3 e −3,9 aos 4 anos; −1,7 e −1,2 aos 6 anos; −7,1 e −5,4 aos 14 anos; −13,5 e −10,7 aos 16 anos). Compare com os +27,2 kg (machos) e +24,5 kg (fêmeas) que o BIF soma para a vaca de 2 anos: **a tabela do BIF não é transferível ao Nelore**, em que a primeira parição é aos 3 anos ou mais e o efeito de idade tem outra escala.
+3. **Outros trabalhos localizados e não lidos:** Bocchi & Albuquerque (2005), *Arq. Bras. Med. Vet. Zootec.* 57:524–532, DOI 10.1590/s0102-09352005000400014 (idade da vaca e data juliana sobre o GMD pré-desmame, também em Nelore); Toral et al. (2009), *R. Bras. Zootec.* 38:1229–1237, DOI 10.1590/s1516-35982009000700011 (modelagem do efeito de idade da vaca em Charolês-Zebu); Souza, Ramos & Silva (2000), *Ciência Rural* 30:881–885, DOI 10.1590/s0103-84782000000500024.
+
+**Aditivo contra multiplicativo (referências clássicas, pagas):** Cundiff, Willham & Pratt (1966), *J. Anim. Sci.* 25:983–987, DOI 10.2527/jas1966.254983x; Nelsen & Kress (1981), *J. Anim. Sci.* 53:1217–1224, DOI 10.2527/jas1981.5351217x; Northcutt, Wilson & Hoekstra (1994), *J. Anim. Sci.* 72:828–832, DOI 10.2527/1994.724828x. Não consegui baixar nenhum deles (OUP responde 403), e por isso não citei números.
+
+### 2.4 O que continua em aberto
+- Tabela de fatores de idade da vaca **atual** de qualquer programa brasileiro.
+- Se a ANCP pré-ajusta ou usa efeito fixo de idade da vaca e como forma as classes.
+- Fator aditivo ou multiplicativo recomendado para Nelore e para taurinos em condição tropical (os dois estudos acima são de 1999 e 2004).
+
+### 2.5 Sugestão de texto para o relatório (substitui a frase "As tabelas de fatores de idade da mãe do BIF e da ANCP não foram encontradas pelas notas")
+
+> O BIF padroniza o peso à desmama em 205 dias e a idade da vaca com fatores aditivos: Adj. 205 = [(PD − PN)/idade] × 205 + PN + ajuste de idade da vaca, e, para o sobreano, Adj. 365 = [(Peso final − PD)/dias] × 160 + Adj. 205, com 247 para 452 dias e 345 para 550 dias. A única tabela do BIF (Apêndice 3.1, 9ª ed.) soma, na desmama, +60 lb (machos) e +54 lb (fêmeas) para vacas de 2 anos, +40 e +36 para 3 anos, +20 e +18 para 4 anos e +20 e +18 para 11 anos ou mais (0 entre 5 e 10 anos); para o peso ao nascer, +8, +5, +2 e +3 lb; e o próprio BIF manda substituir esses fatores pelos da raça sempre que existirem. Os programas brasileiros adotam outras idades-padrão (ABCZ: 210, 365 e 450 dias no CDP de 2023, com interpolação entre pesagens; ANCP: 120, 210, 365 e 450 dias, com janelas de ±45 a 90 dias) e tratam a idade da vaca como efeito fixo no modelo, sem publicar fatores. Em Nelore, os fatores publicados (Paz et al., 1999, multiplicativos, base de 8 anos; Bocchi et al., 2004, regressões quadráticas por região) mostram máximo entre 6 e 9 anos e queda após os 12, com diferenças de cerca de 5 a 8 kg entre a vaca de 3 anos e o máximo, bem menores que os 27 kg do BIF para vacas de 2 anos.
+
