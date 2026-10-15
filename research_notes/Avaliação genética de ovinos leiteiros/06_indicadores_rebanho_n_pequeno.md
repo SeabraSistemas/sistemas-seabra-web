@@ -341,7 +341,7 @@ MPPA é um índice de capacidade produtiva que usa desempenho passado da fêmea,
 - **Expansões da sigla** [RB]. Outras fontes da busca expandem MPPA como "Expected Production Ability" e ERPA como "estimated real producing ability". Não há consenso nas fontes encontradas.
 - **Fórmula clássica de MPPA** [RB, artigo de leite citado em resumo de busca, não identificado]: MPPA = nr/(1+[n−1]r) × desvio médio. A mesma fonte diz que repetibilidade e MPPA refletem efeito genético mais efeito ambiental permanente.
 - **Repetibilidade da produção de leite em Holandesas pequenas, Indonésia** [RB]. Correlação interclasse de 0,43 ± 0,1 e intraclasse de 0,15 ± 0,05. As duas correlações têm interpretações diferentes; confira no original antes de usar.
-- **Ptak & Schaeffer (1993)** [NV]. Citado como origem de MPPA em fontes de bovino. Artigo original não localizado.
+- **Ptak & Schaeffer** [NV, ano não confirmado]. Citado como origem de MPPA em fontes de bovino. Artigo original não localizado.
 - **Larroque et al. (2011), slides EAAP** [TL]. A avaliação genética francesa de Lacaune usa "repeatability animal model", com grupos genéticos para pais desconhecidos. URL de origem não registrada no arquivo.
 - **Ticiani et al. (2013)** [TL]. Regressões de produção sobre dias em lactação com r² de 0,02 a 0,22 (seção 1). Não é repetibilidade, mas mostra o ajuste fraco em 92 dias e 67 ovelhas.
 
