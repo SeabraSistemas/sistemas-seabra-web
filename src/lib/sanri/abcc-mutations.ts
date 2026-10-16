@@ -156,6 +156,15 @@ export async function cancelar(id: number): Promise<{ ok: true } | Falha> {
   return { ok: true };
 }
 
+/** Exclui de vez uma comunicação JÁ CANCELADA (a que vale o banco recusa). */
+export async function excluir(id: number): Promise<{ ok: true } | Falha> {
+  const supa = publicClient();
+  if (!supa) return SEM_BANCO;
+  const { error } = await supa.rpc('abcc_excluir', { p_propriedade: propriedadeApp(), p_id: id });
+  if (error) return { ok: false, status: 400, erro: traduzirErroAbcc(error) };
+  return { ok: true };
+}
+
 /** Marca (ou desmarca) crias que já foram em CDN fora do sistema. */
 export async function marcar(ids: number[], enviada: boolean): Promise<{ ok: true; alteradas: number } | Falha> {
   const supa = publicClient();

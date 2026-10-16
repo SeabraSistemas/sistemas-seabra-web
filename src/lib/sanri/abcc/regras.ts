@@ -294,6 +294,7 @@ export function traduzirErroAbcc(erro: { message?: string } | null | undefined):
   if (msg.startsWith('ABCC_LINHAS_DEMAIS')) return 'animais demais para uma folha';
   if (msg.startsWith('ABCC_SEM_LINHAS')) return 'nenhum animal escolhido';
   if (msg.startsWith('ABCC_NAO_ENCONTRADA')) return 'comunicação não encontrada (já cancelada?)';
+  if (msg.startsWith('ABCC_NAO_CANCELADA')) return 'cancele antes de excluir';
   if (msg.startsWith('ABCC_ANIMAL_FORA') || msg.startsWith('ABCC_COBERTURA_FORA')) return 'um dos animais não é desta fazenda';
   return 'não foi possível gravar';
 }

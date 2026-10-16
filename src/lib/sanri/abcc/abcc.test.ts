@@ -232,6 +232,7 @@ describe('regras da CDN', () => {
   test('erro do banco vira frase', () => {
     assert.equal(traduzirErroAbcc({ message: 'ABCC_NUMERO_USADO: a CDN 302/2026 já existe' }), 'esse número já foi usado (CDN 302/2026 já existe)');
     assert.equal(traduzirErroAbcc({ message: 'ABCC_JA_EM_CDN: 1000026001 (301/2026) já está em CDN' }), '1000026001 (301/2026) já está em CDN');
+    assert.equal(traduzirErroAbcc({ message: 'ABCC_NAO_CANCELADA: comunicação 7 ainda vale — cancele antes de excluir' }), 'cancele antes de excluir');
     assert.equal(traduzirErroAbcc({ message: 'timeout' }), 'não foi possível gravar');
   });
   test('nome do arquivo', () => {

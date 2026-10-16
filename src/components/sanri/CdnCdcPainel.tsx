@@ -551,12 +551,14 @@ function LinhaEmitida({ c }: { c: Comunicacao }) {
   const [ocupado, setOcupado] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
-  async function cancelarComunicacao() {
+  // A que vale se CANCELA (devolve as crias); a cancelada se EXCLUI (some da lista).
+  async function confirmado() {
+    const acao = c.cancelada ? 'excluir' : 'cancelar';
     setOcupado(true);
     setErro(null);
-    const r = await chamar({ acao: 'cancelar', id: c.id });
+    const r = await chamar({ acao, id: c.id });
     setOcupado(false);
-    if (!r.ok) return setErro(`Não cancelou: ${String(r.dados.erro ?? 'tente de novo')}.`);
+    if (!r.ok) return setErro(`Não ${c.cancelada ? 'excluiu' : 'cancelou'}: ${String(r.dados.erro ?? 'tente de novo')}.`);
     setConfirmar(false);
     router.refresh();
   }
@@ -580,26 +582,24 @@ function LinhaEmitida({ c }: { c: Comunicacao }) {
           {c.externa && <span className="ml-2 rounded-pill bg-paper-2 px-2 py-0.5 text-xs text-ink-1">registrada</span>}
           {c.cancelada && <span className="ml-2 rounded-pill bg-erro-fundo px-2 py-0.5 text-xs text-erro">cancelada</span>}
         </span>
-        {!c.cancelada && (
-          <span className="flex shrink-0 items-center gap-1">
-            {!c.externa && <Baixar id={c.id} />}
-            {confirmar ? (
-              <>
-                <span className="text-xs text-ink-1">Cancelar?</span>
-                <PainelBotao variante="perigo" onClick={cancelarComunicacao} disabled={ocupado}>
-                  {ocupado ? 'Cancelando…' : 'Sim'}
-                </PainelBotao>
-                <PainelBotao variante="discreto" onClick={() => setConfirmar(false)} disabled={ocupado}>
-                  Não
-                </PainelBotao>
-              </>
-            ) : (
-              <PainelBotao variante="perigo" onClick={() => setConfirmar(true)}>
-                Cancelar
+        <span className="flex shrink-0 items-center gap-1">
+          {!c.cancelada && !c.externa && <Baixar id={c.id} />}
+          {confirmar ? (
+            <>
+              <span className="text-xs text-ink-1">{c.cancelada ? 'Excluir de vez?' : 'Cancelar?'}</span>
+              <PainelBotao variante="perigo" onClick={confirmado} disabled={ocupado}>
+                {ocupado ? (c.cancelada ? 'Excluindo…' : 'Cancelando…') : 'Sim'}
               </PainelBotao>
-            )}
-          </span>
-        )}
+              <PainelBotao variante="discreto" onClick={() => setConfirmar(false)} disabled={ocupado}>
+                Não
+              </PainelBotao>
+            </>
+          ) : (
+            <PainelBotao variante="perigo" onClick={() => setConfirmar(true)}>
+              {c.cancelada ? 'Excluir' : 'Cancelar'}
+            </PainelBotao>
+          )}
+        </span>
       </div>
       <details>
         <summary className="cursor-pointer text-xs text-ink-1">Animais</summary>
@@ -625,7 +625,7 @@ function SecaoEmitidas({ comunicacoes }: { comunicacoes: Comunicacao[] }) {
         <h3 className="text-base font-semibold text-ink">Emitidas</h3>
         <Info>
           Toda CDN e CDC feita aqui, a mais nova primeiro. Baixar de novo dá a mesma folha da emissão. Cancelar libera o número e
-          devolve as crias para “sem CDN” (ou as coberturas para “sem CDC”).
+          devolve as crias para “sem CDN” (ou as coberturas para “sem CDC”). A cancelada pode ser excluída de vez.
         </Info>
       </div>
       <div className="rounded-card border border-rule bg-paper p-4 shadow-card">

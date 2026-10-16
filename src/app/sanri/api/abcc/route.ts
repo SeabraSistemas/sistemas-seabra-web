@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { sessaoApi } from '@/lib/sanri/sessao';
-import { cancelar, emitirCdc, emitirCdn, marcar } from '@/lib/sanri/abcc-mutations';
+import { cancelar, emitirCdc, emitirCdn, excluir, marcar } from '@/lib/sanri/abcc-mutations';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -28,7 +28,7 @@ function dataIso(v: unknown): string | null {
 const ruim = (erro: string) => NextResponse.json({ erro }, { status: 400 });
 
 /**
- * Ações da aba CDN e CDC: { acao: 'cdn' | 'cdc' | 'cancelar' | 'marcar', … }.
+ * Ações da aba CDN e CDC: { acao: 'cdn' | 'cdc' | 'cancelar' | 'excluir' | 'marcar', … }.
  * Tudo grava pelas funções abcc_* do banco do app, que conferem a fazenda.
  */
 export async function POST(request: Request) {
@@ -69,6 +69,13 @@ export async function POST(request: Request) {
     const id = inteiro(c.id);
     if (id == null) return ruim('comunicação inválida');
     const r = await cancelar(id);
+    return r.ok ? NextResponse.json(r) : NextResponse.json({ erro: r.erro }, { status: r.status });
+  }
+
+  if (c.acao === 'excluir') {
+    const id = inteiro(c.id);
+    if (id == null) return ruim('comunicação inválida');
+    const r = await excluir(id);
     return r.ok ? NextResponse.json(r) : NextResponse.json({ erro: r.erro }, { status: r.status });
   }
 
