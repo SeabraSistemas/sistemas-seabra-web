@@ -23,6 +23,8 @@ export const LINKS: NavLink[] = [
   // Conferência, Reprodução e Lactações saíram em 15/10/2026: a equipe passou a
   // lançar no app, e essas abas liam a planilha aposentada.
   { href: '/sanri/nomes', label: 'Nomes' },
+  // CDN e CDC na planilha oficial, com quem já foi comunicado (16/10/2026).
+  { href: '/sanri/cdn-cdc', label: 'CDN e CDC' },
 ];
 
 /**
