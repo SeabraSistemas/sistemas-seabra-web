@@ -624,7 +624,7 @@ function SecaoEmitidas({ comunicacoes }: { comunicacoes: Comunicacao[] }) {
       <div className="flex flex-wrap items-center gap-2">
         <h3 className="text-base font-semibold text-ink">Emitidas</h3>
         <Info>
-          Toda CDN e CDC feita aqui, a mais nova primeiro. Baixar de novo dá a mesma folha da emissão. Cancelar libera o número e
+          Toda folha feita aqui, a mais nova primeiro. Baixar de novo dá a mesma folha da emissão. Cancelar libera o número e
           devolve as crias para “sem CDN” (ou as coberturas para “sem CDC”). A cancelada pode ser excluída de vez.
         </Info>
       </div>
@@ -643,55 +643,78 @@ function SecaoEmitidas({ comunicacoes }: { comunicacoes: Comunicacao[] }) {
   );
 }
 
-// ---------------------------------------------------------------- página
+// ---------------------------------------------------------------- páginas
 
-export function CdnCdcPainel({
-  configurado,
-  ok,
-  carregadoEm,
-  modelos,
-  crias,
-  coberturas,
-  comunicacoes,
-  criasDesde,
-  inicioDoAno,
-  coberturasDesde,
-  hoje,
-}: LeituraAbcc & { hoje: string }) {
-  const [aba, setAba] = useState<'cdn' | 'cdc' | 'emitidas'>('cdn');
+type PropsPainel = LeituraAbcc & { hoje: string };
 
+/** Topo comum: leitura do app, título com o "i" e o aviso de modelo faltando. */
+function Topo({ titulo, explica, faltaModelo, configurado, ok, carregadoEm }: { titulo: string; explica: React.ReactNode; faltaModelo: boolean } & Pick<LeituraAbcc, 'configurado' | 'ok' | 'carregadoEm'>) {
+  return (
+    <>
+      <EstadoApp configurado={configurado} ok={ok} carregadoEm={carregadoEm} />
+      <div className="flex flex-wrap items-center gap-2">
+        <h2 className="text-lg font-semibold text-ink">{titulo}</h2>
+        <Info>{explica}</Info>
+      </div>
+      {ok && faltaModelo && <Aviso tom="aviso">Falta no sistema a planilha modelo da {titulo.split(' ')[0]} — fale com o suporte.</Aviso>}
+    </>
+  );
+}
+
+/** Aba CDN: as crias e as CDNs emitidas. */
+export function CdnPainel({ configurado, ok, carregadoEm, modelos, crias, comunicacoes, criasDesde, inicioDoAno, hoje }: PropsPainel) {
+  const [parte, setParte] = useState<'crias' | 'emitidas'>('crias');
+  const cdns = comunicacoes.filter((c) => c.tipo === 'cdn');
   return (
     <div className="flex flex-col gap-5">
-      <EstadoApp configurado={configurado} ok={ok} carregadoEm={carregadoEm} />
-
-      <div className="flex flex-wrap items-center gap-2">
-        <h2 className="text-lg font-semibold text-ink">CDN e CDC</h2>
-        <Info>
-          A folha sai na planilha oficial que você usa, já preenchida — é só baixar e enviar. Nada de copiar e colar. Cada CDN e CDC
-          emitida fica guardada com o número, e o app passa a mostrar a cria como “já enviada”.
-        </Info>
-      </div>
-
-      {ok && (!modelos.cdn || !modelos.cdc) && (
-        <Aviso tom="aviso">
-          Falta no sistema a planilha modelo da {[!modelos.cdn && 'CDN', !modelos.cdc && 'CDC'].filter(Boolean).join(' e da ')} — fale com o suporte.
-        </Aviso>
-      )}
-
+      <Topo
+        titulo="CDN — Comunicação de Nascimento"
+        explica="A folha sai na planilha oficial que você usa, já preenchida — é só baixar e enviar, sem copiar e colar. Cada CDN emitida fica guardada com o número, e o app passa a mostrar a cria como “já enviada”."
+        faltaModelo={!modelos.cdn}
+        configurado={configurado}
+        ok={ok}
+        carregadoEm={carregadoEm}
+      />
       <Escolhas
-        rotulo="Comunicação"
-        valor={aba}
-        onChange={setAba}
+        rotulo="CDN"
+        valor={parte}
+        onChange={setParte}
         opcoes={[
-          { chave: 'cdn', texto: 'Nascimento (CDN)' },
-          { chave: 'cdc', texto: 'Cobertura (CDC)' },
-          { chave: 'emitidas', texto: `Emitidas (${comunicacoes.filter((c) => !c.cancelada).length})` },
+          { chave: 'crias', texto: 'Crias' },
+          { chave: 'emitidas', texto: `Emitidas (${cdns.filter((c) => !c.cancelada).length})` },
         ]}
       />
+      {parte === 'crias' && <SecaoCdn crias={crias} comunicacoes={comunicacoes} hoje={hoje} inicioDoAno={inicioDoAno} carregadoDesde={criasDesde} />}
+      {parte === 'emitidas' && <SecaoEmitidas comunicacoes={cdns} />}
+    </div>
+  );
+}
 
-      {aba === 'cdn' && <SecaoCdn crias={crias} comunicacoes={comunicacoes} hoje={hoje} inicioDoAno={inicioDoAno} carregadoDesde={criasDesde} />}
-      {aba === 'cdc' && <SecaoCdc coberturas={coberturas} comunicacoes={comunicacoes} hoje={hoje} desde={coberturasDesde} />}
-      {aba === 'emitidas' && <SecaoEmitidas comunicacoes={comunicacoes} />}
+/** Aba CDC: as coberturas e as CDCs emitidas. */
+export function CdcPainel({ configurado, ok, carregadoEm, modelos, coberturas, comunicacoes, coberturasDesde, hoje }: PropsPainel) {
+  const [parte, setParte] = useState<'coberturas' | 'emitidas'>('coberturas');
+  const cdcs = comunicacoes.filter((c) => c.tipo === 'cdc');
+  return (
+    <div className="flex flex-col gap-5">
+      <Topo
+        titulo="CDC — Comunicação de Cobertura"
+        explica="A folha sai na planilha oficial que você usa, já preenchida — é só baixar e enviar, sem copiar e colar. Cada CDC emitida fica guardada com o número, e a CDN das crias puxa esse número sozinha."
+        faltaModelo={!modelos.cdc}
+        configurado={configurado}
+        ok={ok}
+        carregadoEm={carregadoEm}
+      />
+      <Escolhas
+        rotulo="CDC"
+        valor={parte}
+        onChange={setParte}
+        opcoes={[
+          { chave: 'coberturas', texto: 'Coberturas' },
+          { chave: 'emitidas', texto: `Emitidas (${cdcs.filter((c) => !c.cancelada).length})` },
+        ]}
+      />
+      {parte === 'coberturas' && <SecaoCdc coberturas={coberturas} comunicacoes={comunicacoes} hoje={hoje} desde={coberturasDesde} />}
+      {parte === 'emitidas' && <SecaoEmitidas comunicacoes={cdcs} />}
     </div>
   );
 }

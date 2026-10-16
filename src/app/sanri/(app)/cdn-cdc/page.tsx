@@ -1,11 +1,6 @@
-import { CdnCdcPainel } from '@/components/sanri/CdnCdcPainel';
-import { getAbcc, hojeBrasilia } from '@/lib/sanri/abcc-queries';
-import { exigirSessao } from '@/lib/sanri/sessao';
+import { redirect } from 'next/navigation';
 
-export const dynamic = 'force-dynamic';
-
-export default async function CdnCdcPage() {
-  await exigirSessao();
-  const leitura = await getAbcc();
-  return <CdnCdcPainel {...leitura} hoje={hojeBrasilia()} />;
+/** Primeiro endereço da aba (16/10/2026), antes de CDN e CDC virarem abas separadas. */
+export default function CdnCdcPage() {
+  redirect('/sanri/cdn');
 }

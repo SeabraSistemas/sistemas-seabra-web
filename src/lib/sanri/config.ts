@@ -24,7 +24,12 @@ export const LINKS: NavLink[] = [
   // lançar no app, e essas abas liam a planilha aposentada.
   { href: '/sanri/nomes', label: 'Nomes' },
   // CDN e CDC na planilha oficial, com quem já foi comunicado (16/10/2026).
-  { href: '/sanri/cdn-cdc', label: 'CDN e CDC' },
+  // Abas separadas a pedido do produtor; /sanri/cdn-cdc (o 1º endereço) leva à CDN.
+  { href: '/sanri/cdn', label: 'CDN', tambem: ['/sanri/cdn-cdc'] },
+  { href: '/sanri/cdc', label: 'CDC' },
+  // RGN e RGD: em construção até chegarem os materiais (16/10/2026).
+  { href: '/sanri/rgn', label: 'RGN' },
+  { href: '/sanri/rgd', label: 'RGD' },
 ];
 
 /**

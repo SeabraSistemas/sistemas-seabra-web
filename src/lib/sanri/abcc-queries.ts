@@ -148,10 +148,10 @@ export async function lerComunicacoes(): Promise<Comunicacao[]> {
 }
 
 /**
- * Tudo da aba: as crias deste ano e do anterior (com quem já foi em CDN), as coberturas dos
+ * O que as abas CDN e CDC leem (cada uma pede só a sua parte): as crias deste ano e do anterior (com quem já foi em CDN), as coberturas dos
  * últimos 6 meses (as que ainda dão cria) e as comunicações emitidas.
  */
-export async function getAbcc(agora = new Date()): Promise<LeituraAbcc> {
+export async function getAbcc(partes: { crias?: boolean; coberturas?: boolean } = { crias: true, coberturas: true }, agora = new Date()): Promise<LeituraAbcc> {
   const hoje = hojeBrasilia(agora);
   const inicioDoAno = `${hoje.slice(0, 4)}-01-01`;
   const criasDesde = `${Number(hoje.slice(0, 4)) - 1}-01-01`;
@@ -162,8 +162,8 @@ export async function getAbcc(agora = new Date()): Promise<LeituraAbcc> {
   try {
     const [modelos, crias, coberturas, comunicacoes] = await Promise.all([
       supa.from('abcc_modelo').select('tipo').eq('propriedade_id', propriedadeApp()),
-      lerCrias(criasDesde),
-      lerCoberturas(coberturasDesde),
+      partes.crias ? lerCrias(criasDesde) : Promise.resolve([]),
+      partes.coberturas ? lerCoberturas(coberturasDesde) : Promise.resolve([]),
       lerComunicacoes(),
     ]);
     if (modelos.error) throw new Error(modelos.error.message);
