@@ -31,8 +31,10 @@ export interface LeituraAbcc {
   crias: CriaCdn[];
   coberturas: CoberturaCdc[];
   comunicacoes: Comunicacao[];
-  /** Desde quando as listas vêm ("AAAA-MM-DD"). */
+  /** Desde quando as listas vêm ("AAAA-MM-DD"). As crias vêm desde 1º/jan do
+   *  ano ANTERIOR; o filtro da tela começa no ano corrente (inicioDoAno). */
   criasDesde: string;
+  inicioDoAno: string;
   coberturasDesde: string;
 }
 
@@ -146,14 +148,15 @@ export async function lerComunicacoes(): Promise<Comunicacao[]> {
 }
 
 /**
- * Tudo da aba: as crias do ano (com quem já foi em CDN), as coberturas dos
+ * Tudo da aba: as crias deste ano e do anterior (com quem já foi em CDN), as coberturas dos
  * últimos 6 meses (as que ainda dão cria) e as comunicações emitidas.
  */
 export async function getAbcc(agora = new Date()): Promise<LeituraAbcc> {
   const hoje = hojeBrasilia(agora);
-  const criasDesde = `${hoje.slice(0, 4)}-01-01`;
+  const inicioDoAno = `${hoje.slice(0, 4)}-01-01`;
+  const criasDesde = `${Number(hoje.slice(0, 4)) - 1}-01-01`;
   const coberturasDesde = menosDias(hoje, 180);
-  const vazio = { modelos: { cdn: false, cdc: false }, crias: [], coberturas: [], comunicacoes: [], criasDesde, coberturasDesde };
+  const vazio = { modelos: { cdn: false, cdc: false }, crias: [], coberturas: [], comunicacoes: [], criasDesde, inicioDoAno, coberturasDesde };
   const supa = publicClient();
   if (!supa) return { configurado: false, ok: false, carregadoEm: null, ...vazio };
   try {
@@ -174,6 +177,7 @@ export async function getAbcc(agora = new Date()): Promise<LeituraAbcc> {
       coberturas,
       comunicacoes,
       criasDesde,
+      inicioDoAno,
       coberturasDesde,
     };
   } catch (err) {

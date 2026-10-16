@@ -11,9 +11,10 @@ import {
   linhaCdc,
   linhaCdn,
   maiusculo,
-  ordenarCrias,
+  nasceuNoPeriodo,
   porReprodutor,
   proximoNumero,
+  recentesPrimeiro,
   separarEmFolhas,
   type CoberturaCdc,
   type CriaCdn,
@@ -180,9 +181,23 @@ function LinhaCria({
   );
 }
 
-function SecaoCdn({ crias, comunicacoes, hoje }: { crias: CriaCdn[]; comunicacoes: Comunicacao[]; hoje: string }) {
+function SecaoCdn({
+  crias,
+  comunicacoes,
+  hoje,
+  inicioDoAno,
+  carregadoDesde,
+}: {
+  crias: CriaCdn[];
+  comunicacoes: Comunicacao[];
+  hoje: string;
+  inicioDoAno: string;
+  carregadoDesde: string;
+}) {
   const router = useRouter();
   const [filtro, setFiltro] = useState<'sem' | 'com'>('sem');
+  const [nascDe, setNascDe] = useState(inicioDoAno);
+  const [nascAte, setNascAte] = useState('');
   const [marcadas, setMarcadas] = useState<Set<number>>(new Set());
   const [cdc, setCdc] = useState<Record<number, string>>({});
   const [data, setData] = useState(hoje);
@@ -196,8 +211,10 @@ function SecaoCdn({ crias, comunicacoes, hoje }: { crias: CriaCdn[]; comunicacoe
   const [ocupado, setOcupado] = useState(false);
   const [resultado, setResultado] = useState<Resultado>(null);
 
-  const sem = useMemo(() => ordenarCrias(crias.filter((c) => !c.enviada)), [crias]);
-  const com = useMemo(() => ordenarCrias(crias.filter((c) => c.enviada)), [crias]);
+  // Lista: só as nascidas no período, a última que nasceu no topo.
+  const doPeriodo = useMemo(() => recentesPrimeiro(crias.filter((c) => nasceuNoPeriodo(c.nascimento, nascDe, nascAte))), [crias, nascDe, nascAte]);
+  const sem = useMemo(() => doPeriodo.filter((c) => !c.enviada), [doPeriodo]);
+  const com = useMemo(() => doPeriodo.filter((c) => c.enviada), [doPeriodo]);
   const lista = filtro === 'sem' ? sem : com;
   const escolhidas = lista.filter((c) => marcadas.has(c.id));
   const folhas = filtro === 'sem' ? separarEmFolhas(escolhidas) : [];
@@ -271,16 +288,40 @@ function SecaoCdn({ crias, comunicacoes, hoje }: { crias: CriaCdn[]; comunicacoe
           ]}
         />
         <Info>
-          Crias nascidas no ano. Escolha as que vão na CDN: o sistema separa por tipo de cobertura (monta, IA, TE) e faz uma folha a
+          Crias nascidas no período escolhido (começa em 1º de janeiro; dá para voltar até {dataBr(carregadoDesde)}), a última que
+          nasceu no topo. Na folha elas saem na ordem dos números, como na CDN oficial. Escolha as que vão na CDN: o sistema separa por tipo de cobertura (monta, IA, TE) e faz uma folha a
           cada {CRIAS_POR_CDN}, numeradas em sequência a partir do número que você informar. O CDC Nº vem da CDC da cobertura da mãe;
           quando o sistema não tem, digite. Macho sem nome sai DESCARTE. Quem já foi em CDN antes do sistema: escolha e toque em
           “Marcar como já enviadas”.
         </Info>
       </div>
 
+      <div className="grid grid-cols-2 items-end gap-3 sm:max-w-md">
+        <Rotulo texto="Nascidas de">
+          <PainelCampo
+            type="date"
+            value={nascDe}
+            min={carregadoDesde}
+            max={nascAte || hoje}
+            onChange={(e) => (setNascDe(e.target.value), setMarcadas(new Set()))}
+            className={cn(nascDe && 'border-sage text-sage')}
+          />
+        </Rotulo>
+        <Rotulo texto="até">
+          <PainelCampo
+            type="date"
+            value={nascAte}
+            min={nascDe || carregadoDesde}
+            max={hoje}
+            onChange={(e) => (setNascAte(e.target.value), setMarcadas(new Set()))}
+            className={cn(nascAte && 'border-sage text-sage')}
+          />
+        </Rotulo>
+      </div>
+
       <div className="rounded-card border border-rule bg-paper p-4 shadow-card">
         {lista.length === 0 ? (
-          <p className="text-sm text-ink-2">{filtro === 'sem' ? 'Nenhuma cria esperando CDN.' : 'Nenhuma cria marcada como enviada neste ano.'}</p>
+          <p className="text-sm text-ink-2">{filtro === 'sem' ? 'Nenhuma cria esperando CDN neste período.' : 'Nenhuma cria marcada como enviada neste período.'}</p>
         ) : (
           <>
             <label className="flex items-center gap-3 border-b border-rule pb-2 text-sm font-medium text-ink-1">
@@ -604,7 +645,19 @@ function SecaoEmitidas({ comunicacoes }: { comunicacoes: Comunicacao[] }) {
 
 // ---------------------------------------------------------------- página
 
-export function CdnCdcPainel({ configurado, ok, carregadoEm, modelos, crias, coberturas, comunicacoes, coberturasDesde, hoje }: LeituraAbcc & { hoje: string }) {
+export function CdnCdcPainel({
+  configurado,
+  ok,
+  carregadoEm,
+  modelos,
+  crias,
+  coberturas,
+  comunicacoes,
+  criasDesde,
+  inicioDoAno,
+  coberturasDesde,
+  hoje,
+}: LeituraAbcc & { hoje: string }) {
   const [aba, setAba] = useState<'cdn' | 'cdc' | 'emitidas'>('cdn');
 
   return (
@@ -636,7 +689,7 @@ export function CdnCdcPainel({ configurado, ok, carregadoEm, modelos, crias, cob
         ]}
       />
 
-      {aba === 'cdn' && <SecaoCdn crias={crias} comunicacoes={comunicacoes} hoje={hoje} />}
+      {aba === 'cdn' && <SecaoCdn crias={crias} comunicacoes={comunicacoes} hoje={hoje} inicioDoAno={inicioDoAno} carregadoDesde={criasDesde} />}
       {aba === 'cdc' && <SecaoCdc coberturas={coberturas} comunicacoes={comunicacoes} hoje={hoje} desde={coberturasDesde} />}
       {aba === 'emitidas' && <SecaoEmitidas comunicacoes={comunicacoes} />}
     </div>

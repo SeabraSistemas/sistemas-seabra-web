@@ -19,10 +19,12 @@ import { cabecalhoCdcNoDesenho, marcarMetodo, preencherCdc, preencherCdn } from 
 import {
   faltasCdn,
   linhaCdn,
+  nasceuNoPeriodo,
   nomeArquivo,
   pelagemCdn,
   porReprodutor,
   proximoNumero,
+  recentesPrimeiro,
   separarEmFolhas,
   traduzirErroAbcc,
   type CoberturaCdc,
@@ -197,6 +199,25 @@ describe('regras da CDN', () => {
     const folhas = separarEmFolhas(crias);
     assert.deepEqual(folhas.map((f) => [f.metodo, f.crias.length]), [['mn', 25], ['mn', 5], ['ia', 1]]);
     assert.equal(folhas[0].crias[0].numero, '1000026071');
+  });
+  test('lista: a última que nasceu no topo; empate pelo número maior', () => {
+    const crias = [
+      cria({ id: 1, numero: '1000026001', nascimento: '2026-02-05' }),
+      cria({ id: 2, numero: '1000026003', nascimento: '2026-10-13' }),
+      cria({ id: 3, numero: '1000026002', nascimento: '2026-10-13' }),
+      cria({ id: 4, numero: '1000025300', nascimento: '2025-12-30' }),
+    ];
+    assert.deepEqual(recentesPrimeiro(crias).map((c) => c.id), [2, 3, 1, 4]);
+    // a folha continua na ordem dos números
+    assert.deepEqual(separarEmFolhas(crias)[0].crias.map((c) => c.id), [4, 1, 3, 2]);
+  });
+  test('período de nascimento: inclusivo nas duas pontas; vazio = sem limite', () => {
+    assert.equal(nasceuNoPeriodo('2026-10-01', '2026-10-01', '2026-10-31'), true);
+    assert.equal(nasceuNoPeriodo('2026-10-31', '2026-10-01', '2026-10-31'), true);
+    assert.equal(nasceuNoPeriodo('2026-09-30', '2026-10-01', '2026-10-31'), false);
+    assert.equal(nasceuNoPeriodo('2026-11-01', '2026-10-01', '2026-10-31'), false);
+    assert.equal(nasceuNoPeriodo('2025-12-31', '2026-01-01', ''), false);
+    assert.equal(nasceuNoPeriodo('2025-12-31', '', ''), true);
   });
   test('próximo número: maior + 1, cancelada não conta, sem nenhum = null', () => {
     const cs = [

@@ -193,6 +193,27 @@ export function ordenarCrias<T extends Pick<CriaCdn, 'numero' | 'nascimento' | '
   });
 }
 
+/** Nascida entre `de` e `ate` ("AAAA-MM-DD", inclusive). Vazio = sem limite daquele lado. */
+export function nasceuNoPeriodo(nascimento: string, de: string, ate: string): boolean {
+  const d = nascimento.slice(0, 10);
+  return (!de || d >= de) && (!ate || d <= ate);
+}
+
+/**
+ * Ordem da LISTA na tela: a última que nasceu no topo (empate: o número
+ * maior). A folha da CDN continua na ordem dos números — ver separarEmFolhas.
+ */
+export function recentesPrimeiro<T extends Pick<CriaCdn, 'numero' | 'nascimento' | 'id'>>(crias: T[]): T[] {
+  return [...crias].sort((a, b) => {
+    if (a.nascimento !== b.nascimento) return a.nascimento < b.nascimento ? 1 : -1;
+    const na = a.numero ?? '';
+    const nb = b.numero ?? '';
+    if (na.length !== nb.length) return nb.length - na.length;
+    if (na !== nb) return na < nb ? 1 : -1;
+    return b.id - a.id;
+  });
+}
+
 /**
  * Crias escolhidas -> folhas: uma por método, de 25 em 25, na ordem dos
  * números. 30 crias de monta viram uma folha de 25 e outra de 5.
