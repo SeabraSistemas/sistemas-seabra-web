@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AlertTriangle, Archive, ChevronDown, Download, ExternalLink, PackageCheck, Plus, RefreshCw, Undo2, Upload } from 'lucide-react';
+import { AlertTriangle, Archive, Check, ChevronDown, Download, ExternalLink, PackageCheck, Plus, RefreshCw, Undo2, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
@@ -10,6 +10,7 @@ import {
   dataDoPedido,
   GRUPOS,
   linhasDePedidos,
+  nomeCurto,
   pecasPorUnidade,
   precoDeCompra,
   resumirPorGrupo,
@@ -277,12 +278,14 @@ function Painel({
           <CartaoEstoque grupo="leitor" resumo={resumo.leitor} linhas={linhas} />
         </section>
 
-        <PrecoProdutos precos={snapshot?.precos} historico={historico} ajustes={ajustes} />
+        <PrecoProdutos precos={snapshot?.precos} historico={historico} ajustes={ajustes} linhas={linhas} />
 
         <VaiChegar linhas={aCaminho} />
         <JaChegaram linhas={chegaram} />
         <Vendas vendas={estado.vendas} />
-        <PrecoDolar linhas={linhas} cotacao={cotacao} />
+        <Recolher titulo="Preço pago × dólar">
+          <PrecoDolar linhas={linhas} cotacao={cotacao} />
+        </Recolher>
 
         {outros.length > 0 && <Secundarios linhas={outros} controles={estado.controles} />}
 
@@ -296,9 +299,6 @@ function Painel({
         </Button>
       </form>
 
-      <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
-        O status vem do coletor que roda no seu Mac e lê a sua conta da AliExpress. Chegadas, vendas e anotações ficam salvas no servidor, atrás do login.
-      </p>
     </main>
   );
 }
@@ -309,7 +309,7 @@ function StatusColeta({ snapshot, agora }: { snapshot: Snapshot | null; agora: n
   if (!snapshot) {
     return (
       <p className={cn(cartao, 'text-sm text-muted-foreground')}>
-        Coletor ainda não rodou (ou esta página está fora do seu Mac). Os pedidos lançados à mão e o estoque funcionam normalmente.
+        Sem leitura da AliExpress ainda.
       </p>
     );
   }
@@ -338,7 +338,7 @@ function Atencao({ alertas }: { alertas: Array<{ id: string; url: string; itens:
         {alertas.map((p) => (
           <li key={p.id} className="text-sm">
             <a href={p.url} target="_blank" rel="noreferrer" className="font-medium hover:underline">
-              {p.itens[0]?.titulo ?? `Pedido ${p.id}`}
+              {nomeCurto(p.itens[0]?.titulo ?? `Pedido ${p.id}`)} · {p.id}
             </a>
             {p.alertas.map((a, i) => (
               <p key={i} className="mt-0.5 text-red-300">
@@ -404,10 +404,10 @@ function CartaoEstoque({ grupo, resumo, linhas }: { grupo: Grupo; resumo: Return
       {resumo.proximaChegada && <p className="mt-2 text-xs text-amber-300">Próxima chegada até {diaMes(resumo.proximaChegada)}</p>}
       {semBase && (
         <p className="mt-2 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-300">
-          O número acima soma {recebidos.length} pedidos antigos da conta. Toque em &quot;Acertar estoque&quot; e diga quantos você tem agora.
+          Soma {recebidos.length} pedidos antigos. Toque em &quot;Acertar estoque&quot;.
         </p>
       )}
-      {resumo.base && <p className="mt-1 text-xs text-muted-foreground">Contando desde {new Date(resumo.base.em).toLocaleDateString('pt-BR')}, quando você tinha {resumo.base.qtd}.</p>}
+      {resumo.base && <p className="mt-1 text-xs text-muted-foreground">Desde {new Date(resumo.base.em).toLocaleDateString('pt-BR')}: tinha {resumo.base.qtd}.</p>}
       {acertando ? (
         <div className="mt-3 flex flex-wrap items-end gap-2 border-t border-border pt-3">
           <label className="flex flex-col gap-1">
@@ -472,99 +472,102 @@ function Sparkline({ valores, media }: { valores: number[]; media: number | null
   );
 }
 
-function PrecoProdutos({ precos, historico, ajustes }: { precos: Snapshot['precos']; historico: PrecoProduto[]; ajustes: ReturnType<typeof useAjustes> }) {
+function PrecoProdutos({ precos, historico, ajustes, linhas }: { precos: Snapshot['precos']; historico: PrecoProduto[]; ajustes: ReturnType<typeof useAjustes>; linhas: LinhaPedido[] }) {
   const grupos: Grupo[] = ['microchip', 'leitor'];
   return (
     <section className={cartao}>
-      <p className={rotulo}>Preço do produto</p>
+      <p className={rotulo}>Preço de hoje</p>
       <div className="mt-3 flex flex-col divide-y divide-border">
         {grupos.map((g) => {
           const ligado = ajustes.acompanhar[g] === true;
           const hoje = precos?.[g];
           const doGrupo = historico.filter((h) => h.grupo === g && h.preco != null);
           // Preço de página (sem impostos) não se mistura com o do checkout.
-          const serie = (doGrupo.some((h) => h.checkout) ? doGrupo.filter((h) => h.checkout) : doGrupo).slice(-14).reverse();
+          const serie = (doGrupo.some((h) => h.checkout) ? doGrupo.filter((h) => h.checkout) : doGrupo).slice(-14);
+          const pecas = g === 'microchip' ? pecasPorUnidade(linhas.find((l) => l.grupo === g)?.titulo ?? '') : 1;
+          const total = hoje && !hoje.erro ? precoDeCompra(hoje) : null;
+          const m = hoje?.medias;
+          const verdito = m && m.veredito !== 'sem_historico' && m.vs30 != null ? m : null;
+          const comp = hoje?.checkout;
           return (
-            <div key={g} className="flex flex-col gap-2 py-3 first:pt-0 last:pb-0">
+            <div key={g} className="flex flex-col gap-1.5 py-3 first:pt-0 last:pb-0">
               <div className="flex items-center justify-between gap-3">
-                <p className="text-sm font-medium">
-                  {GRUPOS[g].nome}
-                  {hoje?.variante ? <span className="font-normal text-muted-foreground"> · {hoje.variante}</span> : null}
-                </p>
+                <p className="text-sm font-medium">{GRUPOS[g].nome}</p>
                 <label className={cn('flex items-center gap-2 text-xs text-muted-foreground', !ajustes.local && 'opacity-50')}>
                   <input type="checkbox" checked={ligado} disabled={!ajustes.local} onChange={(e) => ajustes.alternar(g, e.target.checked)} />
-                  Acompanhar preço
+                  Acompanhar
                 </label>
               </div>
-              {!ligado ? (
-                <p className="text-xs text-muted-foreground">Não estou acompanhando o preço de {GRUPOS[g].nome.toLowerCase()}.</p>
-              ) : !hoje ? (
-                <p className="text-xs text-muted-foreground">Ainda não li o preço. Entra na próxima leitura do coletor.</p>
-              ) : hoje.erro ? (
-                <p className="text-xs text-amber-300">Não consegui ler o preço: {hoje.erro}</p>
-              ) : (
+              {ligado && hoje?.erro ? <p className="text-xs text-amber-300">Sem preço: {hoje.erro}</p> : null}
+              {ligado && !hoje ? <p className="text-xs text-muted-foreground">Aguardando a próxima leitura.</p> : null}
+              {ligado && total != null && (
                 <>
-                  <p className="flex flex-wrap items-baseline gap-x-3 text-sm tabular-nums">
-                    <span className="text-2xl font-semibold">{real(precoDeCompra(hoje))}</span>
-                    <span className="text-muted-foreground">{hoje.checkout ? '1 un., com impostos' : '1 un., SEM impostos (só da página)'}</span>
-                    {hoje.dolar ? <span className="text-muted-foreground">· {dolar(precoDeCompra(hoje) / hoje.dolar)}</span> : null}
+                  <p
+                    className="flex flex-wrap items-baseline gap-x-3 tabular-nums"
+                    title={comp ? `produto ${real(comp.subtotal ?? 0)} + importação ${real(comp.imposto ?? 0)} + ICMS ${real(comp.icms ?? 0)}${comp.frete ? ` + frete ${real(comp.frete)}` : ''}` : undefined}
+                  >
+                    <span className="text-3xl font-semibold">{real(total)}</span>
+                    {pecas > 1 ? (
+                      <>
+                        <span className="text-sm text-muted-foreground">{pecas} un.</span>
+                        <span className="text-xl font-semibold text-amber-300">{real(total / pecas)} cada</span>
+                      </>
+                    ) : null}
+                    {hoje?.dolar ? <span className="text-sm text-muted-foreground">{dolar(total / hoje.dolar)}</span> : null}
                   </p>
-                  {hoje.checkout && (
-                    <p className="text-xs text-muted-foreground tabular-nums">
-                      produto {real(hoje.checkout.subtotal ?? 0)} + importação {real(hoje.checkout.imposto ?? 0)} + ICMS {real(hoje.checkout.icms ?? 0)}
-                      {hoje.checkout.frete ? ` + frete ${real(hoje.checkout.frete)}` : ' · frete grátis'}
+                  {!comp && <p className="text-xs text-amber-300">Sem impostos (não cheguei à tela final da compra).</p>}
+                  {verdito && (
+                    <p className={cn('text-sm font-medium', verdito.veredito === 'bom' ? 'text-emerald-300' : verdito.veredito === 'caro' ? 'text-red-300' : 'text-muted-foreground')}>
+                      {verdito.veredito === 'bom' ? '▼ bom preço' : verdito.veredito === 'caro' ? '▲ caro' : '≈ na média'} · {verdito.vs30! > 0 ? '+' : '−'}
+                      {Math.abs(verdito.vs30! * 100).toFixed(1).replace('.', ',')}% vs média ({real(verdito.media30 ?? 0)})
                     </p>
                   )}
-                  {hoje.checkoutErro && <p className="text-xs text-amber-300">Não cheguei ao total com impostos: {hoje.checkoutErro}</p>}
-                  {hoje.medias && hoje.medias.veredito !== 'sem_historico' && hoje.medias.media30 != null && hoje.medias.vs30 != null ? (
-                    <p className={cn('text-xs font-medium', hoje.medias.veredito === 'bom' ? 'text-emerald-300' : hoje.medias.veredito === 'caro' ? 'text-red-300' : 'text-muted-foreground')}>
-                      {hoje.medias.veredito === 'bom' ? '▼ bom preço' : hoje.medias.veredito === 'caro' ? '▲ caro' : '≈ na média'}: {Math.abs(hoje.medias.vs30 * 100).toFixed(1).replace('.', ',')}%{' '}
-                      {hoje.medias.vs30 < 0 ? 'abaixo' : 'acima'} da média de 30 dias ({real(hoje.medias.media30)}, contando suas últimas compras)
-                    </p>
-                  ) : (
-                    <p className="text-xs text-muted-foreground">Histórico começando: a média de 7 e 30 dias aparece em alguns dias.</p>
-                  )}
-                  {hoje.alertas.map((a, i) => (
-                    <p key={i} className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-300">
-                      {a}
+                  {(hoje?.alertas ?? []).map((al, i) => (
+                    <p key={i} className="text-xs text-amber-300">
+                      💡 {al}
                     </p>
                   ))}
-                  <Sparkline valores={[...serie].reverse().map((h) => precoDeCompra(h))} media={hoje.medias?.media30 ?? null} />
-                  {serie.length > 1 && (
-                    <table className="w-full text-xs tabular-nums">
-                      <tbody>
-                        {serie.map((h) => (
-                          <tr key={h.em} className="border-t border-border text-muted-foreground">
-                            <td className="py-1">{diaMes(h.em.slice(0, 10))}</td>
-                            <td className="py-1 text-right">{real(precoDeCompra(h))}</td>
-                            <td className="py-1 text-right">{h.dolar ? dolar(precoDeCompra(h) / h.dolar) : '—'}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  )}
+                  <Sparkline valores={serie.map((h) => precoDeCompra(h))} media={m?.media30 ?? null} />
                 </>
               )}
             </div>
           );
         })}
       </div>
-      <p className="mt-3 text-xs text-muted-foreground">
-        Preço de 1 unidade com impostos, lido na tela final da compra (acima de 3 unidades o imposto sobe). O coletor nunca faz o pedido: só chega até a tela de revisão. O pedido feito na AliExpress trava o preço por até 20 dias sem pagar.
-        {!ajustes.local && ' (Para ligar ou desligar o acompanhamento, abra esta página no seu Mac.)'}
-      </p>
+      {!ajustes.local && <p className="mt-2 text-xs text-muted-foreground">Ligar/desligar só no Mac.</p>}
     </section>
   );
 }
 
+/** Só o que importa: o desembaraço em destaque quando concluído; pagamento e entrega só se houver o que ver. */
 function Selos({ l }: { l: LinhaPedido }) {
   if (!l.ali) return <Selo texto="Lançado à mão" tom="neutro" />;
+  const { pagamento, aduana, entrega } = l.ali;
   return (
-    <div className="flex flex-wrap gap-1.5">
-      <Selo texto={PAGAMENTO[l.ali.pagamento][0]} tom={PAGAMENTO[l.ali.pagamento][1]} />
-      <Selo texto={ADUANA[l.ali.aduana][0]} tom={ADUANA[l.ali.aduana][1]} />
-      <Selo texto={ENTREGA[l.ali.entrega][0]} tom={ENTREGA[l.ali.entrega][1]} />
+    <div className="flex flex-wrap items-center gap-1.5">
+      {aduana === 'concluida' ? (
+        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500 px-3 py-1 text-xs font-semibold text-emerald-950">
+          <Check className="size-3.5" /> Desembaraço concluído
+        </span>
+      ) : (
+        <Selo texto={ADUANA[aduana][0]} tom={ADUANA[aduana][1]} />
+      )}
+      {pagamento !== 'ok' && <Selo texto={PAGAMENTO[pagamento][0]} tom={PAGAMENTO[pagamento][1]} />}
+      {entrega === 'problema' && <Selo texto={ENTREGA[entrega][0]} tom={ENTREGA[entrega][1]} />}
     </div>
+  );
+}
+
+/** "14 out, 2026" -> "14 out" */
+const dataCurta = (d: string | null | undefined) => (d ?? '').replace(/,?\s*\d{4}$/, '');
+
+/** Número de referência da AliExpress: é ele que diz qual pedido está recebendo "Cheguei". */
+function Referencia({ l }: { l: LinhaPedido }) {
+  if (!l.ali) return <>Lançado à mão{l.manual?.data ? ` · ${l.manual.data}` : ''}</>;
+  return (
+    <>
+      Ref. <span className="font-medium text-foreground tabular-nums">{l.ali.id}</span> · pedido {dataCurta(l.ali.data)}
+    </>
   );
 }
 
@@ -580,10 +583,12 @@ function VaiChegar({ linhas }: { linhas: LinhaPedido[] }) {
             <li key={l.id} className="flex flex-col gap-2 py-3 first:pt-0 last:pb-0">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="line-clamp-2 text-sm font-medium">{l.titulo}</p>
+                  <p className="text-base font-semibold">
+                    {nomeCurto(l.titulo)} <span className="font-normal text-muted-foreground">· {l.qtd} un.</span>
+                    {l.ali?.previsao ? <span className="ml-2 text-sm font-normal text-amber-300">{janela(l.ali.previsao.de, l.ali.previsao.ate)}</span> : null}
+                  </p>
                   <p className="mt-0.5 text-xs text-muted-foreground">
-                    {GRUPOS[l.grupo].nome} · {l.qtd} {l.qtd > 1 ? 'un.' : 'un.'}
-                    {l.ali?.previsao ? ` · chega ${janela(l.ali.previsao.de, l.ali.previsao.ate)}` : l.ali ? ' · sem previsão' : ''}
+                    <Referencia l={l} />
                   </p>
                 </div>
                 <Button size="sm" variant="outline" className="shrink-0" onClick={() => alterarControle(l.id, (x) => ({ ...x, recebido: true }))}>
@@ -613,10 +618,12 @@ function JaChegaram({ linhas }: { linhas: LinhaPedido[] }) {
           {linhas.map((l) => (
             <li key={l.id} className="flex items-start justify-between gap-3 py-2.5 text-sm first:pt-0 last:pb-0">
               <div className="min-w-0">
-                <p className="line-clamp-1 font-medium">{l.titulo}</p>
+                <p className="font-medium">
+                  {nomeCurto(l.titulo)} <span className="font-normal text-muted-foreground">· {l.qtd} un.</span>
+                  {!l.conta ? <span className="font-normal text-muted-foreground"> · fora do estoque</span> : null}
+                </p>
                 <p className="text-xs text-muted-foreground">
-                  {GRUPOS[l.grupo].nome} · {l.qtd} un. · {l.ali?.data ?? l.manual?.data ?? ''}
-                  {!l.conta ? ' · fora do estoque' : ''}
+                  <Referencia l={l} />
                 </p>
               </div>
               <Opcoes l={l} />
@@ -779,8 +786,22 @@ function PrecoDolar({ linhas, cotacao }: { linhas: LinhaPedido[]; cotacao: Dolar
           </div>
         );
       })}
-      <p className="mt-3 text-xs text-muted-foreground">Dólar do dia do pedido (cotação de mercado). Verde = menor preço em dólar que você já pagou. &quot;Com imposto&quot; = total pago no pedido dividido pelas unidades, que muda com a quantidade comprada.</p>
+      <p className="mt-3 text-xs text-muted-foreground">Verde = menor preço em dólar que você já pagou.</p>
     </section>
+  );
+}
+
+/** Seção que começa fechada, para a tela não ficar cheia de tabela. */
+function Recolher({ titulo, children }: { titulo: string; children: React.ReactNode }) {
+  const [aberto, setAberto] = useState(false);
+  return (
+    <>
+      <button type="button" className={cn(cartao, 'flex w-full items-center justify-between')} onClick={() => setAberto((v) => !v)}>
+        <p className={rotulo}>{titulo}</p>
+        <ChevronDown className={cn('size-5 text-muted-foreground transition-transform', aberto && 'rotate-180')} />
+      </button>
+      {aberto && children}
+    </>
   );
 }
 
@@ -865,7 +886,7 @@ function Backup() {
   return (
     <section className={cartao}>
       <p className={rotulo}>Backup (chegadas e vendas)</p>
-      <p className="mt-2 text-xs text-muted-foreground">Cópia de segurança do estoque e das vendas. Importar substitui o que há aqui.</p>
+      <p className="mt-2 text-xs text-muted-foreground">Importar substitui o que há aqui.</p>
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <Button size="sm" variant="outline" onClick={baixar}>
           <Download className="size-4" /> Exportar

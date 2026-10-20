@@ -300,3 +300,12 @@ export function totalEmReais(total: string | null): number | null {
   const m = /R\$\s?([\d.]+),(\d{2})/.exec(total ?? '');
   return m ? Number(`${m[1].replace(/\./g, '')}.${m[2]}`) : null;
 }
+
+/** "Microchip", "Leitor" e, para o resto, a primeira palavra do título ("Relógio"). */
+export function nomeCurto(titulo: string): string {
+  const g = grupoDoProduto(titulo);
+  if (g === 'microchip') return 'Microchip';
+  if (g === 'leitor') return 'Leitor';
+  const w = titulo.split(/[\s,]+/)[0] ?? '';
+  return w ? w.charAt(0).toUpperCase() + w.slice(1) : 'Pedido';
+}
