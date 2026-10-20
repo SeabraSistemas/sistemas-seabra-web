@@ -48,10 +48,6 @@ export function montarMensagem(snap, novas, dolar, agora = new Date()) {
     for (const a of p.alertas) linhas.push('', `🚨 ${nomeCurto(p.itens[0]?.titulo)}: ${a.texto}`);
   }
 
-  // Desembaraço concluído novo = hora de olhar o preço para repor.
-  const liberados = novas.filter((m) => /Desembaraço concluído/.test(m.texto)).map((m) => nomeCurto(snap.pedidos.find((p) => p.id === m.pedidoId)?.itens[0]?.titulo));
-  if (liberados.length) linhas.push('', `✅ Desembaraço concluído: ${[...new Set(liberados)].join(', ')}`);
-
   const aCaminho = snap.pedidos.filter((p) => p.entrega === 'a_caminho' || (p.entrega === 'desconhecido' && p.pagamento === 'pendente'));
   if (aCaminho.length) {
     linhas.push('', 'A caminho:');
@@ -88,6 +84,27 @@ export function montarMensagem(snap, novas, dolar, agora = new Date()) {
   if (dolar) linhas.push('', `💵 Dólar: ${real(dolar)}`);
   if (linhas.length === 1) linhas.push('', 'Nada novo.');
   return linhas.join('\n');
+}
+
+/**
+ * Aviso em DESTAQUE, mensagem separada: um pedido que esperava o desembaraço aduaneiro acabou de ser liberado.
+ * É o sinal de que o Felipe já pode comprar mais, então vem com o preço de hoje do mesmo produto.
+ * null se nenhum desembaraço novo.
+ */
+export function montarAvisoDesembaraco(snap, novas) {
+  const liberados = novas.filter((m) => /Desembaraço concluído/.test(m.texto)).map((m) => snap.pedidos.find((p) => p.id === m.pedidoId)).filter(Boolean);
+  if (!liberados.length) return null;
+  const linhas = ['✅✅✅ DESEMBARAÇO CONCLUÍDO ✅✅✅', ''];
+  for (const p of liberados) linhas.push(`${nomeCurto(p.itens[0]?.titulo)} · ${p.itens[0]?.qtd ?? 1} un.`, `Ref. ${p.id}`, '');
+  const NOME = { microchip: 'Microchip', leitor: 'Leitor' };
+  const grupos = new Set(liberados.map((p) => grupoDoProduto(p.itens[0]?.titulo ?? '')));
+  for (const x of Object.values(snap.precos ?? {})) {
+    if (!grupos.has(x.grupo) || x.erro || !x.checkout?.total) continue;
+    linhas.push(`💰 ${NOME[x.grupo] ?? x.grupo} hoje: ${real(precoDeCompra(x))}`);
+    if (x.medias?.veredito === 'bom' && x.medias.vs30 != null) linhas.push(`   ✅ Bom preço · ▼ ${Math.abs(x.medias.vs30 * 100).toFixed(1).replace('.', ',')}% da média`);
+    else if (x.medias?.veredito === 'caro' && x.medias.vs30 != null) linhas.push(`   ▲ ${Math.abs(x.medias.vs30 * 100).toFixed(1).replace('.', ',')}% acima da média`);
+  }
+  return linhas.join('\n').trim();
 }
 
 /** Pedido que deve gerar aviso mesmo que o dia esteja calmo. */

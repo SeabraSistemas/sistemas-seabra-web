@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { montarMensagem, temNovidade } from './notificar.mjs';
+import { montarAvisoDesembaraco, montarMensagem, temNovidade } from './notificar.mjs';
 
 const pedido = (o = {}) => ({
   id: '1',
@@ -55,12 +55,33 @@ test('sem passar pelo checkout o preço sai marcado como sem impostos', () => {
   assert.match(montarMensagem({ ok: true, pedidos: [], mudancas: [], precos }, [], null, AGORA), /💰 Microchip: R\$ 332,99 \(sem impostos, checkout falhou\)/);
 });
 
-test('desembaraço concluído novo e problema no topo', () => {
+test('problema no topo do resumo; o desembaraço novo NÃO se repete no resumo (tem mensagem própria)', () => {
   const p = pedido({ alertas: [{ tipo: 'aduana', texto: 'Objeto retido' }] });
   const novas = [{ pedidoId: '1', texto: 'Readell 100 peças: Desembaraço concluído', grave: false, em: 'x' }];
   const m = montarMensagem({ ok: true, pedidos: [p], mudancas: novas }, novas, null, AGORA);
   assert.match(m, /🚨 Microchip: Objeto retido/);
-  assert.match(m, /✅ Desembaraço concluído: Microchip/);
+  assert.doesNotMatch(m, /DESEMBARAÇO/i);
+});
+
+test('aviso de desembaraço: destaque, produto, referência e o preço de hoje', () => {
+  const novas = [{ pedidoId: '1', texto: 'Readell 100 peças: Desembaraço concluído', grave: false, em: 'x' }];
+  const precos = { microchip: { grupo: 'microchip', checkout: { total: 430, qtd: 1 }, medias: { veredito: 'bom', vs30: -0.0431 }, alertas: [] } };
+  const m = montarAvisoDesembaraco({ ok: true, pedidos: [pedido()], precos }, novas);
+  assert.equal(
+    m,
+    ['✅✅✅ DESEMBARAÇO CONCLUÍDO ✅✅✅', '', 'Microchip · 1 un.', 'Ref. 1', '', '💰 Microchip hoje: R$ 430,00', '   ✅ Bom preço · ▼ 4,3% da média'].join('\n'),
+  );
+  assert.equal(montarAvisoDesembaraco({ ok: true, pedidos: [pedido()] }, []), null, 'sem desembaraço novo, sem aviso');
+  assert.equal(montarAvisoDesembaraco({ ok: true, pedidos: [pedido()] }, [{ pedidoId: '1', texto: 'x: Entregue', grave: false, em: 'x' }]), null);
+});
+
+test('aviso de desembaraço mostra só o preço do produto liberado', () => {
+  const novas = [{ pedidoId: '1', texto: 'Readell: Desembaraço concluído', grave: false, em: 'x' }];
+  const precos = { microchip: { grupo: 'microchip', checkout: { total: 445.63, qtd: 1 }, medias: { veredito: 'caro', vs30: 0.105 }, alertas: [] }, leitor: { grupo: 'leitor', checkout: { total: 100, qtd: 1 }, alertas: [] } };
+  const m = montarAvisoDesembaraco({ ok: true, pedidos: [pedido()], precos }, novas);
+  assert.match(m, /Microchip hoje: R\$ 445,63/);
+  assert.match(m, /▲ 10,5% acima da média/);
+  assert.doesNotMatch(m, /Leitor/);
 });
 
 test('pagamento pendente é sinalizado', () => {

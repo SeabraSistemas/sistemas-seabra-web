@@ -24,7 +24,7 @@ import { classificar, ROTULOS } from './classificar.mjs';
 import { numeroBR, reaisTexto, reaisParaNumero } from './util.mjs';
 import { grupoDoProduto } from './grupos.mjs';
 import { lerAjustes, lerHistoricoPrecos, gravarHistoricoPrecos, parsearProduto, parsearCheckout, registrarPreco, avaliarPreco, medias, precoDeCompra } from './precos.mjs';
-import { dolarAtual, enviar, lerConfig, montarMensagem, temNovidade } from './notificar.mjs';
+import { dolarAtual, enviar, lerConfig, montarAvisoDesembaraco, montarMensagem, temNovidade } from './notificar.mjs';
 import { dadosLocais, enviarParaNuvem, lerNuvem } from './nuvem.mjs';
 
 const DIR = process.env.PEDIDOS_DIR ?? join(homedir(), '.seabra-pedidos');
@@ -39,6 +39,7 @@ const GUARDA_MUDANCA_MS = 30 * 24 * 3_600_000;
 const args = new Set(process.argv.slice(2));
 const modoLogin = args.has('login');
 const dry = args.has('--dry');
+const rapido = args.has('--rapido');
 const dump = args.has('--dump');
 const visivel = args.has('--visivel') || modoLogin;
 
@@ -254,6 +255,15 @@ export function montarPedido(item, rastreioTexto, agora = new Date()) {
   };
 }
 
+/** Pedido já conhecido + rastreio novo -> mesmo pedido com pagamento/aduana/entrega reclassificados. */
+export function reclassificar(p, rastreioTexto, agora = new Date()) {
+  const r = parsearRastreio(rastreioTexto, agora);
+  // Sem nenhum evento a leitura é inconclusiva (página não carregou): nunca vira "mudança".
+  if (r.eventos.length === 0) return p;
+  const c = classificar({ statusTexto: p.statusTexto, eventos: [...r.eventos].reverse() });
+  return { ...p, pagamento: c.pagamento, aduana: c.aduana, entrega: c.entrega, alertas: c.alertas, codigoRastreio: r.codigo ?? p.codigoRastreio, previsao: r.previsao ?? p.previsao ?? null, eventos: r.eventos.slice(0, 30) };
+}
+
 /* ── navegador ──────────────────────────────────────────────────────────── */
 
 async function abrir() {
@@ -371,7 +381,10 @@ async function lerCheckout(pagina) {
 
 async function lerRastreio(pagina, id) {
   await pagina.goto(`${BASE}/p/tracking/index.html?tradeOrderId=${id}`, { waitUntil: 'domcontentloaded', timeout: 60_000 });
-  await pagina.waitForTimeout(3500);
+  // Espera o rastreio APARECER (com o navegador recém-aberto a página demora): tempo fixo lia a tela vazia.
+  // Pedido ainda sem envio não tem o número de rastreamento: segue após o prazo.
+  await pagina.waitForFunction(() => /N[uú]mero de rastre|Tracking (number|no)/i.test(document.body.innerText), null, { timeout: 20_000 }).catch(() => {});
+  await pagina.waitForTimeout(800);
   const bloqueio = problemaDeAcesso(pagina, await pagina.evaluate(textoPagina));
   if (bloqueio) throw new Error(bloqueio);
   // Só expande o histórico (nenhum efeito na conta).
@@ -452,7 +465,16 @@ async function coletar() {
   const agora = new Date().toISOString();
   let ctx;
   try {
-    ctx = await abrir();
+    // A checagem rápida pode estar com o navegador: espera até ~3 min antes de desistir.
+    for (let tentativa = 0; ; tentativa++) {
+      try {
+        ctx = await abrir();
+        break;
+      } catch (e) {
+        if (tentativa >= 8 || !/SingletonLock|ProcessSingleton/i.test(String(e?.message))) throw e;
+        await new Promise((r) => setTimeout(r, 20_000));
+      }
+    }
   } catch (e) {
     const emUso = /SingletonLock|ProcessSingleton|já está em uso/i.test(String(e?.message));
     return {
@@ -490,7 +512,12 @@ async function coletar() {
       }
       abertos++;
       await espera(1500, 3500);
-      pedidos.push(montarPedido(item, await lerRastreio(pagina, item.id)));
+      let novo = montarPedido(item, await lerRastreio(pagina, item.id));
+      // Rastreio que já tínhamos e agora veio vazio = leitura ruim, não pacote sem histórico: mantém o anterior.
+      if (velho?.eventos?.length && novo.eventos.length === 0) {
+        novo = { ...novo, aduana: velho.aduana, eventos: velho.eventos, previsao: novo.previsao ?? velho.previsao ?? null, codigoRastreio: novo.codigoRastreio ?? velho.codigoRastreio };
+      }
+      pedidos.push(novo);
     }
 
     const precos = await coletarPrecos(pagina, pedidos, agora);
@@ -519,6 +546,45 @@ async function coletar() {
     };
   } finally {
     await ctx.close().catch(() => {});
+  }
+}
+
+/**
+ * Checagem LEVE, a cada poucas horas (--rapido): só relê o rastreio dos pedidos que ainda esperam o desembaraço
+ * aduaneiro, para avisar logo que ele sair. Sem nada a conferir, nem abre o navegador. Qualquer falha (perfil em
+ * uso pela leitura completa, sessão, CAPTCHA) é silenciosa: não grava erro, a leitura das 8h cuida disso.
+ * Devolve o novo snapshot só se algo mudou; senão null.
+ */
+async function coletarRapido() {
+  const anterior = lerSnapshot();
+  const pendentes = (anterior?.pedidos ?? []).filter((p) => p.entrega === 'a_caminho' && p.aduana !== 'concluida');
+  if (!anterior?.ok || pendentes.length === 0) {
+    console.log('Nada esperando desembaraço: nada a conferir.');
+    return null;
+  }
+  const agora = new Date().toISOString();
+  let ctx;
+  try {
+    ctx = await abrir();
+    const pagina = ctx.pages()[0] ?? (await ctx.newPage());
+    const atualizados = new Map();
+    for (const p of pendentes) {
+      await espera(1500, 3500);
+      atualizados.set(p.id, reclassificar(p, await lerRastreio(pagina, p.id)));
+    }
+    const pedidos = anterior.pedidos.map((p) => atualizados.get(p.id) ?? p);
+    const novas = diferencas(anterior.pedidos, pedidos, agora);
+    if (novas.length === 0) {
+      console.log(`${pendentes.length} pedido(s) esperando desembaraço: sem novidade.`);
+      return null;
+    }
+    console.log(`Mudou: ${novas.map((m) => m.texto).join(' | ')}`);
+    return { ...anterior, atualizadoEm: agora, pedidos, mudancas: [...novas, ...anterior.mudancas].slice(0, MAX_MUDANCAS) };
+  } catch (e) {
+    console.log(`Checagem rápida pulada: ${String(e?.message ?? e).split('\n')[0]}`);
+    return null;
+  } finally {
+    await ctx?.close().catch(() => {});
   }
 }
 
@@ -553,8 +619,15 @@ async function subirParaOSite() {
 async function avisar(snap) {
   if (dry || args.has('--sem-aviso') || !lerConfig()) return;
   const novas = snap.mudancas.filter((m) => m.em === snap.atualizadoEm);
-  // Todo dia chega um resumo; o que muda é só o quanto tem de novidade no topo.
   try {
+    // Desembaraço novo: mensagem PRÓPRIA e em destaque, antes de tudo — é o sinal para comprar.
+    const urgente = montarAvisoDesembaraco(snap, novas);
+    if (urgente) {
+      await enviar(urgente);
+      console.log('Aviso de desembaraço enviado no Telegram.');
+    }
+    if (rapido) return;
+    // Todo dia chega um resumo; o que muda é só o quanto tem de novidade no topo.
     await enviar(montarMensagem(snap, novas, await dolarAtual()));
     console.log(temNovidade(snap, novas) ? 'Aviso enviado no Telegram.' : 'Resumo do dia enviado no Telegram.');
   } catch (e) {
@@ -567,7 +640,8 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     await login();
   } else {
     if (!existsSync(PERFIL) && !dry) console.log('Aviso: sem sessão guardada ainda — rode "node coletor.mjs login" primeiro.');
-    const snap = await coletar();
+    const snap = rapido ? await coletarRapido() : await coletar();
+    if (!snap) process.exit(0);
     resumo(snap);
     if (!dry) gravarSnapshot(snap);
     process.exitCode = snap.ok ? 0 : 1;

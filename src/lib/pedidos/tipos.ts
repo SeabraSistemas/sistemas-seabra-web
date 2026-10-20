@@ -180,6 +180,21 @@ export interface BaseEstoque {
   em: string;
 }
 
+/**
+ * Operação antiga, de fora da AliExpress (ex.: importação de 5.000 microchips): compra e venda já encerradas.
+ * Não mexe no estoque; só entra no balanço (faturamento, custo e lucro).
+ */
+export interface OperacaoAntiga {
+  id: string;
+  grupo: Grupo;
+  descricao: string;
+  /** Unidades de venda (microchip: chips). */
+  unidades: number;
+  /** Custo e preço de venda por unidade, em reais. */
+  custoUnit: number;
+  vendaUnit: number;
+}
+
 export interface EstadoPedidos {
   controles: Record<string, Controle>;
   manuais: PedidoManual[];
@@ -187,6 +202,7 @@ export interface EstadoPedidos {
   base: Partial<Record<Grupo, BaseEstoque>>;
   /** Preço de venda de UMA unidade (microchip: por chip), em reais. Padrão em PRECO_VENDA_PADRAO. */
   precosVenda?: Partial<Record<Grupo, number>>;
+  historico?: OperacaoAntiga[];
   /** ISO do último "visto": alertas e mudanças depois disso aparecem como novos. */
   vistoEm: string | null;
 }
@@ -345,7 +361,7 @@ export interface Balanco {
  * compra (imposto de importação, ICMS e frete inclusos), repartido pelo custo médio entre o que vendeu e o que sobrou.
  * Compra lançada à mão não tem valor e fica fora do custo.
  */
-export function balanco(grupo: Grupo, linhas: LinhaPedido[], vendas: Venda[], emEstoque: number, precoVendaInformado?: number): Balanco {
+export function balanco(grupo: Grupo, linhas: LinhaPedido[], vendas: Venda[], emEstoque: number, precoVendaInformado?: number, antigas: OperacaoAntiga[] = []): Balanco {
   const precoVenda = precoVendaInformado ?? PRECO_VENDA_PADRAO[grupo];
   let pacotes = 0;
   let unidades = 0;
@@ -362,18 +378,25 @@ export function balanco(grupo: Grupo, linhas: LinhaPedido[], vendas: Venda[], em
   const pacotesRegistrados = registradas.reduce((s, v) => s + v.qtd, 0);
   const pacotesHistorico = Math.max(0, pacotesVendidos - pacotesRegistrados);
   const faturamento = pacotesHistorico * pecas * precoVenda + registradas.reduce((s, v) => s + v.qtd * pecas * (v.preco ?? precoVenda), 0);
-  const custoVendido = pacotes > 0 ? custoCompras * (pacotesVendidos / pacotes) : 0;
+  const custoVendidoAli = pacotes > 0 ? custoCompras * (pacotesVendidos / pacotes) : 0;
+  // Operações antigas: compra e venda já encerradas, entram inteiras no balanço.
+  const ant = antigas.filter((o) => o.grupo === grupo);
+  const antUnidades = ant.reduce((s, o) => s + o.unidades, 0);
+  const antCusto = ant.reduce((s, o) => s + o.unidades * o.custoUnit, 0);
+  const antFat = ant.reduce((s, o) => s + o.unidades * o.vendaUnit, 0);
+  const faturamentoTotal = faturamento + antFat;
+  const custoVendido = custoVendidoAli + antCusto;
   return {
     grupo,
     precoVenda,
     pecas,
-    compradas: unidades,
-    vendidas: pacotesVendidos * pecas,
-    faturamento,
-    custoCompras,
+    compradas: unidades + antUnidades,
+    vendidas: pacotesVendidos * pecas + antUnidades,
+    faturamento: faturamentoTotal,
+    custoCompras: custoCompras + antCusto,
     custoVendido,
-    custoEstoque: custoCompras - custoVendido,
-    lucro: faturamento - custoVendido,
-    margem: faturamento > 0 ? (faturamento - custoVendido) / faturamento : null,
+    custoEstoque: custoCompras - custoVendidoAli,
+    lucro: faturamentoTotal - custoVendido,
+    margem: faturamentoTotal > 0 ? (faturamentoTotal - custoVendido) / faturamentoTotal : null,
   };
 }

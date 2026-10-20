@@ -5,7 +5,7 @@ import { AlertTriangle, Archive, Check, ChevronDown, Download, ExternalLink, Pac
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
-import { acertarEstoque, alterarControle, alterarEstado, definirPrecoVenda, desfazerVenda, exportarEstado, registrarVenda, sincronizarEstado, substituirEstado, useEstadoPedidos } from '@/lib/pedidos/estado';
+import { acertarEstoque, adicionarOperacaoAntiga, alterarControle, alterarEstado, definirPrecoVenda, desfazerVenda, exportarEstado, registrarVenda, removerOperacaoAntiga, sincronizarEstado, substituirEstado, useEstadoPedidos } from '@/lib/pedidos/estado';
 import {
   dataDoPedido,
   GRUPOS,
@@ -291,7 +291,7 @@ function Painel({
 
         {outros.length > 0 && <Secundarios linhas={outros} controles={estado.controles} />}
 
-        <Faturamento linhas={linhas} resumo={resumo} vendas={estado.vendas} precos={estado.precosVenda} />
+        <Faturamento linhas={linhas} resumo={resumo} vendas={estado.vendas} precos={estado.precosVenda} antigas={estado.historico ?? []} />
 
         <NovoManual />
         <Backup />
@@ -839,9 +839,9 @@ function Secundarios({ linhas, controles }: { linhas: LinhaPedido[]; controles: 
 }
 
 /** Faturamento e lucro líquido estimados, de todo o histórico. Os preços de venda por unidade são editáveis aqui. */
-function Faturamento({ linhas, resumo, vendas, precos }: { linhas: LinhaPedido[]; resumo: ReturnType<typeof resumirPorGrupo>; vendas: EstadoPedidos['vendas']; precos: EstadoPedidos['precosVenda'] }) {
+function Faturamento({ linhas, resumo, vendas, precos, antigas }: { linhas: LinhaPedido[]; resumo: ReturnType<typeof resumirPorGrupo>; vendas: EstadoPedidos['vendas']; precos: EstadoPedidos['precosVenda']; antigas: NonNullable<EstadoPedidos['historico']> }) {
   const grupos: Grupo[] = ['microchip', 'leitor'];
-  const bs = grupos.map((g) => balanco(g, linhas, vendas, resumo[g].emEstoque, precos?.[g]));
+  const bs = grupos.map((g) => balanco(g, linhas, vendas, resumo[g].emEstoque, precos?.[g], antigas));
   const total = bs.reduce((a, b) => ({ fat: a.fat + b.faturamento, custo: a.custo + b.custoVendido, lucro: a.lucro + b.lucro, estoque: a.estoque + b.custoEstoque }), { fat: 0, custo: 0, lucro: 0, estoque: 0 });
   const margemTotal = total.fat > 0 ? total.lucro / total.fat : null;
   const pct = (n: number | null) => (n == null ? '—' : `${(n * 100).toFixed(0)}%`);
@@ -894,7 +894,71 @@ function Faturamento({ linhas, resumo, vendas, precos }: { linhas: LinhaPedido[]
         ))}
         {total.estoque > 0 && <p className="text-xs text-muted-foreground">Parado em estoque: {real(total.estoque)} a custo</p>}
       </div>
+      {antigas.length > 0 && (
+        <ul className="mt-3 flex flex-col divide-y divide-border border-t border-border pt-1 text-sm">
+          {antigas.map((o) => (
+            <li key={o.id} className="flex items-center justify-between gap-3 py-2">
+              <span>
+                {o.descricao || 'Operação antiga'} <span className="text-muted-foreground tabular-nums">· {GRUPOS[o.grupo].nome} · {o.unidades.toLocaleString('pt-BR')} un. · {real(o.custoUnit)} → {real(o.vendaUnit)}</span>
+              </span>
+              <Button size="sm" variant="ghost" onClick={() => removerOperacaoAntiga(o.id)} aria-label="Remover esta operação">
+                <Undo2 className="size-4" />
+              </Button>
+            </li>
+          ))}
+        </ul>
+      )}
+      <NovaOperacaoAntiga />
     </section>
+  );
+}
+
+/** Compra e venda antigas, de fora da AliExpress, só para constar no balanço (não mexem no estoque). */
+function NovaOperacaoAntiga() {
+  const [aberto, setAberto] = useState(false);
+  const [grupo, setGrupo] = useState<Grupo>('microchip');
+  const [descricao, setDescricao] = useState('');
+  const [unidades, setUnidades] = useState('');
+  const [custo, setCusto] = useState('');
+  const [venda, setVenda] = useState('');
+  const num = (t: string) => Number(t.replace(',', '.'));
+  const valido = Math.floor(num(unidades)) >= 1 && num(custo) >= 0 && custo.trim() !== '' && num(venda) >= 0 && venda.trim() !== '';
+  const salvar = () => {
+    if (!valido) return;
+    adicionarOperacaoAntiga({ grupo, descricao: descricao.trim(), unidades: Math.floor(num(unidades)), custoUnit: num(custo), vendaUnit: num(venda) });
+    setDescricao('');
+    setUnidades('');
+    setCusto('');
+    setVenda('');
+    setAberto(false);
+  };
+  if (!aberto) {
+    return (
+      <Button className="mt-3" size="sm" variant="ghost" onClick={() => setAberto(true)}>
+        <Plus className="size-4" /> Operação antiga
+      </Button>
+    );
+  }
+  return (
+    <div className="mt-3 flex flex-wrap items-end gap-2 border-t border-border pt-3">
+      <select className={seletor} aria-label="Produto" value={grupo} onChange={(e) => setGrupo(e.target.value as Grupo)}>
+        {(Object.keys(GRUPOS) as Grupo[]).map((g) => (
+          <option key={g} value={g}>
+            {GRUPOS[g].nome}
+          </option>
+        ))}
+      </select>
+      <Input className="w-44" placeholder="Descrição" value={descricao} onChange={(e) => setDescricao(e.target.value)} />
+      <Input className="w-24" inputMode="numeric" placeholder="Unidades" value={unidades} onChange={(e) => setUnidades(e.target.value)} />
+      <Input className="w-24" inputMode="decimal" placeholder="Custo un." value={custo} onChange={(e) => setCusto(e.target.value)} />
+      <Input className="w-24" inputMode="decimal" placeholder="Venda un." value={venda} onChange={(e) => setVenda(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && salvar()} />
+      <Button size="sm" onClick={salvar} disabled={!valido}>
+        Salvar
+      </Button>
+      <Button size="sm" variant="ghost" onClick={() => setAberto(false)}>
+        Cancelar
+      </Button>
+    </div>
   );
 }
 

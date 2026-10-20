@@ -1,5 +1,5 @@
 import { useMemo, useSyncExternalStore } from 'react';
-import { CONTROLE_VAZIO, ESTADO_INICIAL, type BaseEstoque, type Controle, type EstadoPedidos, type Grupo, type PedidoManual, type Venda } from './tipos';
+import { CONTROLE_VAZIO, ESTADO_INICIAL, type BaseEstoque, type Controle, type EstadoPedidos, type Grupo, type OperacaoAntiga, type PedidoManual, type Venda } from './tipos';
 
 /*
  * Estoque, vendas e ponto de partida. A FONTE DA VERDADE é o servidor (/pedidos/api/estado: Supabase
@@ -89,7 +89,18 @@ export function interpretar(bruto: string | null): EstadoPedidos {
       const n = dinheiro(v);
       if (gr && n !== undefined) precosVenda[gr] = n;
     }
-    return { controles, manuais, vendas, base, precosVenda, vistoEm: typeof o.vistoEm === 'string' ? o.vistoEm : null };
+    const historico: OperacaoAntiga[] = [];
+    for (const h of Array.isArray(o.historico) ? o.historico : []) {
+      const r = h as Record<string, unknown>;
+      const gr = grupo(r?.grupo);
+      const un = inteiro(r?.unidades, 1);
+      const custo = dinheiro(r?.custoUnit);
+      const venda = dinheiro(r?.vendaUnit);
+      if (typeof r?.id === 'string' && gr && un && custo !== undefined && venda !== undefined) {
+        historico.push({ id: r.id, grupo: gr, descricao: typeof r.descricao === 'string' ? r.descricao : '', unidades: un, custoUnit: custo, vendaUnit: venda });
+      }
+    }
+    return { controles, manuais, vendas, base, precosVenda, historico, vistoEm: typeof o.vistoEm === 'string' ? o.vistoEm : null };
   } catch {
     return ESTADO_INICIAL;
   }
@@ -177,6 +188,14 @@ export function acertarEstoque(g: Grupo, qtd: number, recebidosAgora: string[]) 
 
 export function definirPrecoVenda(g: Grupo, valor: number) {
   alterarEstado((e) => ({ ...e, precosVenda: { ...e.precosVenda, [g]: valor } }));
+}
+
+export function adicionarOperacaoAntiga(op: Omit<OperacaoAntiga, 'id'>) {
+  alterarEstado((e) => ({ ...e, historico: [...(e.historico ?? []), { ...op, id: `op-${Date.now().toString(36)}` }] }));
+}
+
+export function removerOperacaoAntiga(id: string) {
+  alterarEstado((e) => ({ ...e, historico: (e.historico ?? []).filter((o) => o.id !== id) }));
 }
 
 export function desfazerVenda(id: string) {

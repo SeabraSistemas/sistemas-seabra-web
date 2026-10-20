@@ -4,6 +4,7 @@
  *
  *   node nuvem.mjs --testar              manda o snapshot e o histórico que já estão no Mac
  *   node nuvem.mjs --semear arquivo.json  manda um ESTOQUE INICIAL (só vale se o site ainda não tem estoque)
+ *   node nuvem.mjs --historico arquivo.json  manda OPERAÇÕES ANTIGAS (lista; entram por id, sem apagar nada)
  *
  * Configuração em ~/.seabra-pedidos/nuvem.json (permissão 600): { "url": ".../pedidos/api/ingest", "segredo": "…" }.
  * O segredo é o mesmo PEDIDOS_COLETOR_SECRET cadastrado na Vercel. Sem esse arquivo o coletor não envia
@@ -57,7 +58,11 @@ if (import.meta.url === `file://${process.argv[1]}`) {
       const estado = lerJson(arq?.replace(`${DIR}/`, '') ?? '');
       if (!estado) throw new Error(`Arquivo não encontrado em ${DIR}: ${arq}`);
       console.log(JSON.stringify(await enviarParaNuvem({ estadoInicial: estado })));
-    } else console.log('Use --testar ou --semear arquivo.json');
+    } else if (cmd === '--historico') {
+      const lista = lerJson(arq ?? '');
+      if (!Array.isArray(lista)) throw new Error(`Arquivo não encontrado (ou não é uma lista) em ${DIR}: ${arq}`);
+      console.log(JSON.stringify(await enviarParaNuvem({ historicoManual: lista })));
+    } else console.log('Use --testar, --semear arquivo.json ou --historico arquivo.json');
   } catch (e) {
     console.error(`Erro: ${e.message}`);
     process.exitCode = 1;

@@ -92,3 +92,17 @@ test('balanço: preço de venda editado vale no lugar do padrão; sem compras n�
   const vazio = balanco('microchip', [], [], 0);
   assert.deepEqual([vazio.faturamento, vazio.lucro, vazio.margem], [0, 0, null]);
 });
+
+test('operação antiga: 5.000 chips a R$ 5,20, vendidos a R$ 8,60, entra inteira no balanço sem mexer no estoque', () => {
+  const op = { id: 'imp', grupo: 'microchip' as const, descricao: 'Importação', unidades: 5000, custoUnit: 5.2, vendaUnit: 8.6 };
+  const b = balanco('microchip', [], [], 0, undefined, [op]);
+  assert.equal(b.vendidas, 5000);
+  assert.equal(Math.round(b.faturamento), 43000);
+  assert.equal(Math.round(b.custoVendido), 26000);
+  assert.equal(Math.round(b.lucro), 17000);
+  assert.equal(b.custoEstoque, 0);
+  assert.equal(balanco('leitor', [], [], 0, undefined, [op]).faturamento, 0, 'só soma no produto certo');
+  // Junto de compras da AliExpress: soma os dois.
+  const linhas = [compra('x', 'microchip', 'Readell 100 peças etiqueta de vidro', 1, 'R$400,00')];
+  assert.equal(Math.round(balanco('microchip', linhas, [], 0, undefined, [op]).lucro), Math.round(860 - 400 + 17000));
+});

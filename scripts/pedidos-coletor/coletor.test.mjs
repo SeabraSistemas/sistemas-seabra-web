@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { classificar } from './classificar.mjs';
-import { PROIBIDO, SO_ESTE_BOTAO, dataDoCartao, dataDoEvento, diferencas, numeroBR, parsearCartao, parsearRastreio, previsaoDeEntrega } from './coletor.mjs';
+import { PROIBIDO, SO_ESTE_BOTAO, reclassificar, dataDoCartao, dataDoEvento, diferencas, numeroBR, parsearCartao, parsearRastreio, previsaoDeEntrega } from './coletor.mjs';
 
 /* Textos copiados da conta real (20/10/2026), sem endereço/telefone e com o código de rastreio mascarado. */
 
@@ -244,4 +244,23 @@ test('trava do checkout: só "Comprar" passa; "Fazer o pedido" e qualquer pagame
     assert.ok(!SO_ESTE_BOTAO.test(no) || PROIBIDO.test(no), `deveria barrar: ${no}`);
   }
   assert.ok(!SO_ESTE_BOTAO.test('Fazer o pedido'));
+});
+
+test('checagem rápida: o rastreio novo libera o desembaraço e a mudança aparece', () => {
+  const antes = { id: '1', itens: [{ titulo: 'Readell 100 peças microchip' }], statusTexto: 'Aguardando a entrega', pagamento: 'ok', aduana: 'aguardando', entrega: 'a_caminho', alertas: [], codigoRastreio: null, previsao: null, eventos: [] };
+  const depois = reclassificar(antes, RASTREIO, AGORA);
+  assert.equal(depois.aduana, 'concluida');
+  assert.equal(depois.codigoRastreio, 'NN000000000BR');
+  assert.deepEqual(depois.previsao, { de: '2026-10-26', ate: '2026-11-07' });
+  const m = diferencas([antes], [depois], '2026-10-20T10:00:00Z');
+  assert.equal(m.length, 1);
+  assert.match(m[0].texto, /Desembaraço concluído/);
+  // Rastreio sem nada novo: nenhuma mudança.
+  assert.deepEqual(diferencas([depois], [reclassificar(depois, RASTREIO, AGORA)], 'x'), []);
+});
+
+test('leitura de rastreio vazia (página não carregou) é inconclusiva: não muda nada nem gera aviso', () => {
+  const p = { id: '1', itens: [{ titulo: 'Readell 100 peças microchip' }], statusTexto: 'Aguardando a entrega', pagamento: 'ok', aduana: 'concluida', entrega: 'a_caminho', alertas: [], codigoRastreio: 'NN1', previsao: null, eventos: [{ data: '2026-10-18 03:49', texto: 'Desembaraço aduaneiro concluído' }] };
+  assert.equal(reclassificar(p, 'AliExpress\nFaça o download do aplicativo\nCarrinho', AGORA), p);
+  assert.deepEqual(diferencas([p], [reclassificar(p, '', AGORA)], 'x'), []);
 });

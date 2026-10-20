@@ -104,6 +104,14 @@ e sai para `about:blank` **sem clicar em mais nada**. "Fazer o pedido", "Confirm
 código (`PROIBIDO` / `SO_ESTE_BOTAO` em `coletor.mjs`, com teste). Desligar: `ajustes.json` → `"checkout": { "microchip": false }`.
 A média de 30 dias considera as leituras diárias **e** o que você pagou nos últimos 60 dias (1 a 3 unidades, mesma variante).
 
+## Aviso de desembaraço (checagem rápida, a cada 2 horas)
+
+Quando um pedido que esperava o desembaraço aduaneiro é liberado, o Telegram recebe uma mensagem PRÓPRIA e em destaque
+("✅✅✅ DESEMBARAÇO CONCLUÍDO ✅✅✅", com produto, referência e o preço de hoje) — é o sinal para comprar. Para não esperar as 8h,
+um segundo agendamento (`br.com.sistemaseabra.pedidos-rapido`, `node coletor.mjs --rapido`, a cada 2 h) relê só o rastreio dos
+pedidos a caminho que ainda não foram liberados; sem pedido esperando, nem abre o navegador. Leitura vazia (página que não
+carregou) é descartada, e a leitura das 8h espera se a rápida estiver com o navegador.
+
 ## Quando der problema
 
 | O painel mostra | O que fazer |
