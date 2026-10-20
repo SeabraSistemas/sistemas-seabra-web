@@ -201,9 +201,15 @@ export function PedidosPainel() {
   useEffect(() => {
     const primeira = window.setTimeout(sincronizarEstado, 0);
     const id = window.setInterval(sincronizarEstado, 60_000);
+    // Ao voltar para a aba (ou o celular acordar), puxa na hora: aba esquecida não fica com a versão velha.
+    const aoVoltar = () => document.visibilityState === 'visible' && sincronizarEstado();
+    document.addEventListener('visibilitychange', aoVoltar);
+    window.addEventListener('focus', sincronizarEstado);
     return () => {
       window.clearTimeout(primeira);
       window.clearInterval(id);
+      document.removeEventListener('visibilitychange', aoVoltar);
+      window.removeEventListener('focus', sincronizarEstado);
     };
   }, []);
   const historico = useHistoricoPrecos(dados.snapshot?.atualizadoEm);
@@ -899,7 +905,7 @@ function Faturamento({ linhas, resumo, vendas, precos, antigas }: { linhas: Linh
           {antigas.map((o) => (
             <li key={o.id} className="flex items-center justify-between gap-3 py-2">
               <span>
-                {o.descricao || 'Operação antiga'} <span className="text-muted-foreground tabular-nums">· {GRUPOS[o.grupo].nome} · {o.unidades.toLocaleString('pt-BR')} un. · {real(o.custoUnit)} → {real(o.vendaUnit)}</span>
+                {o.descricao || 'Operação antiga'} <span className="text-muted-foreground tabular-nums">{o.data ? `· ${o.data} ` : ''}· {GRUPOS[o.grupo].nome} · {o.unidades.toLocaleString('pt-BR')} un. · {real(o.custoUnit)} → {real(o.vendaUnit)}</span>
               </span>
               <Button size="sm" variant="ghost" onClick={() => removerOperacaoAntiga(o.id)} aria-label="Remover esta operação">
                 <Undo2 className="size-4" />
@@ -918,6 +924,7 @@ function NovaOperacaoAntiga() {
   const [aberto, setAberto] = useState(false);
   const [grupo, setGrupo] = useState<Grupo>('microchip');
   const [descricao, setDescricao] = useState('');
+  const [quando, setQuando] = useState('');
   const [unidades, setUnidades] = useState('');
   const [custo, setCusto] = useState('');
   const [venda, setVenda] = useState('');
@@ -925,8 +932,9 @@ function NovaOperacaoAntiga() {
   const valido = Math.floor(num(unidades)) >= 1 && num(custo) >= 0 && custo.trim() !== '' && num(venda) >= 0 && venda.trim() !== '';
   const salvar = () => {
     if (!valido) return;
-    adicionarOperacaoAntiga({ grupo, descricao: descricao.trim(), unidades: Math.floor(num(unidades)), custoUnit: num(custo), vendaUnit: num(venda) });
+    adicionarOperacaoAntiga({ grupo, descricao: descricao.trim(), data: quando.trim() || undefined, unidades: Math.floor(num(unidades)), custoUnit: num(custo), vendaUnit: num(venda) });
     setDescricao('');
+    setQuando('');
     setUnidades('');
     setCusto('');
     setVenda('');
@@ -948,7 +956,8 @@ function NovaOperacaoAntiga() {
           </option>
         ))}
       </select>
-      <Input className="w-44" placeholder="Descrição" value={descricao} onChange={(e) => setDescricao(e.target.value)} />
+      <Input className="w-40" placeholder="Descrição" value={descricao} onChange={(e) => setDescricao(e.target.value)} />
+      <Input className="w-28" placeholder="Quando (24 fev 2023)" value={quando} onChange={(e) => setQuando(e.target.value)} />
       <Input className="w-24" inputMode="numeric" placeholder="Unidades" value={unidades} onChange={(e) => setUnidades(e.target.value)} />
       <Input className="w-24" inputMode="decimal" placeholder="Custo un." value={custo} onChange={(e) => setCusto(e.target.value)} />
       <Input className="w-24" inputMode="decimal" placeholder="Venda un." value={venda} onChange={(e) => setVenda(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && salvar()} />

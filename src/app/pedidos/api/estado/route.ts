@@ -28,7 +28,7 @@ export async function PUT(request: Request) {
   if (!(await sessaoValida())) return nao();
   const texto = await request.text();
   if (texto.length > 1_000_000) return NextResponse.json({ erro: 'grande demais' }, { status: 413 });
-  let corpo: Partial<Doc>;
+  let corpo: Partial<Doc> & { baseRev?: number };
   try {
     corpo = JSON.parse(texto);
   } catch {
@@ -36,9 +36,11 @@ export async function PUT(request: Request) {
   }
   if (typeof corpo.rev !== 'number' || !corpo.estado || typeof corpo.estado !== 'object') return NextResponse.json({ erro: 'pedido inválido' }, { status: 400 });
 
-  // Última escrita vence, mas nunca uma MAIS VELHA sobre uma mais nova (aba esquecida aberta).
+  // Última escrita vence, mas nunca uma MAIS VELHA sobre uma mais nova (aba esquecida aberta) e nunca em cima de uma
+  // versão que o aparelho não chegou a ver (`baseRev`: o coletor pode ter gravado no meio — a aba adota em vez de apagar).
   const atual = doc(await lerDoc('estado'));
-  if (atual && corpo.rev < atual.rev) return NextResponse.json({ estado: atual.estado, rev: atual.rev }, { status: 409, headers: SEM_CACHE });
+  const semVer = typeof corpo.baseRev === 'number' && atual != null && atual.rev > corpo.baseRev;
+  if (atual && (corpo.rev < atual.rev || semVer)) return NextResponse.json({ estado: atual.estado, rev: atual.rev }, { status: 409, headers: SEM_CACHE });
   const ok = await gravarDoc('estado', { estado: corpo.estado, rev: corpo.rev });
   return NextResponse.json({ ok }, { status: ok ? 200 : 500, headers: SEM_CACHE });
 }

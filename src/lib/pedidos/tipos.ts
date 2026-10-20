@@ -188,6 +188,8 @@ export interface OperacaoAntiga {
   id: string;
   grupo: Grupo;
   descricao: string;
+  /** Quando foi, em texto livre ("24 fev 2023"). */
+  data?: string;
   /** Unidades de venda (microchip: chips). */
   unidades: number;
   /** Custo e preço de venda por unidade, em reais. */

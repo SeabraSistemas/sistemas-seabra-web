@@ -45,9 +45,16 @@ export async function POST(request: Request) {
     const atual = (await lerDoc('estado')) as { estado?: Record<string, unknown> } | null;
     const estado = { ...(atual?.estado ?? {}) };
     const existentes = (Array.isArray(estado.historico) ? estado.historico : []) as Array<{ id: string }>;
-    const novas = validas.filter((v) => !existentes.some((x) => x.id === v.id));
-    if (novas.length > 0) {
-      estado.historico = [...existentes, ...novas];
+    // Por id: cria se não existe, atualiza os campos se já existe. Repetir o envio não duplica nada.
+    const porId = new Map(existentes.map((x) => [x.id, x as Record<string, unknown>]));
+    let mudou = false;
+    for (const v of validas) {
+      const antes = porId.get(String(v.id));
+      if (!antes || JSON.stringify({ ...antes, ...v }) !== JSON.stringify(antes)) mudou = true;
+      porId.set(String(v.id), { ...(antes ?? {}), ...v });
+    }
+    if (mudou) {
+      estado.historico = [...porId.values()];
       if (await gravarDoc('estado', { estado, rev: Date.now() })) gravados.push('historico');
     }
   }

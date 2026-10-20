@@ -12,6 +12,7 @@ import { CONTROLE_VAZIO, ESTADO_INICIAL, type BaseEstoque, type Controle, type E
 const CHAVE = 'seabra:pedidos:v1';
 const EVENTO = 'seabra:pedidos';
 const CHAVE_REV = 'seabra:pedidos:rev';
+const CHAVE_BASE = 'seabra:pedidos:base-rev';
 
 let memoria: string | null = null;
 
@@ -97,7 +98,7 @@ export function interpretar(bruto: string | null): EstadoPedidos {
       const custo = dinheiro(r?.custoUnit);
       const venda = dinheiro(r?.vendaUnit);
       if (typeof r?.id === 'string' && gr && un && custo !== undefined && venda !== undefined) {
-        historico.push({ id: r.id, grupo: gr, descricao: typeof r.descricao === 'string' ? r.descricao : '', unidades: un, custoUnit: custo, vendaUnit: venda });
+        historico.push({ id: r.id, grupo: gr, descricao: typeof r.descricao === 'string' ? r.descricao : '', data: typeof r.data === 'string' && r.data ? r.data : undefined, unidades: un, custoUnit: custo, vendaUnit: venda });
       }
     }
     return { controles, manuais, vendas, base, precosVenda, historico, vistoEm: typeof o.vistoEm === 'string' ? o.vistoEm : null };
@@ -111,6 +112,23 @@ function lerRev(): number {
     return Number(window.localStorage.getItem(CHAVE_REV)) || 0;
   } catch {
     return 0;
+  }
+}
+
+/** Última rev do SERVIDOR que este aparelho viu. O servidor recusa uma escrita feita em cima de uma rev mais velha. */
+function lerBase(): number {
+  try {
+    return Number(window.localStorage.getItem(CHAVE_BASE)) || 0;
+  } catch {
+    return 0;
+  }
+}
+
+function guardarBase(rev: number) {
+  try {
+    window.localStorage.setItem(CHAVE_BASE, String(rev));
+  } catch {
+    // Sem armazenamento.
   }
 }
 
@@ -134,11 +152,13 @@ function empurrar() {
   window.clearTimeout(agendado);
   agendado = window.setTimeout(async () => {
     try {
-      const r = await fetch('/pedidos/api/estado', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ estado: interpretar(ler()), rev: lerRev() }) });
+      const r = await fetch('/pedidos/api/estado', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ estado: interpretar(ler()), rev: lerRev(), baseRev: lerBase() }) });
       if (r.status === 409) {
+        // O servidor tem algo mais novo (ex.: o coletor gravou): adota em vez de apagar.
         const j = (await r.json()) as { estado: unknown; rev: number };
         guardar(interpretar(JSON.stringify(j.estado)), j.rev);
-      }
+        guardarBase(j.rev);
+      } else if (r.ok) guardarBase(lerRev());
     } catch {
       // Sem rede: fica no cache e vai na próxima gravação ou sincronização.
     }
@@ -146,6 +166,8 @@ function empurrar() {
 }
 
 function gravar(estado: EstadoPedidos) {
+  // Gravação que não muda nada (ex.: sair de um campo sem editar) não pode virar "versão mais nova".
+  if (JSON.stringify(estado) === ler()) return;
   guardar(estado, Date.now());
   empurrar();
 }
@@ -161,8 +183,11 @@ export async function sincronizarEstado() {
     if (!r.ok) return;
     const j = (await r.json()) as { estado: unknown | null; rev: number };
     const local = lerRev();
-    if (j.estado && j.rev > local) guardar(interpretar(JSON.stringify(j.estado)), j.rev);
-    else if (local > j.rev) empurrar();
+    if (j.estado && j.rev > local) {
+      guardar(interpretar(JSON.stringify(j.estado)), j.rev);
+      guardarBase(j.rev);
+    } else if (local > j.rev && lerBase() >= j.rev) empurrar();
+    else if (local > j.rev) guardarBase(0);
   } catch {
     // Sem rede.
   }
