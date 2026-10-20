@@ -185,12 +185,17 @@ export interface EstadoPedidos {
   manuais: PedidoManual[];
   vendas: Venda[];
   base: Partial<Record<Grupo, BaseEstoque>>;
+  /** Preço de venda de UMA unidade (microchip: por chip), em reais. Padrão em PRECO_VENDA_PADRAO. */
+  precosVenda?: Partial<Record<Grupo, number>>;
   /** ISO do último "visto": alertas e mudanças depois disso aparecem como novos. */
   vistoEm: string | null;
 }
 
 export const ESTADO_INICIAL: EstadoPedidos = { controles: {}, manuais: [], vendas: [], base: {}, vistoEm: null };
 export const CONTROLE_VAZIO: Controle = {};
+
+/** Preços de venda que o Felipe praticava em 20/10/2026: R$ 8,60 por chip e R$ 280 por leitor. */
+export const PRECO_VENDA_PADRAO: Record<Grupo, number> = { microchip: 8.6, leitor: 280, outro: 0 };
 
 /** "14 out, 2026" -> Date (meio-dia local) ou null. */
 export function dataDoPedido(texto: string | null): Date | null {
@@ -308,4 +313,67 @@ export function nomeCurto(titulo: string): string {
   if (g === 'leitor') return 'Leitor';
   const w = titulo.split(/[\s,]+/)[0] ?? '';
   return w ? w.charAt(0).toUpperCase() + w.slice(1) : 'Pedido';
+}
+
+/* ── balanço: faturamento, custo e lucro estimado ───────────────────────── */
+
+export interface Balanco {
+  grupo: Grupo;
+  /** Preço de venda de uma unidade (microchip: por chip). */
+  precoVenda: number;
+  /** Chips por pacote (média das compras); 1 para leitor. */
+  pecas: number;
+  /** Unidades de venda (chips, leitores) compradas e já vendidas. */
+  compradas: number;
+  vendidas: number;
+  faturamento: number;
+  /** Tudo que foi pago nas compras recebidas (com imposto), e a parte que corresponde ao que já foi vendido. */
+  custoCompras: number;
+  custoVendido: number;
+  /** Custo do que ainda está em estoque. */
+  custoEstoque: number;
+  lucro: number;
+  /** lucro / faturamento; null sem faturamento. */
+  margem: number | null;
+}
+
+/**
+ * Faturamento e lucro estimados de um produto, de TODO o histórico.
+ *
+ * O que saiu do estoque foi vendido: vendidas = recebidas − estoque atual. As vendas registradas na página usam o
+ * preço que o Felipe informou (ou o padrão); o resto do histórico usa o preço padrão. O custo é o total pago em cada
+ * compra (imposto de importação, ICMS e frete inclusos), repartido pelo custo médio entre o que vendeu e o que sobrou.
+ * Compra lançada à mão não tem valor e fica fora do custo.
+ */
+export function balanco(grupo: Grupo, linhas: LinhaPedido[], vendas: Venda[], emEstoque: number, precoVendaInformado?: number): Balanco {
+  const precoVenda = precoVendaInformado ?? PRECO_VENDA_PADRAO[grupo];
+  let pacotes = 0;
+  let unidades = 0;
+  let custoCompras = 0;
+  for (const l of linhas) {
+    if (l.grupo !== grupo || !l.conta || !l.recebido || !l.ali) continue;
+    pacotes += l.qtd;
+    unidades += l.qtd * (grupo === 'microchip' ? pecasPorUnidade(l.titulo) : 1);
+    custoCompras += totalEmReais(l.ali.total) ?? 0;
+  }
+  const pecas = pacotes > 0 ? unidades / pacotes : 1;
+  const pacotesVendidos = Math.min(pacotes, Math.max(0, pacotes - emEstoque));
+  const registradas = vendas.filter((v) => v.grupo === grupo);
+  const pacotesRegistrados = registradas.reduce((s, v) => s + v.qtd, 0);
+  const pacotesHistorico = Math.max(0, pacotesVendidos - pacotesRegistrados);
+  const faturamento = pacotesHistorico * pecas * precoVenda + registradas.reduce((s, v) => s + v.qtd * pecas * (v.preco ?? precoVenda), 0);
+  const custoVendido = pacotes > 0 ? custoCompras * (pacotesVendidos / pacotes) : 0;
+  return {
+    grupo,
+    precoVenda,
+    pecas,
+    compradas: unidades,
+    vendidas: pacotesVendidos * pecas,
+    faturamento,
+    custoCompras,
+    custoVendido,
+    custoEstoque: custoCompras - custoVendido,
+    lucro: faturamento - custoVendido,
+    margem: faturamento > 0 ? (faturamento - custoVendido) / faturamento : null,
+  };
 }

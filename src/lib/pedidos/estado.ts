@@ -83,7 +83,13 @@ export function interpretar(bruto: string | null): EstadoPedidos {
         base[gr] = { qtd, em: r.em, excluidos: Array.isArray(r.excluidos) ? r.excluidos.filter((x): x is string => typeof x === 'string') : [] };
       }
     }
-    return { controles, manuais, vendas, base, vistoEm: typeof o.vistoEm === 'string' ? o.vistoEm : null };
+    const precosVenda: Partial<Record<Grupo, number>> = {};
+    for (const [g, v] of Object.entries((o.precosVenda ?? {}) as Record<string, unknown>)) {
+      const gr = grupo(g);
+      const n = dinheiro(v);
+      if (gr && n !== undefined) precosVenda[gr] = n;
+    }
+    return { controles, manuais, vendas, base, precosVenda, vistoEm: typeof o.vistoEm === 'string' ? o.vistoEm : null };
   } catch {
     return ESTADO_INICIAL;
   }
@@ -167,6 +173,10 @@ export function registrarVenda(venda: Omit<Venda, 'id' | 'data'> & { data?: stri
 /** "Tenho N agora": tudo que já foi recebido sai da conta e o estoque passa a andar a partir de N. */
 export function acertarEstoque(g: Grupo, qtd: number, recebidosAgora: string[]) {
   alterarEstado((e) => ({ ...e, base: { ...e.base, [g]: { qtd: Math.max(0, Math.floor(qtd)), excluidos: recebidosAgora, em: new Date().toISOString() } } }));
+}
+
+export function definirPrecoVenda(g: Grupo, valor: number) {
+  alterarEstado((e) => ({ ...e, precosVenda: { ...e.precosVenda, [g]: valor } }));
 }
 
 export function desfazerVenda(id: string) {

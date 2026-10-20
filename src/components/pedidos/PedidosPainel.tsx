@@ -5,11 +5,13 @@ import { AlertTriangle, Archive, Check, ChevronDown, Download, ExternalLink, Pac
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
-import { acertarEstoque, alterarControle, alterarEstado, desfazerVenda, exportarEstado, registrarVenda, sincronizarEstado, substituirEstado, useEstadoPedidos } from '@/lib/pedidos/estado';
+import { acertarEstoque, alterarControle, alterarEstado, definirPrecoVenda, desfazerVenda, exportarEstado, registrarVenda, sincronizarEstado, substituirEstado, useEstadoPedidos } from '@/lib/pedidos/estado';
 import {
   dataDoPedido,
   GRUPOS,
+  balanco,
   linhasDePedidos,
+  PRECO_VENDA_PADRAO,
   nomeCurto,
   pecasPorUnidade,
   precoDeCompra,
@@ -289,6 +291,8 @@ function Painel({
 
         {outros.length > 0 && <Secundarios linhas={outros} controles={estado.controles} />}
 
+        <Faturamento linhas={linhas} resumo={resumo} vendas={estado.vendas} precos={estado.precosVenda} />
+
         <NovoManual />
         <Backup />
       </div>
@@ -435,7 +439,7 @@ function CartaoEstoque({ grupo, resumo, linhas }: { grupo: Grupo; resumo: Return
             <Input className="w-20" type="number" min={1} value={qtd} onChange={(e) => setQtd(e.target.value)} />
           </label>
           <label className="flex flex-col gap-1">
-            <span className="text-xs text-muted-foreground">Preço un. (R$, opcional)</span>
+            <span className="text-xs text-muted-foreground">{grupo === 'microchip' ? 'Preço por chip (R$)' : 'Preço (R$)'}</span>
             <Input className="w-36" inputMode="decimal" value={preco} onChange={(e) => setPreco(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && vender()} />
           </label>
           <Button size="sm" onClick={vender}>
@@ -830,6 +834,66 @@ function Secundarios({ linhas, controles }: { linhas: LinhaPedido[]; controles: 
           ))}
         </ul>
       )}
+    </section>
+  );
+}
+
+/** Faturamento e lucro líquido estimados, de todo o histórico. Os preços de venda por unidade são editáveis aqui. */
+function Faturamento({ linhas, resumo, vendas, precos }: { linhas: LinhaPedido[]; resumo: ReturnType<typeof resumirPorGrupo>; vendas: EstadoPedidos['vendas']; precos: EstadoPedidos['precosVenda'] }) {
+  const grupos: Grupo[] = ['microchip', 'leitor'];
+  const bs = grupos.map((g) => balanco(g, linhas, vendas, resumo[g].emEstoque, precos?.[g]));
+  const total = bs.reduce((a, b) => ({ fat: a.fat + b.faturamento, custo: a.custo + b.custoVendido, lucro: a.lucro + b.lucro, estoque: a.estoque + b.custoEstoque }), { fat: 0, custo: 0, lucro: 0, estoque: 0 });
+  const margemTotal = total.fat > 0 ? total.lucro / total.fat : null;
+  const pct = (n: number | null) => (n == null ? '—' : `${(n * 100).toFixed(0)}%`);
+  return (
+    <section className={cartao}>
+      <p className={rotulo}>Faturamento</p>
+      <p className="mt-2 flex flex-wrap items-baseline gap-x-3 tabular-nums">
+        <span className="text-3xl font-semibold">{real(total.lucro)}</span>
+        <span className="text-sm text-muted-foreground">lucro líquido estimado · {pct(margemTotal)} de {real(total.fat)}</span>
+      </p>
+      <table className="mt-3 w-full text-sm tabular-nums">
+        <thead>
+          <tr className="text-left text-xs text-muted-foreground">
+            <th className="py-1 font-normal" />
+            <th className="py-1 text-right font-normal">Vendido</th>
+            <th className="py-1 text-right font-normal">Faturou</th>
+            <th className="py-1 text-right font-normal">Custo</th>
+            <th className="py-1 text-right font-normal">Lucro</th>
+          </tr>
+        </thead>
+        <tbody>
+          {bs.map((b) => (
+            <tr key={b.grupo} className="border-t border-border">
+              <td className="py-2 pr-2">{GRUPOS[b.grupo].nome}</td>
+              <td className="py-2 text-right">{Math.round(b.vendidas).toLocaleString('pt-BR')}</td>
+              <td className="py-2 text-right">{real(b.faturamento)}</td>
+              <td className="py-2 text-right text-muted-foreground">{real(b.custoVendido)}</td>
+              <td className={cn('py-2 text-right font-medium', b.lucro < 0 ? 'text-red-300' : 'text-emerald-300')}>
+                {real(b.lucro)} <span className="text-xs font-normal text-muted-foreground">{pct(b.margem)}</span>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <div className="mt-3 flex flex-wrap items-end gap-3 border-t border-border pt-3">
+        {grupos.map((g) => (
+          <label key={g} className="flex flex-col gap-1">
+            <span className="text-xs text-muted-foreground">{g === 'microchip' ? 'Venda por chip (R$)' : 'Venda por leitor (R$)'}</span>
+            <Input
+              key={`${g}-${precos?.[g] ?? PRECO_VENDA_PADRAO[g]}`}
+              className="w-28"
+              inputMode="decimal"
+              defaultValue={String(precos?.[g] ?? PRECO_VENDA_PADRAO[g]).replace('.', ',')}
+              onBlur={(e) => {
+                const n = Number(e.target.value.replace(',', '.'));
+                if (Number.isFinite(n) && n >= 0 && e.target.value.trim() !== '') definirPrecoVenda(g, n);
+              }}
+            />
+          </label>
+        ))}
+        {total.estoque > 0 && <p className="text-xs text-muted-foreground">Parado em estoque: {real(total.estoque)} a custo</p>}
+      </div>
     </section>
   );
 }
