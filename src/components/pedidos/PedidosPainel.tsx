@@ -5,7 +5,7 @@ import { AlertTriangle, Archive, ChevronDown, Download, ExternalLink, PackageChe
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
-import { acertarEstoque, alterarControle, alterarEstado, desfazerVenda, exportarEstado, registrarVenda, substituirEstado, useEstadoPedidos } from '@/lib/pedidos/estado';
+import { acertarEstoque, alterarControle, alterarEstado, desfazerVenda, exportarEstado, registrarVenda, sincronizarEstado, substituirEstado, useEstadoPedidos } from '@/lib/pedidos/estado';
 import {
   dataDoPedido,
   GRUPOS,
@@ -94,6 +94,10 @@ function useSnapshot() {
     setCarregando(true);
     try {
       const r = await fetch('/pedidos/api/snapshot', { cache: 'no-store' });
+      if (r.status === 401) {
+        window.location.assign('/pedidos/login');
+        return;
+      }
       const j = (await r.json()) as { snapshot: Snapshot | null };
       setSnapshot(j.snapshot);
     } catch {
@@ -191,6 +195,14 @@ export function PedidosPainel() {
   const dados = useSnapshot();
   const cotacao = useDolar();
   const ajustes = useAjustes();
+  useEffect(() => {
+    const primeira = window.setTimeout(sincronizarEstado, 0);
+    const id = window.setInterval(sincronizarEstado, 60_000);
+    return () => {
+      window.clearTimeout(primeira);
+      window.clearInterval(id);
+    };
+  }, []);
   const historico = useHistoricoPrecos(dados.snapshot?.atualizadoEm);
   if (!estado) {
     return <main className="mx-auto min-h-screen max-w-3xl px-4 py-10 text-sm text-muted-foreground">Carregando…</main>;
@@ -278,8 +290,14 @@ function Painel({
         <Backup />
       </div>
 
-      <p className="mt-8 text-xs leading-relaxed text-muted-foreground">
-        O status vem do coletor que roda no seu Mac e lê a sua conta da AliExpress. Chegadas, vendas e anotações ficam só neste navegador.
+      <form action="/pedidos/api/logout" method="POST" className="mt-6">
+        <Button type="submit" variant="ghost" size="sm">
+          Sair
+        </Button>
+      </form>
+
+      <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
+        O status vem do coletor que roda no seu Mac e lê a sua conta da AliExpress. Chegadas, vendas e anotações ficam salvas no servidor, atrás do login.
       </p>
     </main>
   );
@@ -847,7 +865,7 @@ function Backup() {
   return (
     <section className={cartao}>
       <p className={rotulo}>Backup (chegadas e vendas)</p>
-      <p className="mt-2 text-xs text-muted-foreground">Os dados ficam só neste navegador. Exporte para guardar ou levar a outro aparelho; importar substitui o que há aqui.</p>
+      <p className="mt-2 text-xs text-muted-foreground">Cópia de segurança do estoque e das vendas. Importar substitui o que há aqui.</p>
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <Button size="sm" variant="outline" onClick={baixar}>
           <Download className="size-4" /> Exportar

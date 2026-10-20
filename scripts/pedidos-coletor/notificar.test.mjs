@@ -15,8 +15,8 @@ const pedido = (o = {}) => ({
 const relogio = pedido({ id: '3', itens: [{ titulo: 'Relógio inteligente para mulheres e homens', qtd: 1 }], previsao: { de: '2026-10-23', ate: '2026-11-03' } });
 const AGORA = new Date(2026, 9, 20);
 
-test('formato curto: data, a caminho com unidades e previsão, preço de 1 unidade com impostos e dólar embaixo', () => {
-  const precos = { microchip: { grupo: 'microchip', variante: 'green 2.12x12mm', preco: 332.99, checkout: { total: 445.63, qtd: 1 }, dolar: 5.02, alertas: [], medias: { veredito: 'sem_historico' } } };
+test('formato curto: cada pedido numa linha só, preço do microchip direto e dólar embaixo', () => {
+  const precos = { microchip: { grupo: 'microchip', variante: 'green 2.12x12mm', preco: 332.99, checkout: { total: 445.63, qtd: 1 }, dolar: 5.02, alertas: [], medias: { veredito: 'caro', vs30: 0.105, media30: 403.22 } } };
   const m = montarMensagem({ ok: true, pedidos: [pedido(), relogio], mudancas: [], precos }, [], 5.02, AGORA);
   assert.equal(
     m,
@@ -24,29 +24,35 @@ test('formato curto: data, a caminho com unidades e previsão, preço de 1 unida
       '📦 Pedidos — 20/10',
       '',
       'A caminho:',
-      '• Microchip · 1 un. · chega 26 out–7 nov',
-      '• Relógio · 1 un. · chega 23 out–3 nov',
+      '• Microchip 1 un. · 26 out–7 nov',
+      '• Relógio 1 un. · 23 out–3 nov',
       '',
-      '💰 Microchip (1 un., com impostos): R$ 445,63',
-      '   histórico começando: a média aparece em alguns dias',
+      '💰 Microchip: R$ 445,63',
       '',
       '💵 Dólar: R$ 5,02',
     ].join('\n'),
   );
+  // Nenhuma linha passa de 34 caracteres (o que cabe numa linha do Telegram no celular).
+  for (const l of m.split('\n')) assert.ok([...l].length <= 34, `linha longa: ${l}`);
 });
 
-test('média: abaixo é bom preço, acima é caro', () => {
+test('só sinaliza quando o preço está bom', () => {
   const base = { grupo: 'microchip', checkout: { total: 430, qtd: 1 }, alertas: [] };
-  const bom = montarMensagem({ ok: true, pedidos: [], mudancas: [], precos: { microchip: { ...base, medias: { veredito: 'bom', vs30: -0.0431, media30: 449.4 } } } }, [], null, AGORA);
-  assert.match(bom, /▼ 4,3% abaixo da média de R\$ 449,40 — bom preço/);
-  const caro = montarMensagem({ ok: true, pedidos: [], mudancas: [], precos: { microchip: { ...base, medias: { veredito: 'caro', vs30: 0.05, media30: 409.5 } } } }, [], null, AGORA);
-  assert.match(caro, /▲ 5,0% acima da média de R\$ 409,50 — caro/);
+  const msg = (medias) => montarMensagem({ ok: true, pedidos: [], mudancas: [], precos: { microchip: { ...base, medias } } }, [], null, AGORA);
+  assert.match(msg({ veredito: 'bom', vs30: -0.0431, media30: 449.4 }), /✅ Bom preço · ▼ 4,3% da média/);
+  for (const v of [{ veredito: 'caro', vs30: 0.05, media30: 409.5 }, { veredito: 'na_media', vs30: 0, media30: 430 }, { veredito: 'sem_historico' }]) {
+    assert.doesNotMatch(msg(v), /Bom preço|caro|média|histórico/i);
+  }
 });
 
-test('sem passar pelo checkout o aviso diz que o preço está SEM impostos e por quê', () => {
-  const precos = { microchip: { grupo: 'microchip', preco: 332.99, checkoutErro: 'a tela final da compra não abriu', alertas: [] } };
-  const m = montarMensagem({ ok: true, pedidos: [], mudancas: [], precos }, [], null, AGORA);
-  assert.match(m, /Microchip \(1 un\., SEM impostos\): R\$ 332,99 — não consegui chegar ao total: a tela final da compra não abriu/);
+test('aviso de queda aparece junto do preço', () => {
+  const precos = { microchip: { grupo: 'microchip', checkout: { total: 430, qtd: 1 }, alertas: ['abaixo do último pago (R$ 374,62)'], medias: { veredito: 'na_media' } } };
+  assert.match(montarMensagem({ ok: true, pedidos: [], mudancas: [], precos }, [], null, AGORA), /💡 abaixo do último pago \(R\$ 374,62\)/);
+});
+
+test('sem passar pelo checkout o preço sai marcado como sem impostos', () => {
+  const precos = { microchip: { grupo: 'microchip', preco: 332.99, checkoutErro: 'não abriu', alertas: [] } };
+  assert.match(montarMensagem({ ok: true, pedidos: [], mudancas: [], precos }, [], null, AGORA), /💰 Microchip: R\$ 332,99 \(sem impostos, checkout falhou\)/);
 });
 
 test('desembaraço concluído novo e problema no topo', () => {
@@ -59,7 +65,7 @@ test('desembaraço concluído novo e problema no topo', () => {
 
 test('pagamento pendente é sinalizado', () => {
   const m = montarMensagem({ ok: true, pedidos: [pedido({ pagamento: 'pendente', entrega: 'desconhecido' })], mudancas: [] }, [], null, AGORA);
-  assert.match(m, /Microchip · 1 un\. · chega 26 out–7 nov · aguardando pagamento/);
+  assert.match(m, /Microchip 1 un\. · 26 out–7 nov · pagar!/);
 });
 
 test('leitura que falhou avisa e não some', () => {

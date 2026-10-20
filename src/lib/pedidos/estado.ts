@@ -2,13 +2,16 @@ import { useMemo, useSyncExternalStore } from 'react';
 import { CONTROLE_VAZIO, ESTADO_INICIAL, type BaseEstoque, type Controle, type EstadoPedidos, type Grupo, type PedidoManual, type Venda } from './tipos';
 
 /*
- * O /pedidos guarda estoque e baixas no localStorage deste navegador (decisão
- * do Felipe: sem banco). O preço é não sincronizar entre aparelhos — por isso
- * existe exportar/importar. Sem localStorage (aba privada), segue na memória.
+ * Estoque, vendas e ponto de partida. A FONTE DA VERDADE é o servidor (/pedidos/api/estado: Supabase
+ * na Vercel, arquivo no Mac em dev), para o celular e o computador mostrarem o mesmo. O localStorage
+ * é cache: abre a página já com o último estado e funciona sem rede. Cada gravação leva uma "rev"
+ * (ms); a mais nova vence, e uma escrita mais velha nunca cobre uma mais nova. Sem localStorage
+ * (aba privada), segue na memória.
  */
 
 const CHAVE = 'seabra:pedidos:v1';
 const EVENTO = 'seabra:pedidos';
+const CHAVE_REV = 'seabra:pedidos:rev';
 
 let memoria: string | null = null;
 
@@ -86,15 +89,66 @@ export function interpretar(bruto: string | null): EstadoPedidos {
   }
 }
 
-function gravar(estado: EstadoPedidos) {
+function lerRev(): number {
+  try {
+    return Number(window.localStorage.getItem(CHAVE_REV)) || 0;
+  } catch {
+    return 0;
+  }
+}
+
+/** Guarda no cache local, sem mexer no servidor. */
+function guardar(estado: EstadoPedidos, rev: number) {
   const texto = JSON.stringify(estado);
   memoria = texto;
   try {
     window.localStorage.setItem(CHAVE, texto);
+    window.localStorage.setItem(CHAVE_REV, String(rev));
   } catch {
     // Sem armazenamento: fica só na memória desta aba.
   }
   window.dispatchEvent(new Event(EVENTO));
+}
+
+let agendado: number | undefined;
+
+/** Manda o estado local ao servidor (agrupa gravações seguidas). Se o servidor tem algo mais novo, adota. */
+function empurrar() {
+  window.clearTimeout(agendado);
+  agendado = window.setTimeout(async () => {
+    try {
+      const r = await fetch('/pedidos/api/estado', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ estado: interpretar(ler()), rev: lerRev() }) });
+      if (r.status === 409) {
+        const j = (await r.json()) as { estado: unknown; rev: number };
+        guardar(interpretar(JSON.stringify(j.estado)), j.rev);
+      }
+    } catch {
+      // Sem rede: fica no cache e vai na próxima gravação ou sincronização.
+    }
+  }, 600);
+}
+
+function gravar(estado: EstadoPedidos) {
+  guardar(estado, Date.now());
+  empurrar();
+}
+
+/** Puxa o estado do servidor se for mais novo que o local; se o local for mais novo, empurra. */
+export async function sincronizarEstado() {
+  try {
+    const r = await fetch('/pedidos/api/estado', { cache: 'no-store' });
+    if (r.status === 401) {
+      window.location.assign('/pedidos/login');
+      return;
+    }
+    if (!r.ok) return;
+    const j = (await r.json()) as { estado: unknown | null; rev: number };
+    const local = lerRev();
+    if (j.estado && j.rev > local) guardar(interpretar(JSON.stringify(j.estado)), j.rev);
+    else if (local > j.rev) empurrar();
+  } catch {
+    // Sem rede.
+  }
 }
 
 export function alterarEstado(mudar: (e: EstadoPedidos) => EstadoPedidos) {

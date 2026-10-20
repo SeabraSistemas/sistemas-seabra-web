@@ -1,26 +1,15 @@
-import { readFile } from 'node:fs/promises';
-import { homedir } from 'node:os';
-import { join } from 'node:path';
 import { NextResponse } from 'next/server';
+import { sessaoValida } from '@/lib/pedidos/sessao';
+import { lerDoc } from '@/lib/pedidos/nuvem';
 
 export const dynamic = 'force-dynamic';
 
 /**
- * Entrega o snapshot que o coletor grava no Mac (~/.seabra-pedidos/pedidos.json).
- *
- * Só funciona rodando na própria máquina (npm run dev / npm start). Na Vercel
- * não existe esse arquivo, então a rota devolve vazio e a página segue como
- * controle manual — e o conteúdo da conta da AliExpress nunca passa por servidor
- * público.
+ * Snapshot que o coletor grava (arquivo no Mac em dev; Supabase na Vercel, depois do login).
+ * Vazio se ainda não houve leitura.
  */
 export async function GET() {
-  const vazio = NextResponse.json({ snapshot: null }, { headers: { 'Cache-Control': 'no-store' } });
-  if (process.env.VERCEL) return vazio;
-  const arquivo = process.env.PEDIDOS_ARQUIVO ?? join(homedir(), '.seabra-pedidos', 'pedidos.json');
-  try {
-    const snapshot = JSON.parse(await readFile(arquivo, 'utf8'));
-    return NextResponse.json({ snapshot }, { headers: { 'Cache-Control': 'no-store' } });
-  } catch {
-    return vazio;
-  }
+  const sem = { 'Cache-Control': 'no-store' };
+  if (!(await sessaoValida())) return NextResponse.json({ erro: 'não autorizado' }, { status: 401, headers: sem });
+  return NextResponse.json({ snapshot: await lerDoc('snapshot') }, { headers: sem });
 }

@@ -45,7 +45,7 @@ test('uma leitura por dia: a mais nova substitui', () => {
 
 test('queda de 3% em dólar vira aviso', () => {
   const a = avaliarPreco([e(18, 330), e(19, 330), e(20, 315)]);
-  assert.match(a[0], /caiu 4,5% em dólar/);
+  assert.match(a[0], /^caiu 4,5% em dólar/);
 });
 
 test('só o câmbio mexeu: sem aviso de queda', () => {
@@ -56,12 +56,12 @@ test('só o câmbio mexeu: sem aviso de queda', () => {
 
 test('menor preço em dólar dos últimos 30 dias', () => {
   const a = avaliarPreco([e(10, 340), e(12, 338), e(15, 336), e(20, 333)]);
-  assert.ok(a.some((t) => /menor preço em dólar dos últimos 30 dias/.test(t)));
+  assert.ok(a.includes('menor preço em dólar em 30 dias'));
 });
 
 test('abaixo do que o Felipe pagou por último', () => {
   const a = avaliarPreco([e(20, 310)], 313.76);
-  assert.match(a[0], /abaixo do que você pagou por último \(R\$ 313,76\)/);
+  assert.equal(a[0], 'abaixo do último pago (R$ 313,76)');
   assert.deepEqual(avaliarPreco([e(20, 320)], 313.76), []);
 });
 

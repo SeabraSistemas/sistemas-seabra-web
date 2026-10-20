@@ -56,9 +56,10 @@ export function montarMensagem(snap, novas, dolar, agora = new Date()) {
   if (aCaminho.length) {
     linhas.push('', 'A caminho:');
     for (const p of aCaminho) {
-      const prev = p.previsao ? ` · chega ${diaMes(p.previsao.de)}–${diaMes(p.previsao.ate)}` : '';
-      const pag = p.pagamento === 'pendente' ? ' · aguardando pagamento' : '';
-      linhas.push(`• ${nomeCurto(p.itens[0]?.titulo)} · ${p.itens[0]?.qtd ?? 1} un.${prev}${pag}`);
+      // Sem a palavra "chega": no celular ela empurra a data para a linha de baixo.
+      const prev = p.previsao ? ` · ${diaMes(p.previsao.de)}–${diaMes(p.previsao.ate)}` : '';
+      const pag = p.pagamento === 'pendente' ? ' · pagar!' : '';
+      linhas.push(`• ${nomeCurto(p.itens[0]?.titulo)} ${p.itens[0]?.qtd ?? 1} un.${prev}${pag}`);
     }
   }
 
@@ -69,19 +70,16 @@ export function montarMensagem(snap, novas, dolar, agora = new Date()) {
     for (const x of precos) {
       const nome = NOME[x.grupo] ?? x.grupo;
       if (x.erro) {
-        linhas.push(`💰 ${nome}: não consegui ler o preço (${x.erro})`);
+        linhas.push(`💰 ${nome}: sem preço (${x.erro})`);
         continue;
       }
       if (x.checkout?.total) {
-        linhas.push(`💰 ${nome} (1 un., com impostos): ${real(precoDeCompra(x))}`);
+        linhas.push(`💰 ${nome}: ${real(precoDeCompra(x))}`);
         const m = x.medias;
-        const pct = m?.vs30 != null ? `${Math.abs(m.vs30 * 100).toFixed(1).replace('.', ',')}%` : '';
-        if (m?.veredito === 'bom') linhas.push(`   ▼ ${pct} abaixo da média de ${real(m.media30)} — bom preço`);
-        else if (m?.veredito === 'caro') linhas.push(`   ▲ ${pct} acima da média de ${real(m.media30)} — caro`);
-        else if (m?.veredito === 'na_media') linhas.push(`   ≈ na média de ${real(m.media30)}`);
-        else linhas.push('   histórico começando: a média aparece em alguns dias');
+        // Só avisa quando o preço está bom; "caro" e "na média" ficam em silêncio.
+        if (m?.veredito === 'bom' && m.vs30 != null) linhas.push(`   ✅ Bom preço · ▼ ${Math.abs(m.vs30 * 100).toFixed(1).replace('.', ',')}% da média`);
       } else {
-        linhas.push(`💰 ${nome} (1 un., SEM impostos): ${real(x.preco)}${x.checkoutErro ? ` — não consegui chegar ao total: ${x.checkoutErro}` : ''}`);
+        linhas.push(`💰 ${nome}: ${real(x.preco)} (sem impostos${x.checkoutErro ? ', checkout falhou' : ''})`);
       }
       for (const a of x.alertas ?? []) linhas.push(`   💡 ${a}`);
     }

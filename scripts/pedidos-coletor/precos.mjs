@@ -111,7 +111,6 @@ export function avaliarPreco(todo, pago = null) {
   const hoje = historico.at(-1);
   if (!hoje) return [];
   const alertas = [];
-  const dolarTxt = hoje.dolar ? ` (US$ ${usd(hoje).toFixed(2)}, dólar R$ ${hoje.dolar.toFixed(2).replace('.', ',')})` : '';
   const brl = (n) => `R$ ${n.toFixed(2).replace('.', ',')}`;
 
   const antes = historico.slice(0, -1);
@@ -119,11 +118,11 @@ export function avaliarPreco(todo, pago = null) {
   const u = usd(hoje);
   if (u && ontem && usd(ontem)) {
     const queda = 1 - u / usd(ontem);
-    if (queda >= 0.03) alertas.push(`caiu ${(queda * 100).toFixed(1).replace('.', ',')}% em dólar desde a última leitura: ${brl(precoDeCompra(hoje))}${dolarTxt}. Não é só câmbio.`);
+    if (queda >= 0.03) alertas.push(`caiu ${(queda * 100).toFixed(1).replace('.', ',')}% em dólar (não é só câmbio)`);
   }
   const ult30 = antes.filter((e) => Date.parse(hoje.em) - Date.parse(e.em) <= 30 * 86_400_000).map(usd).filter(Boolean);
-  if (u && ult30.length >= 3 && u < Math.min(...ult30) * MENOS) alertas.push(`menor preço em dólar dos últimos 30 dias: ${brl(precoDeCompra(hoje))}${dolarTxt}.`);
-  if (pago && precoDeCompra(hoje) < pago * 0.99) alertas.push(`${brl(precoDeCompra(hoje))} está abaixo do que você pagou por último (${brl(pago)}).`);
+  if (u && ult30.length >= 3 && u < Math.min(...ult30) * MENOS) alertas.push('menor preço em dólar em 30 dias');
+  if (pago && precoDeCompra(hoje) < pago * 0.99) alertas.push(`abaixo do último pago (${brl(pago)})`);
   return alertas;
 }
 

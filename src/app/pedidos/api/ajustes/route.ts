@@ -2,6 +2,7 @@ import { chmod, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { NextResponse } from 'next/server';
+import { sessaoValida } from '@/lib/pedidos/sessao';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,6 +23,7 @@ async function ler() {
 }
 
 export async function GET() {
+  if (!(await sessaoValida())) return NextResponse.json({ erro: 'não autorizado' }, { status: 401 });
   return NextResponse.json({ ajustes: await ler(), local: !process.env.VERCEL }, { headers: { 'Cache-Control': 'no-store' } });
 }
 

@@ -25,6 +25,7 @@ import { numeroBR, reaisTexto, reaisParaNumero } from './util.mjs';
 import { grupoDoProduto } from './grupos.mjs';
 import { lerAjustes, lerHistoricoPrecos, gravarHistoricoPrecos, parsearProduto, parsearCheckout, registrarPreco, avaliarPreco, medias, precoDeCompra } from './precos.mjs';
 import { dolarAtual, enviar, lerConfig, montarMensagem, temNovidade } from './notificar.mjs';
+import { dadosLocais, enviarParaNuvem, lerNuvem } from './nuvem.mjs';
 
 const DIR = process.env.PEDIDOS_DIR ?? join(homedir(), '.seabra-pedidos');
 const BASE = (process.env.ALIEXPRESS_BASE ?? 'https://pt.aliexpress.com').replace(/\/$/, '');
@@ -537,6 +538,17 @@ function resumo(snap) {
   }
 }
 
+/** Manda o resultado ao site (só se ~/.seabra-pedidos/nuvem.json existir). Falha daqui nunca derruba a coleta. */
+async function subirParaOSite() {
+  if (dry || args.has('--sem-site') || !lerNuvem()) return;
+  try {
+    const r = await enviarParaNuvem(dadosLocais());
+    console.log(`Enviado ao site: ${(r?.gravados ?? []).join(', ') || 'nada'}.`);
+  } catch (e) {
+    console.log(`Não consegui enviar ao site: ${e.message}`);
+  }
+}
+
 /** Aviso no Telegram (só se configurado). Falha de aviso nunca derruba a coleta. */
 async function avisar(snap) {
   if (dry || args.has('--sem-aviso') || !lerConfig()) return;
@@ -559,6 +571,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     resumo(snap);
     if (!dry) gravarSnapshot(snap);
     process.exitCode = snap.ok ? 0 : 1;
+    await subirParaOSite();
     await avisar(snap);
   }
 }
