@@ -56,6 +56,18 @@ const nextConfig: NextConfig = {
         ],
       },
       {
+        // /pedidos: compras da AliExpress do Felipe (status lido por coletor
+        // local, estoque no localStorage). Pessoal — fora de busca e sem cache.
+        source: '/pedidos/:path*',
+        headers: [
+          { key: 'X-Robots-Tag', value: 'noindex, nofollow, noarchive, nosnippet' },
+          { key: 'Cache-Control', value: 'no-store, no-cache, must-revalidate, private' },
+          { key: 'Referrer-Policy', value: 'no-referrer' },
+          { key: 'X-Frame-Options', value: 'DENY' },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+        ],
+      },
+      {
         // O /adm lê a base inteira de clientes. Estes headers são a camada que
         // não depende de nenhum código nosso rodar certo: valem inclusive numa
         // rota que esqueça o gate.

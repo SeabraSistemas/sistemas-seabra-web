@@ -1,0 +1,14 @@
+{
+  "name": "pedidos-coletor",
+  "private": true,
+  "type": "module",
+  "description": "Coletor do /pedidos (AliExpress). Dependências separadas para não entrar no build do site.",
+  "scripts": {
+    "login": "node coletor.mjs login",
+    "coletar": "node coletor.mjs",
+    "test": "node --test classificar.test.mjs coletor.test.mjs notificar.test.mjs precos.test.mjs"
+  },
+  "dependencies": {
+    "playwright-core": "1.49.1"
+  }
+}
