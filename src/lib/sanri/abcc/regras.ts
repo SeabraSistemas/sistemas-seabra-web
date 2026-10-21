@@ -9,6 +9,8 @@
  *
  * Decisões do produtor (16/10/2026): a numeração é do criador (informa a
  * primeira, o resto segue); macho sem nome sai DESCARTE; C/M sempre "C".
+ * Pedidos da Maria Pia (21/10/2026): uma CDN por RAÇA (e IA em CDN só de IA,
+ * que já era assim por método) e a CATEGORIA (PO/PC/PA) depois do PESO.
  */
 
 export type Metodo = 'mn' | 'ia' | 'te';
@@ -26,6 +28,8 @@ export interface AnimalRef {
   id: number;
   nome: string | null;
   numero: string | null;
+  /** Categoria de registro da ficha (rebanho.grau_sangue_animal): PO, PC, PA… */
+  categoria?: string | null;
 }
 
 /** Uma cria como o banco devolve (abcc_cdn_crias). */
@@ -36,6 +40,8 @@ export interface CriaCdn {
   sexo: string | null;
   pelagem: string | null;
   raca: string | null;
+  /** Categoria de registro da própria cria, se a ficha já tem (grau_sangue_animal). */
+  categoria?: string | null;
   nascimento: string;
   peso: number | null;
   status: string | null;
@@ -63,6 +69,8 @@ export interface LinhaCdn {
   /** "AAAA-MM-DD" */
   nascimento: string;
   peso: number | null;
+  /** PO, PC, PA… — vazio quando a regra da ABCC não decide (o painel avisa). */
+  categoria: string;
   cm: string;
   usoDdg: string;
   pai: string;
@@ -78,6 +86,10 @@ export interface CabecalhoCdn {
   /** "AAAA-MM-DD" — a data do canto (DATA:). */
   data: string;
   metodo: Metodo;
+  /** Raça da folha ("SAANEN"). Ausente nas CDNs emitidas antes de 21/10: a folha sai como saiu. */
+  raca?: string;
+  /** true = folha com a coluna CATEGORIA depois do PESO (desde 21/10). */
+  comCategoria?: boolean;
 }
 
 /** Uma cobertura como o banco devolve (abcc_cdc_coberturas). */
@@ -139,6 +151,47 @@ export function pelagemCdn(pelagem: string | null, raca: string | null): string 
   return maiusculo(raca) === 'SAANEN' ? 'BRANCA' : '';
 }
 
+/**
+ * Raça da folha: "100,0% Saanen" e "Saanen" são a mesma raça (SAANEN). Cria
+ * cruzada ("50,0% Alpina, 50,0% Saanen") vira "ALPINA × SAANEN" — uma folha
+ * só dela, nunca misturada com a de raça pura.
+ */
+export function racaCdn(raca: string | null | undefined): string {
+  const partes = (raca ?? '')
+    .split(/,(?!\d)/) // a vírgula do "100,0%" não separa
+    .map((p) => maiusculo(p.replace(/^\s*\d+(?:[.,]\d+)?\s*%\s*/, '')))
+    .filter(Boolean);
+  return [...new Set(partes)].join(' × ');
+}
+
+const CATEGORIAS = new Set(['PO', 'PC', 'PA', 'CCG1', 'CCG2', 'CCG3', 'CCG4', 'CCG5']);
+
+function categoriaDe(v: string | null | undefined): string {
+  const c = maiusculo(v).replace(/\s+/g, '');
+  return CATEGORIAS.has(c) ? c : '';
+}
+
+/**
+ * Categoria da cria para a CDN. A da ficha vale; sem ela, a do Art. 35 do
+ * Regulamento do SRG da ABCC (página 10-11), pela categoria dos pais:
+ *   PO × PO = PO · macho PO × fêmea PC = PO (I-c: pais em escrituração
+ *   zootécnica, como na Sanri) · PC × PC = PC · macho PO × fêmea PA = PC ·
+ *   macho PA ou PC × fêmea PA = PC.
+ * Fora disso (macho PC × fêmea PO, pai ou mãe sem categoria) fica vazio — o
+ * regulamento não decide e o painel avisa, em vez de inventar.
+ */
+export function categoriaCdn(c: Pick<CriaCdn, 'categoria' | 'pai' | 'mae'>): string {
+  const propria = categoriaDe(c.categoria);
+  if (propria) return propria;
+  const p = categoriaDe(c.pai?.categoria);
+  const m = categoriaDe(c.mae?.categoria);
+  if (!p || !m) return '';
+  if (p === 'PO' && (m === 'PO' || m === 'PC')) return 'PO';
+  if (p === 'PC' && m === 'PC') return 'PC';
+  if ((p === 'PO' || p === 'PA' || p === 'PC') && m === 'PA') return 'PC';
+  return '';
+}
+
 export function linhaCdn(c: CriaCdn): LinhaCdn {
   const nome = maiusculo(c.nome);
   const sexo = sexoCurto(c.sexo);
@@ -152,6 +205,7 @@ export function linhaCdn(c: CriaCdn): LinhaCdn {
     pelagem: pelagemCdn(c.pelagem, c.raca),
     nascimento: c.nascimento,
     peso: c.peso != null && c.peso > 0 ? Math.round(c.peso * 10) / 10 : null,
+    categoria: categoriaCdn(c),
     cm: 'C',
     usoDdg: '',
     pai: maiusculo(c.pai?.nome),
@@ -170,6 +224,8 @@ export function faltasCdn(c: CriaCdn): string[] {
   if (!l.sexo) out.push('sem sexo');
   if (!l.pelagem) out.push('sem pelagem');
   if (l.peso == null) out.push('sem peso');
+  if (!l.categoria) out.push('sem categoria');
+  if (!racaCdn(c.raca)) out.push('sem raça');
   if (!l.pai) out.push('sem pai');
   if (!l.mae) out.push('sem mãe');
   if (!c.metodo) out.push('cobertura não lançada');
@@ -215,17 +271,23 @@ export function recentesPrimeiro<T extends Pick<CriaCdn, 'numero' | 'nascimento'
 }
 
 /**
- * Crias escolhidas -> folhas: uma por método, de 25 em 25, na ordem dos
- * números. 30 crias de monta viram uma folha de 25 e outra de 5.
+ * Crias escolhidas -> folhas: uma por método (IA só com IA, TE só com TE) e,
+ * dentro do método, uma por raça — de 25 em 25, na ordem dos números. 30
+ * Saanen de monta viram uma folha de 25 e outra de 5; 3 Alpina de monta, uma
+ * terceira. Raças em ordem alfabética; cria sem raça vai numa folha à parte.
  */
-export function separarEmFolhas<T extends Pick<CriaCdn, 'numero' | 'nascimento' | 'id' | 'metodo'>>(
+export function separarEmFolhas<T extends Pick<CriaCdn, 'numero' | 'nascimento' | 'id' | 'metodo' | 'raca'>>(
   crias: T[],
   porFolha = CRIAS_POR_CDN,
-): { metodo: Metodo; crias: T[] }[] {
-  const folhas: { metodo: Metodo; crias: T[] }[] = [];
+): { metodo: Metodo; raca: string; crias: T[] }[] {
+  const folhas: { metodo: Metodo; raca: string; crias: T[] }[] = [];
   for (const { chave } of METODOS) {
-    const doMetodo = ordenarCrias(crias.filter((c) => metodoDaCria(c) === chave));
-    for (let i = 0; i < doMetodo.length; i += porFolha) folhas.push({ metodo: chave, crias: doMetodo.slice(i, i + porFolha) });
+    const doMetodo = crias.filter((c) => metodoDaCria(c) === chave);
+    const racas = [...new Set(doMetodo.map((c) => racaCdn(c.raca)))].sort((a, b) => (!a ? 1 : !b ? -1 : a.localeCompare(b)));
+    for (const raca of racas) {
+      const daRaca = ordenarCrias(doMetodo.filter((c) => racaCdn(c.raca) === raca));
+      for (let i = 0; i < daRaca.length; i += porFolha) folhas.push({ metodo: chave, raca, crias: daRaca.slice(i, i + porFolha) });
+    }
   }
   return folhas;
 }
@@ -244,6 +306,32 @@ export interface ComunicacaoResumo {
 export function proximoNumero(comunicacoes: ComunicacaoResumo[], tipo: 'cdn' | 'cdc', ano: number): number | null {
   const usados = comunicacoes.filter((c) => c.tipo === tipo && c.ano === ano && !c.cancelada).map((c) => c.numero);
   return usados.length ? Math.max(...usados) + 1 : null;
+}
+
+/**
+ * Número sugerido para a próxima CDC do ano. Antes da 1ª CDC do sistema não
+ * há "maior + 1", e o botão ficava cinza sem dizer por quê (o "a CDC não aceita
+ * ser emitida" de 21/10/2026). Então também valem as CDCs que o criador já
+ * fez fora — as citadas nas CDNs ("505/2026") e a do próprio modelo (519/2026).
+ */
+export function sugerirNumeroCdc(comunicacoes: ComunicacaoResumo[], ano: number, citadas: (string | null | undefined)[]): number | null {
+  const usados = comunicacoes.filter((c) => c.tipo === 'cdc' && c.ano === ano && !c.cancelada).map((c) => c.numero);
+  for (const t of citadas) {
+    const m = /^\s*(\d{1,5})\s*\/\s*(\d{4})\s*$/.exec(t ?? '');
+    if (m && Number(m[2]) === ano) usados.push(Number(m[1]));
+  }
+  return usados.length ? Math.max(...usados) + 1 : null;
+}
+
+/** O que falta para o botão de emitir acender — dito na tela, nunca botão cinza calado. */
+export function faltasParaEmitir(campos: { numero: string; data: string; periodoDe?: string; periodoAte?: string }): string[] {
+  const out: string[] = [];
+  if (!/^\d+$/.test(campos.numero) || Number(campos.numero) < 1) out.push('o número');
+  if (!campos.data) out.push('a data');
+  if (campos.periodoDe !== undefined && !campos.periodoDe) out.push('o início do período');
+  if (campos.periodoAte !== undefined && !campos.periodoAte) out.push('o fim do período');
+  if (campos.periodoDe && campos.periodoAte && campos.periodoDe > campos.periodoAte) out.push('um período que termine depois de começar');
+  return out;
 }
 
 export function linhaCdc(c: CoberturaCdc): LinhaCdc {

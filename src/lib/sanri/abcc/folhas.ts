@@ -25,6 +25,7 @@ import {
   type Trecho,
   type Valor,
 } from '@/lib/sanri/abcc/xlsx';
+import { indiceColuna, inserirColuna, inserirColunaNoDesenho, letraColuna } from '@/lib/sanri/abcc/coluna';
 import { CRIAS_POR_CDN, type CabecalhoCdc, type CabecalhoCdn, type LinhaCdc, type LinhaCdn, type Metodo } from '@/lib/sanri/abcc/regras';
 
 // ---------------------------------------------------------------------------
@@ -56,7 +57,48 @@ export const MODELO_CDN = {
   data: 'Q12',
   ano: 'C10',
   metodo: 'I10',
+  /** "RAÇA: SAANEN/ ALPINA" no modelo — a CDN de uma raça só escreve a dela. */
+  raca: 'N12',
+  /** Linha dos títulos das colunas. */
+  titulos: 14,
 } as const;
+
+/** A coluna CATEGORIA entra aqui (logo depois do PESO), pedido da Maria Pia em 21/10/2026. */
+export const COLUNA_CATEGORIA = 'K';
+const LARGURA_CATEGORIA = 14.5;
+
+type Layout = {
+  colunas: Record<keyof typeof MODELO_CDN.colunas | 'categoria', string | null>;
+  todas: string[];
+  numero: string;
+  data: string;
+  ano: string;
+  metodo: string;
+  raca: string;
+};
+
+/** Onde fica cada coisa: no modelo original ou com a coluna CATEGORIA já no lugar. */
+export function layoutCdn(comCategoria: boolean): Layout {
+  const M = MODELO_CDN;
+  const em = indiceColuna(COLUNA_CATEGORIA);
+  const mover = (ref: string) => {
+    if (!comCategoria) return ref;
+    const [, col, linha] = /^([A-Z]+)(\d*)$/.exec(ref) ?? [];
+    return indiceColuna(col) >= em ? `${letraColuna(indiceColuna(col) + 1)}${linha}` : ref;
+  };
+  const cols = Object.fromEntries(Object.entries(M.colunas).map(([k, v]) => [k, mover(v)])) as Layout['colunas'];
+  cols.categoria = comCategoria ? COLUNA_CATEGORIA : null;
+  return {
+    colunas: cols,
+    todas: comCategoria ? colunas('B', letraColuna(indiceColuna('Q') + 1)) : [...M.todas],
+    numero: mover(M.numero),
+    data: mover(M.data),
+    ano: mover(M.ano),
+    metodo: mover(M.metodo),
+    raca: mover(M.raca),
+  };
+}
+
 
 export const MODELO_CDC = {
   /** As linhas de matriz da folha (16 a 18): o que cabe antes do rodapé. */
@@ -150,65 +192,93 @@ export function marcarMetodo(textoModelo: string, metodo: Metodo): string {
   return out;
 }
 
+/** "RAÇA: SAANEN/ ALPINA" -> "RAÇA: SAANEN" (o resto do texto do modelo fica). */
+export function trocarRaca(textoModelo: string, raca: string): string {
+  if (!/^\s*RA[CÇ]A\s*:/i.test(textoModelo)) throw new Error('modelo da CDN mudou: não achei a raça do cabeçalho');
+  return textoModelo.replace(/(:\s*).*$/, `$1${raca}`);
+}
+
 export function preencherCdn(modelo: Uint8Array, cab: CabecalhoCdn, linhas: LinhaCdn[]): Uint8Array {
   const M = MODELO_CDN;
   if (linhas.length > M.linhas) throw new Error(`a CDN cabe ${M.linhas} crias`);
   const p = abrir(modelo);
-  const { planilha: caminho } = caminhos(p);
+  const { planilha: caminho, desenho } = caminhos(p);
   const textos = new Textos(lerTexto(p, 'xl/sharedStrings.xml'));
   let sh = lerTexto(p, caminho);
 
+  // CDN emitida desde 21/10 leva a CATEGORIA depois do PESO. Se o modelo ainda
+  // não tem a coluna, ela entra aqui, como o "Inserir coluna" do Excel. A
+  // emitida antes (sem comCategoria) sai igual a como saiu.
+  const comCategoria = cab.comCategoria === true;
+  if (comCategoria) {
+    const titulo = valorDe(sh, `${COLUNA_CATEGORIA}${M.titulos}`, textos);
+    const jaTem = !!titulo && 'texto' in titulo && /CATEG/i.test(titulo.texto);
+    if (!jaTem) {
+      sh = inserirColuna(sh, COLUNA_CATEGORIA, LARGURA_CATEGORIA);
+      if (desenho && p.arquivos[desenho]) gravarTexto(p, desenho, inserirColunaNoDesenho(lerTexto(p, desenho), COLUNA_CATEGORIA));
+    }
+  }
+  const L = layoutCdn(comCategoria);
+
   // Estilos da 1ª linha de dados valem para toda linha preenchida (as linhas
   // vazias do modelo têm estilos soltos — uma delas, letra vermelha).
-  const base = Object.fromEntries(M.todas.map((c) => [c, estiloDe(sh, `${c}${M.primeiraLinha}`)])) as Record<string, number | null>;
+  const base = Object.fromEntries(L.todas.map((c) => [c, estiloDe(sh, `${c}${M.primeiraLinha}`)])) as Record<string, number | null>;
   // A linha de DESCARTE do modelo dá a cor do descarte; sem ela, a normal.
   let estiloDescarte: Record<string, number | null> = base;
   for (let r = M.primeiraLinha; r < M.primeiraLinha + M.linhas; r++) {
-    const v = valorDe(sh, `${M.colunas.nome}${r}`, textos);
+    const v = valorDe(sh, `${L.colunas.nome}${r}`, textos);
     if (v && 'texto' in v && /descarte/i.test(v.texto)) {
       estiloDescarte = { ...base, ...Object.fromEntries(M.areaNome.map((c) => [c, estiloDe(sh, `${c}${r}`)])) };
       break;
     }
   }
 
-  const textoMetodo = valorDe(sh, M.metodo, textos);
+  const textoMetodo = valorDe(sh, L.metodo, textos);
   if (!textoMetodo || !('texto' in textoMetodo)) throw new Error('modelo da CDN mudou: sem o texto do método');
 
   const escritas: Escrita[] = [
-    { ref: M.numero, valor: { texto: `${cab.numero}/${cab.ano}` } },
-    { ref: M.data, valor: data(cab.data) },
-    { ref: M.ano, valor: { numero: cab.ano } },
-    { ref: M.metodo, valor: { texto: marcarMetodo(textoMetodo.texto, cab.metodo) } },
+    { ref: L.numero, valor: { texto: `${cab.numero}/${cab.ano}` } },
+    { ref: L.data, valor: data(cab.data) },
+    { ref: L.ano, valor: { numero: cab.ano } },
+    { ref: L.metodo, valor: { texto: marcarMetodo(textoMetodo.texto, cab.metodo) } },
   ];
+  if (cab.raca != null) {
+    const textoRaca = valorDe(sh, L.raca, textos);
+    if (!textoRaca || !('texto' in textoRaca)) throw new Error('modelo da CDN mudou: sem a raça do cabeçalho');
+    escritas.push({ ref: L.raca, valor: { texto: trocarRaca(textoRaca.texto, cab.raca) } });
+  }
+  if (comCategoria) escritas.push({ ref: `${COLUNA_CATEGORIA}${M.titulos}`, valor: { texto: 'CATEGORIA' } });
 
   for (let i = 0; i < M.linhas; i++) {
     const r = M.primeiraLinha + i;
     const l = linhas[i];
     if (!l) {
       // Linha sem cria: só esvazia (fica a borda do modelo).
-      for (const c of M.todas) if (estiloDe(sh, `${c}${r}`) != null) escritas.push({ ref: `${c}${r}`, valor: null });
+      for (const c of L.todas) if (estiloDe(sh, `${c}${r}`) != null) escritas.push({ ref: `${c}${r}`, valor: null });
       continue;
     }
     const est = l.descarte ? estiloDescarte : base;
+    const K = L.colunas as Record<string, string>;
     const valores: Record<string, Valor> = {
-      [M.colunas.nome]: texto(l.nome),
+      [K.nome]: texto(l.nome),
       C: null,
       D: null,
       E: null,
-      [M.colunas.numero]: numeroAnimal(l.numero),
-      [M.colunas.sexo]: texto(l.sexo),
-      [M.colunas.pelagem]: texto(l.pelagem),
-      [M.colunas.nascimento]: data(l.nascimento),
-      [M.colunas.peso]: l.peso != null ? { numero: l.peso } : null,
-      [M.colunas.cm]: texto(l.cm),
-      [M.colunas.usoDdg]: texto(l.usoDdg),
-      [M.colunas.pai]: texto(l.pai),
-      [M.colunas.regPai]: numeroAnimal(l.regPai),
-      [M.colunas.mae]: texto(l.mae),
-      [M.colunas.regMae]: numeroAnimal(l.regMae),
-      [M.colunas.cdc]: texto(l.cdc),
+      [K.numero]: numeroAnimal(l.numero),
+      [K.sexo]: texto(l.sexo),
+      [K.pelagem]: texto(l.pelagem),
+      [K.nascimento]: data(l.nascimento),
+      [K.peso]: l.peso != null ? { numero: l.peso } : null,
+      [K.cm]: texto(l.cm),
+      [K.usoDdg]: texto(l.usoDdg),
+      [K.pai]: texto(l.pai),
+      [K.regPai]: numeroAnimal(l.regPai),
+      [K.mae]: texto(l.mae),
+      [K.regMae]: numeroAnimal(l.regMae),
+      [K.cdc]: texto(l.cdc),
     };
-    for (const c of M.todas) escritas.push({ ref: `${c}${r}`, valor: valores[c] ?? null, estilo: est[c] ?? undefined });
+    if (L.colunas.categoria) valores[L.colunas.categoria] = texto(l.categoria);
+    for (const c of L.todas) escritas.push({ ref: `${c}${r}`, valor: valores[c] ?? null, estilo: est[c] ?? undefined });
   }
 
   sh = escreverCelulas(sh, escritas, textos);
@@ -295,6 +365,19 @@ export function cabecalhoCdcNoDesenho(desenho: string, cab: CabecalhoCdc): strin
   trocar(iAno, ts[iAno].texto.replace(/(\/\s*)\d{4}/, `$1${dp.a}`));
 
   return trocarTrechos(desenho, trocas);
+}
+
+/** O "Nº 519/2026" que está no cabeçalho do modelo da CDC (a última que o criador fez à mão). */
+export function numeroDoModeloCdc(modelo: Uint8Array): string | null {
+  try {
+    const p = abrir(modelo);
+    const { desenho } = caminhos(p);
+    if (!desenho) return null;
+    const t = trechos(lerTexto(p, desenho)).find((x) => /^\s*\d+\s*\/\s*\d{4}\s*$/.test(x.texto));
+    return t ? t.texto.replace(/\s+/g, '') : null;
+  } catch {
+    return null;
+  }
 }
 
 export function preencherCdc(modelo: Uint8Array, cab: CabecalhoCdc, linhas: LinhaCdc[]): Uint8Array {

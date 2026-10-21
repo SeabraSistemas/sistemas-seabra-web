@@ -15,9 +15,14 @@ import {
   valorDe,
   type Pacote,
 } from '@/lib/sanri/abcc/xlsx';
-import { cabecalhoCdcNoDesenho, marcarMetodo, preencherCdc, preencherCdn } from '@/lib/sanri/abcc/folhas';
+import { cabecalhoCdcNoDesenho, marcarMetodo, numeroDoModeloCdc, preencherCdc, preencherCdn, trocarRaca } from '@/lib/sanri/abcc/folhas';
+import { deslocarIntervalos, indiceColuna, inserirColuna, inserirColunaNoDesenho, letraColuna } from '@/lib/sanri/abcc/coluna';
 import {
+  categoriaCdn,
   faltasCdn,
+  faltasParaEmitir,
+  racaCdn,
+  sugerirNumeroCdc,
   linhaCdn,
   nasceuNoPeriodo,
   nomeArquivo,
@@ -48,11 +53,12 @@ function sst(textos: string[]): string {
 }
 
 function modeloCdn(): Uint8Array {
-  const textos = ['999/2000', '(   ) Inseminação Artificial  (   ) Transferência de Embriões  ( x )Monta Natural / Controlada', 'Descarte', 'Velha'];
+  const textos = ['999/2000', '(   ) Inseminação Artificial  (   ) Transferência de Embriões  ( x )Monta Natural / Controlada', 'Descarte', 'Velha', 'RAÇA: SAANEN/ ALPINA', 'PESO', 'C/M', 'CDC Nº'];
   const linhas: string[] = [];
   linhas.push('<row r="6"><c r="Q6" s="70" t="s"><v>0</v></c></row>');
   linhas.push('<row r="10"><c r="C10" s="80"><v>2000</v></c><c r="I10" s="5" t="s"><v>1</v></c></row>');
-  linhas.push('<row r="12"><c r="Q12" s="23"><v>36526</v></c></row>');
+  linhas.push('<row r="12"><c r="N12" s="21" t="s"><v>4</v></c><c r="Q12" s="23"><v>36526</v></c></row>');
+  linhas.push('<row r="14" spans="1:18"><c r="J14" s="1" t="s"><v>5</v></c><c r="K14" s="2" t="s"><v>6</v></c><c r="Q14" s="1" t="s"><v>7</v></c></row>');
   for (let r = 15; r <= 39; r++) {
     const nomeEstilo = r === 16 ? 56 : 49; // a linha 16 é a do DESCARTE (vermelho)
     const nome = r === 15 ? '<c r="B15" s="49" t="s"><v>3</v></c>' : r === 16 ? '<c r="B16" s="56" t="s"><v>2</v></c>' : `<c r="B${r}" s="${r > 30 ? 55 : nomeEstilo}"/>`;
@@ -66,7 +72,10 @@ function modeloCdn(): Uint8Array {
     'xl/workbook.xml': WORKBOOK,
     'xl/_rels/workbook.xml.rels': RELS_WB,
     'xl/sharedStrings.xml': sst(textos),
-    'xl/worksheets/sheet1.xml': `<worksheet><sheetData>${linhas.join('')}</sheetData><mergeCells count="1"><mergeCell ref="B15:E15"/></mergeCells></worksheet>`,
+    'xl/worksheets/sheet1.xml':
+      `<worksheet><dimension ref="A1:R54"/><cols><col min="10" max="10" width="14" customWidth="1"/><col min="11" max="11" width="8" customWidth="1"/><col min="17" max="17" width="28" customWidth="1"/></cols>` +
+      `<sheetData>${linhas.join('')}</sheetData><mergeCells count="2"><mergeCell ref="B15:E15"/><mergeCell ref="J48:M48"/></mergeCells>` +
+      `<dataValidations count="1"><dataValidation sqref="J14 Q15:Q39"/></dataValidations></worksheet>`,
   });
 }
 
@@ -108,8 +117,8 @@ function cria(extra: Partial<CriaCdn> = {}): CriaCdn {
     nascimento: '2026-10-01',
     peso: 3.6,
     status: 'ativo',
-    pai: { id: 2, nome: 'Bode Teste', numero: '1000025001' },
-    mae: { id: 3, nome: 'Cabra Teste', numero: '1000024001' },
+    pai: { id: 2, nome: 'Bode Teste', numero: '1000025001', categoria: 'PO' },
+    mae: { id: 3, nome: 'Cabra Teste', numero: '1000024001', categoria: 'PO' },
     metodo: 'mn',
     dataCobertura: '2026-05-04',
     cdc: '520/2026',
@@ -189,7 +198,7 @@ describe('regras da CDN', () => {
     assert.equal(pelagemCdn(null, 'Alpina'), '');
   });
   test('faltas: sem pai, sem CDC, cobertura não lançada', () => {
-    assert.deepEqual(faltasCdn(cria({ pai: null, cdc: null })), ['sem pai', 'sem CDC']);
+    assert.deepEqual(faltasCdn(cria({ pai: null, cdc: null })), ['sem categoria', 'sem pai', 'sem CDC']);
     assert.deepEqual(faltasCdn(cria({ metodo: null, cdc: null })), ['cobertura não lançada']);
     assert.deepEqual(faltasCdn(cria({ metodo: 'ia', cdc: null })), []);
   });
@@ -288,6 +297,119 @@ describe('folha da CDN', () => {
   });
 });
 
+describe('inserir coluna (CATEGORIA depois do PESO)', () => {
+  test('letras e índices', () => {
+    assert.equal(indiceColuna('K'), 11);
+    assert.equal(letraColuna(11), 'K');
+    assert.equal(letraColuna(27), 'AA');
+    assert.equal(deslocarIntervalos('B15:E15 J14 K15:Q39 H9:L9', 11), 'B15:E15 J14 L15:R39 H9:M9');
+  });
+  test('células andam, a nova nasce com o estilo da empurrada, larguras e validações acompanham', () => {
+    const sh =
+      '<worksheet><dimension ref="A1:R54"/><sheetView><selection activeCell="P10" sqref="P10"/></sheetView>' +
+      '<cols><col min="10" max="10" width="14" customWidth="1"/><col min="11" max="11" width="8" customWidth="1"/><col min="12" max="18" width="20"/></cols>' +
+      '<sheetData><row r="14" spans="1:18"><c r="J14" s="1"/><c r="K14" s="2" t="s"><v>0</v></c><c r="Q14" s="3"/></row>' +
+      '<row r="40" spans="2:17"><c r="C40" s="9"/></row><row r="41"/></sheetData>' +
+      '<mergeCells count="2"><mergeCell ref="C40:Q40"/><mergeCell ref="B15:E15"/></mergeCells>' +
+      '<dataValidations count="1"><dataValidation sqref="J14 K15"/></dataValidations></worksheet>';
+    const out = inserirColuna(sh, 'K', 12);
+    assert.match(out, /<c r="J14" s="1"\/><c r="K14" s="2"\/><c r="L14" s="2" t="s"><v>0<\/v><\/c><c r="R14" s="3"\/>/);
+    assert.match(out, /<row r="14" spans="1:19">/);
+    assert.match(out, /<row r="40" spans="2:18"><c r="C40" s="9"\/><\/row>/);
+    assert.match(out, /<mergeCell ref="C40:R40"\/><mergeCell ref="B15:E15"\/>/);
+    assert.match(out, /sqref="J14 L15"/);
+    assert.match(out, /<dimension ref="A1:S54"\/>/);
+    assert.match(out, /activeCell="Q10" sqref="Q10"/);
+    assert.match(out, /<col min="10" max="10" width="14" customWidth="1"\/><col min="11" max="11" width="12" customWidth="1"\/><col min="12" max="12" width="8" customWidth="1"\/><col min="13" max="19" width="20"\/>/);
+  });
+  test('fórmula na planilha: para, não deixa referência errada', () => {
+    assert.throws(() => inserirColuna('<worksheet><sheetData><row r="1"><c r="A1"><f>B1</f></c></row></sheetData></worksheet>', 'K', 12), /fórmula/);
+  });
+  test('desenho: âncora na coluna K (10) ou depois anda; o logo na B fica', () => {
+    const d = '<xdr:from><xdr:col>1</xdr:col></xdr:from><xdr:to><xdr:col>10</xdr:col></xdr:to><xdr:col>16</xdr:col>';
+    assert.equal(inserirColunaNoDesenho(d, 'K'), '<xdr:from><xdr:col>1</xdr:col></xdr:from><xdr:to><xdr:col>11</xdr:col></xdr:to><xdr:col>17</xdr:col>');
+  });
+});
+
+describe('CDN por raça e categoria (pedidos de 21/10)', () => {
+  test('raça: "100,0% Saanen" é SAANEN', () => {
+    assert.equal(racaCdn('100,0% Saanen'), 'SAANEN');
+    assert.equal(racaCdn(' alpina '), 'ALPINA');
+    assert.equal(racaCdn(null), '');
+    assert.equal(racaCdn('50,0% Alpina, 50,0% Saanen'), 'ALPINA × SAANEN');
+  });
+  test('categoria: a da ficha vale; sem ela, a do Art. 35 do SRG pelos pais', () => {
+    const c = (p: string | null, m: string | null, propria: string | null = null) =>
+      categoriaCdn({ categoria: propria, pai: { id: 1, nome: null, numero: null, categoria: p }, mae: { id: 2, nome: null, numero: null, categoria: m } });
+    assert.equal(c('PO', 'PO'), 'PO');
+    assert.equal(c('PO', 'PC'), 'PO');
+    assert.equal(c('PC', 'PC'), 'PC');
+    assert.equal(c('PO', 'PA'), 'PC');
+    assert.equal(c('PA', 'PA'), 'PC');
+    assert.equal(c('PC', 'PA'), 'PC');
+    assert.equal(c('PC', 'PO'), ''); // o regulamento não decide
+    assert.equal(c(null, 'PO'), '');
+    assert.equal(c('PC', 'PO', 'po'), 'PO');
+    assert.ok(faltasCdn(cria({ mae: { id: 3, nome: 'Cabra', numero: '1', categoria: null } })).includes('sem categoria'));
+    assert.ok(faltasCdn(cria({ raca: null })).includes('sem raça'));
+  });
+  test('folhas: método, depois raça (alfabética, sem raça por último); IA só com IA', () => {
+    const crias = [
+      cria({ id: 1, numero: '1000026001' }),
+      cria({ id: 2, numero: '1000026002', raca: 'Alpina' }),
+      cria({ id: 3, numero: '1000026003', raca: '100,0% Saanen' }),
+      cria({ id: 4, numero: '1000026004', metodo: 'ia' }),
+      cria({ id: 5, numero: '1000026005', raca: null }),
+      cria({ id: 6, numero: '1000026006', metodo: 'ia', raca: 'Alpina' }),
+    ];
+    assert.deepEqual(
+      separarEmFolhas(crias).map((f) => [f.metodo, f.raca, f.crias.map((c) => c.id)]),
+      [['mn', 'ALPINA', [2]], ['mn', 'SAANEN', [1, 3]], ['mn', '', [5]], ['ia', 'ALPINA', [6]], ['ia', 'SAANEN', [4]]],
+    );
+  });
+  test('número da CDC: sem CDC no sistema, segue a maior citada (CDN, cobertura, modelo) do ano', () => {
+    const cs = [{ tipo: 'cdn' as const, ano: 2026, numero: 302, cancelada: false }];
+    assert.equal(sugerirNumeroCdc(cs, 2026, ['505/2026', '519/2026', '600/2025', null, 'lixo']), 520);
+    assert.equal(sugerirNumeroCdc([...cs, { tipo: 'cdc', ano: 2026, numero: 530, cancelada: false }], 2026, ['519/2026']), 531);
+    assert.equal(sugerirNumeroCdc(cs, 2026, []), null);
+  });
+  test('botão de emitir diz o que falta', () => {
+    assert.deepEqual(faltasParaEmitir({ numero: '', data: '2026-10-21' }), ['o número']);
+    assert.deepEqual(faltasParaEmitir({ numero: '520', data: '2026-10-21', periodoDe: '', periodoAte: '2026-10-01' }), ['o início do período']);
+    assert.deepEqual(faltasParaEmitir({ numero: '520', data: '2026-10-21', periodoDe: '2026-10-02', periodoAte: '2026-10-01' }), ['um período que termine depois de começar']);
+    assert.deepEqual(faltasParaEmitir({ numero: '520', data: '2026-10-21', periodoDe: '2026-09-01', periodoAte: '2026-10-01' }), []);
+  });
+  test('raça no cabeçalho: troca só depois dos dois pontos; sem "RAÇA:" é erro', () => {
+    assert.equal(trocarRaca('RAÇA: SAANEN/ ALPINA', 'ALPINA'), 'RAÇA: ALPINA');
+    assert.throws(() => trocarRaca('MUNICÍPIO: X', 'SAANEN'), /raça/);
+  });
+  test('folha com CATEGORIA: a coluna entra em K, o resto anda, raça e número no lugar novo', () => {
+    const linhas = [linhaCdn(cria()), linhaCdn(cria({ id: 2, numero: '1000026002', pai: { id: 9, nome: 'Bode PC', numero: '9', categoria: 'PC' } }))];
+    const bytes = preencherCdn(modeloCdn(), { numero: 303, ano: 2026, data: '2026-10-21', metodo: 'mn', raca: 'SAANEN', comCategoria: true }, linhas);
+    const { v, s, sh } = lerPlanilha(bytes);
+    assert.deepEqual(v('K14'), { texto: 'CATEGORIA' });
+    assert.deepEqual(v('L14'), { texto: 'C/M' });
+    assert.deepEqual(v('R14'), { texto: 'CDC Nº' });
+    assert.equal(s('K14'), 2); // estilo do título que foi empurrado
+    assert.deepEqual(v('R6'), { texto: '303/2026' });
+    assert.deepEqual(v('R12'), { numero: serialExcel('2026-10-21') });
+    assert.deepEqual(v('O12'), { texto: 'RAÇA: SAANEN' });
+    assert.deepEqual(v('J15'), { numero: 3.6 });
+    assert.deepEqual(v('K15'), { texto: 'PO' });
+    assert.deepEqual(v('L15'), { texto: 'C' });
+    assert.deepEqual(v('R15'), { texto: '520/2026' });
+    assert.equal(v('K16'), null); // pai PC × mãe PO: o regulamento não decide
+    assert.match(sh, /<mergeCell ref="J48:N48"\/>/);
+    assert.match(sh, /sqref="J14 R15:R39"/);
+  });
+  test('CDN emitida antes de 21/10 (sem comCategoria) sai igual a antes', () => {
+    const { v } = lerPlanilha(preencherCdn(modeloCdn(), { numero: 302, ano: 2026, data: '2026-10-16', metodo: 'mn' }, [linhaCdn(cria())]));
+    assert.deepEqual(v('K15'), { texto: 'C' });
+    assert.deepEqual(v('Q6'), { texto: '302/2026' });
+    assert.deepEqual(v('N12'), { texto: 'RAÇA: SAANEN/ ALPINA' });
+  });
+});
+
 describe('folha da CDC', () => {
   const cab = {
     numero: 520,
@@ -361,5 +483,12 @@ describe('coberturas por reprodutor', () => {
   test('agrupa, ordena por data e põe o maior grupo primeiro', () => {
     const g = porReprodutor([c(1, 7, '2026-10-02'), c(2, 8, '2026-10-01'), c(3, 7, '2026-10-01')]);
     assert.deepEqual(g.map((x) => [x.reprodutor?.id, x.coberturas.map((y) => y.id)]), [[7, [3, 1]], [8, [2]]]);
+  });
+});
+
+describe('número que está no modelo da CDC', () => {
+  test('lê o "Nº 111/2000" do cabeçalho; arquivo que não é planilha = null', () => {
+    assert.equal(numeroDoModeloCdc(modeloCdc()), '111/2000');
+    assert.equal(numeroDoModeloCdc(enc('não é zip')), null);
   });
 });

@@ -32,7 +32,7 @@ export interface Emitidas {
 const RE_CDC = /^\d{1,5}\/\d{4}$/;
 
 /**
- * CDN das crias escolhidas: uma folha por método, de 25 em 25, numeradas em
+ * CDN das crias escolhidas: uma folha por método e raça, de 25 em 25, numeradas em
  * sequência a partir de `numero`. As crias são relidas do banco aqui (não
  * vem nada da tela além dos ids, do número, da data e do CDC Nº digitado
  * para quem o sistema não achou).
@@ -57,7 +57,7 @@ export async function emitirCdn(
   const emitidas: Emitidas['emitidas'] = [];
   let n = numero;
   for (const folha of separarEmFolhas(crias)) {
-    const cab: CabecalhoCdn = { numero: n, ano, data, metodo: folha.metodo };
+    const cab: CabecalhoCdn = { numero: n, ano, data, metodo: folha.metodo, raca: folha.raca, comCategoria: true };
     const linhas: LinhaCdn[] = folha.crias.map((c) => {
       const l = linhaCdn(c);
       const digitado = (cdcDigitado[String(c.id)] ?? '').trim();

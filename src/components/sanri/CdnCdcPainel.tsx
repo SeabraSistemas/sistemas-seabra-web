@@ -8,6 +8,7 @@ import {
   METODOS,
   dataBr,
   faltasCdn,
+  faltasParaEmitir,
   linhaCdc,
   linhaCdn,
   maiusculo,
@@ -16,6 +17,7 @@ import {
   proximoNumero,
   recentesPrimeiro,
   separarEmFolhas,
+  sugerirNumeroCdc,
   type CoberturaCdc,
   type CriaCdn,
 } from '@/lib/sanri/abcc/regras';
@@ -219,6 +221,7 @@ function SecaoCdn({
   const escolhidas = lista.filter((c) => marcadas.has(c.id));
   const folhas = filtro === 'sem' ? separarEmFolhas(escolhidas) : [];
   const todas = lista.length > 0 && escolhidas.length === lista.length;
+  const faltasCdnEmitir = faltasParaEmitir({ numero, data });
 
   function alternar(id: number) {
     setMarcadas((m) => {
@@ -289,7 +292,7 @@ function SecaoCdn({
         />
         <Info>
           Crias nascidas no período escolhido (começa em 1º de janeiro; dá para voltar até {dataBr(carregadoDesde)}), a última que
-          nasceu no topo. Na folha elas saem na ordem dos números, como na CDN oficial. Escolha as que vão na CDN: o sistema separa por tipo de cobertura (monta, IA, TE) e faz uma folha a
+          nasceu no topo. Na folha elas saem na ordem dos números, como na CDN oficial. Escolha as que vão na CDN: o sistema separa por tipo de cobertura (monta, IA, TE) e por raça e faz uma folha a
           cada {CRIAS_POR_CDN}, numeradas em sequência a partir do número que você informar. O CDC Nº vem da CDC da cobertura da mãe;
           quando o sistema não tem, digite. Macho sem nome sai DESCARTE. Quem já foi em CDN antes do sistema: escolha e toque em
           “Marcar como já enviadas”.
@@ -354,7 +357,9 @@ function SecaoCdn({
           <p className="text-sm font-semibold text-ink">
             {plural(escolhidas.length, 'cria', 'crias')} → {plural(folhas.length, 'folha', 'folhas')}
             <span className="block text-xs font-normal text-ink-1">
-              {folhas.map((f, i) => `${numero ? `${Number(numero) + i}/${ano}` : `folha ${i + 1}`}: ${f.crias.length} (${rotuloMetodo(f.metodo).toLowerCase()})`).join(' · ')}
+              {folhas
+                .map((f, i) => `${numero ? `${Number(numero) + i}/${ano}` : `folha ${i + 1}`}: ${f.crias.length} (${rotuloMetodo(f.metodo).toLowerCase()} · ${f.raca || 'sem raça'})`)
+                .join(' · ')}
             </span>
           </p>
           <div className="grid gap-3 sm:grid-cols-2">
@@ -364,13 +369,14 @@ function SecaoCdn({
             <CampoData texto="Data" valor={data} onChange={setData} />
           </div>
           <div className="flex flex-wrap gap-2">
-            <PainelBotao onClick={emitir} disabled={ocupado || !numero || !data}>
+            <PainelBotao onClick={emitir} disabled={ocupado || faltasCdnEmitir.length > 0}>
               {ocupado ? 'Emitindo…' : folhas.length > 1 ? `Emitir ${folhas.length} CDNs` : 'Emitir CDN'}
             </PainelBotao>
             <PainelBotao variante="contorno" onClick={() => marcarComo(true)} disabled={ocupado}>
               Marcar como já enviadas
             </PainelBotao>
           </div>
+          {faltasCdnEmitir.length > 0 && <Aviso tom="aviso">Para emitir, falta {faltasCdnEmitir.join(', ')} da CDN.</Aviso>}
         </div>
       )}
 
@@ -390,16 +396,35 @@ function SecaoCdn({
 
 // ---------------------------------------------------------------- CDC
 
-function SecaoCdc({ coberturas, comunicacoes, hoje, desde }: { coberturas: CoberturaCdc[]; comunicacoes: Comunicacao[]; hoje: string; desde: string }) {
+function SecaoCdc({
+  coberturas,
+  comunicacoes,
+  hoje,
+  desde,
+  numeroModeloCdc,
+}: {
+  coberturas: CoberturaCdc[];
+  comunicacoes: Comunicacao[];
+  hoje: string;
+  desde: string;
+  numeroModeloCdc: string | null;
+}) {
   const router = useRouter();
   const [filtro, setFiltro] = useState<'sem' | 'com'>('sem');
   const [marcadas, setMarcadas] = useState<Set<number>>(new Set());
   const [data, setData] = useState(hoje);
   const ano = Number(data.slice(0, 4)) || Number(hoje.slice(0, 4));
-  const sugerido = proximoNumero(
+  // Sem CDC no sistema ainda, a sugestão vem das que ela fez fora: as citadas
+  // nas CDNs emitidas, nas coberturas e a do modelo (21/10/2026).
+  const citadas = [
+    numeroModeloCdc,
+    ...coberturas.map((c) => c.cdc),
+    ...comunicacoes.filter((c) => c.tipo === 'cdn').flatMap((c) => c.linhas.map((l) => (typeof l.dados.cdc === 'string' ? l.dados.cdc : null))),
+  ];
+  const sugerido = sugerirNumeroCdc(
     comunicacoes.map((c) => ({ tipo: c.tipo, ano: c.ano, numero: c.numero, cancelada: c.cancelada })),
-    'cdc',
     ano,
+    citadas,
   );
   const [numero, setNumero] = useState(sugerido ? String(sugerido) : '');
   const [de, setDe] = useState('');
@@ -417,6 +442,7 @@ function SecaoCdc({ coberturas, comunicacoes, hoje, desde }: { coberturas: Cober
   const periodoDe = de || datas[0] || '';
   const periodoAte = ate || datas[datas.length - 1] || '';
   const folhas = Math.ceil(escolhidas.length / MATRIZES_POR_CDC);
+  const faltasCdcEmitir = faltasParaEmitir({ numero, data, periodoDe, periodoAte });
   const contagem = new Map<string, number>();
   for (const c of escolhidas) contagem.set(linhaCdc(c).nome || String(c.femea.numero), (contagem.get(linhaCdc(c).nome || String(c.femea.numero)) ?? 0) + 1);
   const repetidas = [...contagem].filter(([, n]) => n > 1).map(([nome, n]) => `${nome} (${n}×)`);
@@ -528,13 +554,14 @@ function SecaoCdc({ coberturas, comunicacoes, hoje, desde }: { coberturas: Cober
             <CampoData texto="Data de preenchimento" valor={data} onChange={setData} />
           </div>
           <div className="flex flex-wrap gap-2">
-            <PainelBotao onClick={() => emitir(false)} disabled={ocupado || !numero || !data || !periodoDe || !periodoAte}>
+            <PainelBotao onClick={() => emitir(false)} disabled={ocupado || faltasCdcEmitir.length > 0}>
               {ocupado ? 'Gravando…' : folhas > 1 ? `Emitir ${folhas} CDCs` : 'Emitir CDC'}
             </PainelBotao>
-            <PainelBotao variante="contorno" onClick={() => emitir(true)} disabled={ocupado || !numero || !periodoDe || !periodoAte}>
+            <PainelBotao variante="contorno" onClick={() => emitir(true)} disabled={ocupado || faltasCdcEmitir.length > 0}>
               Registrar CDC já enviada
             </PainelBotao>
           </div>
+          {faltasCdcEmitir.length > 0 && <Aviso tom="aviso">Para emitir, falta {faltasCdcEmitir.join(', ')} da CDC.</Aviso>}
         </div>
       )}
 
@@ -691,7 +718,7 @@ export function CdnPainel({ configurado, ok, carregadoEm, modelos, crias, comuni
 }
 
 /** Aba CDC: as coberturas e as CDCs emitidas. */
-export function CdcPainel({ configurado, ok, carregadoEm, modelos, coberturas, comunicacoes, coberturasDesde, hoje }: PropsPainel) {
+export function CdcPainel({ configurado, ok, carregadoEm, modelos, coberturas, comunicacoes, coberturasDesde, numeroModeloCdc, hoje }: PropsPainel) {
   const [parte, setParte] = useState<'coberturas' | 'emitidas'>('coberturas');
   const cdcs = comunicacoes.filter((c) => c.tipo === 'cdc');
   return (
@@ -713,7 +740,7 @@ export function CdcPainel({ configurado, ok, carregadoEm, modelos, coberturas, c
           { chave: 'emitidas', texto: `Emitidas (${cdcs.filter((c) => !c.cancelada).length})` },
         ]}
       />
-      {parte === 'coberturas' && <SecaoCdc coberturas={coberturas} comunicacoes={comunicacoes} hoje={hoje} desde={coberturasDesde} />}
+      {parte === 'coberturas' && <SecaoCdc coberturas={coberturas} comunicacoes={comunicacoes} hoje={hoje} desde={coberturasDesde} numeroModeloCdc={numeroModeloCdc} />}
       {parte === 'emitidas' && <SecaoEmitidas comunicacoes={cdcs} />}
     </div>
   );

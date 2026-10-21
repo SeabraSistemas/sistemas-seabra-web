@@ -2,6 +2,7 @@ import 'server-only';
 import { publicClient } from '@/lib/adm/supabase-admin';
 import { propriedadeApp } from '@/lib/sanri/config';
 import type { CabecalhoCdc, CabecalhoCdn, CoberturaCdc, CriaCdn, LinhaCdc, LinhaCdn, Metodo } from '@/lib/sanri/abcc/regras';
+import { numeroDoModeloCdc } from '@/lib/sanri/abcc/folhas';
 
 /** Uma CDN ou CDC registrada (abcc_comunicacoes). */
 export interface Comunicacao {
@@ -31,6 +32,8 @@ export interface LeituraAbcc {
   crias: CriaCdn[];
   coberturas: CoberturaCdc[];
   comunicacoes: Comunicacao[];
+  /** "519/2026": o número da CDC que está no modelo do criador (ajuda a sugerir a próxima). */
+  numeroModeloCdc: string | null;
   /** Desde quando as listas vêm ("AAAA-MM-DD"). As crias vêm desde 1º/jan do
    *  ano ANTERIOR; o filtro da tela começa no ano corrente (inicioDoAno). */
   criasDesde: string;
@@ -123,12 +126,41 @@ function menosDias(iso: string, dias: number): string {
   return d.toISOString().slice(0, 10);
 }
 
+/**
+ * Categoria de registro (rebanho.grau_sangue_animal: PO, PC, PA…) da cria e
+ * dos pais — a CDN leva a CATEGORIA desde 21/10/2026. Lida à parte, em
+ * blocos (o PostgREST corta em 1000 linhas), sempre na fazenda do painel.
+ */
+async function categorias(ids: number[]): Promise<Map<number, string | null>> {
+  const supa = publicClient();
+  const out = new Map<number, string | null>();
+  if (!supa || ids.length === 0) return out;
+  const unicos = [...new Set(ids)];
+  for (let i = 0; i < unicos.length; i += 300) {
+    const { data, error } = await supa
+      .from('rebanho')
+      .select('id, grau_sangue_animal')
+      .eq('propriedade_id', propriedadeApp())
+      .in('id', unicos.slice(i, i + 300));
+    if (error) throw new Error(error.message);
+    for (const r of (data as { id: number; grau_sangue_animal: string | null }[]) ?? []) out.set(Number(r.id), r.grau_sangue_animal);
+  }
+  return out;
+}
+
 export async function lerCrias(desde: string): Promise<CriaCdn[]> {
   const supa = publicClient();
   if (!supa) throw new Error('banco do app não configurado');
   const { data, error } = await supa.rpc('abcc_cdn_crias', { p_propriedade: propriedadeApp(), p_desde: desde });
   if (error) throw new Error(error.message);
-  return ((data as Bruto[]) ?? []).map(mapCria);
+  const crias = ((data as Bruto[]) ?? []).map(mapCria);
+  const cat = await categorias(crias.flatMap((c) => [c.id, c.pai?.id ?? 0, c.mae?.id ?? 0]).filter((id) => id > 0));
+  return crias.map((c) => ({
+    ...c,
+    categoria: cat.get(c.id) ?? null,
+    pai: c.pai ? { ...c.pai, categoria: cat.get(c.pai.id) ?? null } : null,
+    mae: c.mae ? { ...c.mae, categoria: cat.get(c.mae.id) ?? null } : null,
+  }));
 }
 
 export async function lerCoberturas(desde: string): Promise<CoberturaCdc[]> {
@@ -156,7 +188,7 @@ export async function getAbcc(partes: { crias?: boolean; coberturas?: boolean } 
   const inicioDoAno = `${hoje.slice(0, 4)}-01-01`;
   const criasDesde = `${Number(hoje.slice(0, 4)) - 1}-01-01`;
   const coberturasDesde = menosDias(hoje, 180);
-  const vazio = { modelos: { cdn: false, cdc: false }, crias: [], coberturas: [], comunicacoes: [], criasDesde, inicioDoAno, coberturasDesde };
+  const vazio = { modelos: { cdn: false, cdc: false }, crias: [], coberturas: [], comunicacoes: [], numeroModeloCdc: null, criasDesde, inicioDoAno, coberturasDesde };
   const supa = publicClient();
   if (!supa) return { configurado: false, ok: false, carregadoEm: null, ...vazio };
   try {
@@ -168,6 +200,12 @@ export async function getAbcc(partes: { crias?: boolean; coberturas?: boolean } 
     ]);
     if (modelos.error) throw new Error(modelos.error.message);
     const tipos = new Set(((modelos.data as { tipo: string }[]) ?? []).map((m) => m.tipo));
+    let numeroModeloCdc: string | null = null;
+    if (partes.coberturas && tipos.has('cdc')) {
+      const { data: m } = await supa.from('abcc_modelo').select('arquivo_base64').eq('propriedade_id', propriedadeApp()).eq('tipo', 'cdc').maybeSingle();
+      const b64 = (m as { arquivo_base64?: string } | null)?.arquivo_base64;
+      if (b64) numeroModeloCdc = numeroDoModeloCdc(new Uint8Array(Buffer.from(b64, 'base64')));
+    }
     return {
       configurado: true,
       ok: true,
@@ -176,6 +214,7 @@ export async function getAbcc(partes: { crias?: boolean; coberturas?: boolean } 
       crias,
       coberturas,
       comunicacoes,
+      numeroModeloCdc,
       criasDesde,
       inicioDoAno,
       coberturasDesde,
