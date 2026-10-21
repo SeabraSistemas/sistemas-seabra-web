@@ -112,6 +112,13 @@ um segundo agendamento (`br.com.sistemaseabra.pedidos-rapido`, `node coletor.mjs
 pedidos a caminho que ainda não foram liberados; sem pedido esperando, nem abre o navegador. Leitura vazia (página que não
 carregou) é descartada, e a leitura das 8h espera se a rápida estiver com o navegador.
 
+## Telegram: reenvio e aviso de pedido novo
+
+- **Rede instável:** o envio tenta 4 vezes (3 s, 10 s, 30 s). Se mesmo assim falhar, a mensagem vai para `~/.seabra-pedidos/telegram-fila.json` e
+  sai na próxima execução (checagem das 2 em 2 horas ou resumo das 7h), marcada como "atrasada". Mensagem com mais de 24 h é descartada.
+- **Pedido novo:** a checagem rápida também lê a lista de pedidos e avisa "🛒 Novo pedido" (só vale pedido feito nos últimos 4 dias, para uma
+  leitura que traz um pedido antigo a mais não virar aviso falso) e "💳 Pagamento aprovado" quando o status do cartão muda.
+
 ## Quando der problema
 
 | O painel mostra | O que fazer |

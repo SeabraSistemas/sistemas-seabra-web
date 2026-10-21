@@ -24,7 +24,7 @@ const norm = (s) =>
 const PAGAMENTO = [
   ['problema', /(falha|erro|problema|recus\w+|negad\w+|nao (foi )?(aprovad|conclu)\w+|expirou|declin\w+)[^.\n]{0,40}pagamento|pagamento[^.\n]{0,40}(falh\w+|recus\w+|negad\w+|nao (foi )?(aprovad|conclu)\w+|expirou|declin\w+|problema)|payment[^.\n]{0,30}(fail\w*|declin\w*|refus\w*|problem|error)|(fail\w*|declin\w*|problem|error)[^.\n]{0,30}payment|pago no pago/],
   ['pendente', /esperando (o )?pagamento|a ser pago|aguardando (o )?pagamento|pagamento pendente|finalizar (o )?pagamento|awaiting payment|payment pending|pending payment|esperando pago|pendiente de pago/],
-  ['ok', /pagamento (confirmado|aprovado|efetuado|recebido|concluido|realizado)|pedido pago|payment (confirmed|approved|received|successful|complete)|order paid|pago confirmado|pago aprobado/],
+  ['ok', /^(processando|processing)$|pagamento (confirmado|aprovado|efetuado|recebido|concluido|realizado)|pedido pago|payment (confirmed|approved|received|successful|complete)|order paid|pago confirmado|pago aprobado/],
 ];
 
 const ADUANA = [
@@ -38,7 +38,7 @@ const ENTREGA = [
   ['cancelado', /^(cancelad\w*|closed|cancell?ed)$|pedido cancelad\w+|order (was )?cancel\w+|cancelad\w+ (pelo|por) (vendedor|comprador|sistema)|transacao (fechada|encerrada)|pedido fechado|order closed|reembolso (concluido|aprovado|efetuado)|refund (complete\w*|approved|issued)/],
   ['problema', /(falha|tentativa (de entrega )?(malsucedida|fracassada)|nao foi possivel entregar|endereco (incorreto|invalido|nao localizado|insuficiente)|destinatario ausente|extraviad\w+|extravio|perdid\w+|danificad\w+|avariad\w+|devolvid\w+ ao (remetente|vendedor)|retornand\w+ ao remetente|entrega (falhou|atrasada|nao realizada)|delivery (failed|attempt failed|exception)|undeliverable|returned to sender|lost in transit|address (issue|problem|incorrect)|em disputa|disputa (aberta|em andamento)|devolucao solicitada|pacote nao localizado)/],
   ['entregue', /^(concluido|completed)$|\bentregue\b|objeto entregue|entrega (realizada|concluida|efetuada)|pedido (foi )?entregue|\bdelivered\b|delivery (complete\w*|successful)|pacote (foi )?entregue|recebido pelo destinatario|retirado (pelo|na) (destinatario|agencia)/],
-  ['a_caminho', /(awaiting (delivery|shipment)|aguardando (a )?(entrega|envio|postagem)|sendo preparado|em transito|a caminho|enviado|despachado|postado|coletado|saiu para entrega|saiu do|chegou (a|ao|na)|in transit|shipped|out for delivery|dispatched|picked up|departed|arrived|aguardando retirada|pronto para retirada|aguardando envio|preparando|em preparacao|awaiting shipment|processing)/],
+  ['a_caminho', /(^processando$|awaiting (delivery|shipment)|aguardando (a )?(entrega|envio|postagem)|sendo preparado|em transito|a caminho|enviado|despachado|postado|coletado|saiu para entrega|saiu do|chegou (a|ao|na)|in transit|shipped|out for delivery|dispatched|picked up|departed|arrived|aguardando retirada|pronto para retirada|aguardando envio|preparando|em preparacao|awaiting shipment|processing)/],
 ];
 
 const ORDEM_ENTREGA = ['entregue', 'problema', 'cancelado', 'a_caminho'];

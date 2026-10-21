@@ -103,3 +103,11 @@ test('retenção de exportação ainda é alerta', () => {
   const r = classificar({ eventos: ev('Objeto retido pela alfândega de exportação') });
   assert.equal(r.aduana, 'problema');
 });
+
+test('"Processando" no cartão: já pago, o vendedor está preparando o envio', () => {
+  const r = classificar({ statusTexto: 'Processando' });
+  assert.deepEqual([r.pagamento, r.entrega], ['ok', 'a_caminho']);
+  assert.deepEqual(r.alertas, []);
+  // "Processando no centro de triagem…" (rastreio) continua sendo só um evento de trânsito.
+  assert.equal(classificar({ statusTexto: 'Em trânsito', eventos: [{ texto: 'Processando no centro de triagem do país/região de partida' }] }).entrega, 'a_caminho');
+});

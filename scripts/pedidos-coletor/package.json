@@ -6,7 +6,7 @@
   "scripts": {
     "login": "node coletor.mjs login",
     "coletar": "node coletor.mjs",
-    "test": "node --test classificar.test.mjs coletor.test.mjs notificar.test.mjs precos.test.mjs"
+    "test": "node --test classificar.test.mjs coletor.test.mjs notificar.test.mjs precos.test.mjs notificar-fila.test.mjs"
   },
   "dependencies": {
     "playwright-core": "1.49.1"

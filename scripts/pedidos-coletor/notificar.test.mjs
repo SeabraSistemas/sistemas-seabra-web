@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { montarAvisoDesembaraco, montarMensagem, temNovidade } from './notificar.mjs';
+import { montarAvisoDesembaraco, montarAvisoPedidos, montarMensagem, temNovidade } from './notificar.mjs';
 
 const pedido = (o = {}) => ({
   id: '1',
@@ -98,4 +98,18 @@ test('dia calmo', () => {
   assert.equal(temNovidade({ ok: true, pedidos: [pedido()] }, []), false);
   assert.equal(temNovidade({ ok: true, pedidos: [pedido()] }, [{}]), true);
   assert.equal(temNovidade({ ok: false, pedidos: [] }, []), true);
+});
+
+test('aviso de pedido novo: produto, valor, estado do pagamento e referência', () => {
+  const p = pedido({ id: '8215', total: 'R$445,63', pagamento: 'pendente', entrega: 'desconhecido' });
+  const novas = [{ pedidoId: '8215', texto: 'Readell 100 peças: Novo pedido', grupo: false, em: 'x' }];
+  novas[0].texto = 'Novo pedido: Readell 100 peças';
+  assert.equal(montarAvisoPedidos({ ok: true, pedidos: [p] }, novas), ['🛒 Novo pedido', 'Microchip · 1 un. · R$ 445,63', 'aguardando pagamento · Ref. 8215'].join('\n'));
+});
+
+test('aviso de pagamento aprovado; sem pedido novo nem pagamento, nada', () => {
+  const novas = [{ pedidoId: '1', texto: 'Readell: Pagamento aprovado', grave: false, em: 'x' }];
+  assert.equal(montarAvisoPedidos({ ok: true, pedidos: [pedido()] }, novas), ['💳 Pagamento aprovado', 'Microchip · 1 un.', 'Ref. 1'].join('\n'));
+  assert.equal(montarAvisoPedidos({ ok: true, pedidos: [pedido()] }, [{ pedidoId: '1', texto: 'x: A caminho', grave: false, em: 'x' }]), null);
+  assert.equal(montarAvisoPedidos({ ok: true, pedidos: [pedido()] }, []), null);
 });

@@ -24,7 +24,7 @@ import { classificar, ROTULOS } from './classificar.mjs';
 import { numeroBR, reaisTexto, reaisParaNumero } from './util.mjs';
 import { grupoDoProduto } from './grupos.mjs';
 import { lerAjustes, lerHistoricoPrecos, gravarHistoricoPrecos, parsearProduto, parsearCheckout, registrarPreco, avaliarPreco, medias, precoDeCompra } from './precos.mjs';
-import { dolarAtual, enviar, lerConfig, montarAvisoDesembaraco, montarMensagem, temNovidade } from './notificar.mjs';
+import { descarregarFila, dolarAtual, enviarOuGuardar, lerConfig, montarAvisoDesembaraco, montarAvisoPedidos, montarMensagem, temNovidade } from './notificar.mjs';
 import { dadosLocais, enviarParaNuvem, lerNuvem } from './nuvem.mjs';
 
 const DIR = process.env.PEDIDOS_DIR ?? join(homedir(), '.seabra-pedidos');
@@ -550,16 +550,16 @@ async function coletar() {
 }
 
 /**
- * Checagem LEVE, a cada poucas horas (--rapido): só relê o rastreio dos pedidos que ainda esperam o desembaraço
- * aduaneiro, para avisar logo que ele sair. Sem nada a conferir, nem abre o navegador. Qualquer falha (perfil em
+
+ * Checagem LEVE, a cada poucas horas (--rapido): relê a lista (pedido novo, pagamento aprovado) e o rastreio dos pedidos
+ * que ainda esperam o desembaraço aduaneiro, para avisar logo que acontecer. Qualquer falha (perfil em
  * uso pela leitura completa, sessão, CAPTCHA) é silenciosa: não grava erro, a leitura das 8h cuida disso.
  * Devolve o novo snapshot só se algo mudou; senão null.
  */
 async function coletarRapido() {
   const anterior = lerSnapshot();
-  const pendentes = (anterior?.pedidos ?? []).filter((p) => p.entrega === 'a_caminho' && p.aduana !== 'concluida');
-  if (!anterior?.ok || pendentes.length === 0) {
-    console.log('Nada esperando desembaraço: nada a conferir.');
+  if (!anterior?.ok) {
+    console.log('Sem leitura completa anterior: nada a conferir.');
     return null;
   }
   const agora = new Date().toISOString();
@@ -567,15 +567,42 @@ async function coletarRapido() {
   try {
     ctx = await abrir();
     const pagina = ctx.pages()[0] ?? (await ctx.newPage());
+
+    // 1) A lista: pedido NOVO e mudança de status do cartão (ex.: pagamento aprovado).
+    const lista = await lerListaDePedidos(pagina);
+    const conhecidos = new Map(anterior.pedidos.map((p) => [p.id, p]));
+    let pedidos = [...anterior.pedidos];
+    // A lista às vezes vem com um pedido a mais ou a menos: só vale como "novo" o que foi feito nos últimos dias.
+    const recente = (data) => {
+      const d = dataDoCartao(data);
+      return d != null && Date.now() - d.getTime() < 4 * 86_400_000;
+    };
+    for (const item of lista) {
+      const c0 = parsearCartao(item.texto);
+      const velho = conhecidos.get(item.id);
+      if (!velho) {
+        if (recente(c0.data)) pedidos = [montarPedido(item, ''), ...pedidos];
+      } else if (c0.status && !['entregue', 'cancelado'].includes(velho.entrega)) {
+        const c = classificar({ statusTexto: c0.status, eventos: [...(velho.eventos ?? [])].reverse() });
+        // Atualiza se o texto do cartão mudou OU se a leitura que temos ficou para trás do classificador (ex.: "status ?").
+        if (c0.status !== velho.statusTexto || c.pagamento !== velho.pagamento || c.entrega !== velho.entrega) {
+          pedidos = pedidos.map((p) => (p.id === item.id ? { ...p, statusTexto: c0.status, pagamento: c.pagamento, entrega: c.entrega, aduana: p.aduana === 'concluida' ? p.aduana : c.aduana, alertas: c.alertas } : p));
+        }
+      }
+    }
+
+    // 2) O rastreio de quem ainda espera o desembaraço aduaneiro.
+    const pendentes = pedidos.filter((p) => p.entrega === 'a_caminho' && p.aduana !== 'concluida');
     const atualizados = new Map();
     for (const p of pendentes) {
       await espera(1500, 3500);
       atualizados.set(p.id, reclassificar(p, await lerRastreio(pagina, p.id)));
     }
-    const pedidos = anterior.pedidos.map((p) => atualizados.get(p.id) ?? p);
+    pedidos = pedidos.map((p) => atualizados.get(p.id) ?? p);
+
     const novas = diferencas(anterior.pedidos, pedidos, agora);
     if (novas.length === 0) {
-      console.log(`${pendentes.length} pedido(s) esperando desembaraço: sem novidade.`);
+      console.log(`Sem novidade (${lista.length} pedidos na lista, ${pendentes.length} esperando desembaraço).`);
       return null;
     }
     console.log(`Mudou: ${novas.map((m) => m.texto).join(' | ')}`);
@@ -619,20 +646,23 @@ async function subirParaOSite() {
 async function avisar(snap) {
   if (dry || args.has('--sem-aviso') || !lerConfig()) return;
   const novas = snap.mudancas.filter((m) => m.em === snap.atualizadoEm);
-  try {
-    // Desembaraço novo: mensagem PRÓPRIA e em destaque, antes de tudo — é o sinal para comprar.
-    const urgente = montarAvisoDesembaraco(snap, novas);
-    if (urgente) {
-      await enviar(urgente);
-      console.log('Aviso de desembaraço enviado no Telegram.');
+  const mandar = async (texto, rotulo) => {
+    try {
+      await enviarOuGuardar(texto);
+      console.log(`${rotulo} enviado no Telegram.`);
+    } catch (e) {
+      console.log(`Não consegui avisar no Telegram (${rotulo}): ${e.message}`);
     }
-    if (rapido) return;
-    // Todo dia chega um resumo; o que muda é só o quanto tem de novidade no topo.
-    await enviar(montarMensagem(snap, novas, await dolarAtual()));
-    console.log(temNovidade(snap, novas) ? 'Aviso enviado no Telegram.' : 'Resumo do dia enviado no Telegram.');
-  } catch (e) {
-    console.log(`Não consegui avisar no Telegram: ${e.message}`);
-  }
+  };
+  // Desembaraço novo: mensagem PRÓPRIA e em destaque, antes de tudo — é o sinal para comprar.
+  const urgente = montarAvisoDesembaraco(snap, novas);
+  if (urgente) await mandar(urgente, 'Aviso de desembaraço');
+  // Compra nova na conta (ou pagamento aprovado): confirma que o coletor viu.
+  const pedidosNovos = montarAvisoPedidos(snap, novas);
+  if (pedidosNovos) await mandar(pedidosNovos, 'Aviso de pedido');
+  if (rapido) return;
+  // Todo dia chega um resumo; o que muda é só o quanto tem de novidade no topo.
+  await mandar(montarMensagem(snap, novas, await dolarAtual()), temNovidade(snap, novas) ? 'Aviso' : 'Resumo do dia');
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
@@ -640,6 +670,11 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     await login();
   } else {
     if (!existsSync(PERFIL) && !dry) console.log('Aviso: sem sessão guardada ainda — rode "node coletor.mjs login" primeiro.');
+    // Mensagem que não saiu por falha de rede numa execução anterior sai agora.
+    if (!dry && lerConfig()) {
+      const reenviadas = await descarregarFila().catch(() => 0);
+      if (reenviadas) console.log(`Reenviei ${reenviadas} mensagem(ns) que estava(m) na fila.`);
+    }
     const snap = rapido ? await coletarRapido() : await coletar();
     if (!snap) process.exit(0);
     resumo(snap);

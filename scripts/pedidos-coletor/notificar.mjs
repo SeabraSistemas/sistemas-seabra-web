@@ -107,6 +107,27 @@ export function montarAvisoDesembaraco(snap, novas) {
   return linhas.join('\n').trim();
 }
 
+/**
+ * Pedido NOVO na conta (ou pagamento que acabou de ser aprovado): confirma que o coletor viu a compra.
+ * null se não houve nada disso.
+ */
+export function montarAvisoPedidos(snap, novas) {
+  const blocos = [];
+  for (const m of novas) {
+    const p = snap.pedidos.find((x) => x.id === m.pedidoId);
+    if (!p) continue;
+    const item = p.itens[0];
+    const nome = `${nomeCurto(item?.titulo)} · ${item?.qtd ?? 1} un.`;
+    if (/^Novo pedido/.test(m.texto)) {
+      const estado = p.pagamento === 'pendente' ? 'aguardando pagamento' : p.pagamento === 'ok' ? 'pagamento aprovado' : 'status ?';
+      blocos.push([`🛒 Novo pedido`, `${nome}${p.total ? ` · ${p.total.replace('R$', 'R$ ')}` : ''}`, `${estado} · Ref. ${p.id}`].join('\n'));
+    } else if (/Pagamento aprovado/.test(m.texto)) {
+      blocos.push([`💳 Pagamento aprovado`, nome, `Ref. ${p.id}`].join('\n'));
+    }
+  }
+  return blocos.length ? blocos.join('\n\n') : null;
+}
+
 /** Pedido que deve gerar aviso mesmo que o dia esteja calmo. */
 export const temNovidade = (snap, novas) =>
   !snap.ok || novas.length > 0 || snap.pedidos.some((p) => p.alertas.length > 0) || Object.values(snap.precos ?? {}).some((x) => (x.alertas ?? []).length > 0);
@@ -134,11 +155,70 @@ async function telegram(token, metodo, corpo) {
   return j.result;
 }
 
-export async function enviar(texto, config = lerConfig()) {
-  if (!config) return false;
+const dormir = (ms) => new Promise((r) => setTimeout(r, ms));
+const ARQUIVO_FILA = join(DIR, 'telegram-fila.json');
+
+/** Uma tentativa de envio. Lança se o Telegram não aceitou ou se a rede falhou. */
+async function enviarUmaVez(texto, config) {
   // O Telegram limita a 4096 caracteres por mensagem.
   await telegram(config.token, 'sendMessage', { chat_id: config.chatId, text: texto.slice(0, 4000), disable_web_page_preview: true });
-  return true;
+}
+
+/** Rede instável (logo que o Mac acorda, por exemplo) é o erro comum: tenta de novo antes de desistir. */
+export async function enviar(texto, config = lerConfig(), esperas = [3_000, 10_000, 30_000]) {
+  if (!config) return false;
+  for (let i = 0; ; i++) {
+    try {
+      await enviarUmaVez(texto, config);
+      return true;
+    } catch (e) {
+      // Recusa do Telegram (token, chat) não melhora tentando de novo; falha de rede sim.
+      if (/Telegram recusou/.test(String(e?.message)) || i >= esperas.length) throw e;
+      await dormir(esperas[i]);
+    }
+  }
+}
+
+const lerFila = () => {
+  try {
+    const f = JSON.parse(readFileSync(ARQUIVO_FILA, 'utf8'));
+    return Array.isArray(f) ? f : [];
+  } catch {
+    return [];
+  }
+};
+const gravarFila = (f) => {
+  mkdirSync(DIR, { recursive: true, mode: 0o700 });
+  writeFileSync(ARQUIVO_FILA, JSON.stringify(f, null, 2), { mode: 0o600 });
+};
+
+/** Envia; se a rede não deixar, guarda na fila para a próxima execução (resumo 7h ou checagem das 2 em 2 horas). */
+export async function enviarOuGuardar(texto, config = lerConfig()) {
+  if (!config) return false;
+  try {
+    return await enviar(texto, config);
+  } catch (e) {
+    gravarFila([...lerFila(), { texto, em: new Date().toISOString() }]);
+    throw new Error(`${e.message} — guardei na fila para reenviar`);
+  }
+}
+
+/** Reenvia o que ficou na fila (descarta o que tem mais de 24 h: aviso velho confunde mais do que ajuda). */
+export async function descarregarFila(config = lerConfig(), agora = Date.now()) {
+  if (!config) return 0;
+  const fila = lerFila().filter((m) => agora - Date.parse(m.em) < 24 * 3_600_000);
+  const restante = [];
+  let enviadas = 0;
+  for (const m of fila) {
+    try {
+      await enviar(`${m.texto}\n\n(atrasada: ${new Date(m.em).toLocaleString('pt-BR', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' })})`, config, [3_000]);
+      enviadas++;
+    } catch {
+      restante.push(m);
+    }
+  }
+  gravarFila(restante);
+  return enviadas;
 }
 
 /** Cotação do dólar para o aviso; falha silenciosa (o aviso sai sem ela). */
