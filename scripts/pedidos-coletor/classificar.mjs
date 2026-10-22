@@ -58,22 +58,29 @@ function ultimo(regras, textos, ordem) {
 }
 
 /*
- * "Desembaraço aduaneiro concluído" no rastreio da AliExpress significa que o pacote está liberado
- * no Brasil (confirmado pelo Felipe em 20/10/2026) — pode vir ANTES de o pacote sair da China, porque
- * a liberação é feita por declaração eletrônica. Só uma frase que diga "exportação" explicitamente
- * (aduana do país de partida) fica de fora de "concluída"/"em andamento".
- * "Retido/problema" e "imposto pendente" valem onde estiverem: são ruins em qualquer lado.
+ * Aduana de SAÍDA x de CHEGADA. O rastreio usa a MESMA frase ("Desembaraço aduaneiro concluído") para a exportação na
+ * China e para a importação no Brasil. Só vale a do destino: a que vem DEPOIS de o pacote sair do país de partida (ou
+ * de chegar ao país de destino/Brasil), ou a que diz "importação". Visto na conta real em 22/10/2026: o pedido
+ * 8214734896720545 tinha "concluído" em 18/10, saiu do país só em 20/10 e hoje está em país de trânsito — a frase de 18/10
+ * era a de exportação, e tratá-la como Brasil gerou um aviso de desembaraço FALSO. (Em 20/10 a regra foi relaxada por
+ * pedido do Felipe e voltou a ser esta depois dessa prova.)
+ * "Retido/problema" e "imposto pendente" valem em qualquer lado: são ruins onde estiverem.
  */
+const SAIDA_DO_PAIS = /saiu do pais\/regiao de partida|saiu do pais de (partida|origem)|left (the )?(country|origin)|departed from (the )?(origin )?(country|region)|chegou ao pais\/regiao de destino|chegou ao pais de destino|chegou ao brasil|arrived (in|at) (the )?destination (country|region)/;
 const E_EXPORTACAO = /exportacao|\bexport\b|exportation/;
+const E_IMPORTACAO = /importacao|\bimport\b|receita federal|remessa conforme/;
 
-/** Último evento de aduana do Brasil (ou problema/imposto), do mais antigo ao mais novo. */
+/** Último evento de aduana do DESTINO (ou problema/imposto de qualquer lado), do mais antigo ao mais novo. */
 function aduanaDoBrasil(textos) {
+  let saiu = false;
   let aduana = null;
   for (const t of textos) {
     if (!t) continue;
+    if (SAIDA_DO_PAIS.test(t)) saiu = true;
     const v = ADUANA.find(([, re]) => re.test(t))?.[0];
     if (!v) continue;
-    if ((v === 'concluida' || v === 'em_andamento') && E_EXPORTACAO.test(t)) continue;
+    const doDestino = !E_EXPORTACAO.test(t) && (saiu || E_IMPORTACAO.test(t));
+    if ((v === 'concluida' || v === 'em_andamento') && !doDestino) continue;
     aduana = v;
   }
   return aduana;

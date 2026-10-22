@@ -79,8 +79,13 @@ test('texto sem nada reconhecível', () => {
   assert.deepEqual([r.pagamento, r.aduana, r.entrega], ['desconhecido', 'desconhecido', 'desconhecido']);
 });
 
-test('desembaraço concluído vale como liberado no Brasil, mesmo antes de o pacote sair da China', () => {
-  const r = classificar({ statusTexto: 'Aguardando a entrega', eventos: ev('Desembaraço aduaneiro concluído', 'Saiu do país/região de partida.') });
+test('desembaraço ANTES de o pacote sair do país de partida é o de EXPORTAÇÃO e não conta (caso real de 22/10)', () => {
+  const r = classificar({ statusTexto: 'Aguardando a entrega', eventos: ev('Desembaraço aduaneiro iniciado', 'Desembaraço aduaneiro concluído', 'Saiu do país/região de partida.', 'Chegou no país/região de trânsito') });
+  assert.equal(r.aduana, 'aguardando');
+});
+
+test('desembaraço DEPOIS de sair do país de partida é o do destino e conta', () => {
+  const r = classificar({ statusTexto: 'Aguardando a entrega', eventos: ev('Desembaraço aduaneiro concluído', 'Saiu do país/região de partida.', 'Desembaraço aduaneiro iniciado', 'Desembaraço aduaneiro concluído') });
   assert.equal(r.aduana, 'concluida');
 });
 

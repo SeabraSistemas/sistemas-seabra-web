@@ -196,11 +196,11 @@ test('rastreio: código, eventos na ordem e sem barra de progresso nem aviso de 
   );
 });
 
-test('pedido real a caminho, desembaraço concluído e sem alertas', () => {
+test('pedido real a caminho (22/10): o desembaraço de 18/10 é o de exportação, então a aduana de cá segue aguardando', () => {
   const c0 = parsearCartao(CARTAO_A_CAMINHO);
   const r = parsearRastreio(RASTREIO, AGORA);
   const c = classificar({ statusTexto: c0.status, eventos: [...r.eventos].reverse() });
-  assert.deepEqual([c.pagamento, c.aduana, c.entrega], ['ok', 'concluida', 'a_caminho']);
+  assert.deepEqual([c.pagamento, c.aduana, c.entrega], ['ok', 'aguardando', 'a_caminho']);
   assert.deepEqual(c.alertas, []);
 });
 
@@ -249,12 +249,11 @@ test('trava do checkout: só "Comprar" passa; "Fazer o pedido" e qualquer pagame
 test('checagem rápida: o rastreio novo libera o desembaraço e a mudança aparece', () => {
   const antes = { id: '1', itens: [{ titulo: 'Readell 100 peças microchip' }], statusTexto: 'Aguardando a entrega', pagamento: 'ok', aduana: 'aguardando', entrega: 'a_caminho', alertas: [], codigoRastreio: null, previsao: null, eventos: [] };
   const depois = reclassificar(antes, RASTREIO, AGORA);
-  assert.equal(depois.aduana, 'concluida');
+  assert.equal(depois.aduana, 'aguardando');
   assert.equal(depois.codigoRastreio, 'NN000000000BR');
   assert.deepEqual(depois.previsao, { de: '2026-10-26', ate: '2026-11-07' });
-  const m = diferencas([antes], [depois], '2026-10-20T10:00:00Z');
-  assert.equal(m.length, 1);
-  assert.match(m[0].texto, /Desembaraço concluído/);
+  // Aduana não mudou (segue aguardando): nenhum aviso de desembaraço.
+  assert.deepEqual(diferencas([antes], [depois], '2026-10-20T10:00:00Z'), []);
   // Rastreio sem nada novo: nenhuma mudança.
   assert.deepEqual(diferencas([depois], [reclassificar(depois, RASTREIO, AGORA)], 'x'), []);
 });
