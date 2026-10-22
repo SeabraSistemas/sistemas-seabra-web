@@ -5,7 +5,9 @@ Conteúdo:
   separação das crias (TMM), corte num dia-fim e regra de parada por intervalo longo;
 * tim: o TIM de vacas (ICAR Procedure 2), até 305 dias;
 * lactacao_pequenos_ruminantes: as regras da Seção 16 da ICAR para cabras e ovelhas (separação
-  do aleitamento, janelas do 1º controle, intervalo máximo, mínimo de controles);
+  do aleitamento, janelas do 1º controle, intervalo máximo, mínimo de controles); por padrão só
+  avisa quando uma regra é violada, e com estrito_norma=True aplica a norma (sem cálculo com o 1º
+  controle fora da janela; hiato máximo e meio intervalo conforme o método de controle);
 * curvas de Wood (log-linear e Gauss-Newton), Wilmink e declínio exponencial;
 * FCM 4% (Gaines), ECM (Sjaunja et al. 1990, com o divisor declarado), ECS/SCS e média geométrica
   da contagem de células; controles AT e AC.
@@ -29,6 +31,16 @@ import numpy as np
 # Densidade para converter litros em quilos (ICAR Seção 16).
 DENSIDADE_LEITE_OVELHA = 1.036   # g/mL
 DENSIDADE_LEITE_CABRA = 1.032    # g/mL (fator de peso para volume citado para cabras)
+
+# Seção 16 da ICAR, tabela de intervalos entre controles (caprinos 2.5.1; ovinos 1.2.4.1): intervalo
+# médio do rebanho por método. O dígito é o intervalo em semanas (4, 5, 6 e, só em caprinos, 7); T, C,
+# Z e Y (uma ordenha medida ou amostrada) têm 30 dias, como o A4. O 2º caractere do método vem depois da
+# letra de quem mede (A, B, C ou E).
+INTERVALO_MEDIO_METODO = {"4": 30.0, "5": 36.0, "6": 42.0, "7": 49.0,
+                          "T": 30.0, "C": 30.0, "Z": 30.0, "Y": 30.0}
+SEGUNDO_CARACTERE_VALIDO = {"caprino": "4567TCZY", "ovino": "456TC"}
+# Ovinos, 1.2.4.2: hiato máximo entre dois controles não nulos = 70 dias (2 × 35), qualquer método.
+HIATO_MAXIMO_OVINO = 70.0
 
 # ECM de Sjaunja et al. (1990): divisor 3,140, na forma citada por três artigos abertos (relatório
 # de leite), e a variante 3,1138, que é o numerador com 4,0% de gordura e 3,3% de proteína e faz a
@@ -126,12 +138,28 @@ def fim_icar(dias, comprimento: float | None = None, secagem: float | None = Non
     return min(fim, comprimento) if comprimento is not None else fim
 
 
+def intervalo_medio_do_metodo(metodo: str, especie: str) -> float:
+    """Intervalo médio entre controles do método (Seção 16 da ICAR): A4/B4/C4/E4 = 30 dias; 5 = 36;
+    6 = 42; 7 = 49 (só caprinos); AT, AC, AZ e AY = 30. O hiato máximo de caprinos é o dobro
+    (60, 72, 84 e 98 dias para A4, A5, A6 e A7; ICAR 2.5.2). O método D não é oficial e não entra."""
+    if especie not in SEGUNDO_CARACTERE_VALIDO:
+        raise ValueError("especie deve ser 'caprino' ou 'ovino'")
+    m = str(metodo).strip().upper()
+    if len(m) != 2 or m[0] not in "ABCE" or m[1] not in SEGUNDO_CARACTERE_VALIDO[especie]:
+        raise ValueError(f"método {metodo!r} inválido para {especie} (use, por exemplo, A4, A5, A6"
+                         f"{', A7' if especie == 'caprino' else ''}, AT ou AC; o D não é oficial)")
+    return INTERVALO_MEDIO_METODO[m[1]]
+
+
 def lactacao_pequenos_ruminantes(dias, producoes, especie: str, secagem: float | None = None,
                                  separacao_crias: float | None = None,
                                  comprimento: float | None = None,
                                  intervalo_medio: float | None = None,
                                  minimo_controles: int = 3,
-                                 producao_minima: float = 0.2) -> Lactacao:
+                                 producao_minima: float = 0.2,
+                                 estrito_norma: bool = False,
+                                 metodo: str | None = None,
+                                 limite_primeiro_controle: float | None = None) -> Lactacao:
     """Lactação de cabra ou ovelha pelas regras da Seção 16 da ICAR.
 
     * TMY (sem separacao_crias): ordenha desde o parto; o Fleischmann começa no parto.
@@ -139,21 +167,55 @@ def lactacao_pequenos_ruminantes(dias, producoes, especie: str, secagem: float |
       entra; controles até esse dia são descartados e o Fleischmann começa nele. TMM e TMY não
       se misturam no mesmo grupo de contemporâneas.
     * 1º controle: caprino ordenhado desde o parto, entre o 6º e o 80º dia; com mamada (e ovinos),
-      até a duração da mamada + 52 dias (35 dias com tolerância de 17).
-    * Intervalo máximo entre controles não nulos = 2 × intervalo médio (caprino 2 × 30 = 60 dias;
-      ovino 2 × 35 = 70 dias); acima disso o cálculo para no controle anterior.
-    * Mínimo de controles: 3 (exigência do Fleischmann na ICAR para cabras; o estudo grego de
-      ovinos exigiu o mesmo); produção mínima medida de 200 g (avisa, não descarta).
+      até a duração da mamada + 52 dias (35 dias com tolerância de 17). A norma manda não calcular
+      a lactação quando o 1º controle passa do limite (caprinos 2.4.2.1 e 2.4.2.2; ovinos 1.2.3.2).
+    * Intervalo máximo entre controles não nulos: caprinos, 2 × o intervalo médio do método
+      (60, 72, 84 e 98 dias em A4, A5, A6 e A7; 2.5.2); ovinos, 70 dias (1.2.4.2). Acima disso o
+      cálculo para no controle anterior. O padrão deste motor é o do método A4 (caprino 2 × 30 = 60;
+      ovino 2 × 35 = 70); para A5, A6 e A7 informe `intervalo_medio` (36, 42, 49) ou use `metodo`.
+    * Mínimo de controles: 3 (exigência do Fleischmann na ICAR para cabras, 2.7.3 e 2.7.4; o
+      parágrafo 2.5.2 diz "não fixado", e para ovelhas a norma também não fixa; o estudo grego de
+      ovinos exigiu 3); produção mínima medida de 200 g (avisa, não descarta).
     * Fim: secagem real ou, sem ela, último controle + ½ intervalo; limitado ao comprimento-padrão
-      (ex.: 305 dias na PL305 do Capragene).
+      (ex.: 305 dias na PL305 do Capragene). A regra do meio intervalo (2.7.5) está escrita só para
+      cabras; para ovelhas a norma deixa a data de secagem calculada a cargo da organização.
+    * A Seção 16 (2.8.2, caprinos) também permite estimar controles faltantes, num hiato de até 100
+      dias, pela média dos vizinhos. Esta função não faz isso: para no controle anterior (2.5.2). As
+      duas cláusulas coexistem no texto da norma e não se conciliam.
+
+    Por padrão (estrito_norma = False) os problemas viram `avisos` e a conta segue, como nas versões
+    anteriores: nenhum número existente muda. Com `estrito_norma = True` a função aplica a norma:
+
+    * 1º controle depois do limite → sem cálculo (total e ate_dia NaN, completa = False, aviso). O
+      limite vem de `limite_primeiro_controle` (dia a partir do parto) quando informado; a norma só
+      admite essa exceção para cabras ("se a sociedade da raça justificar limite maior"), e a função
+      levanta ValueError para ovinos. Um 1º controle de cabra antes do 6º dia só gera aviso, porque
+      a norma escreve "não calcular" para o limite superior;
+    * hiato máximo e meio intervalo conforme o método de controle (`metodo`: A4, B5, AT, AC, AZ...):
+      cabras, 2 × e ½ × o intervalo médio do método; ovelhas, hiato fixo de 70 dias, e o meio
+      intervalo do fim, sem secagem, de 15 dias no A4 (36 e 42 dias de intervalo médio no A5 e A6),
+      por analogia com a cabra, o que a função avisa. Sem `metodo`, vale `intervalo_medio` e, na falta
+      dele, 30 dias (A4, o método-padrão da ICAR); no estrito o padrão de ovinos deixa de ser 35.
 
     Os problemas viram `avisos`; a lactação com hiato longo volta com completa = False.
     """
     if especie not in ("caprino", "ovino"):
         raise ValueError("especie deve ser 'caprino' ou 'ovino'")
-    if intervalo_medio is None:
-        intervalo_medio = 30.0 if especie == "caprino" else 35.0
+    if estrito_norma and especie == "ovino" and limite_primeiro_controle is not None:
+        raise ValueError("a Seção 16 só admite limite maior do 1º controle para cabras (2.4.2)")
     avisos: list[str] = []
+    if estrito_norma:
+        if metodo is not None:
+            intervalo_medio = intervalo_medio_do_metodo(metodo, especie)
+        elif intervalo_medio is None:
+            intervalo_medio = 30.0
+        hiato_maximo = HIATO_MAXIMO_OVINO if especie == "ovino" else 2.0 * intervalo_medio
+    else:
+        if metodo is not None:
+            avisos.append("método informado ignorado: só vale com estrito_norma = True")
+        if intervalo_medio is None:
+            intervalo_medio = 30.0 if especie == "caprino" else 35.0
+        hiato_maximo = 2.0 * intervalo_medio
     t = [float(x) for x in dias]
     m = [float(x) for x in producoes]
     tipo = "TMY"
@@ -169,9 +231,17 @@ def lactacao_pequenos_ruminantes(dias, producoes, especie: str, secagem: float |
     if len(t) < minimo_controles:
         avisos.append(f"só {len(t)} controle(s) válido(s); o mínimo é {minimo_controles}")
         return Lactacao(float("nan"), float("nan"), False, tipo, len(t), avisos)
-    limite_1o = inicio + 52.0 if (tipo == "TMM" or especie == "ovino") else 80.0
+    if limite_primeiro_controle is not None:
+        limite_1o = float(limite_primeiro_controle)
+    else:
+        limite_1o = inicio + 52.0 if (tipo == "TMM" or especie == "ovino") else 80.0
     if t[0] > limite_1o:
-        avisos.append(f"1º controle no dia {t[0]:.0f}, depois do limite de {limite_1o:.0f} (ICAR)")
+        aviso_1o = f"1º controle no dia {t[0]:.0f}, depois do limite de {limite_1o:.0f} (ICAR)"
+        if estrito_norma:
+            avisos.append(aviso_1o + ": sem cálculo de lactação (Seção 16: \"there should be no "
+                          "lactation calculation\")")
+            return Lactacao(float("nan"), float("nan"), False, tipo, len(t), avisos)
+        avisos.append(aviso_1o)
     if tipo == "TMY" and especie == "caprino" and t[0] < 6.0:
         avisos.append(f"1º controle no dia {t[0]:.0f}, antes do 6º dia (ICAR)")
     if any(p < producao_minima for p in m):
@@ -179,7 +249,10 @@ def lactacao_pequenos_ruminantes(dias, producoes, especie: str, secagem: float |
     fim = fim_icar(t, comprimento, secagem, intervalo_medio / 2.0)
     if secagem is None:
         avisos.append(f"sem data de secagem: fim calculado no dia {fim:.0f} (último + ½ intervalo)")
-    resultado = fleischmann(t, m, fim, inicio, intervalo_maximo=2.0 * intervalo_medio)
+        if estrito_norma and especie == "ovino":
+            avisos.append("ovelha: a Seção 16 não escreve a regra do meio intervalo (2.7.5 é de cabras); "
+                          "aplicada por analogia com a cabra")
+    resultado = fleischmann(t, m, fim, inicio, intervalo_maximo=hiato_maximo)
     resultado.tipo = tipo
     resultado.avisos = avisos + resultado.avisos
     return resultado
@@ -349,7 +422,12 @@ def controle_at(ordenha_medida: float) -> float:
 def controle_ac(ordenha_medida: float, tanque_total: float, tanque_da_ordenha_medida: float) -> float:
     """Controle AC: ordenha medida × (tanque das duas ordenhas / tanque da ordenha medida).
 
-    Forma usual; o Anexo 1 da ICAR não foi transcrito nas notas (relatório de ovinos, Exemplo 1:
-    1,05 L de manhã, tanque de 132 L de manhã e 88 L à tarde → 1,75 L/dia, contra 2,10 do AT).
+    Forma usual, não verificada. A Seção 16 da ICAR não escreve a fórmula do AC: o Anexo 1 só o
+    define (nota 1: teste mensal corrigido para as diferenças manhã/tarde, pelo volume de leite que o
+    rebanho todo produziu nas duas ordenhas, o tanque), e o texto de ovinos (1.2.5 e a garantia de
+    qualidade do AC, 1.2.6) descreve o coeficiente sem dar a conta; para cabras (2.5.1) a norma
+    remete aos métodos da Procedure 1 da Seção 02, a critério de cada membro da ICAR. Relatório de
+    ovinos, Exemplo 1: 1,05 L de manhã, tanque de 132 L de manhã e 88 L à tarde → 1,75 L/dia,
+    contra 2,10 do AT.
     """
     return ordenha_medida * tanque_total / tanque_da_ordenha_medida

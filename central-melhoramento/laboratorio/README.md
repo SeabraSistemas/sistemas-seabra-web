@@ -32,7 +32,7 @@ laboratorio/
 │                          (test_mrode.py: saída dos scripts R oficiais de Mrode et al. 2023)
 ├── validacao_mrode/       shim de pedigreemm/nadiv em R, rodar_scripts.sh e comparar.py
 ├── gerar_vetores_teste.py gera vetores_teste.json
-└── vetores_teste.json     133 pares entrada → saída para validar as calculadoras em JS/TS e Dart
+└── vetores_teste.json     137 pares entrada → saída para validar as calculadoras em JS/TS e Dart
 ```
 
 Requisitos: Python 3.13 e numpy. Não há outras dependências (nem scipy, nem pytest).
@@ -42,7 +42,7 @@ Requisitos: Python 3.13 e numpy. Não há outras dependências (nem scipy, nem p
 Todos os comandos rodam dentro de `central-melhoramento/laboratorio/`.
 
 ```bash
-python3 -m unittest discover -s tests        # 128 testes: cerca de 800 números dos relatórios e
+python3 -m unittest discover -s tests        # 142 testes: cerca de 800 números dos relatórios e
                                               # 18 testes com a saída dos scripts de Mrode et al. (2023)
 python3 -m melhoramento.rebanho               # pipeline com o CSV de exemplo
 python3 -m melhoramento.rebanho outro.csv     # o mesmo pipeline com outro arquivo no mesmo formato
@@ -121,8 +121,9 @@ Abreviações: **Corte**, **Leite**, **Caprinos** e **Ovinos** são os quatro re
 | `fleischmann` | I₀M₁ + Σ I_i(M_i + M_{i+1})/2 + I_nM_n; corte no fim com interpolação; parada por hiato | Leite, "Do controle ao total"; Caprinos, Ex. 1; Ovinos, Ex. 1 |
 | `tim` | TIM da ICAR Procedure 2 até 305 dias | Leite, "Do controle ao total" |
 | `producao_componente` | gordura e proteína em kg pelo mesmo método | Leite; Caprinos, Ex. 1 |
+| `intervalo_medio_do_metodo` | intervalo médio por método (A4 30, A5 36, A6 42, A7 49; AT, AC, AZ e AY 30) | Seção 16 da ICAR, 2.5.1 e 1.2.4.1 |
 | `fim_icar` | secagem real ou último controle + ½ intervalo, limitado ao comprimento | Caprinos, Ex. 1 |
-| `lactacao_pequenos_ruminantes` | regras da Seção 16 da ICAR: TMY/TMM, 1º controle, hiato de 2× o intervalo, mínimo de 3 controles | Caprinos, "Pela ICAR, só o leite da ordenha exclusiva"; Ovinos, "A ICAR só mede depois do desmame" |
+| `lactacao_pequenos_ruminantes` | regras da Seção 16 da ICAR: TMY/TMM, 1º controle, hiato de 2× o intervalo, mínimo de 3 controles; com `estrito_norma=True`, sem cálculo se o 1º controle passa da janela e hiato por método (ver "Modo estrito da Seção 16") | Caprinos, "Pela ICAR, só o leite da ordenha exclusiva"; Ovinos, "A ICAR só mede depois do desmame" |
 | `wood`, `pico_wood`, `inflexao_wood` | y = a·t^b·e^(−ct); pico em b/c; inflexão em (b + √b)/c | Leite, "Curvas de lactação"; Ovinos, Ex. 1 |
 | `ajustar_wood_loglinear` | MQO em ln y | Leite; Caprinos, Ex. 1 |
 | `ajustar_wood_gauss_newton` | mínimos quadrados não lineares (6 iterações no exemplo) | Leite, "Curvas de lactação" |
@@ -279,6 +280,22 @@ Nenhuma conta antiga mudou. Os 110 testes anteriores continuam passando, e o ún
 - **Modelo de touro com parentesco entre touros (Ex. 4.2).** É o próximo passo simples: A_s⁻¹ no lugar de I em `modelo_touro`. Ficou para depois porque `calculadoras.js` replica a assinatura atual da função.
 - **Colunas dependentes em `montar_X` (Ex. 5.1).** Falta detectá-las e dizer o nome de cada uma, em vez de parar com "Singular matrix".
 - **Os demais exemplos dos scripts**, que continuam fora, como diz "Limites": efeitos associativos (9.1), regressão fixa e aleatória (10), modelos genômicos (11, 12 e 14), dominância e epistasia (13), limiar (15), REML (17) e Gibbs (18).
+
+## Modo estrito da Seção 16 (22/10/2026)
+
+O estudo da norma (`research_notes/estudo_software/icar_section16_e_lactacao.md`, conferido de novo na wiki da Seção 16 em 22/10/2026) achou quatro pontos em que `lactacao_pequenos_ruminantes` diverge da ICAR. Para não mudar nenhum número existente, as regras da norma entraram como opção: `estrito_norma=False` é o padrão e o comportamento de antes; com `estrito_norma=True` a função aplica a norma.
+
+| Regra da norma | Padrão (`estrito_norma=False`, como antes) | Com `estrito_norma=True` |
+|---|---|---|
+| 1º controle fora da janela: cabra ordenhada desde o parto, depois do 80º dia (2.4.2.1); com mamada, depois da mamada + 52 dias (2.4.2.2 e, em ovinos, 1.2.3.2). Exemplos da norma: mamada de 0, 25 e 45 dias, limite de 52, 77 e 97 dias. "There should be no lactation calculation" | avisa e calcula | total e `ate_dia` NaN, `completa = False`, aviso. `limite_primeiro_controle` (dia a partir do parto) abre a exceção "se a sociedade da raça justificar limite maior", só para cabras (ovinos: `ValueError`). Cabra com 1º controle antes do 6º dia continua só com aviso, porque a norma escreve "não calcular" para o limite superior |
+| Hiato máximo entre controles não nulos: cabras, 2 × o intervalo médio do método (60, 72, 84 e 98 dias em A4, A5, A6 e A7; 2.5.2); ovelhas, 70 dias (1.2.4.2) | 2 × `intervalo_medio` (padrão 30 em cabras e 35 em ovelhas, ou seja, 60 e 70); A5, A6 e A7 exigem passar 36, 42 e 49 | `metodo="A5"` etc. define o intervalo (A4/B4/C4/E4, AT, AC, AZ e AY = 30; 5 = 36; 6 = 42; 7 = 49, só cabras); ovelhas sempre 70 dias; sem `metodo` e sem `intervalo_medio`, 30 dias (A4) |
+| Fim sem secagem: último controle + metade do intervalo (2.7.5, escrito só para cabras); para ovelhas a norma deixa a secagem calculada a cargo da organização, e o intervalo médio do A4 é 30 dias (1.2.4.1) | ovelha: 35/2 = 17,5 dias (o 35 vem do limite de 70 dias, não de um intervalo médio) | ovelha: metade do intervalo médio do método (15 dias no A4, 18 no A5, 21 no A6), por analogia com a cabra, com aviso explícito |
+
+Continua igual nos dois modos: o mínimo de 3 controles (2.7.3 e 2.7.4; o parágrafo 2.5.2 diz "não fixado", e para ovelhas a norma também não fixa), a produção mínima de 200 g (só avisa; o Anexo 1 da Seção 16 diz 150 g), o corte no comprimento-padrão e a interpolação. O motor **não** estima controles faltantes num hiato de até 100 dias pela média dos vizinhos (2.8.2, caprinos): para no controle anterior (2.5.2). As duas cláusulas coexistem no texto da norma e não se conciliam. Fora do modo estrito, `metodo` é ignorado com um aviso.
+
+O comentário de `controle_ac` dizia que "o Anexo 1 da ICAR não foi transcrito". O Anexo 1 não traz fórmula do AC: só define o método (nota 1: correção pelo volume do tanque do rebanho nas duas ordenhas). A fórmula usada aqui, ordenha medida × tanque das duas ordenhas / tanque da ordenha medida, continua sendo a forma usual, não verificada.
+
+**Testes.** `tests/test_lactacao.py`, classe `TestEstritoNorma` (14 testes), cada um com a seção da norma e os números do exemplo oficial (6º a 80º dia; 52, 77 e 97 dias; 60, 72, 84 e 98 dias; 70 dias; 15, 18, 21 e 24,5 dias), mais a prova de que o padrão não mudou. Os 128 testes anteriores continuam iguais. `vetores_teste.json` ganhou quatro vetores (`lactacao.intervalo_metodo_a7`, `lactacao.cabra_estrito_1o_controle_tardio`, `lactacao.cabra_estrito_hiato_a5` e `lactacao.ovelha_estrito_sem_secagem`) e os 133 antigos ficaram idênticos. A porta `../lab/calculadoras.js` ganhou os mesmos parâmetros opcionais (`estrito_norma`, `metodo`, `limite_primeiro_controle`), sem mudar o padrão.
 
 ## Limites
 

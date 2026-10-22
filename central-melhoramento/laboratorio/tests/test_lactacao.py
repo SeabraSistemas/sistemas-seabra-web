@@ -257,5 +257,169 @@ class TestRegrasICAR(TesteRelatorio):
             L.fleischmann([30, 20], [1.0, 1.0], fim=100)
 
 
+class TestEstritoNorma(TesteRelatorio):
+    """Regras da Seção 16 da ICAR aplicadas com estrito_norma=True. Por padrão (False) o motor só
+    avisa e calcula, como antes; os testes abaixo também travam esse padrão."""
+
+    @staticmethod
+    def _cabra(dias, secagem=250, **kw):
+        return L.lactacao_pequenos_ruminantes(dias, [2.0] * len(dias), "caprino", secagem=secagem, **kw)
+
+    def test_tabela_de_intervalos_por_metodo(self):
+        # Seção 16, caprinos 2.5.1: A4/B4/C4/E4 = 30 dias; A5 = 36; A6 = 42; A7 = 49; AT, AC, AZ e AY = 30.
+        # Hiato máximo (2.5.2) = 2 × o intervalo médio: 60, 72, 84 e 98 dias.
+        medios = [L.intervalo_medio_do_metodo(m, "caprino") for m in ("A4", "B5", "c6", "E7", "AT", "AC", "AZ", "AY")]
+        self.assertEqual(medios, [30.0, 36.0, 42.0, 49.0, 30.0, 30.0, 30.0, 30.0])
+        self.assertEqual([2 * L.intervalo_medio_do_metodo(m, "caprino") for m in ("A4", "A5", "A6", "A7")],
+                         [60.0, 72.0, 84.0, 98.0])
+        # Ovinos, 1.2.4.1: 30 dias no A4, 36 no A5 e 42 no A6 (AT e AC: 30); não existe A7, AZ nem AY.
+        self.assertEqual([L.intervalo_medio_do_metodo(m, "ovino") for m in ("A4", "A5", "A6", "AT", "AC")],
+                         [30.0, 36.0, 42.0, 30.0, 30.0])
+        for invalido, especie in (("A7", "ovino"), ("AZ", "ovino"), ("D4", "caprino"), ("A8", "caprino"), ("A", "caprino")):
+            with self.assertRaises(ValueError):
+                L.intervalo_medio_do_metodo(invalido, especie)
+
+    def test_cabra_1o_controle_fora_da_janela_nao_calcula(self):
+        # 2.4.2.1: 1º controle entre o 6º e o 80º dia; "there should be no lactation calculation".
+        for dia, calcula in ((6, True), (80, True), (81, False), (95, False)):
+            padrao = self._cabra([dia, dia + 30, dia + 60])
+            estrito = self._cabra([dia, dia + 30, dia + 60], estrito_norma=True)
+            self.assertFalse(math.isnan(padrao.total), "o padrão continua calculando, só avisa")
+            self.assertEqual(math.isnan(estrito.total), not calcula, dia)
+            self.assertEqual(estrito.completa, calcula, dia)
+            self.assertEqual(any("sem cálculo" in a for a in estrito.avisos), not calcula, dia)
+            if calcula:
+                self.assertEqual(estrito.total, padrao.total)
+        self.assertTrue(any("limite de 80" in a for a in self._cabra([95, 125, 155]).avisos))
+
+    def test_cabra_antes_do_6o_dia_so_avisa(self):
+        # 2.4.2.1 diz "no lactation calculation" só para a diferença maior que o limite superior; o
+        # 1º controle antes do 6º dia continua sendo aviso, também no modo estrito.
+        r = self._cabra([4, 34, 64], estrito_norma=True)
+        self.assertFalse(math.isnan(r.total))
+        self.assertTrue(any("antes do 6º dia" in a for a in r.avisos))
+
+    def test_cabra_limite_maior_justificado_pela_raca(self):
+        # 2.4.2.1: "save if the breed society justifies for its breed that the threshold should be higher".
+        sem = self._cabra([95, 125, 155], estrito_norma=True)
+        com = self._cabra([95, 125, 155], estrito_norma=True, limite_primeiro_controle=100)
+        self.assertTrue(math.isnan(sem.total))
+        self.assertFalse(math.isnan(com.total))
+        self.assertEqual(com.total, self._cabra([95, 125, 155]).total)
+
+    def test_mamada_media_mais_52_dias_exemplos_da_norma(self):
+        # 1.2.3.2 (ovelhas) e 2.4.2.2 (cabras): parto → 1º controle ≤ mamada média + 52 dias; mamada de 0,
+        # 25 e 45 dias dão 52, 77 e 97 dias. O motor usa o dia de separação da própria fêmea.
+        for especie in ("ovino", "caprino"):
+            for mamada, limite in ((0, 52), (25, 77), (45, 97)):
+                for dia, calcula in ((limite, True), (limite + 1, False)):
+                    r = L.lactacao_pequenos_ruminantes([dia, dia + 30, dia + 60], [2.0, 1.9, 1.8], especie,
+                                                       secagem=250, separacao_crias=mamada, estrito_norma=True)
+                    self.assertEqual(math.isnan(r.total), not calcula, (especie, mamada, dia))
+                    self.assertEqual(r.tipo, "TMM")
+                    padrao = L.lactacao_pequenos_ruminantes([dia, dia + 30, dia + 60], [2.0, 1.9, 1.8], especie,
+                                                            secagem=250, separacao_crias=mamada)
+                    self.assertFalse(math.isnan(padrao.total))
+
+    def test_ovelha_sem_mamada_tambem_limita_em_52_dias(self):
+        # Mamada de 0 dia (só fase colostral): 1º controle em até 52 dias do parto (1.2.3.2).
+        ok = L.lactacao_pequenos_ruminantes([52, 82, 112], [2.0, 1.9, 1.8], "ovino", secagem=200, estrito_norma=True)
+        no = L.lactacao_pequenos_ruminantes([53, 83, 113], [2.0, 1.9, 1.8], "ovino", secagem=200, estrito_norma=True)
+        self.assertFalse(math.isnan(ok.total))
+        self.assertTrue(math.isnan(no.total))
+        with self.assertRaises(ValueError):    # a exceção da raça só existe para cabras
+            L.lactacao_pequenos_ruminantes([53, 83, 113], [2.0] * 3, "ovino", secagem=200,
+                                           estrito_norma=True, limite_primeiro_controle=100)
+
+    def test_hiato_maximo_por_metodo_em_cabras(self):
+        # 2.5.2: hiato máximo = 2 × intervalo médio do método = 60, 72, 84 e 98 dias (A4, A5, A6, A7); no
+        # hiato maior o cálculo "is stopped" no controle (i); no igual, segue.
+        for metodo, maximo in (("A4", 60), ("A5", 72), ("A6", 84), ("A7", 98), ("AT", 60), ("AC", 60)):
+            dias_ok = [20, 20 + maximo, 20 + maximo + 20]
+            dias_no = [20, 21 + maximo, 21 + maximo + 20]
+            ok = self._cabra(dias_ok, secagem=300, estrito_norma=True, metodo=metodo)
+            no = self._cabra(dias_no, secagem=300, estrito_norma=True, metodo=metodo)
+            self.assertTrue(ok.completa, metodo)
+            self.assertEqual(ok.ate_dia, 300, metodo)
+            self.assertFalse(no.completa, metodo)
+            self.assertEqual(no.ate_dia, 20, metodo)
+            self.assertTrue(any("hiato" in a for a in no.avisos), metodo)
+
+    def test_hiato_padrao_continua_60_em_cabras_sem_metodo(self):
+        # O padrão do motor (A4) não muda: sem `metodo`, o hiato de 61 a 72 dias para a lactação mesmo
+        # que o A5 o permita; quem usa A5 passa metodo="A5" (estrito) ou intervalo_medio=36 (padrão).
+        dias = [20, 85, 105]                                   # hiato de 65 dias
+        self.assertFalse(self._cabra(dias).completa)
+        self.assertFalse(self._cabra(dias, estrito_norma=True).completa)
+        self.assertTrue(self._cabra(dias, estrito_norma=True, metodo="A5").completa)
+        self.assertTrue(self._cabra(dias, intervalo_medio=36.0).completa)
+
+    def test_hiato_de_ovelhas_e_70_dias_em_qualquer_metodo(self):
+        # 1.2.4.2: 70 dias (2 × 35) para ovelhas, mesmo nos métodos de 36 e 42 dias de intervalo médio.
+        for metodo in (None, "A4", "A5", "A6", "AC"):
+            ok = L.lactacao_pequenos_ruminantes([40, 110, 140], [2.0, 1.8, 1.7], "ovino", secagem=200,
+                                                estrito_norma=True, metodo=metodo)
+            no = L.lactacao_pequenos_ruminantes([40, 111, 141], [2.0, 1.8, 1.7], "ovino", secagem=200,
+                                                estrito_norma=True, metodo=metodo)
+            self.assertTrue(ok.completa, metodo)
+            self.assertFalse(no.completa, metodo)
+            self.assertEqual(no.ate_dia, 40, metodo)
+
+    def test_ovelha_sem_secagem_termina_em_ultimo_mais_15(self):
+        # Padrão (inalterado): 35/2 = 17,5 dias. Estrito: A4 tem 30 dias de intervalo médio (1.2.4.1), a regra
+        # do meio intervalo é a de cabras (2.7.5) e vale por analogia, com aviso: 190 + 15 = dia 205.
+        padrao = L.lactacao_pequenos_ruminantes(DIAS_OVELHA, LEITE_OVELHA, "ovino", separacao_crias=30)
+        estrito = L.lactacao_pequenos_ruminantes(DIAS_OVELHA, LEITE_OVELHA, "ovino", separacao_crias=30,
+                                                 estrito_norma=True)
+        a5 = L.lactacao_pequenos_ruminantes(DIAS_OVELHA, LEITE_OVELHA, "ovino", separacao_crias=30,
+                                            estrito_norma=True, metodo="A5")
+        self.assertEqual(padrao.ate_dia, 207.5)
+        self.assertEqual(estrito.ate_dia, 205.0)
+        self.assertEqual(a5.ate_dia, 208.0)                    # 36/2 = 18 dias
+        self.assertTrue(any("por analogia" in a for a in estrito.avisos))
+        self.assertFalse(any("por analogia" in a for a in padrao.avisos))
+        # Com secagem real o fim é o mesmo nos dois modos.
+        com = L.lactacao_pequenos_ruminantes(DIAS_OVELHA, LEITE_OVELHA, "ovino", separacao_crias=30,
+                                             secagem=200, estrito_norma=True)
+        self.assertEqual(com.ate_dia, 200)
+
+    def test_cabra_sem_secagem_meio_intervalo_do_metodo(self):
+        # 2.7.5: último controle + metade do intervalo escolhido. A4: 280 + 15 = 295 (683,4 kg, Exemplo 1 de
+        # caprinos); A5: 280 + 18 = 298; A6: 280 + 21; A7: 280 + 24,5.
+        r4 = L.lactacao_pequenos_ruminantes(DIAS_CABRA, LEITE_CABRA, "caprino", comprimento=305,
+                                            estrito_norma=True, metodo="A4")
+        self.assertPublicado(r4.total, 683.4, 1)
+        self.assertEqual(r4.ate_dia, 295)
+        for metodo, fim in (("A5", 298.0), ("A6", 301.0), ("A7", 304.5)):
+            r = L.lactacao_pequenos_ruminantes(DIAS_CABRA, LEITE_CABRA, "caprino", comprimento=305,
+                                               estrito_norma=True, metodo=metodo)
+            self.assertEqual(r.ate_dia, fim, metodo)
+
+    def test_exemplos_oficiais_dos_relatorios_nao_mudam_no_modo_estrito(self):
+        # Exemplo 1 de caprinos (675,9 kg) e de ovinos (231,3 L; hiato de 90 dias → 79,7 L no dia 70).
+        c = L.lactacao_pequenos_ruminantes(DIAS_CABRA, LEITE_CABRA, "caprino", secagem=290, comprimento=305,
+                                           estrito_norma=True, metodo="A4")
+        self.assertPublicado(c.total, 675.9, 1)
+        self.assertTrue(c.completa)
+        for idx, tmm, ate, completa in (([0, 1, 2, 3, 4, 5], 231.3, 200, True), ([0, 1, 4, 5], 79.7, 70, False)):
+            r = L.lactacao_pequenos_ruminantes(DIAS_OVELHA[idx], LEITE_OVELHA[idx], "ovino", secagem=200,
+                                               separacao_crias=30, estrito_norma=True)
+            self.assertPublicado(r.total, tmm, 1)
+            self.assertEqual((r.ate_dia, r.completa), (ate, completa))
+
+    def test_metodo_fora_do_modo_estrito_e_ignorado_com_aviso(self):
+        base = self._cabra([20, 85, 105])
+        com = self._cabra([20, 85, 105], metodo="A5")
+        self.assertEqual((com.total, com.ate_dia, com.completa), (base.total, base.ate_dia, base.completa))
+        self.assertTrue(any("ignorado" in a for a in com.avisos))
+        with self.assertRaises(ValueError):
+            self._cabra([20, 50, 80], estrito_norma=True, metodo="D4")
+
+    def test_controle_ac_comentario_nao_cita_anexo_nao_transcrito(self):
+        # O Anexo 1 da Seção 16 não traz a fórmula do AC (só a definição, nota 1); o texto do motor deve dizer isso.
+        self.assertNotIn("não foi transcrito", L.controle_ac.__doc__)
+        self.assertIn("não escreve a fórmula", L.controle_ac.__doc__)
+
+
 if __name__ == "__main__":
     unittest.main()

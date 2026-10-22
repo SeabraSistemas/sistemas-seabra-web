@@ -33,6 +33,7 @@ TOLERANCIA_RELATIVA = 1e-9
 
 CORTE, LEITE = "relatório de bovinos de corte", "relatório de bovinos leiteiros"
 CAPRINOS, OVINOS = "relatório de caprinos leiteiros", "relatório de ovinos leiteiros"
+ICAR16 = "ICAR Seção 16 (wiki, conferida em 22/10/2026)"
 MRODE = "Mrode et al. (2023), 4ª ed., script oficial"
 
 # Pedigrees com identificadores em texto e "0" para pai ou mãe desconhecidos.
@@ -156,6 +157,18 @@ def casos() -> list[dict]:
     caso("lactacao.tmm_ovelha_hiato", "lactacao.lactacao_pequenos_ruminantes", f"{OVINOS}, Exemplo 1",
          dias=[40, 70, 160, 190], producoes=[2.15, 1.73, 0.96, 0.72], especie="ovino", secagem=200,
          separacao_crias=30)
+    # Regras da Seção 16 da ICAR com estrito_norma=True (o padrão, sem a opção, não mudou).
+    caso("lactacao.intervalo_metodo_a7", "lactacao.intervalo_medio_do_metodo", ICAR16 + ", 2.5.1",
+         metodo="A7", especie="caprino")
+    caso("lactacao.cabra_estrito_1o_controle_tardio", "lactacao.lactacao_pequenos_ruminantes", ICAR16 + ", 2.4.2.1",
+         dias=[95, 125, 155, 185], producoes=[2.4, 2.2, 2.0, 1.8], especie="caprino", secagem=200,
+         estrito_norma=True)
+    caso("lactacao.cabra_estrito_hiato_a5", "lactacao.lactacao_pequenos_ruminantes", ICAR16 + ", 2.5.2",
+         dias=[20, 85, 105], producoes=[2.8, 2.5, 2.3], especie="caprino", secagem=250,
+         estrito_norma=True, metodo="A5")
+    caso("lactacao.ovelha_estrito_sem_secagem", "lactacao.lactacao_pequenos_ruminantes",
+         ICAR16 + ", 1.2.6.2 e 2.7.5 (por analogia)", dias=DIAS_OVELHA, producoes=LEITE_OVELHA, especie="ovino",
+         separacao_crias=30, estrito_norma=True)
     caso("lactacao.wood_loglinear", "lactacao.ajustar_wood_loglinear", f"{LEITE}, curvas",
          dias=DEL_VACA, producoes=LEITE_VACA)
     caso("lactacao.wood_gauss_newton", "lactacao.ajustar_wood_gauss_newton", f"{LEITE}, curvas",

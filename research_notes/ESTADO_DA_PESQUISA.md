@@ -22,8 +22,8 @@ A central também terá um **laboratório de testes dos modelos**. Os modelos s�
 ## Laboratório
 | Peça | Situação | Onde |
 |---|---|---|
-| Motor em Python | 8 módulos, 128 testes, 133 vetores de teste. Validado contra os 24 scripts R oficiais de Mrode et al. (2023, 4ª ed.): 44 comparações, 3.146 valores, diferença máxima de 8,5e-14; inclui grupos de pais desconhecidos e Gauss-Seidel | `central-melhoramento/laboratorio/` (`python3 -m unittest discover -s tests`) |
-| Calculadoras da central | 8 calculadoras em JavaScript; 121 vetores e 112 números dos relatórios conferidos | `central-melhoramento/lab/` (`node lab/testar_calculadoras.mjs`) |
+| Motor em Python | 8 módulos, 142 testes, 137 vetores de teste, com modo estrito da Section 16 do ICAR. Validado contra os 24 scripts R oficiais de Mrode et al. (2023, 4ª ed.): 44 comparações, 3.146 valores, diferença máxima de 8,5e-14; inclui grupos de pais desconhecidos e Gauss-Seidel | `central-melhoramento/laboratorio/` (`python3 -m unittest discover -s tests`) |
+| Calculadoras da central | 8 calculadoras em JavaScript; 125 vetores e 112 números dos relatórios conferidos | `central-melhoramento/lab/` (`node lab/testar_calculadoras.mjs`) |
 
 ## Equipe de IA (modelos por fase)
 

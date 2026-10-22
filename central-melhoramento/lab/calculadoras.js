@@ -950,16 +950,46 @@
     return !ausente(comprimento) ? Math.min(fim, comprimento) : fim;
   }
 
+  /** Intervalo médio entre controles por método (Seção 16 da ICAR): 4 = 30 dias; 5 = 36; 6 = 42;
+   * 7 = 49 (só caprinos); T, C, Z e Y = 30. O hiato máximo de caprinos é o dobro. */
+  const INTERVALO_MEDIO_METODO = { "4": 30.0, "5": 36.0, "6": 42.0, "7": 49.0, "T": 30.0, "C": 30.0, "Z": 30.0, "Y": 30.0 };
+  const SEGUNDO_CARACTERE_VALIDO = { caprino: "4567TCZY", ovino: "456TC" };
+  const HIATO_MAXIMO_OVINO = 70.0;   // ovinos, 1.2.4.2: 70 dias (2 × 35) em qualquer método
+
+  function intervalo_medio_do_metodo(metodo, especie) {
+    if (!(especie in SEGUNDO_CARACTERE_VALIDO)) throw new RangeError("especie deve ser 'caprino' ou 'ovino'");
+    const m = String(metodo).trim().toUpperCase();
+    if (m.length !== 2 || "ABCE".indexOf(m[0]) < 0 || SEGUNDO_CARACTERE_VALIDO[especie].indexOf(m[1]) < 0) {
+      throw new RangeError(`método '${metodo}' inválido para ${especie} (o D não é oficial)`);
+    }
+    return INTERVALO_MEDIO_METODO[m[1]];
+  }
+
   /**
    * Lactação de cabra ou ovelha pelas regras da Seção 16 da ICAR: TMY ou TMM (com a separação
    * das crias), janela do 1º controle, hiato máximo de 2 × o intervalo médio, mínimo de controles,
    * fim pela secagem ou pelo último controle + ½ intervalo. Os problemas viram `avisos`.
+   * Com estrito_norma = true aplica a norma: sem cálculo com o 1º controle fora da janela e hiato
+   * máximo por método (caprinos 2 × o intervalo do método; ovinos 70 dias). O padrão (false) não mudou.
    */
   function lactacao_pequenos_ruminantes(dias, producoes, especie, secagem = null, separacao_crias = null,
-    comprimento = null, intervalo_medio = null, minimo_controles = 3, producao_minima = 0.2) {
+    comprimento = null, intervalo_medio = null, minimo_controles = 3, producao_minima = 0.2,
+    estrito_norma = false, metodo = null, limite_primeiro_controle = null) {
     if (especie !== "caprino" && especie !== "ovino") throw new RangeError("especie deve ser 'caprino' ou 'ovino'");
-    if (ausente(intervalo_medio)) intervalo_medio = especie === "caprino" ? 30.0 : 35.0;
+    if (estrito_norma && especie === "ovino" && !ausente(limite_primeiro_controle)) {
+      throw new RangeError("a Seção 16 só admite limite maior do 1º controle para cabras (2.4.2)");
+    }
     const avisos = [];
+    let hiato_maximo;
+    if (estrito_norma) {
+      if (!ausente(metodo)) intervalo_medio = intervalo_medio_do_metodo(metodo, especie);
+      else if (ausente(intervalo_medio)) intervalo_medio = 30.0;
+      hiato_maximo = especie === "ovino" ? HIATO_MAXIMO_OVINO : 2.0 * intervalo_medio;
+    } else {
+      if (!ausente(metodo)) avisos.push("método informado ignorado: só vale com estrito_norma = True");
+      if (ausente(intervalo_medio)) intervalo_medio = especie === "caprino" ? 30.0 : 35.0;
+      hiato_maximo = 2.0 * intervalo_medio;
+    }
     let t = dias.map(Number);
     let m = producoes.map(Number);
     let tipo = "TMY";
@@ -977,13 +1007,26 @@
       avisos.push(`só ${t.length} controle(s) válido(s); o mínimo é ${minimo_controles}`);
       return novaLactacao(NaN, NaN, false, tipo, t.length, avisos, []);
     }
-    const limite1o = (tipo === "TMM" || especie === "ovino") ? inicio + 52.0 : 80.0;
-    if (t[0] > limite1o) avisos.push(`1º controle no dia ${formatar0(t[0])}, depois do limite de ${formatar0(limite1o)} (ICAR)`);
+    const limite1o = !ausente(limite_primeiro_controle) ? Number(limite_primeiro_controle)
+      : ((tipo === "TMM" || especie === "ovino") ? inicio + 52.0 : 80.0);
+    if (t[0] > limite1o) {
+      const aviso1o = `1º controle no dia ${formatar0(t[0])}, depois do limite de ${formatar0(limite1o)} (ICAR)`;
+      if (estrito_norma) {
+        avisos.push(aviso1o + ': sem cálculo de lactação (Seção 16: "there should be no lactation calculation")');
+        return novaLactacao(NaN, NaN, false, tipo, t.length, avisos, []);
+      }
+      avisos.push(aviso1o);
+    }
     if (tipo === "TMY" && especie === "caprino" && t[0] < 6.0) avisos.push(`1º controle no dia ${formatar0(t[0])}, antes do 6º dia (ICAR)`);
     if (m.some((p) => p < producao_minima)) avisos.push(`controle abaixo da produção mínima medível de ${formatarFloat(producao_minima)} kg`);
     const fim = fim_icar(t, comprimento, secagem, intervalo_medio / 2.0);
-    if (ausente(secagem)) avisos.push(`sem data de secagem: fim calculado no dia ${formatar0(fim)} (último + ½ intervalo)`);
-    const resultado = fleischmann(t, m, fim, inicio, 2.0 * intervalo_medio);
+    if (ausente(secagem)) {
+      avisos.push(`sem data de secagem: fim calculado no dia ${formatar0(fim)} (último + ½ intervalo)`);
+      if (estrito_norma && especie === "ovino") {
+        avisos.push("ovelha: a Seção 16 não escreve a regra do meio intervalo (2.7.5 é de cabras); aplicada por analogia com a cabra");
+      }
+    }
+    const resultado = fleischmann(t, m, fim, inicio, hiato_maximo);
     resultado.tipo = tipo;
     resultado.avisos = avisos.concat(resultado.avisos);
     return resultado;
@@ -1172,8 +1215,10 @@
     "lactacao.tim": ["dias", "producoes", "fim"],
     "lactacao.producao_componente": ["dias", "leite", "teor_pct", "fim", "inicio", "intervalo_maximo"],
     "lactacao.fim_icar": ["dias", "comprimento", "secagem", "meio_intervalo"],
+    "lactacao.intervalo_medio_do_metodo": ["metodo", "especie"],
     "lactacao.lactacao_pequenos_ruminantes": ["dias", "producoes", "especie", "secagem", "separacao_crias",
-      "comprimento", "intervalo_medio", "minimo_controles", "producao_minima"],
+      "comprimento", "intervalo_medio", "minimo_controles", "producao_minima", "estrito_norma", "metodo",
+      "limite_primeiro_controle"],
     "lactacao.wood": ["t", "a", "b", "c"],
     "lactacao.pico_wood": ["a", "b", "c"],
     "lactacao.inflexao_wood": ["b", "c"],
@@ -1222,7 +1267,7 @@
     blup: { dep_de_ebv, possible_change, possible_change_de_r, modelo_touro, rel_exata_modelo_touro },
     lactacao: {
       ECM_DIVISOR_SJAUNJA, ECM_DIVISOR_4G_3_3P,
-      fleischmann, tim, producao_componente, fim_icar, lactacao_pequenos_ruminantes,
+      fleischmann, tim, producao_componente, fim_icar, intervalo_medio_do_metodo, lactacao_pequenos_ruminantes,
       wood, pico_wood, inflexao_wood, fcm4, ecm, ecs, ccs_de_ecs, ccs_media_geometrica, controle_at, controle_ac,
     },
     ganho: {

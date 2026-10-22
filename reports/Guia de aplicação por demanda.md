@@ -404,7 +404,7 @@ O Regulamento (CE) 853/2004 fixa só contagem em placas (1,5 milhão de UFC/mL p
 
 **Cuidados**
 
-- **ICAR:** 1º controle até a mamada média mais 52 dias; controles não nulos a no máximo 70 dias; menor produção medida de 200 g, apesar do 150 g do Anexo 1 (Verif. ovinos, conflito "Menor quantidade testada").
+- **ICAR:** 1º controle até a mamada média mais 52 dias (passou disso, a norma manda não calcular a lactação); controles não nulos a no máximo 70 dias; menor produção medida de 200 g, apesar do 150 g do Anexo 1 (Verif. ovinos, conflito "Menor quantidade testada").
 - **Ne da Lacaune:** 188 por pedigree e 370 por desequilíbrio de ligação; diferem por método e período (Verif. ovinos, correção 7).
 - **ISOL** seleciona sólidos, células e úbere, não volume (Ovinos, "ISOL").
 - **SOCS2:** o alelo T caiu de 0,21 em 2005 para 0,09 em 2017 entre carneiros de IA (Verif. ovinos, correção 4).
@@ -465,11 +465,11 @@ Lote de manejo e regime (pasto, semiconfinamento, confinamento), para o GC; loca
 |---|---|---|---|
 | Mínimo de controles por lactação | 3 | Caprinos (Fleischmann na ICAR); Ovinos (Vouraki et al.) | `lactacao.lactacao_pequenos_ruminantes` |
 | Duração mínima da lactação (PL305 do Capragene) | 60 dias | Caprinos, "Pela ICAR" | `rebanho.padronizar_lactacoes` |
-| 1º controle de cabra ordenhada desde o parto | 6º ao 80º dia; Capragene: até o 75º | Caprinos, "Pela ICAR" | idem e `lactacao.lactacao_pequenos_ruminantes` |
-| 1º controle com mamada, e em ovelhas | até a mamada + 52 dias | Caprinos; Ovinos | `lactacao.lactacao_pequenos_ruminantes` |
-| Intervalo máximo entre controles não nulos | 60 dias em cabras e 70 em ovelhas; acima, o cálculo para e a lactação fica incompleta | Caprinos; Ovinos | idem |
+| 1º controle de cabra ordenhada desde o parto | 6º ao 80º dia; depois do 80º, a norma manda não calcular a lactação (salvo limite maior justificado pela raça); Capragene: até o 75º. O motor só avisa por padrão; com `estrito_norma=True` não calcula | Caprinos, "Pela ICAR" | idem e `lactacao.lactacao_pequenos_ruminantes` |
+| 1º controle com mamada, e em ovelhas | até a mamada + 52 dias; depois, a norma manda não calcular (motor: aviso no padrão, sem cálculo em `estrito_norma=True`) | Caprinos; Ovinos | `lactacao.lactacao_pequenos_ruminantes` |
+| Intervalo máximo entre controles não nulos | cabras: 2 × o intervalo médio do método (60 dias no A4, AT e AC; 72, 84 e 98 nos métodos 5, 6 e 7); ovelhas: 70 dias; acima, o cálculo para e a lactação fica incompleta. O padrão do motor é 60 e 70; `metodo="A5"` etc. em `estrito_norma=True` | Caprinos; Ovinos | idem |
 | Menor produção medida | 200 g (aviso) | Verif. ovinos, conflito "Menor quantidade testada" | idem |
-| Sem data de secagem | último controle + ½ intervalo, com aviso | Caprinos, Ex. 1 | `lactacao.fim_icar` |
+| Sem data de secagem | último controle + ½ intervalo, com aviso; a regra está escrita só para cabras (em ovelhas, por analogia: o padrão do motor usa 17,5 dias e `estrito_norma=True`, 15 no A4) | Caprinos, Ex. 1 | `lactacao.fim_icar` |
 | TMY e TMM no mesmo GC | proibido | Caprinos, Ex. 1 | `rebanho.grupo_contemporaneas` |
 | Tamanho mínimo do GC | 3 animais (Capragene); estudos com dados da ANCP e da Geneplus descartam GCs com menos de 5 | Caprinos, "Modelo de lactação"; Corte, "Antes do modelo" | `rebanho.desvios_contemporaneas` (avisa abaixo de 3) |
 | Reprodutores por GC | pelo menos 2 (BIF e ICAR); 10 laços genéticos na GenSys | Corte, "Antes do modelo" | [a definir] |
@@ -526,7 +526,7 @@ Do mais simples ao mais pesado (README, "Passos sugeridos"): (1) `taxas`, `confi
 
 ### 6.6 As calculadoras da central
 
-Antes da porta em Dart, a aba Laboratório da central já roda oito calculadoras em JavaScript (`central-melhoramento/lab/calculadoras.js`): MPPA e índice da fêmea, confiabilidade, acurácia BIF e Possible Change, parentesco e endogamia, taxas, índice econômico, lactação ICAR e ganho genético. Elas são a primeira porta do motor: `node lab/testar_calculadoras.mjs` confere 121 dos 133 vetores (os 12 restantes são funções que nenhuma calculadora usa: BLUP matricial, grupos de pais desconhecidos, Gauss-Seidel, variância heterogênea, ajustes de Wood e Wilmink e Smith-Hazel) e 112 números impressos nos relatórios (`central-melhoramento/lab/README.md`). Servem para demonstrar uma análise na triagem, com os números do próprio cliente, e como referência de tela para o app. Os exemplos que vêm preenchidos são fictícios.
+Antes da porta em Dart, a aba Laboratório da central já roda oito calculadoras em JavaScript (`central-melhoramento/lab/calculadoras.js`): MPPA e índice da fêmea, confiabilidade, acurácia BIF e Possible Change, parentesco e endogamia, taxas, índice econômico, lactação ICAR e ganho genético. Elas são a primeira porta do motor: `node lab/testar_calculadoras.mjs` confere 125 dos 137 vetores (os 12 restantes são funções que nenhuma calculadora usa: BLUP matricial, grupos de pais desconhecidos, Gauss-Seidel, variância heterogênea, ajustes de Wood e Wilmink e Smith-Hazel) e 112 números impressos nos relatórios (`central-melhoramento/lab/README.md`). Servem para demonstrar uma análise na triagem, com os números do próprio cliente, e como referência de tela para o app. Os exemplos que vêm preenchidos são fictícios.
 
 ---
 
