@@ -43,6 +43,13 @@ A central também terá um **laboratório de testes dos modelos**. Os modelos s�
 - O site da ANCP exige completar a cadeia de certificados (intermediárias da Let's Encrypt), sem desligar o TLS.
 - Não usar Sci-Hub nem fontes não autorizadas. Artigos pagos só pelo acesso institucional do usuário (UFF/CAPES): lista em `research_notes/Verificação de fontes/artigos_para_obter.md`.
 
+## Estudos do software baixado (22/10/2026)
+Pasta "soft melhoramento" no Google Drive do usuário (86 arquivos): manuais e artigos do BLUPF90, fontes e manuais de 5 pacotes do CRAN, normas e anais do ICAR. Estudos em `research_notes/estudo_software/`:
+- `icar_section16_e_lactacao.md`: o motor reproduz o exemplo oficial; 11 correções, aplicadas nos relatórios de caprinos e ovinos (v2.1) e no motor (modo estrito opcional).
+- `blupf90_guia_de_traducao.md`: anatomia do `.par`, tradução dos exemplos de Mrode, licença (gratuito para pesquisa; uso comercial exige contato com a UGA) e as 5 primeiras funções que faltam no motor.
+- `pedigreemm_nadiv_comparacao.md`: algoritmo igual ao do motor; melhoria principal: F sem montar A; licenças GPL.
+- Os binários do BLUPF90 **não foram rodados** (rede restrita).
+
 ## Próximos passos
 1. Documentos bloqueados para robôs, que o usuário pode anexar: fórmula oficial do ISOL (Idele/Lacaune), catálogos Latxa (ASLANA), relatório MAPA/INIA de ovinos de leite, PDFs da HAL citados nas notas de ovinos e os 9 artigos de ovinos abertos mas bloqueados (lista em `artigos_para_obter.md`).
 2. Ler os PDFs pagos que o usuário anexar e confirmar as equações clássicas (Henderson, Quaas, Willham, Gilmour, Wood, Wilmink, Ali & Schaeffer, Ptak & Schaeffer, Schaeffer 2004).
