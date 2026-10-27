@@ -113,3 +113,9 @@ test('aviso de pagamento aprovado; sem pedido novo nem pagamento, nada', () => {
   assert.equal(montarAvisoPedidos({ ok: true, pedidos: [pedido()] }, [{ pedidoId: '1', texto: 'x: A caminho', grave: false, em: 'x' }]), null);
   assert.equal(montarAvisoPedidos({ ok: true, pedidos: [pedido()] }, []), null);
 });
+
+test('aviso de desembaraço informa a hora do evento no rastreio', () => {
+  const p = pedido({ eventos: [{ data: '2026-10-23 09:07', texto: 'Desembaraço aduaneiro concluído' }, { data: '2026-10-23 08:40', texto: 'Desembaraço aduaneiro iniciado' }] });
+  const novas = [{ pedidoId: '1', texto: 'Readell: Desembaraço concluído', grave: false, em: 'x' }];
+  assert.match(montarAvisoDesembaraco({ ok: true, pedidos: [p] }, novas), /Ref\. 1\nLiberado em 23\/10 09:07/);
+});

@@ -95,7 +95,12 @@ export function montarAvisoDesembaraco(snap, novas) {
   const liberados = novas.filter((m) => /Desembaraço concluído/.test(m.texto)).map((m) => snap.pedidos.find((p) => p.id === m.pedidoId)).filter(Boolean);
   if (!liberados.length) return null;
   const linhas = ['✅✅✅ DESEMBARAÇO CONCLUÍDO ✅✅✅', ''];
-  for (const p of liberados) linhas.push(`${nomeCurto(p.itens[0]?.titulo)} · ${p.itens[0]?.qtd ?? 1} un.`, `Ref. ${p.id}`, '');
+  for (const p of liberados) {
+    // Hora do evento no rastreio (a AliExpress costuma publicar horas depois): o Felipe vê o atraso em vez de achar que o aviso falhou.
+    const ev = (p.eventos ?? []).find((e) => /Desembaraço aduaneiro concluído|Desembaraço concluído/i.test(e.texto) && e.data);
+    const quando = ev ? `Liberado em ${ev.data.slice(8, 10)}/${ev.data.slice(5, 7)} ${ev.data.slice(11, 16)}` : null;
+    linhas.push(`${nomeCurto(p.itens[0]?.titulo)} · ${p.itens[0]?.qtd ?? 1} un.`, `Ref. ${p.id}`, ...(quando ? [quando] : []), '');
+  }
   const NOME = { microchip: 'Microchip', leitor: 'Leitor' };
   const grupos = new Set(liberados.map((p) => grupoDoProduto(p.itens[0]?.titulo ?? '')));
   for (const x of Object.values(snap.precos ?? {})) {

@@ -36,6 +36,10 @@ const MAX_DETALHES = 40;
 const MAX_MUDANCAS = 80;
 const GUARDA_MUDANCA_MS = 30 * 24 * 3_600_000;
 
+// Toda linha do log leva data e hora: o launchd não marca, e sem isso não dá para saber QUANDO cada checagem rodou.
+const _log = console.log;
+console.log = (...a) => _log(`[${new Date().toLocaleString('pt-BR')}]`, ...a);
+
 const args = new Set(process.argv.slice(2));
 const modoLogin = args.has('login');
 const dry = args.has('--dry');
