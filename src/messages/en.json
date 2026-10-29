@@ -305,7 +305,7 @@
       {
         "operator": "Telegram FZ-LLC",
         "purpose": "Internal operational notices for our team (registrations and account events)",
-        "data": "Notice content, which may include the user's name and email",
+        "data": "Notice content, which may include the producer's name and the farm's name",
         "country": "United Arab Emirates"
       }
     ],

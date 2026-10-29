@@ -305,7 +305,7 @@
       {
         "operator": "Telegram FZ-LLC",
         "purpose": "Avisos operativos internos del equipo (registros y eventos de la cuenta)",
-        "data": "Contenido del aviso, que puede incluir nombre y correo electrónico del usuario",
+        "data": "Contenido del aviso, que puede incluir el nombre del productor y el de la propiedad",
         "country": "Emiratos Árabes Unidos"
       }
     ],
