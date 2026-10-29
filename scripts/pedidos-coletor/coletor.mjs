@@ -24,7 +24,7 @@ import { classificar, ROTULOS } from './classificar.mjs';
 import { numeroBR, reaisTexto, reaisParaNumero } from './util.mjs';
 import { grupoDoProduto } from './grupos.mjs';
 import { lerAjustes, lerHistoricoPrecos, gravarHistoricoPrecos, parsearProduto, parsearCheckout, registrarPreco, avaliarPreco, medias, precoDeCompra } from './precos.mjs';
-import { descarregarFila, dolarAtual, enviarOuGuardar, lerConfig, montarAvisoDesembaraco, montarAvisoPedidos, montarMensagem, temNovidade } from './notificar.mjs';
+import { chaveParaDecidir, descarregarFila, dolarAtual, enviarOuGuardar, lerConfig, montarAvisoDesembaraco, montarAvisoPedidos, montarAvisoPodeComprar, montarMensagem, temNovidade } from './notificar.mjs';
 import { dadosLocais, enviarParaNuvem, lerNuvem } from './nuvem.mjs';
 
 const DIR = process.env.PEDIDOS_DIR ?? join(homedir(), '.seabra-pedidos');
@@ -695,7 +695,7 @@ async function subirParaOSite() {
 }
 
 /** Aviso no Telegram (só se configurado). Falha de aviso nunca derruba a coleta. */
-async function avisar(snap) {
+async function avisar(snap, anterior) {
   if (dry || args.has('--sem-aviso') || !lerConfig()) return;
   const novas = snap.mudancas.filter((m) => m.em === snap.atualizadoEm);
   const mandar = async (texto, rotulo) => {
@@ -709,6 +709,9 @@ async function avisar(snap) {
   // Desembaraço novo: mensagem PRÓPRIA e em destaque, antes de tudo — é o sinal para comprar.
   const urgente = montarAvisoDesembaraco(snap, novas);
   if (urgente) await mandar(urgente, 'Aviso de desembaraço');
+  // Último desembaraço liberado com um pedido separado esperando: pagar ou cancelar e comprar de novo. Sai uma vez só.
+  const chave = chaveParaDecidir(snap);
+  if (chave && chave !== chaveParaDecidir(anterior)) await mandar(montarAvisoPodeComprar(snap), 'Aviso de pode comprar');
   // Compra nova na conta (ou pagamento aprovado): confirma que o coletor viu.
   const pedidosNovos = montarAvisoPedidos(snap, novas);
   if (pedidosNovos) await mandar(pedidosNovos, 'Aviso de pedido');
@@ -727,12 +730,13 @@ if (import.meta.url === `file://${process.argv[1]}`) {
       const reenviadas = await descarregarFila().catch(() => 0);
       if (reenviadas) console.log(`Reenviei ${reenviadas} mensagem(ns) que estava(m) na fila.`);
     }
+    const anterior = lerSnapshot();
     const snap = rapido ? await coletarRapido() : await coletar();
     if (!snap) process.exit(0);
     resumo(snap);
     if (!dry) gravarSnapshot(snap);
     process.exitCode = snap.ok ? 0 : 1;
     await subirParaOSite();
-    await avisar(snap);
+    await avisar(snap, anterior);
   }
 }

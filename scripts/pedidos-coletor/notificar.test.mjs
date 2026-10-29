@@ -119,3 +119,28 @@ test('aviso de desembaraço informa a hora do evento no rastreio', () => {
   const novas = [{ pedidoId: '1', texto: 'Readell: Desembaraço concluído', grave: false, em: 'x' }];
   assert.match(montarAvisoDesembaraco({ ok: true, pedidos: [p] }, novas), /Ref\. 1\nLiberado em 23\/10 09:07/);
 });
+
+test('pedido separado: só pede decisão quando nenhum pedido pago espera desembaraço (pedido de 29/10)', async () => {
+  const { pedidosParaDecidir, montarAvisoPodeComprar, chaveParaDecidir } = await import('./notificar.mjs');
+  const chip = (id, extra) => ({ id, itens: [{ titulo: 'Readell 100 peças etiqueta de vidro com implantador', qtd: 1 }], alertas: [], eventos: [], ...extra });
+  const separado = chip('9', { pagamento: 'pendente', entrega: 'desconhecido', aduana: 'desconhecido', total: 'R$473,29', prazoPagamento: '2026-11-16T12:00:00Z' });
+  const precos = { microchip: { grupo: 'microchip', checkout: { total: 450.1, qtd: 1 } } };
+  const agora = new Date('2026-10-29T12:00:00Z');
+
+  // "Processando" (pago, ainda sem envio) segura a decisão.
+  const segurando = { pedidos: [separado, chip('1', { pagamento: 'ok', entrega: 'a_caminho', aduana: 'aguardando' })], precos };
+  assert.deepEqual(pedidosParaDecidir(segurando), []);
+  assert.equal(montarAvisoPodeComprar(segurando, agora), null);
+  assert.equal(chaveParaDecidir(segurando), '');
+
+  const livre = { pedidos: [separado, chip('1', { pagamento: 'ok', entrega: 'a_caminho', aduana: 'concluida' }), chip('2', { pagamento: 'ok', entrega: 'entregue', aduana: 'concluida' })], precos };
+  const msg = montarAvisoPodeComprar(livre, agora);
+  assert.match(msg, /PODE COMPRAR/);
+  assert.match(msg, /Cancele e compre de novo/);
+  assert.match(msg, /R\$ 23,19 mais barato/);
+  assert.match(msg, /Prazo: 18 dias/);
+  assert.equal(chaveParaDecidir(livre), '9');
+
+  const caro = { ...livre, precos: { microchip: { grupo: 'microchip', checkout: { total: 490, qtd: 1 } } } };
+  assert.match(montarAvisoPodeComprar(caro, agora), /Pague o separado/);
+});

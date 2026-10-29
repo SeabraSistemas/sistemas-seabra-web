@@ -14,6 +14,7 @@ import { join } from 'node:path';
 import { createInterface } from 'node:readline';
 import { grupoDoProduto } from './grupos.mjs';
 import { precoDeCompra } from './precos.mjs';
+import { reaisParaNumero } from './util.mjs';
 
 const DIR = process.env.PEDIDOS_DIR ?? join(homedir(), '.seabra-pedidos');
 const ARQUIVO = join(DIR, 'telegram.json');
@@ -59,6 +60,13 @@ export function montarMensagem(snap, novas, dolar, agora = new Date()) {
       const pag = p.pagamento !== 'pendente' ? '' : resta == null ? ' · pagar!' : ` · ${resta <= 3 ? '⚠️ ' : ''}pagar em ${resta} dia${resta === 1 ? '' : 's'}`;
       linhas.push(`• ${nomeCurto(p.itens[0]?.titulo)} ${p.itens[0]?.qtd ?? 1} un.${prev}${pag}`);
     }
+  }
+
+  // Enquanto não há desembaraço pendente, o resumo repete a decisão sobre o pedido separado (com a cotação de hoje).
+  const decidir = pedidosParaDecidir(snap);
+  if (decidir.length) {
+    linhas.push('', '🟢 Pode comprar · aduana livre');
+    for (const p of decidir) linhas.push(...comparar(snap, p, agora));
   }
 
   const NOME = { microchip: 'Microchip', leitor: 'Leitor' };
@@ -112,6 +120,55 @@ export function montarAvisoDesembaraco(snap, novas) {
     else if (x.medias?.veredito === 'caro' && x.medias.vs30 != null) linhas.push(`   ▲ ${Math.abs(x.medias.vs30 * 100).toFixed(1).replace('.', ',')}% acima da média`);
   }
   return linhas.join('\n').trim();
+}
+
+/*
+ * PEDIDO SEPARADO × PREÇO DE HOJE (pedido do Felipe, 29/10/2026). Ele deixa um pedido "esperando pagamento" no preço bom
+ * e só paga depois que TODOS os pedidos já pagos passarem pelo desembaraço no Brasil. Quando isso acontece, compara o
+ * que está para pagar com a cotação de hoje: pagar o separado ou cancelar e comprar de novo. Pedido pago que ainda nem
+ * foi enviado ("Processando", sem rastreio) também segura: ainda não passou pela aduana.
+ */
+const DIA = 86_400_000;
+
+/** Pedidos separados para pagar, se nenhum pedido pago está esperando o desembaraço; senão []. */
+export function pedidosParaDecidir(snap) {
+  const esperando = snap.pedidos.some((p) => p.pagamento === 'ok' && !['entregue', 'cancelado'].includes(p.entrega) && p.aduana !== 'concluida');
+  if (esperando) return [];
+  return snap.pedidos.filter((p) => p.pagamento === 'pendente' && p.entrega !== 'cancelado');
+}
+
+/** Muda quando aparece um "pode comprar" novo: só então sai a mensagem própria (não a cada checagem). */
+export const chaveParaDecidir = (snap) => (snap ? pedidosParaDecidir(snap).map((p) => p.id).sort().join(',') : '');
+
+/** Linhas da comparação de um pedido separado com a cotação de hoje do mesmo produto. */
+function comparar(snap, p, agora) {
+  const it = p.itens[0];
+  const qtd = it?.qtd ?? 1;
+  const aPagar = reaisParaNumero(p.total);
+  const linhas = [`A pagar: ${nomeCurto(it?.titulo)} ${qtd} un.`, `${aPagar ? real(aPagar) : '?'} · Ref. ${p.id}`];
+  const x = snap.precos?.[grupoDoProduto(it?.titulo ?? '')];
+  const hoje = x && !x.erro && x.checkout?.total ? precoDeCompra(x) * qtd : null;
+  if (hoje && aPagar) {
+    const dif = aPagar - hoje;
+    linhas.push(`Hoje: ${real(hoje)}`);
+    if (dif > 1) linhas.push(`👉 Cancele e compre de novo`, `   ${real(dif)} mais barato`);
+    else if (dif < -1) linhas.push(`👉 Pague o separado`, `   novo sairia ${real(-dif)} mais caro`);
+    else linhas.push(`👉 Mesmo preço: pague o separado`);
+  } else linhas.push('Sem cotação de hoje para comparar');
+  if (p.prazoPagamento) {
+    const resta = Math.max(0, Math.ceil((Date.parse(p.prazoPagamento) - agora.getTime()) / DIA));
+    linhas.push(`Prazo: ${resta} dia${resta === 1 ? '' : 's'}`);
+  }
+  return linhas;
+}
+
+/** Mensagem própria "pode comprar", com a decisão de cada pedido separado. null se ainda há desembaraço pendente. */
+export function montarAvisoPodeComprar(snap, agora = new Date()) {
+  const lista = pedidosParaDecidir(snap);
+  if (!lista.length) return null;
+  const linhas = ['🟢 PODE COMPRAR', 'Todos os pedidos já passaram na aduana.'];
+  for (const p of lista) linhas.push('', ...comparar(snap, p, agora));
+  return linhas.join('\n');
 }
 
 /**
