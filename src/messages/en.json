@@ -237,7 +237,8 @@
     "rights": "All rights reserved.",
     "services": "Web Services",
     "privacy": "Privacy",
-    "terms": "Terms of Use"
+    "terms": "Terms of Use",
+    "deleteAccount": "Delete my account"
   },
   "privacyPage": {
     "title": "Privacy Policy",

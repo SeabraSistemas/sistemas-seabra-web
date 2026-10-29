@@ -237,7 +237,8 @@
     "rights": "Todos los derechos reservados.",
     "services": "Servicios Web",
     "privacy": "Privacidad",
-    "terms": "Términos de Uso"
+    "terms": "Términos de Uso",
+    "deleteAccount": "Eliminar mi cuenta"
   },
   "privacyPage": {
     "title": "Política de Privacidad",

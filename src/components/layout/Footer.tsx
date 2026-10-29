@@ -178,7 +178,7 @@ export function Footer() {
           <p className="text-sm text-muted-foreground">
             &copy; {new Date().getFullYear()} Seabra. {t('footer.rights')}
           </p>
-          <div className="flex items-center gap-6 text-sm text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
             <Link
               href="/privacidade"
               className="hover:text-foreground transition-colors"
@@ -190,6 +190,12 @@ export function Footer() {
               className="hover:text-foreground transition-colors"
             >
               {t('footer.terms')}
+            </Link>
+            <Link
+              href="/excluir-conta"
+              className="hover:text-foreground transition-colors"
+            >
+              {t('footer.deleteAccount')}
             </Link>
           </div>
         </div>
