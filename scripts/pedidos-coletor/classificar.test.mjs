@@ -116,3 +116,9 @@ test('"Processando" no cartão: já pago, o vendedor está preparando o envio', 
   // "Processando no centro de triagem…" (rastreio) continua sendo só um evento de trânsito.
   assert.equal(classificar({ statusTexto: 'Em trânsito', eventos: [{ texto: 'Processando no centro de triagem do país/região de partida' }] }).entrega, 'a_caminho');
 });
+
+test('pacote entregue no rastreio vale mais que o cartão "Aguardando a entrega" (caso real de 29/10)', () => {
+  const r = classificar({ statusTexto: 'Aguardando a entrega', eventos: ev('Saiu do país/região de partida.', 'Desembaraço aduaneiro concluído', 'Pacote entregue. — Nota da transportadora: Entregue') });
+  assert.equal(r.entrega, 'entregue');
+  assert.equal(r.aduana, 'concluida');
+});

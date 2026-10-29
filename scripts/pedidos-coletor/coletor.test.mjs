@@ -263,3 +263,17 @@ test('leitura de rastreio vazia (página não carregou) é inconclusiva: não mu
   assert.equal(reclassificar(p, 'AliExpress\nFaça o download do aplicativo\nCarrinho', AGORA), p);
   assert.deepEqual(diferencas([p], [reclassificar(p, '', AGORA)], 'x'), []);
 });
+
+test('prazo para pagar vem da página de detalhes ("cancelado em 18 dias", caso real de 29/10)', async () => {
+  const { parsearPrazoPagamento, diasParaPagar, montarPedido } = await import('./coletor.mjs');
+  const agora = new Date('2026-10-29T12:00:00Z');
+  const ate = parsearPrazoPagamento('Esperando pagamento\nSem pagamento, este pedido será cancelado em 18 dias\n', agora);
+  assert.equal(diasParaPagar(ate, agora), 18);
+  assert.equal(diasParaPagar(parsearPrazoPagamento('será cancelado em 5 horas', agora), agora), 1);
+  assert.equal(parsearPrazoPagamento('Aguardando a entrega', agora), null);
+  const item = { id: '1', texto: 'Esperando pagamento\nData: 27 out, 2026\nNúmero de referência: 1\nWSRFID Microchip Store\nReadell 100 peças\nR$353,46\nx1\nTotal:R$473,29' };
+  const longe = montarPedido(item, '', agora, 'será cancelado em 18 dias');
+  assert.equal(longe.alertas.length, 0, 'pedido separado com prazo folgado não é alerta');
+  assert.ok(longe.prazoPagamento);
+  assert.equal(montarPedido(item, '', agora, 'será cancelado em 2 dias').alertas[0].tipo, 'pagamento');
+});

@@ -229,16 +229,39 @@ export function parsearRastreio(texto, agora = new Date()) {
   return { codigo, previsao, eventos };
 }
 
-export function montarPedido(item, rastreioTexto, agora = new Date()) {
+/**
+ * Prazo para pagar, da página de detalhes ("Sem pagamento, este pedido será cancelado em 18 dias"). O Felipe deixa
+ * pedidos separados no preço bom e paga depois: o que importa é quantos dias ainda tem. Devolve a data-limite (ISO) ou null.
+ */
+export function parsearPrazoPagamento(texto, agora = new Date()) {
+  const m = String(texto ?? '').match(/cancelad[oa] em (\d+) (dia|hora|minuto)s?|(?:closed|cancell?ed) in (\d+) (day|hour|minute)s?/i);
+  if (!m) return null;
+  const n = Number(m[1] ?? m[3]);
+  const unidade = (m[2] ?? m[4]).toLowerCase();
+  const ms = /^(dia|day)$/.test(unidade) ? 86_400_000 : /^(hora|hour)$/.test(unidade) ? 3_600_000 : 60_000;
+  return new Date(agora.getTime() + n * ms).toISOString();
+}
+
+/** Dias inteiros que faltam até `ate` (arredonda para cima: "18 dias" lido hoje continua 18 hoje). */
+export function diasParaPagar(ate, agora = new Date()) {
+  return Math.max(0, Math.ceil((Date.parse(ate) - agora.getTime()) / 86_400_000));
+}
+
+export function montarPedido(item, rastreioTexto, agora = new Date(), detalheTexto = '') {
   const c0 = parsearCartao(item.texto);
   const r = rastreioTexto ? parsearRastreio(rastreioTexto, agora) : { codigo: null, previsao: null, eventos: [] };
   const c = classificar({ statusTexto: c0.status, eventos: [...r.eventos].reverse() });
   const alertas = [...c.alertas];
+  const prazoPagamento = c.pagamento === 'pendente' ? parsearPrazoPagamento(detalheTexto, agora) : null;
 
-  // Esperando pagamento há mais de um dia é o "problema de pagamento" que a AliExpress não chama de erro.
+  // Pedido separado esperando pagamento é escolha dele: só vira alerta quando o prazo está acabando (≤ 3 dias).
+  // Sem o prazo lido, vale a regra antiga: pendente há mais de um dia.
   const feito = dataDoCartao(c0.data);
   const dias = feito ? Math.floor((agora - feito) / 86_400_000) : 0;
-  if (c.pagamento === 'pendente' && dias >= 1) alertas.push({ tipo: 'pagamento', texto: `Pagamento pendente há ${dias} dia${dias > 1 ? 's' : ''} (pedido de ${c0.data})` });
+  if (c.pagamento === 'pendente' && prazoPagamento) {
+    const resta = diasParaPagar(prazoPagamento, agora);
+    if (resta <= 3) alertas.push({ tipo: 'pagamento', texto: `Pagar em ${resta} dia${resta === 1 ? '' : 's'} ou o pedido é cancelado` });
+  } else if (c.pagamento === 'pendente' && dias >= 1) alertas.push({ tipo: 'pagamento', texto: `Pagamento pendente há ${dias} dia${dias > 1 ? 's' : ''} (pedido de ${c0.data})` });
 
   return {
     id: item.id,
@@ -256,6 +279,7 @@ export function montarPedido(item, rastreioTexto, agora = new Date()) {
     codigoRastreio: r.codigo,
     previsao: r.previsao,
     eventos: r.eventos.slice(0, 30),
+    ...(prazoPagamento ? { prazoPagamento } : {}),
   };
 }
 
@@ -401,6 +425,18 @@ async function lerRastreio(pagina, id) {
   return pagina.evaluate(textoPagina);
 }
 
+/** Página de detalhes do pedido (só leitura): é onde aparece o prazo para pagar. */
+async function lerDetalhe(pagina, id) {
+  await pagina.goto(`${BASE}/p/order/detail.html?orderId=${id}`, { waitUntil: 'domcontentloaded', timeout: 60_000 });
+  await pagina.waitForFunction(() => /N[uú]mero de refer|Order (number|ID)/i.test(document.body.innerText), null, { timeout: 20_000 }).catch(() => {});
+  await pagina.waitForTimeout(800);
+  const texto = await pagina.evaluate(textoPagina);
+  const bloqueio = problemaDeAcesso(pagina, texto);
+  if (bloqueio) throw new Error(bloqueio);
+  if (dump) await salvarDump(`detalhe-${id}`, pagina);
+  return texto;
+}
+
 /* ── execução ───────────────────────────────────────────────────────────── */
 
 async function login() {
@@ -508,6 +544,14 @@ async function coletar() {
       }
       const status = parsearCartao(item.texto).status;
       const final = ['entregue', 'cancelado'].includes(classificar({ statusTexto: status }).entrega);
+      // Esperando pagamento: não tem rastreio, mas a página de detalhes diz quantos dias faltam para pagar.
+      if (/esperando pagamento|a ser pago|awaiting payment|to pay/i.test(status) && abertos < MAX_DETALHES) {
+        abertos++;
+        await espera(1500, 3500);
+        const novo = montarPedido(item, '', new Date(), await lerDetalhe(pagina, item.id).catch(() => ''));
+        pedidos.push(novo.prazoPagamento || !velho?.prazoPagamento ? novo : { ...novo, prazoPagamento: velho.prazoPagamento });
+        continue;
+      }
       // Concluído/cancelado já se explica pelo cartão: não precisa abrir o rastreio (a 1ª leitura traz o histórico todo).
       if (final || abertos >= MAX_DETALHES || /esperando pagamento|a ser pago|awaiting payment|to pay/i.test(status)) {
         // Sem envio ainda (ou limite de acessos): só o cartão da lista.
@@ -585,7 +629,11 @@ async function coletarRapido() {
       const c0 = parsearCartao(item.texto);
       const velho = conhecidos.get(item.id);
       if (!velho) {
-        if (recente(c0.data)) pedidos = [montarPedido(item, ''), ...pedidos];
+        if (recente(c0.data)) {
+          const pagar = /esperando pagamento|a ser pago|awaiting payment|to pay/i.test(c0.status ?? '');
+          const detalhe = pagar ? await lerDetalhe(pagina, item.id).catch(() => '') : '';
+          pedidos = [montarPedido(item, '', new Date(), detalhe), ...pedidos];
+        }
       } else if (c0.status && !['entregue', 'cancelado'].includes(velho.entrega)) {
         const c = classificar({ statusTexto: c0.status, eventos: [...(velho.eventos ?? [])].reverse() });
         // Atualiza se o texto do cartão mudou OU se a leitura que temos ficou para trás do classificador (ex.: "status ?").

@@ -96,6 +96,10 @@ export function classificar({ statusTexto = '', eventos = [] }) {
   const pagamento = ultimo(PAGAMENTO, textos) ?? 'desconhecido';
   let aduana = aduanaDoBrasil(textos) ?? 'desconhecido';
   let entrega = ultimo(ENTREGA, textos, ORDEM_ENTREGA) ?? 'desconhecido';
+  // O cartão fica em "Aguardando a entrega" até o comprador confirmar, mesmo com o pacote já entregue (visto em 29/10/2026:
+  // "Pacote entregue. — Nota da transportadora: Entregue" e o cartão ainda aguardando). O rastreio manda.
+  const doRastreio = ultimo(ENTREGA, textos.slice(0, eventos.length), ORDEM_ENTREGA);
+  if (entrega === 'a_caminho' && doRastreio === 'entregue') entrega = 'entregue';
 
   // Pedido entregue já passou pela aduana e pelo pagamento, mesmo que o texto não diga.
   if (aduana === 'desconhecido' && entrega === 'entregue') aduana = 'concluida';

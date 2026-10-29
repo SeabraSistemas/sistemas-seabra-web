@@ -288,7 +288,7 @@ function Painel({
 
         <PrecoProdutos precos={snapshot?.precos} historico={historico} ajustes={ajustes} linhas={linhas} />
 
-        <VaiChegar linhas={aCaminho} />
+        <VaiChegar linhas={aCaminho} agora={agora} />
         <JaChegaram linhas={chegaram} />
         <Vendas vendas={estado.vendas} />
         <Recolher titulo="Preço pago × dólar">
@@ -572,6 +572,16 @@ function Selos({ l }: { l: LinhaPedido }) {
 const dataCurta = (d: string | null | undefined) => (d ?? '').replace(/,?\s*\d{4}$/, '');
 
 /** Número de referência da AliExpress: é ele que diz qual pedido está recebendo "Cheguei". */
+/** Pedido separado esperando pagamento: quantos dias faltam antes de a AliExpress cancelar. */
+function PrazoPagar({ ate, agora }: { ate: string; agora: number }) {
+  const resta = Math.max(0, Math.ceil((Date.parse(ate) - agora) / 86_400_000));
+  return (
+    <span className={`ml-2 text-sm font-normal ${resta <= 3 ? 'text-red-400' : 'text-amber-300'}`}>
+      pagar em {resta} dia{resta === 1 ? '' : 's'} (até {diaMes(isoLocal(new Date(ate)))})
+    </span>
+  );
+}
+
 function Referencia({ l }: { l: LinhaPedido }) {
   if (!l.ali) return <>Lançado à mão{l.manual?.data ? ` · ${l.manual.data}` : ''}</>;
   return (
@@ -581,7 +591,7 @@ function Referencia({ l }: { l: LinhaPedido }) {
   );
 }
 
-function VaiChegar({ linhas }: { linhas: LinhaPedido[] }) {
+function VaiChegar({ linhas, agora }: { linhas: LinhaPedido[]; agora: number }) {
   return (
     <section className={cartao}>
       <p className={rotulo}>Vai chegar ({linhas.length})</p>
@@ -596,6 +606,7 @@ function VaiChegar({ linhas }: { linhas: LinhaPedido[] }) {
                   <p className="text-base font-semibold">
                     {nomeCurto(l.titulo)} <span className="font-normal text-muted-foreground">· {l.qtd} un.</span>
                     {l.ali?.previsao ? <span className="ml-2 text-sm font-normal text-amber-300">{janela(l.ali.previsao.de, l.ali.previsao.ate)}</span> : null}
+                    {l.ali?.pagamento === 'pendente' && l.ali.prazoPagamento && agora ? <PrazoPagar ate={l.ali.prazoPagamento} agora={agora} /> : null}
                   </p>
                   <p className="mt-0.5 text-xs text-muted-foreground">
                     <Referencia l={l} />

@@ -54,7 +54,9 @@ export function montarMensagem(snap, novas, dolar, agora = new Date()) {
     for (const p of aCaminho) {
       // Sem a palavra "chega": no celular ela empurra a data para a linha de baixo.
       const prev = p.previsao ? ` · ${diaMes(p.previsao.de)}–${diaMes(p.previsao.ate)}` : '';
-      const pag = p.pagamento === 'pendente' ? ' · pagar!' : '';
+      // Pedido separado no preço bom: o que ele precisa saber é quantos dias ainda tem para pagar.
+      const resta = p.prazoPagamento ? Math.max(0, Math.ceil((Date.parse(p.prazoPagamento) - agora.getTime()) / 86_400_000)) : null;
+      const pag = p.pagamento !== 'pendente' ? '' : resta == null ? ' · pagar!' : ` · ${resta <= 3 ? '⚠️ ' : ''}pagar em ${resta} dia${resta === 1 ? '' : 's'}`;
       linhas.push(`• ${nomeCurto(p.itens[0]?.titulo)} ${p.itens[0]?.qtd ?? 1} un.${prev}${pag}`);
     }
   }
@@ -124,7 +126,8 @@ export function montarAvisoPedidos(snap, novas) {
     const item = p.itens[0];
     const nome = `${nomeCurto(item?.titulo)} · ${item?.qtd ?? 1} un.`;
     if (/^Novo pedido/.test(m.texto)) {
-      const estado = p.pagamento === 'pendente' ? 'aguardando pagamento' : p.pagamento === 'ok' ? 'pagamento aprovado' : 'status ?';
+      const resta = p.prazoPagamento ? Math.max(0, Math.ceil((Date.parse(p.prazoPagamento) - Date.now()) / 86_400_000)) : null;
+      const estado = p.pagamento === 'pendente' ? (resta == null ? 'aguardando pagamento' : `pagar em ${resta} dias`) : p.pagamento === 'ok' ? 'pagamento aprovado' : 'status ?';
       blocos.push([`🛒 Novo pedido`, `${nome}${p.total ? ` · ${p.total.replace('R$', 'R$ ')}` : ''}`, `${estado} · Ref. ${p.id}`].join('\n'));
     } else if (/Pagamento aprovado/.test(m.texto)) {
       blocos.push([`💳 Pagamento aprovado`, nome, `Ref. ${p.id}`].join('\n'));

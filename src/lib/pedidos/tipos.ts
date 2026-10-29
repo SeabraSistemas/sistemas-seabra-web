@@ -53,6 +53,8 @@ export interface PedidoAli {
   produto?: { url: string; variante: string | null } | null;
   /** Janela de entrega prevista, datas ISO (YYYY-MM-DD). */
   previsao?: { de: string; ate: string } | null;
+  /** Esperando pagamento: até quando dá para pagar antes de a AliExpress cancelar (ISO). */
+  prazoPagamento?: string | null;
   /** Do mais novo para o mais antigo. */
   eventos: EventoRastreio[];
 }
