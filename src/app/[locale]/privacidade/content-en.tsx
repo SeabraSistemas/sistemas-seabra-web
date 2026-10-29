@@ -182,7 +182,8 @@ export function PrivacidadeContentEn() {
         </li>
         <li>
           CPF or CNPJ, when necessary for the subscription, for issuing a tax
-          document, or for official pedigree registration documents
+          document, for official pedigree registration documents, and in the
+          technician registration
         </li>
         <li>Address: postal code (CEP), municipality, and state</li>
         <li>Profile photo, if you upload one</li>
@@ -267,12 +268,18 @@ export function PrivacidadeContentEn() {
         </li>
         <li>
           <strong>Notifications:</strong> alerting you about expected births,
-          drying-off, vaccination, visits, and billing.
+          drying-off, vaccination, visits, and, outside the app store versions,
+          billing.
         </li>
         <li>
-          <strong>Install apps (Android only):</strong> applying the Sistema Seabra
-          update from within the app itself, without going through the browser.
-          Used only to install Sistema Seabra.
+          <strong>
+            Install apps (only in the app downloaded from our website, on
+            Android):
+          </strong>{' '}
+          applying the Sistema Seabra update from within the app itself, without
+          going through the browser. Used only to install Sistema Seabra. The
+          version distributed through Google Play and the App Store does not use
+          this permission; there, updates are handled by the store itself.
         </li>
       </ul>
 
@@ -363,6 +370,11 @@ export function PrivacidadeContentEn() {
         <li>
           <strong>Where it goes:</strong> to the language-model service{' '}
           <strong>Gemini, by Google LLC</strong>, on servers located outside Brazil.
+          In the Beef Cattle module you can register the{' '}
+          <strong>key of your own account</strong> with another provider (OpenAI,
+          Anthropic, or Google). In that case, the question and the related data go
+          to the provider that <strong>you</strong> chose, under the contract
+          between you and that provider.
         </li>
         <li>
           <strong>What is stored:</strong> the conversation history is kept in our
@@ -378,6 +390,11 @@ export function PrivacidadeContentEn() {
           your data is sent through this channel.
         </li>
       </ul>
+      <p>
+        <strong>Reading documents from photos:</strong> when you photograph a
+        registration record or upload the PDF of a milk analysis report, the image
+        or file is sent to Gemini, by Google LLC, to extract the data.
+      </p>
       <p>
         A response from an artificial intelligence assistant may contain errors. It
         does not replace the judgment of a veterinarian or an animal scientist, and
@@ -413,7 +430,17 @@ export function PrivacidadeContentEn() {
         </li>
         <li>
           <strong>Artificial intelligence assistant</strong> — Google LLC (Gemini),
-          as described in section 6.
+          as described in section 6, including reading registration records from
+          photos and milk analysis reports in PDF.
+        </li>
+        <li>
+          <strong>Service emails</strong> — Brevo (Sendinblue SAS), which receives
+          your name and email to send codes and notices.
+        </li>
+        <li>
+          <strong>Internal team notices</strong> — Telegram, which receives
+          operational notices about registrations and account events, sent only to
+          our team.
         </li>
         <li>
           <strong>Subscription and payment</strong> — Asaas, which receives your
@@ -738,7 +765,7 @@ export function PrivacidadeContentEn() {
         9. Where Your Data Is Processed
       </h2>
       <p>
-        Our processors — Supabase and Google — process data on servers located
+        Our processors — Supabase, Google, Brevo, and Telegram — process data on servers located
         outside Brazil, including in the United States. The LGPD permits this
         international transfer, and it takes place under the contractual clauses
         and protection guarantees offered by these providers, at a level equivalent
@@ -782,9 +809,14 @@ export function PrivacidadeContentEn() {
           provide the Service.
         </li>
         <li>
-          <strong>After the account is closed:</strong> we delete or anonymize the
-          Personal Data within 90 days, except for what the law requires us to
-          retain.
+          <strong>After the account is deleted (section 12):</strong> we delete or
+          anonymize the Personal Data within 15 days, and backup copies are fully
+          deleted within 90 days, except for what the law requires us to retain.
+        </li>
+        <li>
+          <strong>The end of paid access is not account closure:</strong> the
+          account returns to the free plan and the data remains stored for as long
+          as the account exists.
         </li>
         <li>
           <strong>Tax and financial data:</strong> 5 years, as required by tax
@@ -845,8 +877,16 @@ export function PrivacidadeContentEn() {
         spreadsheet and as a PDF.
       </p>
       <p>
-        <strong>What you request from us:</strong> a complete copy of your data,
-        deletion of your account, and any of the other rights listed above. Write
+        <strong>Deleting your account is something you do yourself:</strong> in the
+        app, under Profile → Delete my account, or on the page{' '}
+        <Link href="/excluir-conta" className="text-primary hover:underline">
+          sistemaseabra.com.br/excluir-conta
+        </Link>
+        . Deletion is completed within 15 days.
+      </p>
+      <p>
+        <strong>What you request from us by email:</strong> a complete copy of your
+        data and any of the other rights listed above. Write
         to{' '}
         <a
           className="text-primary hover:underline"

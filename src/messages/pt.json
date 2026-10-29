@@ -242,18 +242,18 @@
   },
   "privacyPage": {
     "title": "Política de Privacidade",
-    "lastUpdated": "Última atualização: 20 de setembro de 2026",
+    "lastUpdated": "Última atualização: 29 de outubro de 2026",
     "localeNotice": ""
   },
   "termsPage": {
     "title": "Termos de Uso",
-    "lastUpdated": "Última atualização: 10 de maio de 2026",
+    "lastUpdated": "Última atualização: 29 de outubro de 2026",
     "localeNotice": "",
     "draftNotice": ""
   },
   "operatorsPage": {
     "title": "Operadores que tratam seus dados",
-    "lastUpdated": "Última atualização: 19 de setembro de 2026",
+    "lastUpdated": "Última atualização: 29 de outubro de 2026",
     "intro": "Esta é a lista sempre atual dos operadores que tratam dados em nome da Sistema Seabra, referida pela seção 7.1 da Política de Privacidade. Se a versão do aplicativo que você tem descrever algo diferente, vale esta página.",
     "colOperator": "Operador",
     "colPurpose": "Para que serve",
@@ -279,6 +279,12 @@
         "country": "EUA"
       },
       {
+        "operator": "Google LLC — Gemini",
+        "purpose": "Leitura de ficha de registro por foto e de laudo de análise do leite em PDF",
+        "data": "Imagem da ficha ou arquivo do laudo",
+        "country": "EUA"
+      },
+      {
         "operator": "Asaas",
         "purpose": "Assinatura e cobrança",
         "data": "Nome, CPF/CNPJ, e-mail, telefone, dados do pagamento",
@@ -289,6 +295,18 @@
         "purpose": "Avisos e código de acesso por WhatsApp",
         "data": "Telefone e conteúdo da mensagem",
         "country": "Brasil"
+      },
+      {
+        "operator": "Brevo (Sendinblue SAS)",
+        "purpose": "E-mails do serviço (códigos e avisos)",
+        "data": "Nome e e-mail",
+        "country": "França"
+      },
+      {
+        "operator": "Telegram FZ-LLC",
+        "purpose": "Avisos operacionais internos da equipe (cadastros e eventos da conta)",
+        "data": "Conteúdo do aviso, que pode incluir nome e e-mail do usuário",
+        "country": "Emirados Árabes Unidos"
       }
     ],
     "backLink": "Voltar para a Política de Privacidade"

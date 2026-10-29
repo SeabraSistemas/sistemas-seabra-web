@@ -188,8 +188,9 @@ export function PrivacidadeContentEs() {
         </li>
         <li>
           CPF (identificación fiscal individual brasileña) o CNPJ, cuando sea
-          necesario para la suscripción, para la emisión de documento fiscal
-          o para documentos oficiales de registro genealógico
+          necesario para la suscripción, para la emisión de documento fiscal,
+          para documentos oficiales de registro genealógico y en el registro
+          del técnico
         </li>
         <li>Dirección: código postal (CEP), municipio y estado</li>
         <li>Foto de perfil, si usted envía una</li>
@@ -276,13 +277,19 @@ export function PrivacidadeContentEs() {
         </li>
         <li>
           <strong>Notificaciones:</strong> avisar sobre partos previstos,
-          secado, vacunación, visitas y cobros.
+          secado, vacunación, visitas y, fuera de las versiones de las tiendas,
+          cobros.
         </li>
         <li>
-          <strong>Instalar aplicaciones (solo Android):</strong> aplicar la
-          actualización del Sistema Seabra desde dentro de la propia
-          aplicación, sin pasar por el navegador. Se usa solo para instalar
-          el Sistema Seabra.
+          <strong>
+            Instalar aplicaciones (solo en la aplicación descargada de nuestro
+            sitio, en Android):
+          </strong>{' '}
+          aplicar la actualización del Sistema Seabra desde dentro de la propia
+          aplicación, sin pasar por el navegador. Se usa solo para instalar el
+          Sistema Seabra. La versión distribuida por Google Play y por la App
+          Store no usa este permiso; en ella la actualización la hace la propia
+          tienda.
         </li>
       </ul>
 
@@ -376,7 +383,11 @@ export function PrivacidadeContentEs() {
         <li>
           <strong>Adónde va:</strong> al servicio de modelos de lenguaje{' '}
           <strong>Gemini, de Google LLC</strong>, en servidores fuera de
-          Brasil.
+          Brasil. En el módulo de Bovinos de Carne usted puede registrar la{' '}
+          <strong>clave de su propia cuenta</strong> en otro proveedor (OpenAI,
+          Anthropic o Google). En ese caso, la pregunta y los datos
+          relacionados van al proveedor que <strong>usted</strong> eligió, bajo
+          el contrato entre usted y él.
         </li>
         <li>
           <strong>Lo que queda guardado:</strong> el historial de la
@@ -393,6 +404,12 @@ export function PrivacidadeContentEs() {
           suyo se envía por esa vía.
         </li>
       </ul>
+      <p>
+        <strong>Lectura de documentos por foto:</strong> cuando usted
+        fotografía una ficha de registro o envía el PDF de un informe de
+        análisis de la leche, la imagen o el archivo se envía a Gemini, de
+        Google LLC, para extraer los datos.
+      </p>
       <p>
         La respuesta de un asistente de inteligencia artificial puede
         contener errores. No sustituye el juicio de un médico veterinario o
@@ -430,7 +447,18 @@ export function PrivacidadeContentEs() {
         </li>
         <li>
           <strong>Asistente de inteligencia artificial</strong> — Google LLC
-          (Gemini), en los términos de la sección 6.
+          (Gemini), en los términos de la sección 6, incluida la lectura de
+          fichas por foto y de informes en PDF.
+        </li>
+        <li>
+          <strong>Correos electrónicos del servicio</strong> — Brevo
+          (Sendinblue SAS), que recibe nombre y correo electrónico para enviar
+          códigos y avisos.
+        </li>
+        <li>
+          <strong>Avisos internos del equipo</strong> — Telegram, que recibe
+          avisos operativos sobre registros y eventos de la cuenta, enviados
+          solo a nuestro equipo.
         </li>
         <li>
           <strong>Suscripción y pago</strong> — Asaas, que recibe nombre,
@@ -772,7 +800,7 @@ export function PrivacidadeContentEs() {
         9. Dónde se procesan sus datos
       </h2>
       <p>
-        Nuestros encargados — Supabase y Google — procesan datos en
+        Nuestros encargados — Supabase, Google, Brevo y Telegram — procesan datos en
         servidores ubicados fuera de Brasil, incluso en los Estados Unidos.
         La LGPD permite esta transferencia internacional, y esta se realiza
         bajo las cláusulas contractuales y las garantías de protección
@@ -817,9 +845,15 @@ export function PrivacidadeContentEs() {
           necesarios para prestar el Servicio.
         </li>
         <li>
-          <strong>Después del cierre de la cuenta:</strong> eliminamos o
-          anonimizamos los Datos Personales en un plazo de hasta 90 días,
-          salvo lo que la ley obligue a mantener.
+          <strong>Después de la eliminación de la cuenta (sección 12):</strong>{' '}
+          eliminamos o anonimizamos los Datos Personales en un plazo de hasta
+          15 días, y la eliminación completa de las copias de seguridad ocurre
+          en hasta 90 días, salvo lo que la ley obligue a mantener.
+        </li>
+        <li>
+          <strong>El fin del acceso pago no es cierre de la cuenta:</strong> la
+          cuenta vuelve al plan gratuito y los datos siguen guardados mientras
+          la cuenta exista.
         </li>
         <li>
           <strong>Datos fiscales y financieros:</strong> 5 años, por
@@ -882,9 +916,16 @@ export function PrivacidadeContentEs() {
         exportar su rebaño y sus informes en hoja de cálculo y en PDF.
       </p>
       <p>
-        <strong>Lo que usted nos pide a nosotros:</strong> copia completa de
-        sus datos, eliminación de la cuenta y cualquiera de los demás
-        derechos anteriores. Escriba a{' '}
+        <strong>Eliminar la cuenta lo hace usted mismo:</strong> en la
+        aplicación, en Perfil → Eliminar mi cuenta, o en la página{' '}
+        <Link href="/excluir-conta" className="text-primary hover:underline">
+          sistemaseabra.com.br/excluir-conta
+        </Link>
+        . La eliminación se completa en un plazo de hasta 15 días.
+      </p>
+      <p>
+        <strong>Lo que usted nos pide por correo electrónico:</strong> copia
+        completa de sus datos y cualquiera de los demás derechos anteriores. Escriba a{' '}
         <a
           className="text-primary hover:underline"
           href="mailto:sistemaseabra@gmail.com?subject=LGPD"

@@ -242,18 +242,18 @@
   },
   "privacyPage": {
     "title": "Privacy Policy",
-    "lastUpdated": "Last updated: September 20, 2026",
+    "lastUpdated": "Last updated: October 29, 2026",
     "localeNotice": ""
   },
   "termsPage": {
     "title": "Terms of Use",
-    "lastUpdated": "Last updated: May 10, 2026",
+    "lastUpdated": "Last updated: October 29, 2026",
     "localeNotice": "The legal text below is in Portuguese (Brazilian law applies). For an automated translation, use your browser's translate feature.",
     "draftNotice": ""
   },
   "operatorsPage": {
     "title": "Operators that process your data",
-    "lastUpdated": "Last updated: September 19, 2026",
+    "lastUpdated": "Last updated: October 29, 2026",
     "intro": "This is the always-current list of operators that process data on behalf of Sistema Seabra, referenced by section 7.1 of the Privacy Policy. If the app version you have describes something different, this page controls.",
     "colOperator": "Operator",
     "colPurpose": "What it is for",
@@ -279,6 +279,12 @@
         "country": "USA"
       },
       {
+        "operator": "Google LLC — Gemini",
+        "purpose": "Reading registration records from photos and milk analysis reports in PDF",
+        "data": "Image of the record or report file",
+        "country": "USA"
+      },
+      {
         "operator": "Asaas",
         "purpose": "Subscription and billing",
         "data": "Name, CPF/CNPJ (Brazilian tax ID), email, phone, payment data",
@@ -289,6 +295,18 @@
         "purpose": "Alerts and access codes via WhatsApp",
         "data": "Phone number and message content",
         "country": "Brazil"
+      },
+      {
+        "operator": "Brevo (Sendinblue SAS)",
+        "purpose": "Service emails (codes and notices)",
+        "data": "Name and email",
+        "country": "France"
+      },
+      {
+        "operator": "Telegram FZ-LLC",
+        "purpose": "Internal operational notices for our team (registrations and account events)",
+        "data": "Notice content, which may include the user's name and email",
+        "country": "United Arab Emirates"
       }
     ],
     "backLink": "Back to the Privacy Policy"

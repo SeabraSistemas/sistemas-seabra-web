@@ -185,8 +185,8 @@ export function PrivacidadeContentPt() {
         </li>
         <li>
           CPF ou CNPJ, quando necessário para a assinatura, para a emissão de
-          documento fiscal ou para documentos oficiais de registro
-          genealógico
+          documento fiscal, para documentos oficiais de registro
+          genealógico e no cadastro do técnico
         </li>
         <li>Endereço: CEP, município e estado</li>
         <li>Foto de perfil, se você enviar uma</li>
@@ -271,12 +271,18 @@ export function PrivacidadeContentPt() {
         </li>
         <li>
           <strong>Notificações:</strong> avisar sobre partos previstos,
-          secagem, vacinação, visitas e cobranças.
+          secagem, vacinação, visitas e, fora das versões das lojas,
+          cobranças.
         </li>
         <li>
-          <strong>Instalar aplicativos (somente Android):</strong> aplicar a
-          atualização do Sistema Seabra por dentro do próprio app, sem passar
-          pelo navegador. Usada só para instalar o Sistema Seabra.
+          <strong>
+            Instalar aplicativos (somente no aplicativo baixado do nosso site,
+            no Android):
+          </strong>{' '}
+          aplicar a atualização do Sistema Seabra por dentro do próprio app,
+          sem passar pelo navegador. Usada só para instalar o Sistema Seabra.
+          A versão distribuída pelo Google Play e pela App Store não usa esta
+          permissão; nela a atualização é feita pela própria loja.
         </li>
       </ul>
 
@@ -369,7 +375,11 @@ export function PrivacidadeContentPt() {
         <li>
           <strong>Para onde vai:</strong> para o serviço de modelos de
           linguagem <strong>Gemini, da Google LLC</strong>, em servidores
-          fora do Brasil.
+          fora do Brasil. No módulo de Bovinos de Corte você pode cadastrar a{' '}
+          <strong>chave da sua própria conta</strong> em outro provedor
+          (OpenAI, Anthropic ou Google). Nesse caso a pergunta e os dados
+          relacionados vão para o provedor que <strong>você</strong> escolheu,
+          sob o contrato entre você e ele.
         </li>
         <li>
           <strong>O que fica guardado:</strong> o histórico da conversa fica
@@ -386,6 +396,12 @@ export function PrivacidadeContentPt() {
           seu é enviado por esse caminho.
         </li>
       </ul>
+      <p>
+        <strong>Leitura de documentos por foto:</strong> quando você fotografa
+        uma ficha de registro ou envia o PDF de um laudo de análise do leite, a
+        imagem ou o arquivo é enviado ao Gemini, da Google LLC, para extrair os
+        dados.
+      </p>
       <p>
         A resposta de um assistente de inteligência artificial pode conter
         erro. Ela não substitui o julgamento de um médico veterinário ou
@@ -422,7 +438,17 @@ export function PrivacidadeContentPt() {
         </li>
         <li>
           <strong>Assistente de inteligência artificial</strong> — Google LLC
-          (Gemini), nos termos da seção 6.
+          (Gemini), nos termos da seção 6, inclusive a leitura de ficha por
+          foto e de laudo em PDF.
+        </li>
+        <li>
+          <strong>E-mails do serviço</strong> — Brevo (Sendinblue SAS), que
+          recebe nome e e-mail para enviar códigos e avisos.
+        </li>
+        <li>
+          <strong>Avisos internos da equipe</strong> — Telegram, que recebe
+          avisos operacionais sobre cadastros e eventos da conta, enviados
+          somente à nossa equipe.
         </li>
         <li>
           <strong>Assinatura e pagamento</strong> — Asaas, que recebe nome,
@@ -751,7 +777,7 @@ export function PrivacidadeContentPt() {
         9. Onde seus dados são processados
       </h2>
       <p>
-        Nossos operadores — Supabase e Google — processam dados em
+        Nossos operadores — Supabase, Google, Brevo e Telegram — processam dados em
         servidores localizados fora do Brasil, inclusive nos Estados Unidos.
         A LGPD permite essa transferência internacional, e ela acontece sob
         as cláusulas contratuais e as garantias de proteção oferecidas por
@@ -796,9 +822,15 @@ export function PrivacidadeContentPt() {
           necessários para prestar o Serviço.
         </li>
         <li>
-          <strong>Depois do encerramento da conta:</strong> eliminamos ou
-          anonimizamos os Dados Pessoais em até 90 dias, salvo o que a lei
-          obrigue a manter.
+          <strong>Depois da exclusão da conta (seção 12):</strong> eliminamos
+          ou anonimizamos os Dados Pessoais em até 15 dias, e a eliminação
+          completa das cópias de segurança acontece em até 90 dias, salvo o
+          que a lei obrigue a manter.
+        </li>
+        <li>
+          <strong>Fim do acesso pago não é encerramento:</strong> a conta volta
+          ao plano gratuito e os dados continuam guardados enquanto a conta
+          existir.
         </li>
         <li>
           <strong>Dados fiscais e financeiros:</strong> 5 anos, por exigência
@@ -860,8 +892,16 @@ export function PrivacidadeContentPt() {
         relatórios em planilha e em PDF.
       </p>
       <p>
-        <strong>O que você pede a nós:</strong> cópia completa dos seus
-        dados, exclusão da conta e qualquer um dos demais direitos acima.
+        <strong>Excluir a conta você faz sozinho:</strong> no aplicativo, em
+        Perfil → Excluir minha conta, ou pela página{' '}
+        <Link href="/excluir-conta" className="text-primary hover:underline">
+          sistemaseabra.com.br/excluir-conta
+        </Link>
+        . A exclusão é concluída em até 15 dias.
+      </p>
+      <p>
+        <strong>O que você pede a nós por e-mail:</strong> cópia completa dos
+        seus dados e qualquer um dos demais direitos acima.
         Escreva para{' '}
         <a
           className="text-primary hover:underline"
