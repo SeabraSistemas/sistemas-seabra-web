@@ -70,7 +70,11 @@ const reais = (x: number) => `R$ ${x.toFixed(2).replace('.', ',')}`;
  */
 export function avisosDoAlimento(a: Alimento): AvisoAlimento[] {
   const avisos: AvisoAlimento[] = [];
-  if (a.avisoFonte) avisos.push({ nivel: 'aviso', texto: `Da planilha: ${a.avisoFonte}.` });
+  if (a.avisoFonte) {
+    const original = alimentoOriginal(a.id);
+    const editado = original != null && [...CAMPOS_COMPOSICAO, 'ms' as const].some((c) => original[c] !== a[c]);
+    avisos.push(editado ? { nivel: 'info', texto: `A planilha original avisava: ${a.avisoFonte}. Você já editou este alimento.` } : { nivel: 'aviso', texto: `Da planilha: ${a.avisoFonte}.` });
+  }
 
   if (a.ms == null) {
     avisos.push({ nivel: 'info', texto: 'Sem matéria seca no banco: não entra no cálculo até preencher.' });
@@ -89,11 +93,11 @@ export function avisosDoAlimento(a: Alimento): AvisoAlimento[] {
     avisos.push({ nivel: 'erro', texto: `Amido (${pct(a.amido)}) maior que o CNF (${pct(a.cnf)}): o amido é parte do CNF. Um dos dois está errado.` });
   }
 
-  // PB + FDN + EE + MM + CNF deveria fechar perto de 100% da MS.
+  // PB + FDN + EE + MM + CNF deveria fechar perto de 100%, ±6 da MS.
   if (CAMPOS_COMPOSICAO.filter((c) => c !== 'ndt' && c !== 'ca' && c !== 'p' && c !== 'amido').every((c) => a[c] != null) && !mineralOuAditivo) {
     const soma = (a.pb ?? 0) + (a.fdn ?? 0) + (a.ee ?? 0) + (a.mm ?? 0) + (a.cnf ?? 0);
-    if (soma < 0.95 || soma > 1.05) {
-      avisos.push({ nivel: 'aviso', texto: `PB + FDN + EE + MM + CNF somam ${pct(soma)} da MS (deveria fechar perto de 100%).` });
+    if (soma < 0.94 || soma > 1.06) {
+      avisos.push({ nivel: 'aviso', texto: `PB + FDN + EE + MM + CNF somam ${pct(soma)} da MS (deveria fechar em 100%, com folga de 6 pontos).` });
     }
   }
 

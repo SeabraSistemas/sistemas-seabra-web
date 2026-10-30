@@ -239,3 +239,12 @@ describe('comparador de insumos', () => {
     perto(soja.porKgMs ?? 0, 2.0 / 0.886);
   });
 });
+
+describe('aviso da planilha depois da edição', () => {
+  test('o aviso da fonte vira informação quando o produtor já editou o alimento', () => {
+    const editado = aplicarEdicoes({ alteracoes: { 'caroco-de-algodao': { amido: 0.088 } }, criados: [] }).find((a) => a.id === 'caroco-de-algodao')!;
+    const avisos = avisosDoAlimento(editado);
+    assert.equal(avisos.filter((a) => a.nivel === 'erro' || a.nivel === 'aviso').some((a) => /amido/i.test(a.texto)), false);
+    assert.ok(avisos.some((a) => a.nivel === 'info' && /já editou/.test(a.texto)));
+  });
+});

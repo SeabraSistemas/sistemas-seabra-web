@@ -6,7 +6,7 @@ import { NUTRIENTES_COMPARADOR, custoDoInsumo, maisBarato, type CustoInsumo, typ
 import type { Alimento } from '@/lib/nutricao/tipos';
 import { numero, reais } from '@/components/nutricao/formato';
 import type { EstadoComparador } from '@/components/nutricao/estado';
-import { Aviso, Info, NumeroInput, Rotulo, Secao, Selecao } from '@/components/nutricao/ui';
+import { Aviso, NumeroInput, Rotulo, Secao, Selecao } from '@/components/nutricao/ui';
 import { cn } from '@/lib/utils';
 
 const NOME_NUTRIENTE: Record<NutrienteComparador, string> = { pb: 'proteína bruta (PB)', ndt: 'NDT', ca: 'cálcio (Ca)', p: 'fósforo (P)' };
@@ -148,7 +148,7 @@ function Barras({ nome, a, b, nomeA, nomeB }: { nome: string; a: number | null; 
   );
   return (
     <div className="space-y-1">
-      <p className="text-sm font-medium capitalize-first">{nome}</p>
+      <p className="text-sm font-medium first-letter:uppercase">{nome}</p>
       {barra(a, nomeA, vence === 'a')}
       {barra(b, nomeB, vence === 'b')}
     </div>

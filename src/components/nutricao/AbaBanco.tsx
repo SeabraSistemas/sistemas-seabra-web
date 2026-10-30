@@ -212,7 +212,7 @@ function ItemBanco({
                   <NumeroInput
                     rotuloAria={`${c.rotulo} de ${a.nome}`}
                     valor={valor == null ? null : Number((valor * 100).toFixed(4))}
-                    aoMudar={(n) => aoEditar(c.chave, n == null ? null : n / 100)}
+                    aoMudar={(n) => aoEditar(c.chave, n == null ? null : Number((n / 100).toFixed(6)))}
                     sufixo={c.sufixo}
                     placeholder="sem dado"
                     casas={4}

@@ -255,7 +255,7 @@ function LadoALado({ ex }: { ex: TresExigencias }) {
       info: <p>Energia (kcal) e proteína (g) líquidas por kg de leite produzido. O AFRC 1998 usa 678 kcal e 29 g por kg.</p>,
       a: '—',
       b: '—',
-      c: rod?.energiaKcalPorKg != null ? `${numero(rod.energiaKcalPorKg, 0)} kcal · ${numero(rod.proteinaGPorKg, 1)} g` : '—',
+      c: rod?.energiaKcalPorKg != null ? `${numero(rod.energiaKcalPorKg, 0)} kcal ${numero(rod.proteinaGPorKg, 1)} g` : '—',
     },
   ];
 
@@ -273,20 +273,20 @@ function LadoALado({ ex }: { ex: TresExigencias }) {
       }
     >
       <div className="-mx-1 overflow-x-auto">
-        <table className="w-full min-w-[21rem] border-separate border-spacing-0 text-sm">
+        <table className="w-full table-fixed border-separate border-spacing-0 text-[13px]">
           <thead>
             <tr className="text-left text-xs text-muted-foreground">
-              <th className="px-1 pb-2 font-medium" />
+              <th className="w-[31%] px-1 pb-2 font-medium" />
               <th className="px-1 pb-2 text-right font-semibold text-foreground">
-                Formulador
+                Formul.
                 <div className="font-normal text-muted-foreground">{ex.categoria?.nome ?? '—'}</div>
               </th>
               <th className="px-1 pb-2 text-right font-semibold text-foreground">
-                NRC 2007
+                NRC
                 <div className="font-normal text-muted-foreground">{ex.serie ? `${ex.serie.nivel}` : '—'}</div>
               </th>
               <th className="px-1 pb-2 text-right font-semibold text-foreground">
-                Rodrigues
+                Rodrig.
                 <div className="font-normal text-muted-foreground">2006</div>
               </th>
             </tr>
@@ -296,13 +296,16 @@ function LadoALado({ ex }: { ex: TresExigencias }) {
               <tr key={l.rotulo} className={cn('border-t border-border', l.destaque && 'bg-secondary/60')}>
                 <th className="border-t border-border px-1 py-2 text-left align-top font-normal">
                   <span className="flex items-start gap-0.5">
-                    <span>{l.rotulo}</span>
+                    <span className="min-w-0">
+                      {l.rotulo.split(' (')[0]}
+                      {l.rotulo.includes(' (') && <span className="block text-xs text-muted-foreground">{l.rotulo.slice(l.rotulo.indexOf(' (') + 2, -1)}</span>}
+                    </span>
                     {l.info && <Info titulo={l.rotulo}>{l.info}</Info>}
                   </span>
                 </th>
                 <td className="border-t border-border px-1 py-2 text-right align-top tabular-nums">{l.a}</td>
                 <td className="border-t border-border px-1 py-2 text-right align-top tabular-nums">{l.b}</td>
-                <td className="border-t border-border px-1 py-2 text-right align-top tabular-nums">{l.c}</td>
+                <td className="border-t border-border px-1 py-2 text-right align-top tabular-nums break-words">{l.c}</td>
               </tr>
             ))}
           </tbody>

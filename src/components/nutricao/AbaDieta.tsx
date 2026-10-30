@@ -2,7 +2,7 @@
 
 import { ArrowDown, ArrowUp, Check, Plus, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { NOME_GRUPO, ORDEM_GRUPOS, avisosDoAlimento } from '@/lib/nutricao/alimentos';
+import { NOME_GRUPO, avisosDoAlimento } from '@/lib/nutricao/alimentos';
 import { compararComExigencia, type LinhaComparacao, type Status } from '@/lib/nutricao/comparacao';
 import { FAIXAS_CA_P, calcularDieta, formulaDoConcentrado, type BlocoDieta, type ResultadoDieta } from '@/lib/nutricao/dieta';
 import type { TresExigencias } from '@/lib/nutricao/exigencias';
@@ -17,7 +17,7 @@ import {
 } from '@/lib/nutricao/tipos';
 import { comSinal, numero, pct, reais } from '@/components/nutricao/formato';
 import { TOLERANCIAS, dietaExemplo, dietaVazia, type EstadoAnimal, type EstadoDieta, type ItemEstado, type PredefTolerancia, type Rascunho } from '@/components/nutricao/estado';
-import { Aviso, Botao, Info, NumeroInput, Opcoes, Rotulo, Secao, Selecao, Selo } from '@/components/nutricao/ui';
+import { Aviso, Botao, NumeroInput, Opcoes, Rotulo, Secao, Selecao, Selo } from '@/components/nutricao/ui';
 import { cn } from '@/lib/utils';
 
 type Props = {
@@ -49,7 +49,7 @@ function paraEntrada(d: EstadoDieta): EntradaDieta {
 }
 
 export function AbaDieta(p: Props) {
-  const { dieta, mudarDieta, banco, ex } = p;
+  const { dieta, mudarDieta, banco } = p;
   const resultado = useMemo(() => calcularDieta(paraEntrada(dieta), banco), [dieta, banco]);
   const nivelPorId = useMemo(() => {
     const m = new Map<string, 'erro' | 'aviso' | 'info'>();
@@ -270,9 +270,9 @@ function Balanco(p: Props & { resultado: ResultadoDieta }) {
   const { resultado, ex, tolerancia, mostrarQuantidade } = p;
   const tol = TOLERANCIAS[tolerancia].valor;
   const fontes: Fonte[] = [
-    { chave: 'formulador', titulo: 'Formulador', exig: ex.formulador },
-    { chave: 'nrc', titulo: 'NRC 2007', exig: ex.nrc },
-    { chave: 'rodrigues', titulo: 'Rodrigues', exig: ex.rodriguesExig },
+    { chave: 'formulador', titulo: 'Formul.', exig: ex.formulador },
+    { chave: 'nrc', titulo: 'NRC', exig: ex.nrc },
+    { chave: 'rodrigues', titulo: 'Rodrig.', exig: ex.rodriguesExig },
   ];
   const comparacoes = fontes.map((f) => (f.exig ? compararComExigencia(resultado, f.exig, tol) : null));
   const chaves: LinhaComparacao['chave'][] = ['cms', 'ndt', 'pb', 'ca', 'p'];
@@ -322,13 +322,18 @@ function Balanco(p: Props & { resultado: ResultadoDieta }) {
       </div>
 
       {sem ? (
-        <Aviso>Informe o peso e a categoria na aba Exigência.</Aviso>
+        <div className="space-y-2">
+          <Aviso>Falta o peso ou a categoria para ter uma exigência.</Aviso>
+          <Botao className="w-full" onClick={p.irParaExigencia}>
+            Abrir a aba Exigência
+          </Botao>
+        </div>
       ) : (
         <div className="-mx-1 overflow-x-auto">
-          <table className="w-full min-w-[21rem] border-separate border-spacing-0 text-sm">
+          <table className="w-full table-fixed border-separate border-spacing-0 text-[13px]">
             <thead>
               <tr className="text-xs text-muted-foreground">
-                <th className="px-1 pb-2" />
+                <th className="w-[22%] px-1 pb-2" />
                 <th className="px-1 pb-2 text-right font-semibold text-foreground">Dieta</th>
                 {fontes.map((f) => (
                   <th key={f.chave} className="px-1 pb-2 text-right font-semibold text-foreground">
@@ -344,7 +349,10 @@ function Balanco(p: Props & { resultado: ResultadoDieta }) {
                 const apresentar = apresentacao(chave, mostrarQuantidade);
                 return (
                   <tr key={chave}>
-                    <th className="border-t border-border px-1 py-2 text-left align-top font-medium">{apresentar.rotulo}</th>
+                    <th className="border-t border-border px-1 py-2 text-left align-top font-medium">
+                      {apresentar.rotulo.split(' (')[0]}
+                      {apresentar.rotulo.includes(' (') && <span className="block text-xs font-normal text-muted-foreground">{apresentar.rotulo.slice(apresentar.rotulo.indexOf(' (') + 2, -1)}</span>}
+                    </th>
                     <td className="border-t border-border px-1 py-2 text-right align-top font-semibold tabular-nums">{apresentar.dieta(base)}</td>
                     {fontes.map((f, i) => {
                       const l = comparacoes[i]?.find((x) => x.chave === chave);
