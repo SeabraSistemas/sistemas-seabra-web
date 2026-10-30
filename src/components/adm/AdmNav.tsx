@@ -41,6 +41,8 @@ const ITENS: ItemNav[] = [
   // O diretório do TENANT REAL do banco (93 tabelas carregam propriedade_id).
   { href: '/adm/propriedades', rotulo: 'Propriedades' },
   { href: '/adm/consultores', rotulo: 'Consultores', prefixos: ['/adm/c/'] },
+  // Análise INTERNA de melhoramento genético entre fazendas — só do Felipe.
+  { href: '/adm/melhoramento', rotulo: 'Melhoramento' },
 ];
 
 function ativo(pathname: string, item: ItemNav): boolean {

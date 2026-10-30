@@ -1109,6 +1109,10 @@ export const ABAS_CLIENTE: AbaCliente[] = [
   // comparação com a mediana do segmento é justamente o que dá valor comercial
   // à peça em PDF — ver a proposta de conteúdo do dossiê no §D4 do desenho.
   { slug: 'benchmark', rotulo: 'Benchmark', noDossie: true },
+  // Análise INTERNA de melhoramento genético. `noDossie: false` não é detalhe:
+  // o dossiê é peça comercial que vai para o cliente, e esta aba mostra modelos
+  // ainda não validados — nada dela pode sair do painel.
+  { slug: 'melhoramento', rotulo: 'Melhoramento', noDossie: false },
   { slug: 'tabelas', rotulo: 'Tabelas', noDossie: false },
 ];
 
@@ -1370,4 +1374,90 @@ export interface LinhaPagamentosCliente {
   meses_como_cliente: number | null;
   /** O que ele paga por mês hoje. 0 para quem saiu ou é cortesia. */
   mrr_atual: number | null;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MELHORAMENTO GENÉTICO (interno) — implementado em
+// supabase/melhoramento/melhoramento_02_views.sql
+//
+// Análise INTERNA do Felipe sobre os rebanhos dos clientes, para validar
+// modelos de melhoramento antes de qualquer coisa chegar ao app. Nada daqui
+// aparece para produtor: a aba é `noDossie: false` e o cálculo (src/lib/
+// melhoramento/*) roda no servidor do Next, sob demanda, sem gravar nada.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const VIEWS_MELHORAMENTO = {
+  lactacao: 'melhoramento_lactacao',
+  pedigree: 'melhoramento_pedigree',
+  fazenda: 'melhoramento_fazenda',
+  rodada: 'melhoramento_rodada',
+  resultado: 'melhoramento_resultado',
+  validacao: 'melhoramento_validacao',
+  diagnostico: 'melhoramento_diagnostico',
+} as const;
+
+export type ViewMelhoramento = (typeof VIEWS_MELHORAMENTO)[keyof typeof VIEWS_MELHORAMENTO];
+export const NOMES_VIEWS_MELHORAMENTO: ViewMelhoramento[] = Object.values(VIEWS_MELHORAMENTO);
+
+/** Uma lactação de cabra ou ovelha — `adm.melhoramento_lactacao`. */
+export interface LinhaMelhoramentoLactacao {
+  propriedade_id: number;
+  /** 'caprino' | 'ovino' */
+  especie: string;
+  lactacao_id: number;
+  animal_id: number;
+  raca: string | null;
+  /** Posição entre as lactações REGISTRADAS do animal (sintéticas contadas à parte). */
+  ordem_lactacao: number;
+  lactacoes_do_animal: number;
+  /** rebanho.ordem_parto cru: a ordem ATUAL do animal. */
+  ordem_parto_cadastro: number | null;
+  /** 'YYYY-MM-DD' */
+  data_inicio: string;
+  ano_parto: number;
+  mes_parto: number;
+  /** 'verao' | 'outono' | 'inverno' | 'primavera' (hemisfério sul). */
+  estacao_parto: string;
+  /** Dezembro conta no verão do ano seguinte. */
+  ano_estacao: number;
+  idade_parto_dias: number | null;
+  data_encerramento: string | null;
+  encerrada: boolean;
+  duracao_dias: number | null;
+  dias_registrados: number | null;
+  total_leite: number | null;
+  media_leite: number | null;
+  metodo_inferencia: string | null;
+  confianca_inferencia: string | null;
+  sintetica: boolean;
+  pai_id: number | null;
+  mae_id: number | null;
+}
+
+/** Um animal de pequeno ruminante — `adm.melhoramento_pedigree`. */
+export interface LinhaMelhoramentoPedigree {
+  animal_id: number;
+  propriedade_id: number;
+  especie: string;
+  numero_animal: string | null;
+  nome_animal: string | null;
+  sexo: string | null;
+  data_de_nascimento: string | null;
+  pai_id: number | null;
+  mae_id: number | null;
+  raca: string | null;
+  status: string | null;
+}
+
+/** Uma (propriedade, espécie) com rebanho — `adm.melhoramento_fazenda`. */
+export interface LinhaMelhoramentoFazenda {
+  propriedade_id: number;
+  especie: string;
+  nome: string | null;
+  produtor_id: number | null;
+  teste: boolean;
+  animais: number;
+  lactacoes: number;
+  lactacoes_encerradas: number;
+  lactacoes_sinteticas: number;
 }
