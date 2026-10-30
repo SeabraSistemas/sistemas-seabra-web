@@ -1,6 +1,15 @@
 {
   "permissions": {
     "allow": [
+      "Bash",
+      "Edit",
+      "Write",
+      "WebSearch",
+      "mcp__Supabase_SeabraApp",
+      "mcp__Supabase",
+      "mcp__Google_Drive",
+      "mcp__claude-code-remote",
+      "Artifact",
       "Bash(npx eslint *)",
       "Bash(npm test *)",
       "Bash(git add *)",
