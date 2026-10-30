@@ -28,6 +28,13 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  --color-ok: var(--ok);
+  --color-ok-foreground: var(--ok-foreground);
+  --color-ok-soft: var(--ok-soft);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --color-bad: var(--bad);
+  --color-bad-soft: var(--bad-soft);
   --color-wa: var(--wa);
   --color-wa-hover: var(--wa-hover);
   --color-wa-ink: var(--wa-ink);
@@ -102,6 +109,52 @@
   --wa: #25d366;
   --wa-hover: #20bd5a;
   --wa-ink: #ffffff;
+
+  /* Estados de leitura (verde = dentro, âmbar = sobra/atenção, vermelho = falta/erro).
+     Só o /nutricao os usa hoje; no escuro ficam como fallback. */
+  --ok: #4ade80;
+  --ok-foreground: #000000;
+  --ok-soft: #12261a;
+  --warn: #fbbf24;
+  --warn-soft: #2a2108;
+  --bad: #f87171;
+  --bad-soft: #2b1313;
+}
+
+/* Tema de campo do /nutricao: claro e de alto contraste, para ler no sol. O
+   laboratório é usado em pé, no curral, com o celular debaixo de céu aberto —
+   fundo escuro some. Vai na <body> (não num wrapper) porque o popover do "i"
+   é renderizado num portal fora do wrapper. A opção escolhida é sempre
+   verde-escuro com texto branco (5,0:1). */
+.tema-campo {
+  color-scheme: light;
+  --background: #fbfaf6;
+  --foreground: #16140f;
+  --card: #ffffff;
+  --card-foreground: #16140f;
+  --popover: #ffffff;
+  --popover-foreground: #16140f;
+  --primary: #15803d;
+  --primary-foreground: #ffffff;
+  --secondary: #efece3;
+  --secondary-foreground: #16140f;
+  --muted: #f3f0e8;
+  --muted-foreground: #57534a;
+  --accent: #efece3;
+  --accent-foreground: #16140f;
+  --destructive: #b42318;
+  --destructive-foreground: #ffffff;
+  --border: #d8d3c4;
+  --input: #8c8675;
+  --ring: #15803d;
+
+  --ok: #15803d;
+  --ok-foreground: #ffffff;
+  --ok-soft: #e3f4e7;
+  --warn: #92400e;
+  --warn-soft: #fdf1d6;
+  --bad: #b42318;
+  --bad-soft: #fde7e4;
 }
 
 @layer base {
