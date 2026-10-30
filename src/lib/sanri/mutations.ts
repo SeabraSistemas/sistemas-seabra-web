@@ -46,7 +46,7 @@ function textoPlanilha(s: string): string {
 }
 
 /**
- * Aba que o PAINEL inventou (dieta_baia, estacao_monta): cria a aba no 1º
+ * Aba que o PAINEL inventou (dieta_baia): cria a aba no 1º
  * salvamento e as colunas que faltarem no header, sempre no fim — quem
  * mexeu na aba à mão não perde a ordem dela. Devolve header + linhas atuais.
  * Nunca usar em aba do AppSheet.

@@ -13,23 +13,23 @@ export const ABA_BAIAS = 'Baias';
 export const ABA_BAIA_CATEGORIA = 'Baia_categoria';
 /** Criada pelo painel no 1º salvamento — não existe no AppSheet. */
 export const ABA_DIETA = 'dieta_baia';
-export const ABA_REBANHO = 'RebanhoProd';
-export const ABA_REPRODUCAO = 'Reproduçao';
-export const ABA_DIAGNOSTICO = 'DiagnosticoGestaçao';
-export const ABA_PARTOS = 'Partos';
-export const ABA_IA = 'IA';
-/** A "view" das estações de monta — criada pelo painel no 1º salvamento, o AppSheet não usa. */
-export const ABA_ESTACOES = 'estacao_monta';
-/** Resultado de cada conferência de baia — criada pelo painel no 1º salvamento, o AppSheet não usa. */
-export const ABA_CONFERENCIA = 'conferencia_baia';
 
 export const LINKS: NavLink[] = [
   // Régua e Saídas moram dentro de Produção (sub-abas); as rotas continuam as mesmas.
   { href: '/sanri/producao', label: 'Produção', tambem: ['/sanri/regua', '/sanri/saidas'] },
+  // Os mesmos avisos que o robô manda no grupo do WhatsApp às 6h (15/10/2026).
+  { href: '/sanri/avisos', label: 'Avisos' },
   { href: '/sanri/dieta', label: 'Dieta' },
-  { href: '/sanri/conferencia', label: 'Conferência' },
-  { href: '/sanri/reproducao', label: 'Reprodução' },
-  { href: '/sanri/lactacoes', label: 'Lactações' },
+  // Conferência, Reprodução e Lactações saíram em 15/10/2026: a equipe passou a
+  // lançar no app, e essas abas liam a planilha aposentada.
+  { href: '/sanri/nomes', label: 'Nomes' },
+  // CDN e CDC na planilha oficial, com quem já foi comunicado (16/10/2026).
+  // Abas separadas a pedido do produtor; /sanri/cdn-cdc (o 1º endereço) leva à CDN.
+  { href: '/sanri/cdn', label: 'CDN', tambem: ['/sanri/cdn-cdc'] },
+  { href: '/sanri/cdc', label: 'CDC' },
+  // RGN e RGD: em construção até chegarem os materiais (16/10/2026).
+  { href: '/sanri/rgn', label: 'RGN' },
+  { href: '/sanri/rgd', label: 'RGD' },
 ];
 
 /**

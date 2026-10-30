@@ -54,7 +54,7 @@ const directLinks = [
   { href: '/blog', labelKey: 'header.blog' },
 ] as const;
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://pr.sistemaseabra.com.br/';
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://app.sistemaseabra.com.br/';
 
 // APK hospedado no GitHub. Enquanto não houver link, o botão de download não
 // é renderizado: prometer "baixar" e entregar navegador frustra o visitante.

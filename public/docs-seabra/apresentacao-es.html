@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex,nofollow,noarchive">
     <meta name="googlebot" content="noindex,nofollow">
-    <title>Seabra Pequeños Rumiantes — Presentación del Sistema</title>
+    <title>Seabra — Presentación del Sistema</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500;6..72,600;6..72,700&family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -21,6 +21,7 @@
             --ocre: #c8813c;
             --ocre-ink: #ffffff;
             --ocre-text: #9f652d; /* ocre escurecido — 4,8:1 sobre branco, o --ocre original só dá 3,15:1 (insuficiente p/ texto normal) */
+            --ocre-on-dark: #f0c493; /* ocre claro para texto sobre a capa escura */
             --font-serif: 'Newsreader', Georgia, 'Times New Roman', serif;
             --font-sans: 'Archivo', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         }
@@ -43,11 +44,22 @@
             font-size: 90px; color: var(--ink); opacity: 0.025; font-weight: 700;
             pointer-events: none; z-index: -1; white-space: nowrap;
         }
+        body[data-seg="bovinos-corte"]::before { content: "Seabra Bovinos de Carne"; }
 
-        .lang-switcher { position: absolute; top: 20px; right: 30px; display: flex; gap: 6px; z-index: 10; }
+        .topbar { position: absolute; top: 20px; left: 30px; right: 30px; display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; z-index: 10; }
+        .lang-switcher { display: flex; gap: 6px; }
         .lang-switcher .lang-btn { display: inline-block; padding: 5px 12px; border-radius: 4px; font-size: 12px; font-weight: 600; text-decoration: none; color: white; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.35); letter-spacing: 0.5px; }
         .lang-switcher .lang-btn:hover { background: rgba(255,255,255,0.3); }
         .lang-switcher .lang-btn.active { background: var(--ocre-text); color: #ffffff; border-color: var(--ocre-text); }
+
+        /* ===== SELETOR DE SEGMENTO ===== */
+        .seg-switch { display: flex; padding: 4px; gap: 2px; border: 1px solid rgba(255,255,255,0.3); border-radius: 999px; background: rgba(255,255,255,0.08); max-width: 100%; }
+        .seg-switch button { font: inherit; font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.85); background: transparent; border: 0; border-radius: 999px; padding: 7px 16px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
+        .seg-switch button:hover { color: #fff; }
+        .seg-switch button[aria-selected="true"] { background: #fff; color: var(--ink); }
+        .seg-switch button:focus-visible { outline: 2px solid var(--ocre); outline-offset: 2px; }
+        .soon { display: inline-block; font-size: 9.5px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--ocre-on-dark); border: 1px solid currentColor; border-radius: 4px; padding: 1px 6px; line-height: 1.4; }
+        .seg-switch button[aria-selected="true"] .soon { color: var(--ocre-text); }
 
         .hero {
             min-height: 260mm; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;
@@ -114,6 +126,12 @@
         .objection .ans { font-size: 13px; color: var(--ink-soft); }
         .objection .ans strong { color: var(--ink); }
 
+        .news-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 20px 0; }
+        .news { border: 1px solid var(--line); border-top: 3px solid var(--ocre); border-radius: 8px; padding: 16px 18px; background: #fff; }
+        .news h4 { font-size: 15px; margin-bottom: 6px; }
+        .news p { font-size: 13px; color: var(--ink-soft); margin: 0; }
+        .plan-tag { display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; color: var(--ocre-text); border: 1px solid var(--line); border-radius: 4px; padding: 0 6px; margin-left: 4px; vertical-align: 2px; }
+
         .partnership { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-top: 20px; }
         .partnership-card { padding: 20px; border-radius: 8px; border: 1px solid var(--line); border-top: 4px solid var(--ocre); background: white; }
         .partnership-card .p-title { font-weight: 700; color: var(--ink); font-size: 16px; margin-bottom: 8px; }
@@ -132,24 +150,59 @@
         .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--line); text-align: center; color: var(--ink-faint); font-size: 12px; }
         .footer img { height: 35px; margin-bottom: 8px; opacity: 0.6; }
 
+        @media (max-width: 680px) {
+            body { padding: 0 16px 24px; }
+            body::before { font-size: 46px; }
+            .topbar { top: 14px; left: 16px; right: 16px; }
+            .seg-switch button { padding: 7px 11px; font-size: 12.5px; gap: 6px; }
+            .hero { margin: 0 -16px; min-height: 0; padding: 120px 20px 60px; }
+            .hero img.logo { height: 70px; margin-bottom: 22px; }
+            .hero .brand { font-size: 34px; }
+            .hero .sub-brand { margin-bottom: 32px; }
+            .hero .promise { font-size: 26px; }
+            .hero .tagline { font-size: 16px; margin-bottom: 28px; }
+            .pillars, .how-it-works, .segments-grid, .objections, .partnership, .news-grid { grid-template-columns: 1fr; }
+            .problem-section, .presenter-kit { padding: 20px 18px; }
+            .diff-block { padding: 18px; }
+            .cta-final { padding: 32px 18px; }
+            .cta-btn { width: 100%; }
+        }
+
+        @media (max-width: 420px) {
+            .seg-switch .soon { display: none; } /* o aviso "em breve" continua no topo do painel do BC */
+        }
+
         @media print {
             body { padding: 0 15mm 15mm 15mm; }
             .hero { margin: 0 -15mm; min-height: 270mm; }
             .page-break { page-break-before: always; }
-            .lang-switcher { display: none; }
-            section, .pillar, .diff-block, .profile-card, .segment-card, .partnership-card { page-break-inside: avoid; }
+            .topbar { display: none; }
+            section, .pillar, .diff-block, .profile-card, .segment-card, .partnership-card, .news { page-break-inside: avoid; }
             .hero, .cta-final { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         }
     </style>
 </head>
-<body>
+<body data-seg="pequenos-ruminantes">
 
-<div class="hero">
+<div class="topbar">
+    <div class="seg-switch" role="tablist" aria-label="Segmento">
+        <button type="button" role="tab" id="tab-pr" data-seg-tab="pequenos-ruminantes" aria-controls="painel-pr" aria-selected="true">Pequeños Rumiantes</button>
+        <button type="button" role="tab" id="tab-bc" data-seg-tab="bovinos-corte" aria-controls="painel-bc" aria-selected="false" tabindex="-1">Bovinos de Carne <span class="soon">próximamente</span></button>
+    </div>
     <div class="lang-switcher">
         <a href="/apresentacao" class="lang-btn">PT</a>
         <a href="/apresentacao-es" class="lang-btn active">ES</a>
         <a href="/apresentacao-en" class="lang-btn">EN</a>
     </div>
+</div>
+
+<!-- ================================================================== -->
+<!-- PEQUEÑOS RUMIANTES                                                 -->
+<!-- ================================================================== -->
+<div id="painel-pr" role="tabpanel" aria-labelledby="tab-pr" data-seg-panel="pequenos-ruminantes">
+
+<!-- HERO -->
+<div class="hero">
     <img src="/docs-seabra/Logo_png.png" alt="Seabra" class="logo">
     <div class="brand">Seabra</div>
     <div class="sub-brand">Pequeños Rumiantes</div>
@@ -158,6 +211,7 @@
     <div class="badge-audience">Para asociaciones, productores independientes e instituciones</div>
 </div>
 
+<!-- PROBLEMA -->
 <section class="problem-section">
     <h2>El problema que enfrenta su operación hoy</h2>
     <ul>
@@ -169,40 +223,42 @@
     </ul>
 </section>
 
+<!-- 4 PILARES -->
 <section>
     <h2>La solución en 4 pilares</h2>
     <p>Seabra Pequeños Rumiantes organiza todo lo que su operación necesita en cuatro frentes integrados:</p>
     <div class="pillars">
-        <div class="pillar p-op">
+        <div class="pillar">
             <div class="p-label">01 · OPERACIÓN</div>
             <h3>Rutina del establecimiento</h3>
-            <p>Rebaño, eventos (nacimiento, venta, muerte, aborto, descarte), producción diaria, control lechero, lactancias, colaboradores ilimitados con permisos, notificaciones en la app y vía WhatsApp, finanzas.</p>
+            <p>Rebaño, eventos (nacimiento, destete, venta, muerte, aborto, descarte), estación de monta, producción diaria, control lechero, lactancias, colaboradores con permisos, notificaciones y finanzas.</p>
         </div>
-        <div class="pillar p-tec">
+        <div class="pillar">
             <div class="p-label">02 · TÉCNICA</div>
             <h3>Trabajo del técnico en campo</h3>
-            <p>EML lechera (16 características) y EML de carne (13 características), medidas corporales, diagnóstico gestacional, CMT, FAMACHA, condición corporal — todo funcionando offline.</p>
+            <p>EML lechera (16 características) y EML de carne (13 características), medidas corporales, CMT, FAMACHA, condición corporal — todo funcionando offline. Y ahora la EML por foto, evaluada por el equipo Seabra.</p>
         </div>
-        <div class="pillar p-dec">
+        <div class="pillar">
             <div class="p-label">03 · DECISIÓN</div>
             <h3>Datos que generan acción</h3>
-            <p>Dashboards adaptativos por segmento, indicadores cruzados (reproducción × producción × genética), Asistente IA y exportación CSV de todos los tipos de datos.</p>
+            <p>Dashboards adaptativos por segmento, indicadores cruzados (reproducción × producción × genética), costo por kg producido, pedido de insumos, Asistente IA y exportación en PDF, Excel y CSV.</p>
         </div>
-        <div class="pillar p-gob">
+        <div class="pillar">
             <div class="p-label">04 · GOBERNANZA</div>
             <h3>Gestión de la asociación</h3>
-            <p>Multi-tenant con aislamiento de datos, panel de admin, gestión de técnicos y productores, capacitaciones integradas, pagos.</p>
+            <p>Datos aislados por asociación, panel de admin, gestión de técnicos y productores, análisis agregados y descuento automático para los asociados.</p>
         </div>
     </div>
 </section>
 
+<!-- CÓMO FUNCIONA -->
 <section>
     <h2>Cómo funciona</h2>
     <div class="how-it-works">
         <div class="step">
             <div class="step-num">1</div>
             <h4>Registra</h4>
-            <p>Productor y técnico cargan eventos en la app, en el campo, con o sin internet.</p>
+            <p>Productor y técnico cargan eventos en la app, en el campo, con o sin internet — incluso por voz.</p>
         </div>
         <div class="step">
             <div class="step-num">2</div>
@@ -219,49 +275,94 @@
 
 <div class="page-break"></div>
 
+<!-- NOVEDADES -->
+<section>
+    <h2>Lo nuevo en la app</h2>
+    <p>Desde la última versión de este material, SeabraApp sumó:</p>
+    <div class="news-grid">
+        <div class="news">
+            <h4>EML por foto <span class="plan-tag">Pro</span></h4>
+            <p>Usted fotografía el animal con la cámara guiada (silueta de la pose y nivel en pantalla) y el equipo Seabra lo evalúa. La EML vuelve a la ficha con el sello "Evaluación por foto", que también aparece en la vitrina.</p>
+        </div>
+        <div class="news">
+            <h4>Estación de monta</h4>
+            <p>Lote de hembras, reproductor y período, con un color por semana: el servicio se registra con un toque. En el parto, la app sugiere el padre por la fecha del servicio y avisa cuando hay dos posibles.</p>
+        </div>
+        <div class="news">
+            <h4>Transferencia de animal</h4>
+            <p>¿Vendió un animal a otro productor? Genere un código de 8 caracteres y envíelo por WhatsApp o e-mail. Quien lo recibe ingresa el código y el animal aparece en su app; su ficha conserva el historial.</p>
+        </div>
+        <div class="news">
+            <h4>Destete e historial de ubicación</h4>
+            <p>El destete pasó a ser un manejo, con cambio de categoría automático. Y ahora se puede ver adónde fue cada animal y cuándo se revisó cada corral.</p>
+        </div>
+        <div class="news">
+            <h4>Pedido de insumos y costo por kg <span class="plan-tag">Pro</span></h4>
+            <p>Cuánto comprar de cada insumo, en kg y en bolsas, para 7 días a 1 año. En carne, cuánto cuesta producir cada kg vivo, fase por fase, con metas y ranking de reproductores.</p>
+        </div>
+        <div class="news">
+            <h4>PDF, Excel y planilla en la computadora</h4>
+            <p>Todo listado exporta en PDF, Excel o CSV. En la computadora, el rebaño se vuelve una planilla con las columnas que usted elija, y las pantallas se dividen en lista y ficha lado a lado.</p>
+        </div>
+        <div class="news">
+            <h4>Comunicación de nacimientos a la ABCC</h4>
+            <p>Para criadores de caprinos en Brasil: la app genera el Excel listo para pegar en el documento de la ABCC y marca quién ya fue comunicado.</p>
+        </div>
+        <div class="news">
+            <h4>Informe del control lechero</h4>
+            <p>Histograma de la producción, producción por corral y los 15 mejores y 15 peores animales de cada control.</p>
+        </div>
+    </div>
+</section>
+
+<div class="page-break"></div>
+
+<!-- SEGMENTOS -->
 <section>
     <h2>Segmentos atendidos</h2>
-    <p>El sistema se adapta al perfil productivo. Las pantallas, indicadores y flujos cambian según el segmento — cada productor ve solo lo relevante para su realidad.</p>
+    <p>El sistema se adapta al perfil productivo. Pantallas, indicadores y flujos cambian según el segmento — cada productor ve solo lo que es relevante para su realidad.</p>
     <div class="segments-grid">
-        <div class="segment-card sc-lec-cap">
+        <div class="segment-card">
             <h4>Caprinos Lecheros</h4>
             <ul>
-                <li>Control lechero (dos ordeños)</li>
+                <li>Control lechero (dos ordeños) con informe</li>
                 <li>Lactancias y secado</li>
                 <li>Análisis: CCS, CBT, grasa, proteína, lactosa</li>
                 <li>CMT (California Mastitis Test)</li>
-                <li>EML lechera y Diagnóstico Gestacional</li>
+                <li>EML lechera, también por foto</li>
+                <li>Comunicación de nacimientos a la ABCC</li>
             </ul>
         </div>
-        <div class="segment-card sc-lec-ovi">
+        <div class="segment-card">
             <h4>Ovinos Lecheros</h4>
             <ul>
                 <li>Control lechero adaptado a la especie</li>
-                <li>Lactancias y composición de leche</li>
+                <li>Lactancias y composición de la leche</li>
                 <li>Indicadores reproductivos y productivos</li>
-                <li>EML y DG con protocolo ovino</li>
-                <li>Razas ovinas pre-cargadas</li>
+                <li>EML con protocolo ovino</li>
+                <li>Razas ovinas precargadas</li>
             </ul>
         </div>
-        <div class="segment-card sc-car-cap">
+        <div class="segment-card">
             <h4>Caprinos de Carne</h4>
             <ul>
                 <li>Pesajes y ganancia media diaria (GMD)</li>
                 <li>Medidas corporales (perímetro torácico, circunferencia escrotal)</li>
-                <li><strong>EML de Carne</strong> dedicada (13 características en 4 grupos)</li>
-                <li><strong>IMR</strong> (Índice de Mérito del Reproductor) y <strong>KCD</strong> (Kilos de Cría Destetada)</li>
-                <li>Genealogía y seguimiento de progenie</li>
-                <li>Control de lotes y sectores</li>
+                <li><strong>EML de Carne</strong> dedicada (13 características en 5 grupos)</li>
+                <li><strong>IMR</strong> (Índice de Mérito del Reproductor) y <strong>KCDM</strong> (Kilos de Cordero Destetado)</li>
+                <li>Costo por kg producido, metas y ranking de reproductores</li>
+                <li>Genealogía y progenie con seguimiento de hijos</li>
             </ul>
         </div>
-        <div class="segment-card sc-car-ovi">
+        <div class="segment-card">
             <h4>Ovinos de Carne</h4>
             <ul>
                 <li>Desempeño ponderal por animal y lote (GMD)</li>
-                <li>Medidas corporales y escores</li>
-                <li><strong>EML de Carne</strong> ovina (13 características)</li>
-                <li><strong>IMR</strong> y <strong>KCD</strong> para selección de reproductores</li>
-                <li>Manejo reproductivo, recría y trazabilidad hasta faena</li>
+                <li>Medidas corporales y condición</li>
+                <li><strong>EML de Carne</strong> ovina (13 características en 5 grupos)</li>
+                <li><strong>IMR</strong> y <strong>KCDM</strong> para selección de reproductores</li>
+                <li>Costo por kg producido y metas reproductivas</li>
+                <li>Manejo reproductivo, recría y trazabilidad hasta la faena</li>
             </ul>
         </div>
     </div>
@@ -269,6 +370,7 @@
 
 <div class="page-break"></div>
 
+<!-- PERFILES -->
 <section>
     <h2>Funcionalidades por perfil de usuario</h2>
 
@@ -276,17 +378,19 @@
         <h3>Productor</h3>
         <div class="identity">Registra lo que pasa en el establecimiento sin complicar la rutina diaria.</div>
         <ul>
-            <li><strong>Rebaño:</strong> registro, edición, listado con filtros y perfil individual detallado por animal.</li>
-            <li><strong>Eventos:</strong> nacimientos, reproducción, abortos, muertes, ventas, descartes, secado, pesaje, clínica y manejo.</li>
-            <li><strong>Producción:</strong> producción diaria, control lechero, salida de leche, stock (tanque/enfriador).</li>
+            <li><strong>Rebaño:</strong> registro, edición, listado con filtros, perfil individual detallado por animal y, en la computadora, el rebaño en planilla.</li>
+            <li><strong>Eventos:</strong> nacimientos (con mortinatos), destete, reproducción y estación de monta, abortos, muertes, ventas, descartes, secado, pesaje, clínica y manejo.</li>
+            <li><strong>Producción:</strong> producción diaria, control lechero con informe y salida de leche.</li>
             <li><strong>Lactancias:</strong> historial completo y detalles de lactancias cerradas.</li>
             <li><strong>Análisis de leche:</strong> composición, CCS, CBT, grasa y proteína.</li>
             <li><strong>Dashboard:</strong> gráficos de producción, composición del rebaño e indicadores reproductivos.</li>
             <li><strong>Solicitudes técnicas:</strong> apertura y seguimiento de visitas de los técnicos.</li>
-            <li><strong>Colaboradores ilimitados con permisos granulares:</strong> registre cuantos colaboradores necesite y defina qué puede ver y usar cada uno.</li>
-            <li><strong>Notificaciones en la app + WhatsApp:</strong> partos, DG, destetes, análisis, visitas y manejos avisados automáticamente en el celular.</li>
-            <li><strong>Finanzas:</strong> gastos por categoría, sector y período.</li>
-            <li><strong>Exportación CSV</strong> de los datos del establecimiento en cualquier momento.</li>
+            <li><strong>Transferencia de animal:</strong> pasa el animal a otro productor con un código, sin exponer ninguna lista de usuarios.</li>
+            <li><strong>Colaboradores con permisos:</strong> hasta 2 en el Intermedio e ilimitados en el Pro, cada uno viendo y usando solo lo que el productor habilite.</li>
+            <li><strong>Notificaciones:</strong> partos, DG, destetes, análisis, visitas y manejos avisados en la app — y, en el Pro, también por WhatsApp.</li>
+            <li><strong>Finanzas y nutrición (Pro):</strong> gastos e ingresos, costo por litro, costo por kg producido y pedido de insumos.</li>
+            <li><strong>EML por foto (Pro):</strong> fotografía el animal y recibe la evaluación del equipo Seabra en la ficha.</li>
+            <li><strong>Exportación</strong> en PDF, Excel y CSV, desde cada pantalla de listado.</li>
         </ul>
     </div>
 
@@ -294,12 +398,11 @@
         <h3>Técnico</h3>
         <div class="identity">Registra evaluaciones y servicios en el campo, muchas veces sin señal.</div>
         <ul>
-            <li><strong>Evaluación Morfológica Lineal (EML):</strong> dos módulos dedicados — <strong>EML Lechera</strong> (16 características, foco en ubre, pezones y conformación lechera) y <strong>EML de Carne</strong> (13 características en 4 grupos: estructura corporal, estructura de carne, miembros anteriores y posteriores). Formularios diferenciados para machos y hembras, puntuación total e historial editable.</li>
+            <li><strong>Evaluación Morfológica Lineal (EML):</strong> dos módulos dedicados — <strong>EML Lechera</strong> (16 características, foco en ubre, pezones y conformación lechera) y <strong>EML de Carne</strong> (13 características en 5 grupos: estructura corporal y conformación, grupa y movilidad, carne y musculatura, miembros anteriores y miembros posteriores). Formularios diferenciados para machos y hembras, puntuación total, historial editable y clasificación en el PDF.</li>
             <li><strong>Medidas corporales:</strong> perímetro torácico, circunferencia escrotal y medidas objetivas.</li>
-            <li><strong>Diagnóstico Gestacional (DG):</strong> registros con días gestacionales e identificación de patologías reproductivas.</li>
             <li><strong>Gestión de visitas:</strong> agenda, establecimientos atendidos, panel de actividades.</li>
             <li><strong>Solicitudes:</strong> recepción, aprobación y rechazo de las solicitudes de los productores.</li>
-            <li><strong>Modo offline completo:</strong> todo funciona sin señal y sincroniza después.</li>
+            <li><strong>Modo offline completo:</strong> EML, medidas y visitas se graban y editan sin señal y se sincronizan después.</li>
         </ul>
     </div>
 
@@ -308,49 +411,50 @@
         <div class="identity">Ve el rebaño agregado de la asociación y administra técnicos y productores.</div>
         <ul>
             <li><strong>Gestión de usuarios:</strong> registro y edición de técnicos y productores vinculados a la asociación.</li>
-            <li><strong>Establecimientos:</strong> visualización y monitoreo del uso de cada establecimiento asociado.</li>
+            <li><strong>Establecimientos:</strong> visualización y monitoreo de uso de cada establecimiento asociado.</li>
             <li><strong>Análisis gerenciales:</strong> métricas globales, distribución por sexo, por establecimiento, producción agregada.</li>
             <li><strong>Historiales:</strong> filtros avanzados de registros, movimientos y eventos reproductivos por categoría.</li>
-            <li><strong>Exportación centralizada:</strong> panel dedicado con filtros por fecha, agregación por productor, 12 tipos de datos.</li>
-            <li><strong>Pagos:</strong> suscripciones, historial, morosidad.</li>
+            <li><strong>Exportación centralizada:</strong> panel dedicado con filtros por fecha y agregación por productor.</li>
+            <li><strong>Descuento para los asociados:</strong> 20% en el plan de cada asociado, 33% cuando la asociación supera los 30 suscriptores — automático, sin enlace ni código.</li>
         </ul>
     </div>
 </section>
 
 <div class="page-break"></div>
 
+<!-- DIFERENCIALES -->
 <section>
     <h2>Diferenciales técnicos</h2>
 
-    <div class="diff-block green">
+    <div class="diff-block">
         <div class="diff-label">01 · Modo Offline First</div>
         <h3>Trabajo de campo sin depender de señal</h3>
-        <p>Almacenamiento local en cada dispositivo con sincronización automática y resolución de conflictos cuando la conexión vuelve. El técnico va al establecimiento más remoto y registra EML, medidas y DG con el mismo flujo de siempre.</p>
+        <p>Almacenamiento local en cada dispositivo con sincronización automática y resolución de conflictos cuando la conexión vuelve. El técnico va al establecimiento más remoto y registra EML, medidas y visitas con el mismo flujo de siempre.</p>
     </div>
 
-    <div class="diff-block purple">
+    <div class="diff-block">
         <div class="diff-label">02 · Asistente de IA</div>
         <h3>Un asistente dentro de la app, siempre a mano</h3>
-        <p>Responde en lenguaje natural a preguntas sobre su rebaño, basándose en los datos reales del establecimiento — producción, reproducción, calidad de leche, sanidad, desempeño, genética y mucho más. Cuantos más datos registra, más valiosas son las respuestas.</p>
+        <p>En el Pro, responde en lenguaje natural a preguntas sobre su rebaño, basándose en los datos reales del establecimiento — producción, reproducción, calidad de leche, sanidad, desempeño, genética y mucho más — y también <strong>registra datos conversando</strong>, en la app y en WhatsApp. En el Intermedio, el asistente responde sobre zootecnia y reglamentos ABCC, con soporte humano en WhatsApp.</p>
         <p style="margin-top:14px;"><strong>Detecta preguntas científicas</strong> (PT/ES) y busca literatura académica automáticamente. <strong>Conoce el manual de la app</strong> y responde dudas operativas adaptadas al perfil del usuario (productor, técnico, admin, colaborador).</p>
     </div>
 
     <div class="diff-block">
-        <div class="diff-label">03 · Exportación de datos en CSV</div>
+        <div class="diff-label">03 · Exportación en PDF, Excel y CSV</div>
         <h3>Sus datos disponibles para cualquier análisis externo</h3>
-        <p>El productor exporta datos propios desde cada pantalla de listado. El admin de asociación tiene un panel centralizado con filtros por fecha y agregación por productor. Exporta <strong>12 tipos de datos</strong>: control lechero, manejo, pesaje, secado, nacimiento, venta, muerte, aborto, descarte, clínica, salida de leche, producción diaria. Archivo CSV UTF-8 listo para Excel, investigación científica o ERP.</p>
+        <p>Cada pantalla de listado tiene el botón para exportar en <strong>PDF, Excel o CSV</strong> — control lechero, manejo, pesaje, secado, nacimiento, venta, muerte, aborto, descarte, clínica, salida de leche, producción diaria y más. En la computadora, el rebaño se vuelve una <strong>planilla</strong> con las columnas que usted elija. El admin de asociación tiene un panel centralizado con filtros por fecha y agregación por productor. Listo para Excel, investigación científica o ERP.</p>
     </div>
 
-    <div class="diff-block amber">
+    <div class="diff-block">
         <div class="diff-label">04 · Configuración por establecimiento</div>
         <h3>El sistema se ajusta a su realidad productiva</h3>
-        <p>Cada establecimiento configura sus propios parámetros: peso y edad ideales de destete, peso y edad para entrada en reproducción, días para diagnóstico gestacional, peso estándar al nacimiento, auto-categorización. Para asociaciones e instituciones con necesidades específicas, ofrecemos <strong>desarrollo a medida</strong> (ver modelos comerciales más adelante).</p>
+        <p>Cada establecimiento configura sus propios parámetros: peso y edad ideales de destete, peso y edad para entrada en reproducción, días para diagnóstico gestacional, peso estándar al nacimiento, auto-categorización y las razas del registro. Para asociaciones e instituciones con necesidades específicas, ofrecemos <strong>desarrollo a medida</strong> (ver modelos comerciales más adelante).</p>
     </div>
 
     <div class="diff-block">
         <div class="diff-label">05 · Notificaciones inteligentes + WhatsApp</div>
         <h3>El sistema avisa antes de que tenga que recordar</h3>
-        <p>Central de notificaciones en la propia app que alerta sobre eventos importantes de la rutina: <strong>partos previstos, diagnósticos gestacionales venciendo, destetes próximos, resultados de análisis de leche, solicitudes de visita técnica, vacunaciones y manejos pendientes</strong>. Con un clic, las mismas notificaciones se envían directamente al <strong>WhatsApp</strong> del productor, técnico o colaborador — sin depender de push, email o de que el usuario abra la aplicación.</p>
+        <p>Central de notificaciones en la propia app que alerta sobre eventos importantes de la rutina: <strong>partos previstos, diagnósticos gestacionales venciendo, destetes próximos, resultados de análisis de leche, solicitudes de visita técnica, vacunaciones y manejos pendientes</strong>. En el plan Pro, las mismas notificaciones llegan directo al <strong>WhatsApp</strong> del productor, técnico o colaborador — sin depender de push, e-mail o de que el usuario abra la aplicación.</p>
         <span class="diff-chip">Partos y DG</span>
         <span class="diff-chip">Destete y pesajes</span>
         <span class="diff-chip">Análisis de leche</span>
@@ -358,21 +462,22 @@
         <span class="diff-chip">Manejos y vacunas</span>
     </div>
 
-    <div class="diff-block amber">
-        <div class="diff-label">06 · Colaboradores ilimitados con permisos</div>
+    <div class="diff-block">
+        <div class="diff-label">06 · Colaboradores con permisos</div>
         <h3>Todo el equipo del establecimiento usando el sistema</h3>
-        <p>Registre <strong>cuantos colaboradores quiera</strong> — tamberos, ordeñadores, administrativos, capataz — sin costo adicional por usuario. Para cada colaborador, el productor define <strong>exactamente qué puede ver y qué puede usar</strong>: acceso solo a carga de ordeño, solo a manejo clínico, solo a eventos reproductivos, o combinaciones. Cada persona hace su parte sin exponer datos sensibles ni entorpecer el flujo de otros.</p>
+        <p>Registre a sus colaboradores — tamberos, ordeñadores, administrativos, capataz — <strong>hasta 2 en el Intermedio y cuantos quiera en el Pro</strong>, sin costo adicional por usuario. Para cada colaborador, el productor define <strong>exactamente qué puede ver y qué puede usar</strong>: acceso solo a carga de ordeño, solo a manejo clínico, solo a eventos reproductivos, o combinaciones. Cada persona hace su parte sin exponer datos sensibles ni entorpecer el flujo de otros.</p>
     </div>
 
-    <div class="diff-block green">
-        <div class="diff-label">07 · Multi-tenant y Multi-plataforma</div>
+    <div class="diff-block">
+        <div class="diff-label">07 · Multi-asociación y multi-plataforma</div>
         <h3>Una plataforma, varias asociaciones, todos los dispositivos</h3>
-        <p>Cada asociación tiene sus datos aislados y su propio admin. La misma infraestructura atiende varias organizaciones con separación total. Disponible en Android, iOS y Web, con la misma base de datos.</p>
+        <p>Cada asociación tiene sus datos aislados y su propio admin. La misma infraestructura atiende varias organizaciones con separación total. Disponible en Android y en la Web — en iPhone y en la computadora, desde el navegador —, con la misma base de datos. En la computadora, las pantallas se dividen en lista y ficha lado a lado.</p>
     </div>
 </section>
 
 <div class="page-break"></div>
 
+<!-- KIT PRESENTADOR -->
 <section class="presenter-kit">
     <h2>Para quien presenta Seabra</h2>
     <p>Si usted es consultor, técnico de asociación o socio que va a presentar el sistema a una asociación o grupo de productores, este es su kit de argumentación.</p>
@@ -380,8 +485,8 @@
     <h3 style="color:var(--ink);">Los 4 pilares en una línea cada uno</h3>
     <ul>
         <li><strong>Operación:</strong> toda la rutina del productor en una sola app.</li>
-        <li><strong>Técnica:</strong> EML, DG, medidas y CMT en el campo, offline.</li>
-        <li><strong>Decisión:</strong> dashboards, IA y exportación de datos.</li>
+        <li><strong>Técnica:</strong> EML (también por foto), medidas y CMT en el campo, offline.</li>
+        <li><strong>Decisión:</strong> dashboards, costos, IA y exportación de datos.</li>
         <li><strong>Gobernanza:</strong> la asociación ve y gestiona el rebaño asociado.</li>
     </ul>
 
@@ -396,7 +501,7 @@
     <div class="objections">
         <div class="objection">
             <div class="obj">Ya uso planilla, me alcanza.</div>
-            <div class="ans"><strong>Respuesta:</strong> la planilla no avisa cuando un parto está próximo, no funciona offline en el corral y no genera indicadores cruzados. Seabra sí.</div>
+            <div class="ans"><strong>Respuesta:</strong> la planilla no avisa cuando un parto está próximo, no funciona offline en el campo y no genera indicadores cruzados. Seabra sí — y además exporta a Excel cuando usted quiera.</div>
         </div>
         <div class="objection">
             <div class="obj">Mi asociación no tiene área de TI.</div>
@@ -404,7 +509,7 @@
         </div>
         <div class="objection">
             <div class="obj">El técnico no va a usar celular.</div>
-            <div class="ans"><strong>Respuesta:</strong> la app fue diseñada para quien usa botas y trabaja con animales. Interfaz simple, toques grandes, offline. Capacitación presencial disponible.</div>
+            <div class="ans"><strong>Respuesta:</strong> la app fue diseñada para quien usa botas y trabaja con animales. Interfaz simple, toques grandes, dictado por voz, offline. Capacitación presencial disponible.</div>
         </div>
     </div>
 
@@ -413,33 +518,35 @@
     <ul>
         <li>Reventa de licencias a los productores asociados con margen.</li>
         <li>Monetización de los datos agregados del rebaño (investigación, genética, lácteas).</li>
-        <li>Prestación de servicios técnicos de mayor valor (EML, DG, consultoría) con registro profesional.</li>
+        <li>Prestación de servicios técnicos de mayor valor (EML, consultoría) con registro profesional.</li>
     </ul>
 </section>
 
+<!-- MODELOS COMERCIALES -->
 <section>
     <h2>Modelos comerciales</h2>
     <p>Seabra atiende desde el productor individual hasta instituciones, en modelos elegidos según el perfil y el objetivo del cliente:</p>
     <div class="partnership">
-        <div class="partnership-card saas">
+        <div class="partnership-card">
             <div class="p-title">Suscripción (SaaS)</div>
-            <div class="p-body">Tres planes para el productor — <strong>Iniciante, Intermediario y Pro</strong> — en ciclo mensual o anual. Las asociaciones afilian a sus productores con descuento por asociado y obtienen su propio panel administrativo. Acceso inmediato, sin inversión inicial.</div>
+            <div class="p-body">Tres planes para el productor — <strong>Inicial, Intermedio y Pro</strong> — en ciclo mensual o anual. Los asociados tienen descuento automático y la asociación obtiene su propio panel administrativo. Acceso inmediato, sin inversión inicial.</div>
         </div>
-        <div class="partnership-card licencia">
+        <div class="partnership-card">
             <div class="p-title">Licencia Completa</div>
             <div class="p-body">Adquisición del sistema con código fuente. Para asociaciones o instituciones que quieren operar como <strong>fuente de ingresos</strong>: reventa a productores, recolección de datos, investigación, white-label.</div>
         </div>
-        <div class="partnership-card custom">
+        <div class="partnership-card">
             <div class="p-title">Desarrollo a Medida</div>
             <div class="p-body">Adaptaciones pagas para grupos con realidad específica: nuevos campos, reportes a medida, integraciones (ERP, laboratorios), dashboards dedicados, white-label.</div>
         </div>
     </div>
-    <p style="margin-top: 20px; font-size: 13px; color: #64748b; text-align: center;">Valores, comparativo de funcionalidades y descuentos en el documento <strong>Planes y Valores</strong>.</p>
+    <p style="margin-top: 20px; font-size: 13px; color: var(--ink-soft); text-align: center;">Valores, comparativo de funcionalidades y descuentos en el documento <strong>Planes y Valores</strong>.</p>
 </section>
 
 <div class="page-break"></div>
 
-<section class="training-list green">
+<!-- CAPACITACIONES -->
+<section class="training-list">
     <h2>Capacitaciones disponibles</h2>
     <p>La implementación de Seabra se acompaña de un programa de capacitaciones técnicas. Conocimiento zootécnico y operación del sistema caminan juntos.</p>
 
@@ -451,7 +558,7 @@
         <li>Primeros auxilios y buenas prácticas con neonatos</li>
     </ul>
 
-    <div class="training-list blue">
+    <div class="training-list">
         <h3>Diagnóstico Gestacional Transrectal</h3>
         <ul>
             <li>Diagnóstico a partir de 30 días de gestación</li>
@@ -459,7 +566,7 @@
         </ul>
     </div>
 
-    <div class="training-list purple">
+    <div class="training-list">
         <h3>Reproducción</h3>
         <ul>
             <li>Inseminación artificial transcervical</li>
@@ -469,7 +576,7 @@
         </ul>
     </div>
 
-    <div class="training-list amber">
+    <div class="training-list">
         <h3>Uso del Sistema</h3>
         <ul>
             <li>Operación completa de la app por parte de los productores</li>
@@ -479,7 +586,7 @@
         </ul>
     </div>
 
-    <div class="training-list green">
+    <div class="training-list">
         <h3>Gerenciamiento en Caprinocultura y Ovinocultura</h3>
         <ul>
             <li>Ingreso y calidad de los datos</li>
@@ -490,6 +597,7 @@
     </div>
 </section>
 
+<!-- CTA FINAL -->
 <div class="cta-final">
     <h2>¿Listo para verlo funcionando?</h2>
     <p>Agende una demostración personalizada o solicite una propuesta adecuada a su realidad.</p>
@@ -501,11 +609,158 @@
     <div class="note">Material institucional · Planes y valores en documento aparte</div>
 </div>
 
+</div>
+
+<!-- ================================================================== -->
+<!-- BOVINOS DE CARNE                                                   -->
+<!-- ================================================================== -->
+<div id="painel-bc" role="tabpanel" aria-labelledby="tab-bc" data-seg-panel="bovinos-corte" hidden>
+
+<!-- HERO -->
+<div class="hero">
+    <img src="/docs-seabra/Logo_png.png" alt="Seabra" class="logo">
+    <div class="brand">Seabra</div>
+    <div class="sub-brand">Bovinos de Carne</div>
+    <div class="promise">Del nacimiento a la venta. Gestión del rebaño de carne, establecimiento por establecimiento.</div>
+    <div class="tagline">Pesaje, reproducción, manejo e indicadores en una sola app, con varios establecimientos en la misma cuenta.</div>
+    <div class="badge-audience">Próximamente en SeabraApp</div>
+</div>
+
+<!-- LO QUE VIENE -->
+<section>
+    <h2>Lo que trae Bovinos de Carne</h2>
+    <p>Seabra Bovinos de Carne lleva al ganado de carne la misma base de la app de pequeños rumiantes, con pantallas propias para la rutina del establecimiento ganadero:</p>
+    <div class="pillars">
+        <div class="pillar">
+            <div class="p-label">01 · REBAÑO</div>
+            <h3>Todo el rebaño, en minutos</h3>
+            <p>Carga por planilla (CSV o Excel) con revisión antes de grabar, listado con filtros y tres vistas, ficha del animal y genealogía hasta el toro del semen.</p>
+        </div>
+        <div class="pillar">
+            <div class="p-label">02 · DESEMPEÑO</div>
+            <h3>Pesaje y ganancia de peso</h3>
+            <p>Pesaje en la manga al ritmo del manejo, ganancia media diaria por animal y por lote, y operaciones por lote.</p>
+        </div>
+        <div class="pillar">
+            <div class="p-label">03 · REPRODUCCIÓN</div>
+            <h3>De la estación de monta al parto</h3>
+            <p>Estación de monta, tacto, IATF y transferencia de embriones, control de semen y termo, protocolos que recuerdan la próxima etapa, parto y destete con madre y cría vinculadas.</p>
+        </div>
+        <div class="pillar">
+            <div class="p-label">04 · GESTIÓN</div>
+            <h3>Números que cierran la cuenta</h3>
+            <p>Finanzas, valor de la arroba y nueve paneles de indicadores, exportables en CSV, Excel y PDF.</p>
+        </div>
+    </div>
+</section>
+
+<!-- CÓMO FUNCIONA -->
+<section>
+    <h2>Cómo funciona</h2>
+    <div class="how-it-works">
+        <div class="step">
+            <div class="step-num">1</div>
+            <h4>Registra</h4>
+            <p>Pesaje, manejo y reproducción cargados en el campo, con o sin señal.</p>
+        </div>
+        <div class="step">
+            <div class="step-num">2</div>
+            <h4>Sincroniza</h4>
+            <p>Al recuperar la conexión, todo sube a la nube, sin perder nada.</p>
+        </div>
+        <div class="step">
+            <div class="step-num">3</div>
+            <h4>Decide</h4>
+            <p>Paneles, valor de la arroba y exportaciones transforman el dato en decisión.</p>
+        </div>
+    </div>
+</section>
+
+<!-- DIFERENCIALES -->
+<section>
+    <h2>Hecho para el establecimiento ganadero</h2>
+
+    <div class="diff-block">
+        <div class="diff-label">01 · Manejo animal por animal</div>
+        <h3>Una pasada por la manga, todo registrado</h3>
+        <p>En la sesión de manejo, cada animal que pasa recibe en la misma pantalla lo que se hizo con él: pesaje, tacto, IATF, transferencia de embriones o venta. Clínica, bajas por muerte, venta o descarte, y el pluviómetro del establecimiento están en la misma app.</p>
+    </div>
+
+    <div class="diff-block">
+        <div class="diff-label">02 · Varios establecimientos, una cuenta</div>
+        <h3>Todo el grupo en una suscripción</h3>
+        <p>Hasta 10 establecimientos en la misma suscripción, con transferencia de animales entre ellos sin perder la genealogía y el historial de dónde estuvo cada animal.</p>
+    </div>
+
+    <div class="diff-block">
+        <div class="diff-label">03 · Equipo con acceso propio</div>
+        <h3>Cada colaborador hace su parte</h3>
+        <p>Los colaboradores entran con su propio usuario y con los permisos que define el dueño.</p>
+    </div>
+</section>
+
+<!-- PLANES -->
+<section>
+    <h2>Planes</h2>
+    <p>Un solo plan, con todo incluido. El valor depende de la cantidad de establecimientos: <strong>hasta 3, R$ 370/mes</strong>; <strong>4 a 5, R$ 500/mes</strong>; <strong>6 a 10, R$ 700/mes</strong> (valores en reales). La suscripción es independiente de la de Pequeños Rumiantes.</p>
+</section>
+
+<!-- CTA FINAL -->
+<div class="cta-final">
+    <h2>¿Quiere ser de los primeros?</h2>
+    <p>Escríbanos para conocer Bovinos de Carne y recibir el aviso del lanzamiento.</p>
+    <div class="cta-buttons">
+        <a href="/planos-es#bovinos-corte" class="cta-btn">Ver los valores &rarr;</a>
+        <a href="https://wa.me/5521999366784?text=Quiero%20recibir%20el%20aviso%20del%20lanzamiento%20de%20Seabra%20Bovinos%20de%20Carne" class="cta-btn secondary">Quiero recibir el aviso</a>
+    </div>
+    <div class="note">Material institucional · Bovinos de Carne próximamente en SeabraApp</div>
+</div>
+
+</div>
+
+<!-- FOOTER -->
 <div class="footer">
-    <img src="/docs-seabra/Logo_png.png" alt="Seabra Pequeños Rumiantes">
-    <p><strong>Seabra Pequeños Rumiantes</strong> — Sistema de Gestión para Caprinos y Ovinos (leche y carne)</p>
+    <img src="/docs-seabra/Logo_png.png" alt="Seabra">
+    <p><strong>SeabraApp</strong> — Sistema de Gestión de Rebaños · Pequeños Rumiantes y Bovinos de Carne</p>
     <p>Documento confidencial · Distribución restringida · No publicado en canales públicos</p>
 </div>
+
+<script>
+/* Seletor de segmento. O endereço guarda a escolha (#bovinos-corte), para dar
+   para mandar o link já aberto no BC; Pequenos Ruminantes é o padrão, sem hash. */
+(function () {
+    var SEGS = ['pequenos-ruminantes', 'bovinos-corte'];
+    var tabs = [].slice.call(document.querySelectorAll('[data-seg-tab]'));
+    var panels = [].slice.call(document.querySelectorAll('[data-seg-panel]'));
+    var langs = [].slice.call(document.querySelectorAll('.lang-switcher a'));
+
+    function show(seg, updateUrl) {
+        if (SEGS.indexOf(seg) < 0) seg = SEGS[0];
+        document.body.setAttribute('data-seg', seg);
+        tabs.forEach(function (t) {
+            var on = t.getAttribute('data-seg-tab') === seg;
+            t.setAttribute('aria-selected', on ? 'true' : 'false');
+            t.tabIndex = on ? 0 : -1;
+        });
+        panels.forEach(function (p) { p.hidden = p.getAttribute('data-seg-panel') !== seg; });
+        var hash = seg === SEGS[0] ? '' : '#' + seg;
+        langs.forEach(function (a) { a.href = a.getAttribute('href').split('#')[0] + hash; });
+        if (updateUrl) history.replaceState(null, '', location.pathname + location.search + hash);
+    }
+
+    tabs.forEach(function (t, i) {
+        t.addEventListener('click', function () { show(t.getAttribute('data-seg-tab'), true); });
+        t.addEventListener('keydown', function (e) {
+            if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+            var next = tabs[(i + (e.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length];
+            next.focus();
+            show(next.getAttribute('data-seg-tab'), true);
+        });
+    });
+    window.addEventListener('hashchange', function () { show(location.hash.slice(1), false); window.scrollTo(0, 0); });
+    show(location.hash.slice(1), false);
+})();
+</script>
 
 </body>
 </html>

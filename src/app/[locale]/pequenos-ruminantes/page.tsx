@@ -14,7 +14,7 @@ interface PageProps {
   params: Promise<{ locale: string }>;
 }
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://pr.sistemaseabra.com.br/';
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://app.sistemaseabra.com.br/';
 const APK_URL = process.env.NEXT_PUBLIC_APK_URL || '';
 
 export async function generateMetadata({ params }: PageProps) {
