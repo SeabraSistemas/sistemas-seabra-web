@@ -40,10 +40,12 @@ export default async function TermosPage({ params }: PageProps) {
 
         <div className="space-y-6 text-foreground leading-relaxed">
           <p>
-            Estes Termos de Uso (&quot;Termos&quot;) regem o uso do aplicativo{' '}
-            <strong>SeabraApp</strong> e dos serviços associados
-            (&quot;Serviço&quot;), oferecidos pela{' '}
-            <strong>Seabra</strong> (&quot;nós&quot;, &quot;nosso&quot;).
+            Estes Termos de Uso (&quot;Termos&quot;) regem o uso do{' '}
+            <strong>Sistema Seabra</strong> (aplicativo Android, iOS e web, e o
+            site sistemaseabra.com.br) e dos serviços associados
+            (&quot;Serviço&quot;), oferecidos por{' '}
+            <strong>SEABRA SOLUTIONS LTDA</strong>, CNPJ 50.132.061/0001-80, com
+            sede em Florianópolis/SC (&quot;nós&quot;, &quot;nosso&quot;).
           </p>
           <p>
             Ao usar o Serviço, você (&quot;Usuário&quot;) declara ter lido,
@@ -68,8 +70,8 @@ export default async function TermosPage({ params }: PageProps) {
               administradores de associações de criadores
             </li>
             <li>
-              Pessoas jurídicas atuando no setor de caprinocultura ou
-              ovinocultura
+              Pessoas físicas e jurídicas que atuem na criação de caprinos,
+              ovinos ou bovinos
             </li>
           </ul>
 
@@ -94,29 +96,43 @@ export default async function TermosPage({ params }: PageProps) {
           <h2 className="text-2xl font-semibold text-foreground mt-10 mb-4">
             4. Planos e cobrança
           </h2>
-          <ul className="list-disc pl-6 space-y-2">
-            <li>
-              O Serviço é oferecido em plano <strong>gratuito (trial)</strong> e
-              planos <strong>pagos</strong> (mensal ou anual)
-            </li>
-            <li>
-              Preços e condições são divulgados em{' '}
-              <Link href="/" className="text-primary hover:underline">
-                sistemaseabra.com.br
-              </Link>
-            </li>
-            <li>
-              Pagamentos processados via Asaas; cancelamento a qualquer momento
-            </li>
-            <li>
-              Não há reembolso proporcional para o período já pago, salvo se
-              exigido por lei
-            </li>
-            <li>
-              Após o término da assinatura, o acesso ao Serviço fica restrito a
-              leitura por 90 dias antes da anonimização
-            </li>
-          </ul>
+          <p>
+            <strong>4.1. Plano gratuito.</strong> Toda conta de produtor tem
+            acesso gratuito e <strong>sem prazo</strong> a: cadastro de animais
+            (inclusive por planilha), nascimentos, baixas (óbito, venda,
+            descarte), consulta do rebanho e da ficha de cada animal, edição dos
+            dados de cadastro do animal, e <strong>uma</strong> propriedade. O
+            conteúdo do plano gratuito pode mudar; quando reduzirmos o que é
+            gratuito, avisaremos com 30 dias de antecedência (seção 12).
+          </p>
+          <p>
+            <strong>4.2. Recursos pagos.</strong> Os demais recursos são
+            liberados por contratação: diretamente conosco, pelo site, ou por
+            meio de associação de criadores conveniada. As condições, os valores
+            e a forma de pagamento constam da proposta ou da página de
+            contratação, <strong>fora do aplicativo</strong>. Os pagamentos
+            feitos a nós são processados pela Asaas.
+          </p>
+          <p>
+            <strong>4.3. Cancelamento e reembolso.</strong> Você pode cancelar a
+            qualquer momento; o acesso pago segue até o fim do período já pago.
+            Não há reembolso proporcional desse período, salvo quando a lei o
+            exigir — inclusive o direito de arrependimento em 7 dias da
+            contratação feita a distância (art. 49 do Código de Defesa do
+            Consumidor), quando aplicável.
+          </p>
+          <p>
+            <strong>4.4. Quando o acesso pago termina.</strong> Ao fim da
+            contratação, por cancelamento, falta de pagamento ou fim do convênio
+            com a associação, a conta <strong>volta ao plano gratuito</strong>.{' '}
+            <strong>Nenhum dado é apagado ou anonimizado por isso.</strong> Os
+            lançamentos feitos enquanto o acesso pago valia continuam na ficha
+            dos animais e podem ser consultados e exportados; o que deixa de
+            funcionar são os recursos pagos e, se houver mais de uma
+            propriedade, o acesso às propriedades além da primeira, até nova
+            contratação. Colaboradores convidados ficam sem acesso enquanto a
+            conta estiver no plano gratuito.
+          </p>
 
           <h2 className="text-2xl font-semibold text-foreground mt-10 mb-4">
             5. Uso aceitável
@@ -170,7 +186,7 @@ export default async function TermosPage({ params }: PageProps) {
           <ul className="list-disc pl-6 space-y-2">
             <li>
               Marca, design, código-fonte, textos e demais elementos do
-              SeabraApp são propriedade da Seabra ou licenciados a ela
+              Sistema Seabra são propriedade da Seabra ou licenciados a ela
             </li>
             <li>
               Nada nestes Termos transfere direitos de propriedade intelectual
@@ -205,6 +221,10 @@ export default async function TermosPage({ params }: PageProps) {
               Suporte via WhatsApp em horário comercial (segunda a sexta,
               9h–18h)
             </li>
+            <li>
+              Funcionalidades de inteligência artificial podem errar e não
+              substituem a avaliação de médico veterinário ou zootecnista
+            </li>
           </ul>
 
           <h2 className="text-2xl font-semibold text-foreground mt-10 mb-4">
@@ -238,20 +258,38 @@ export default async function TermosPage({ params }: PageProps) {
           <h2 className="text-2xl font-semibold text-foreground mt-10 mb-4">
             11. Encerramento
           </h2>
-          <p>Podemos suspender ou encerrar seu acesso a qualquer momento por:</p>
+          <p>Podemos suspender ou encerrar seu acesso por:</p>
           <ul className="list-disc pl-6 space-y-2">
             <li>Violação destes Termos</li>
-            <li>Inadimplência prolongada (&gt;30 dias)</li>
             <li>Solicitação sua</li>
           </ul>
-          <p>Após encerramento:</p>
-          <ul className="list-disc pl-6 space-y-2">
-            <li>Acesso aos dados fica disponível em modo leitura por 90 dias</li>
-            <li>
-              Após 90 dias, dados são anonimizados ou eliminados conforme
-              Política de Privacidade
-            </li>
-          </ul>
+          <p>
+            A falta de pagamento não encerra a conta: ela só leva a conta de
+            volta ao plano gratuito (seção 4.4).
+          </p>
+          <p>
+            <strong>Exclusão da conta a seu pedido.</strong> Você pode excluir a
+            conta a qualquer momento pelo próprio aplicativo (Perfil → Excluir
+            minha conta) ou pela página{' '}
+            <a
+              className="text-primary hover:underline"
+              href={`/${locale}/excluir-conta`}
+            >
+              sistemaseabra.com.br/excluir-conta
+            </a>
+            . A exclusão é concluída em até 15 dias: os Dados Pessoais e os
+            dados do rebanho são eliminados ou anonimizados, salvo o que a lei
+            obrigue a guardar, conforme a Política de Privacidade; a eliminação
+            completa das cópias de segurança acontece em até 90 dias. Exporte o
+            que quiser guardar <strong>antes</strong> de pedir: depois da
+            exclusão não é possível recuperar. Se houver contratação paga
+            ativa, a exclusão também a cancela.
+          </p>
+          <p>
+            <strong>Encerramento por violação.</strong> Em caso de encerramento
+            por violação, você poderá pedir a exportação dos seus dados em até
+            30 dias.
+          </p>
 
           <h2 className="text-2xl font-semibold text-foreground mt-10 mb-4">
             12. Alterações dos Termos
@@ -281,8 +319,9 @@ export default async function TermosPage({ params }: PageProps) {
           <p>
             Estes Termos são regidos pelas leis da{' '}
             <strong>República Federativa do Brasil</strong>. Fica eleito o{' '}
-            <strong>foro da Comarca do Rio de Janeiro/RJ</strong> para dirimir
-            quaisquer controvérsias.
+            <strong>foro da comarca de Florianópolis/SC</strong> para dirimir
+            quaisquer controvérsias, salvo quando a lei garantir ao consumidor o
+            foro do seu domicílio.
           </p>
 
           <h2 className="text-2xl font-semibold text-foreground mt-10 mb-4">

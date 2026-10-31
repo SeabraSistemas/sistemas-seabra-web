@@ -25,6 +25,7 @@ const localizedPaths = [
   '/contato',
   '/privacidade',
   '/termos',
+  '/excluir-conta',
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {
