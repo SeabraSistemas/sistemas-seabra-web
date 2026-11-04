@@ -2,7 +2,9 @@ import { ShieldAlert } from 'lucide-react';
 import { VAZIO, formatarInteiro, formatarNumero, formatarPercentual } from '@/lib/adm/format';
 import { ROTULO_MOTIVO, MOTIVOS_EXCLUSAO } from '@/lib/melhoramento/contemporaneas';
 import type { AnaliseCaracteristica, RankingModelo, ValidacaoCaracteristica } from '@/lib/melhoramento/analise';
-import type { DiagnosticoFazenda, TomConclusao } from '@/lib/melhoramento/diagnostico';
+import type { DiagnosticoFazenda, ResumoEndogamia, TomConclusao } from '@/lib/melhoramento/diagnostico';
+import type { ResumoReml } from '@/lib/melhoramento/modelos';
+import type { ProblemaListado } from '@/lib/melhoramento/parentesco';
 import type { Intervalo } from '@/lib/melhoramento/validacao';
 import {
   CARACTERISTICAS,
@@ -36,8 +38,8 @@ export function AvisoInterno() {
       <p>
         <strong className="font-medium">Análise interna, não validada.</strong> Modelos de melhoramento em
         avaliação sobre o cadastro do produtor como ele está hoje. Não mostrar a cliente, não usar como
-        recomendação de seleção. Calculado no servidor ao abrir a página; nada é gravado e nenhum dado do
-        app é alterado.
+        recomendação de seleção. Calculado no servidor ao abrir a página; o painel não grava nada e nenhum
+        dado do app é alterado (rodadas só são guardadas pelo script de linha de comando, rodado à mão).
       </p>
     </div>
   );
@@ -250,17 +252,75 @@ export function PainelDiagnostico({ diagnostico: d }: { diagnostico: Diagnostico
         </p>
       </div>
 
-      {d.pedigree.duplicados + d.pedigree.autoparentesco + d.pedigree.paisAusentes + d.pedigree.ciclosCortados > 0 && (
-        <p className="text-xs text-muted-foreground">
-          Pedigree de {formatarInteiro(d.pedigree.animais)} animais: {formatarInteiro(d.pedigree.duplicados)}{' '}
-          duplicado(s), {formatarInteiro(d.pedigree.autoparentesco)} autoparentesco,{' '}
-          {formatarInteiro(d.pedigree.paisAusentes)} pai(s)/mãe(s) fora do cadastro (viraram desconhecidos),{' '}
-          {formatarInteiro(d.pedigree.ciclosCortados)} ciclo(s) cortado(s), {formatarInteiro(d.pedigree.sexoIncoerente)}{' '}
-          com sexo incoerente, {formatarInteiro(d.pedigree.nascimentoIncoerente)} filho(s) nascido(s) antes do pai ou da
-          mãe.
-        </p>
-      )}
+      <div className="grid gap-4 lg:grid-cols-2">
+        <ProblemasPedigree problemas={d.pedigree.problemas} animais={d.pedigree.animais} />
+        <EndogamiaResumo endogamia={d.endogamia} />
+      </div>
     </section>
+  );
+}
+
+/**
+ * Os problemas do pedigree encontrados nesta fazenda, um por tipo, com o que
+ * foi feito (corrigido = o vínculo duvidoso virou desconhecido; apontado = só
+ * avisado, não muda a conta) e alguns ids para achar o animal no app.
+ */
+export function ProblemasPedigree({ problemas, animais }: { problemas: ProblemaListado[]; animais: number }) {
+  return (
+    <div>
+      <h3 className="text-sm text-foreground">Validação do pedigree</h3>
+      <p className="text-xs text-muted-foreground">
+        {formatarInteiro(animais)} animais no pedigree desta fazenda · ID duplicado, autoparentesco, pai fora do
+        cadastro, pai mais novo que o filho, ciclo, sexo incoerente e animal pai-e-mãe
+      </p>
+      {problemas.length === 0 ? (
+        <p className="mt-2 text-sm text-muted-foreground">Nenhum problema encontrado.</p>
+      ) : (
+        <div className="mt-2 overflow-x-auto">
+          <table className="w-full min-w-[30rem] text-sm">
+            <thead>
+              <tr className="border-b border-border text-left text-xs text-muted-foreground">
+                <th className="py-1 pe-3 font-normal">Problema</th>
+                <th className="py-1 pe-3 text-right font-normal">Animais</th>
+                <th className="py-1 pe-3 font-normal">O que foi feito</th>
+                <th className="py-1 font-normal">Exemplos (id)</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {problemas.map((p) => (
+                <tr key={p.tipo}>
+                  <td className="py-1 pe-3">{p.rotulo}</td>
+                  <td className="py-1 pe-3 text-right tabular-nums">{formatarInteiro(p.quantidade)}</td>
+                  <td className={cn('py-1 pe-3', p.acao === 'corrigido' ? 'text-amber-200' : 'text-muted-foreground')}>
+                    {p.acao === 'corrigido' ? 'corrigido' : 'apontado'}: {p.efeito}
+                  </td>
+                  <td className="py-1 font-mono text-xs text-muted-foreground">{p.exemplos.join(', ')}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** F de cada fêmea (ou bezerro) com registro, por Sargolzaei e Iwaisaki, sem montar A. */
+export function EndogamiaResumo({ endogamia: e }: { endogamia: ResumoEndogamia }) {
+  return (
+    <div>
+      <h3 className="text-sm text-foreground">Endogamia</h3>
+      <p className="text-xs text-muted-foreground">
+        F de {formatarInteiro(e.animais)} animais com registro, pelo pedigree desta fazenda (Sargolzaei e Iwaisaki
+        2005, sem montar a matriz A)
+      </p>
+      <div className="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <Numero rotulo="F médio" valor={formatarPercentual(e.media, 2)} />
+        <Numero rotulo="F máximo" valor={formatarPercentual(e.maxima, 1)} />
+        <Numero rotulo="Com F > 0" valor={formatarInteiro(e.endogamicos)} detalhe={fracao(e.endogamicos, e.animais)} />
+        <Numero rotulo="F ≥ 6,25%" valor={formatarInteiro(e.acima625)} detalhe="filha de meios-irmãos ou mais" />
+      </div>
+    </div>
   );
 }
 
@@ -297,7 +357,9 @@ export function TabelaValidacao({
         <h2 className="text-base">{titulo}</h2>
         <p className="text-xs text-muted-foreground">
           {v.rodou
-            ? `${formatarInteiro(v.n)} fêmeas (de ${formatarInteiro(v.candidatas)} com 2+ lactações) · ${info.rotulo.toLowerCase()}`
+            ? caracteristica === 'p210'
+              ? `${formatarInteiro(v.n)} vacas (de ${formatarInteiro(v.candidatas)} com 2+ bezerros) · ${info.rotulo.toLowerCase()}`
+              : `${formatarInteiro(v.n)} fêmeas (de ${formatarInteiro(v.candidatas)} com 2+ lactações) · ${info.rotulo.toLowerCase()}`
             : 'não rodou'}
         </p>
       </div>
@@ -358,6 +420,98 @@ export function TabelaValidacao({
           </p>
         </>
       )}
+      {v.naoRodaram.length > 0 && (
+        <ul className="mt-2 flex flex-col gap-1 text-xs text-muted-foreground">
+          {v.naoRodaram.map((m) => (
+            <li key={m.modelo}>
+              <strong className="font-medium text-foreground">Fora desta validação:</strong>{' '}
+              {rotulo.get(m.modelo)?.rotulo ?? m.modelo} — {m.motivo}.
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// REML
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * As variâncias estimadas na fazenda (AI-REML), com o erro-padrão e o
+ * julgamento. Quando a estimativa não é usável, a tela diz por quê e o modelo
+ * "BLUP com variâncias estimadas" não roda — o número não vira ranking.
+ */
+export function PainelReml({
+  completo,
+  treino,
+  caracteristica,
+  literatura,
+}: {
+  completo: ResumoReml | null;
+  treino: ResumoReml | null;
+  caracteristica: CaracteristicaChave;
+  literatura: string;
+}) {
+  if (!completo && !treino) return null;
+  const linhas: [string, ResumoReml | null][] = [
+    ['Todos os dados (ranking)', completo],
+    ['Sem a última lactação (validação)', treino],
+  ];
+  return (
+    <section className="painel">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h2 className="text-base">Variâncias estimadas na fazenda (AI-REML)</h2>
+        <p className="text-xs text-muted-foreground">{CARACTERISTICAS[caracteristica].rotulo.toLowerCase()}</p>
+      </div>
+      <div className="mt-3 overflow-x-auto">
+        <table className="w-full min-w-[44rem] text-sm">
+          <thead>
+            <tr className="border-b border-border text-left text-xs text-muted-foreground">
+              <th className="py-1.5 pe-3 font-normal">Dados</th>
+              <th className="py-1.5 pe-3 text-right font-normal">h² ± EP</th>
+              <th className="py-1.5 pe-3 text-right font-normal">r ± EP</th>
+              <th className="py-1.5 pe-3 text-right font-normal">Voltas (AI / EM)</th>
+              <th className="py-1.5 pe-3 text-right font-normal">Incógnitas</th>
+              <th className="py-1.5 font-normal">Usado?</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border">
+            {linhas.map(([rotulo, r]) => (
+              <tr key={rotulo} className="align-top">
+                <td className="py-1.5 pe-3">{rotulo}</td>
+                {!r ? (
+                  <td colSpan={5} className="py-1.5 text-muted-foreground">
+                    {VAZIO}
+                  </td>
+                ) : (
+                  <>
+                    <td className="py-1.5 pe-3 text-right tabular-nums">
+                      {r.h2 != null ? `${formatarNumero(r.h2, 2)} ± ${formatarNumero(r.epH2, 2)}` : VAZIO}
+                    </td>
+                    <td className="py-1.5 pe-3 text-right tabular-nums">
+                      {r.r != null ? `${formatarNumero(r.r, 2)} ± ${formatarNumero(r.epR, 2)}` : VAZIO}
+                    </td>
+                    <td className="py-1.5 pe-3 text-right tabular-nums">
+                      {r.estimou ? `${formatarInteiro(r.passos.ai)} / ${formatarInteiro(r.passos.em)}` : VAZIO}
+                    </td>
+                    <td className="py-1.5 pe-3 text-right tabular-nums">{formatarInteiro(r.incognitas)}</td>
+                    <td className={cn('py-1.5', r.usar ? 'text-emerald-200' : 'text-amber-200')}>
+                      {r.usar ? 'sim' : `não — ${r.motivos.join('; ')}`}
+                    </td>
+                  </>
+                )}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p className="mt-2 text-xs text-muted-foreground">
+        A estimativa só é usada com dado suficiente, convergência, h² e ambiente permanente longe da fronteira e h² que
+        se distingue de zero (h² − 1,96·EP &gt; 0). Os modelos de variância fixa usam a literatura ({literatura}). O
+        erro-padrão é aproximado: inversa da matriz de informação média e método delta.
+      </p>
     </section>
   );
 }
@@ -375,16 +529,40 @@ export function Rankings({
   modelos: ModeloInfo[];
   tipo: 'femeas' | 'reprodutores';
 }) {
-  const rankings = tipo === 'femeas' ? c.rankingFemeas : c.rankingReprodutores;
+  return (
+    <ListaRankings
+      titulo={tipo === 'femeas' ? 'Ranking das fêmeas' : 'Ranking dos reprodutores'}
+      rankings={tipo === 'femeas' ? c.rankingFemeas : c.rankingReprodutores}
+      modelos={modelos}
+      caracteristica={c.caracteristica}
+      tipo={tipo === 'femeas' ? 'femeas' : 'reprodutores'}
+    />
+  );
+}
+
+/** Um bloco por modelo, o do BLUP aberto. Serve ao leite (fêmeas, reprodutores) e ao corte (bezerros, touros, vacas). */
+export function ListaRankings({
+  titulo,
+  rankings,
+  modelos,
+  caracteristica,
+  tipo,
+}: {
+  titulo: string;
+  rankings: RankingModelo[] | null;
+  modelos: ModeloInfo[];
+  caracteristica: CaracteristicaChave;
+  tipo: TipoRanking;
+}) {
   if (!rankings || rankings.length === 0) return null;
   const info = new Map(modelos.map((m) => [m.chave, m]));
   const abertoPadrao = rankings.find((r) => r.modelo.startsWith('blup'))?.modelo ?? rankings[0].modelo;
   return (
     <section className="painel">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="text-base">{tipo === 'femeas' ? 'Ranking das fêmeas' : 'Ranking dos reprodutores'}</h2>
+        <h2 className="text-base">{titulo}</h2>
         <p className="text-xs text-muted-foreground">
-          um modelo por bloco · todos os dados · {CARACTERISTICAS[c.caracteristica].rotulo.toLowerCase()}
+          um modelo por bloco · todos os dados · {CARACTERISTICAS[caracteristica].rotulo.toLowerCase()}
         </p>
       </div>
       <div className="mt-3 flex flex-col gap-2">
@@ -395,13 +573,23 @@ export function Rankings({
             modelo={info.get(r.modelo) ?? null}
             aberto={r.modelo === abertoPadrao}
             tipo={tipo}
-            caracteristica={c.caracteristica}
+            caracteristica={caracteristica}
           />
         ))}
       </div>
     </section>
   );
 }
+
+type TipoRanking = 'femeas' | 'reprodutores' | 'bezerros' | 'touros' | 'matrizes';
+
+const COLUNA_N: Record<TipoRanking, string> = {
+  femeas: 'Lactações',
+  reprodutores: 'Filhas',
+  bezerros: 'Registros',
+  touros: 'Filhos',
+  matrizes: 'Bezerros',
+};
 
 function BlocoRanking({
   ranking: r,
@@ -413,7 +601,7 @@ function BlocoRanking({
   ranking: RankingModelo;
   modelo: ModeloInfo | null;
   aberto: boolean;
-  tipo: 'femeas' | 'reprodutores';
+  tipo: TipoRanking;
   caracteristica: CaracteristicaChave;
 }) {
   const casas = casasDesvio(caracteristica);
@@ -445,7 +633,7 @@ function BlocoRanking({
                 Valor ({CARACTERISTICAS[caracteristica].unidade})
               </th>
               <th className="py-1 pe-3 text-right font-normal">{temRel ? 'Confiabilidade' : ''}</th>
-              <th className="py-1 text-right font-normal">{tipo === 'femeas' ? 'Lactações' : 'Filhas'}</th>
+              <th className="py-1 text-right font-normal">{COLUNA_N[tipo]}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
@@ -487,7 +675,9 @@ export function ComoLemosMelhoramento({ config, modelos }: { config: ConfigAnali
         <li>
           <strong className="font-medium text-foreground">Grupo de contemporâneas:</strong> fazenda × ano × estação do
           parto (hemisfério sul) × primípara ou adulta. Grupo com menos de {config.tamanhoMinimoGrupo} lactações sai.
-          Primípara = primeira lactação estimada (contando partos de antes do app pelo cadastro) com menos de 30 meses.
+          Primípara = primeira lactação estimada (contando partos de antes do app pelo cadastro) com menos de{' '}
+          {Math.round(config.idadeMaximaPrimiparaDias / 30.4375)} meses. Nas ovelhas, o sistema de mamada (TMM ×
+          TMY), que o relatório põe no grupo, não existe no app.
         </li>
         <li>
           <strong className="font-medium text-foreground">Desvio:</strong> a lactação menos a média das OUTRAS do
@@ -495,8 +685,25 @@ export function ComoLemosMelhoramento({ config, modelos }: { config: ConfigAnali
         </li>
         <li>
           <strong className="font-medium text-foreground">Modelos:</strong>{' '}
-          {modelos.map((m) => m.rotulo).join('; ')}. Variâncias são da literatura (h² e r), nunca estimadas com o
-          rebanho; o BLUP usa A⁻¹ de Henderson/Quaas com endogamia, PEV exata e o motor validado contra Mrode e a ICAR.
+          {modelos.map((m) => m.rotulo).join('; ')}. Nos de variância fixa, h² e r vêm da literatura:{' '}
+          {config.blup.map((p) => p.fonte).join('; ')}; MPPA: {config.fonteMppa}. O BLUP usa A⁻¹ de Henderson/Quaas
+          com endogamia (F de Sargolzaei e Iwaisaki, sem montar A), PEV exata (Cholesky denso ou esparso com a
+          inversa seletiva de Takahashi) e o motor validado contra Mrode e a ICAR.
+        </li>
+        {config.reml.ativo && (
+          <li>
+            <strong className="font-medium text-foreground">Variâncias estimadas na fazenda:</strong> AI-REML com
+            passo de EM quando o AI sai do espaço (conferido contra o Exemplo 17.7 de Mrode), refeito só com os dados
+            de treino para a validação. Usado só com {config.reml.registrosMinimos}+ lactações,{' '}
+            {config.reml.femeasRepetidasMinimas}+ fêmeas com 2+ lactações, convergência, h² e ambiente permanente
+            longe da fronteira e h² que se distingue de zero; senão a tela diz por quê e o modelo não roda.
+          </li>
+        )}
+        <li>
+          <strong className="font-medium text-foreground">Pedigree:</strong> ID duplicado fica com a primeira linha;
+          pai fora do cadastro, autoparentesco, pai ou mãe nascido depois do filho ou menos de{' '}
+          {config.gestacaoDias} dias antes (uma gestação) e o vínculo que fecha um ciclo viram desconhecidos; sexo
+          incoerente e animal pai-e-mãe são só apontados. Tudo aparece no diagnóstico.
         </li>
         <li>
           <strong className="font-medium text-foreground">Validação para frente:</strong> para cada fêmea com 2+

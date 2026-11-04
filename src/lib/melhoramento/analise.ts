@@ -17,11 +17,17 @@
 
 import { prepararRegistros, desviosDasContemporaneas, type Preparacao, type Registro } from '@/lib/melhoramento/contemporaneas';
 import { diagnosticar, LIMIARES, type DiagnosticoFazenda } from '@/lib/melhoramento/diagnostico';
-import { ajustarModelos, type AjusteModelos, type ResumoBlup } from '@/lib/melhoramento/modelos';
+import {
+  ajustarModelos,
+  type AjusteModelos,
+  type ModeloNaoRodou,
+  type ResumoBlup,
+  type ResumoReml,
+} from '@/lib/melhoramento/modelos';
 import { montarPedigree, type AnimalPedigreeEntrada, type PedigreeMontado } from '@/lib/melhoramento/parentesco';
 import {
-  CONFIG_PADRAO,
   ESPECIES_MELHORAMENTO,
+  configDaEspecie,
   ORDEM_CARACTERISTICAS,
   modelosDaConfig,
   type AnimalEntrada,
@@ -34,7 +40,7 @@ import {
 import { metricasValidacao, vencedorDaValidacao, type MetricasValidacao, type Vencedor } from '@/lib/melhoramento/validacao';
 
 /** Versão do motor gravada junto de cada análise, para ela ser reproduzível. */
-export const VERSAO_MOTOR = 'ts-0.1.0 (porta do pacote melhoramento 0.1.0)';
+export const VERSAO_MOTOR = 'ts-0.2.0 (porta do pacote melhoramento 0.1.0; REML, ovinos e corte)';
 
 export interface EntradaFazenda {
   propriedadeId: number;
@@ -78,6 +84,10 @@ export interface ValidacaoCaracteristica {
   porModelo: { modelo: string; metricas: MetricasValidacao }[];
   vencedor: Vencedor | null;
   blup: ResumoBlup[];
+  /** O REML refeito SÓ com os dados de treino (sem os alvos), quando ligado. */
+  reml: ResumoReml | null;
+  /** Modelos fora desta validação, com o motivo (o REML não confiável, por exemplo). */
+  naoRodaram: ModeloNaoRodou[];
 }
 
 export interface AnaliseCaracteristica {
@@ -90,6 +100,9 @@ export interface AnaliseCaracteristica {
   rankingFemeas: RankingModelo[] | null;
   rankingReprodutores: RankingModelo[] | null;
   blup: ResumoBlup[];
+  /** O REML com todos os dados (o do ranking); null quando não houve ajuste completo. */
+  reml: ResumoReml | null;
+  naoRodaram: ModeloNaoRodou[];
   avisos: string[];
 }
 
@@ -131,12 +144,12 @@ function linhasDoPedigree(entrada: EntradaFazenda): AnimalPedigreeEntrada[] {
 }
 
 export function analisarFazenda(entrada: EntradaFazenda, opcoes: OpcoesAnalise): AnaliseFazenda {
-  const config = opcoes.config ?? CONFIG_PADRAO;
+  const config = opcoes.config ?? configDaEspecie(entrada.especie);
   const especie = ESPECIES_MELHORAMENTO[entrada.especie];
   const lactacoes = entrada.lactacoes.filter(
     (l) => l.propriedadeId === entrada.propriedadeId && l.especie === entrada.especie,
   );
-  const ped = montarPedigree(linhasDoPedigree({ ...entrada, lactacoes }));
+  const ped = montarPedigree(linhasDoPedigree({ ...entrada, lactacoes }), { gestacaoDias: config.gestacaoDias });
   const preparacoes = ORDEM_CARACTERISTICAS.map((c) => prepararRegistros(lactacoes, c, config));
   const diagnostico = diagnosticar(lactacoes, preparacoes, ped, config, entrada.sinteticasForaDaLeitura ?? 0);
   const modelos = modelosDaConfig(config);
@@ -188,6 +201,8 @@ function analisarCaracteristica(
     rankingFemeas: completo ? rankings(completo.femea, config, animais) : null,
     rankingReprodutores: completo ? rankings(completo.reprodutor, config, animais) : null,
     blup: completo?.blup ?? [],
+    reml: completo?.reml ?? null,
+    naoRodaram: completo?.naoRodaram ?? validacao.naoRodaram,
     avisos: completo?.avisos ?? [],
   };
 }
@@ -254,6 +269,8 @@ export function validarParaFrente(
     porModelo: [],
     vencedor: null,
     blup: [],
+    reml: null,
+    naoRodaram: [],
   };
   if (alvos.length < config.minimoValidacao) {
     return {
@@ -267,7 +284,9 @@ export function validarParaFrente(
   const treino = registros.filter((_, i) => !ehAlvo.has(i));
   const aj = ajustarModelos(treino, ped, config, { pev: 'reprodutores' });
 
-  const modelos = aj.modelos.map((m) => m.chave);
+  // Só os modelos que rodaram no treino; os outros vão para `naoRodaram`.
+  const fora = new Set(aj.naoRodaram.map((m) => m.modelo));
+  const modelos = aj.modelos.map((m) => m.chave).filter((m) => !fora.has(m));
   const pares: { animal: number; realizado: number }[] = [];
   for (const [animal, i] of alvos) {
     const realizado = realizadoTodos[i];
@@ -279,6 +298,8 @@ export function validarParaFrente(
     return {
       ...vazio,
       blup: aj.blup,
+      reml: aj.reml,
+      naoRodaram: aj.naoRodaram,
       motivo:
         `das ${alvos.length} fêmeas com 2+ lactações, só ${pares.length} têm desvio calculável no treino e no ` +
         `alvo (o mínimo é ${config.minimoValidacao})`,
@@ -297,5 +318,7 @@ export function validarParaFrente(
     porModelo,
     vencedor: vencedorDaValidacao(porModelo, config.minimoVencedor),
     blup: aj.blup,
+    reml: aj.reml,
+    naoRodaram: aj.naoRodaram,
   };
 }

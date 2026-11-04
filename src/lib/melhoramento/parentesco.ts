@@ -19,9 +19,9 @@
  *    tela mostra. Um pedigree consertado em silêncio produz um EBV que ninguém
  *    sabe de onde veio.
  *
- *    A endogamia é calculada por Meuwissen e Luo (1992), sem montar A: com
- *    2.000 animais, A densa teria 4 milhões de células só para tirar a
- *    diagonal. A⁻¹ sai pelas regras de Henderson (1976) com a correção de Quaas
+ *    A endogamia é calculada sem montar A, por Sargolzaei e Iwaisaki (2005);
+ *    Meuwissen e Luo (1992) fica ao lado para conferência: com 2.000
+ *    animais, A densa teria 4 milhões de células só para tirar a diagonal. A⁻¹ sai pelas regras de Henderson (1976) com a correção de Quaas
  *    (1976), como contribuições esparsas que vão direto para as MME. As duas
  *    conferem com a porta nos testes.
  */
@@ -232,12 +232,28 @@ export interface ProblemasPedigree {
   paisAusentes: number[];
   /** Vínculos cortados para desfazer um ciclo: [animal, pai ou mãe removido]. */
   ciclosCortados: [number, number][];
-  /** Animais usados como pai com sexo de fêmea, ou como mãe com sexo de macho. */
+  /** Animais usados como pai com sexo de fêmea, ou como mãe com sexo de macho. Só apontados. */
   sexoIncoerente: number[];
-  /** Animais que aparecem ao mesmo tempo como pai e como mãe. */
+  /** Animais que aparecem ao mesmo tempo como pai e como mãe. Só apontados. */
   paiEMae: number[];
-  /** Filhos que nasceram antes (ou no dia) do pai ou da mãe. Só contados. */
+  /**
+   * Vínculos cortados porque o pai ou a mãe nasceu DEPOIS do filho, no mesmo
+   * dia ou menos de uma gestação antes: [filho, pai ou mãe, dias entre os
+   * nascimentos (negativo = o pai nasceu depois)]. Um deles está errado — a
+   * data ou o vínculo — e o vínculo é o que muda o BLUP.
+   */
+  nascimentoImpossivel: [number, number, number][];
+  /** = nascimentoImpossivel.length (o nome antigo, mantido para quem já lia). */
   nascimentoIncoerente: number;
+}
+
+export interface OpcoesPedigree {
+  /**
+   * Gestação da espécie (dias). Pai ou mãe nascido menos que isto antes do
+   * filho não pode ser pai ou mãe dele. Sem o valor, só "nasceu depois ou no
+   * mesmo dia" é cortado.
+   */
+  gestacaoDias?: number;
 }
 
 export interface PedigreeMontado {
@@ -250,33 +266,43 @@ export interface PedigreeMontado {
   problemas: ProblemasPedigree;
 }
 
-function normalizarSexo(s: string | null | undefined): 'macho' | 'femea' | null {
+export function normalizarSexo(s: string | null | undefined): 'macho' | 'femea' | null {
   if (!s) return null;
   const t = s
     .normalize('NFD')
     .replace(/[̀-ͯ]/g, '')
     .trim()
     .toLowerCase();
-  if (t.startsWith('mach')) return 'macho';
-  if (t.startsWith('feme')) return 'femea';
+  if (t.startsWith('mach') || t === 'm') return 'macho';
+  if (t.startsWith('feme') || t === 'f') return 'femea';
   return null;
+}
+
+function dias(d: string): number | null {
+  const t = Date.parse(`${d.slice(0, 10)}T00:00:00Z`);
+  return Number.isFinite(t) ? Math.round(t / 86400000) : null;
 }
 
 /**
  * Monta o pedigree de uma fazenda a partir das linhas do cadastro. Nunca lança.
  *
- * Regras, nesta ordem, cada uma com o seu contador em `problemas`:
+ * Regras, nesta ordem, cada uma com o seu contador em `problemas` (o desenho
+ * segue as checagens de nadiv `numPed`/`prepPed` e AGHmatrix `verifyped`,
+ * lidas em research_notes/estudo_software/pedigreemm_nadiv_comparacao.md §5.2):
  *   1. id repetido: fica a primeira linha;
  *   2. animal que é pai ou mãe de si mesmo: o vínculo vira desconhecido;
  *   3. pai ou mãe que não está nas linhas: vira DESCONHECIDO. Não o promovemos a
  *      fundador porque, sem cadastro único de reprodutores, um id que veio de
  *      fora pode não ser o mesmo animal de que o produtor fala — inventar
  *      meio-irmãs a partir disso seria pior que perdê-las;
- *   4. ciclo (A é ancestral de A): o vínculo que fecha o ciclo é cortado.
- * Sexo incoerente e pai mais novo que o filho são só contados — não mudam o
- * cálculo, mas dizem muito da qualidade do cadastro.
+ *   4. pai ou mãe que nasceu depois do filho, no mesmo dia ou menos de uma
+ *      gestação antes (`opcoes.gestacaoDias`): o vínculo é impossível e vira
+ *      desconhecido. Só se as duas datas existem;
+ *   5. ciclo (A é ancestral de A): o vínculo que fecha o ciclo é cortado.
+ * Sexo incoerente e animal que é pai e mãe ao mesmo tempo são só APONTADOS:
+ * não mudam A (a conta não usa sexo), mas dizem muito do cadastro.
  */
-export function montarPedigree(linhas: readonly AnimalPedigreeEntrada[]): PedigreeMontado {
+export function montarPedigree(linhas: readonly AnimalPedigreeEntrada[], opcoes: OpcoesPedigree = {}): PedigreeMontado {
   const problemas: ProblemasPedigree = {
     duplicados: [],
     autoparentesco: [],
@@ -284,6 +310,7 @@ export function montarPedigree(linhas: readonly AnimalPedigreeEntrada[]): Pedigr
     ciclosCortados: [],
     sexoIncoerente: [],
     paiEMae: [],
+    nascimentoImpossivel: [],
     nascimentoIncoerente: 0,
   };
 
@@ -300,6 +327,7 @@ export function montarPedigree(linhas: readonly AnimalPedigreeEntrada[]): Pedigr
 
   const ausentes = new Set<number>();
   const auto = new Set<number>();
+  const minimo = opcoes.gestacaoDias ?? 1;
   for (const [id, a] of porId) {
     for (const campo of ['pai', 'mae'] as const) {
       const p = a[campo];
@@ -310,13 +338,23 @@ export function montarPedigree(linhas: readonly AnimalPedigreeEntrada[]): Pedigr
       } else if (!porId.has(p)) {
         ausentes.add(p);
         a[campo] = null;
+      } else {
+        const np = porId.get(p)!.nascimento;
+        const dp = np ? dias(np) : null;
+        const df = a.nascimento ? dias(a.nascimento) : null;
+        if (dp != null && df != null && df - dp < minimo) {
+          problemas.nascimentoImpossivel.push([id, p, df - dp]);
+          a[campo] = null;
+        }
       }
     }
   }
   problemas.autoparentesco = [...auto].sort((a, b) => a - b);
   problemas.paisAusentes = [...ausentes].sort((a, b) => a - b);
+  problemas.nascimentoImpossivel.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  problemas.nascimentoIncoerente = problemas.nascimentoImpossivel.length;
 
-  // Coerência de sexo e de nascimento — só diagnóstico.
+  // Coerência de sexo e pai-e-mãe — só diagnóstico.
   const comoPai = new Set<number>();
   const comoMae = new Set<number>();
   for (const a of porId.values()) {
@@ -328,12 +366,6 @@ export function montarPedigree(linhas: readonly AnimalPedigreeEntrada[]): Pedigr
   for (const m of comoMae) if (normalizarSexo(porId.get(m)?.sexo) === 'macho') sexoIncoerente.add(m);
   problemas.sexoIncoerente = [...sexoIncoerente].sort((a, b) => a - b);
   problemas.paiEMae = [...comoPai].filter((p) => comoMae.has(p)).sort((a, b) => a - b);
-  for (const a of porId.values()) {
-    for (const p of [a.pai, a.mae]) {
-      const np = p != null ? porId.get(p)?.nascimento : null;
-      if (np && a.nascimento && np >= a.nascimento) problemas.nascimentoIncoerente += 1;
-    }
-  }
 
   // Ordenação topológica estável (pai antes da mãe), cortando o vínculo que
   // fecharia um ciclo em vez de lançar.
@@ -377,6 +409,53 @@ export function montarPedigree(linhas: readonly AnimalPedigreeEntrada[]): Pedigr
     if (a.mae != null) mae[i] = indice.get(a.mae)!;
   });
   return { ids: ordem, indice, pai, mae, problemas };
+}
+
+/** Um tipo de problema do pedigree, pronto para a tela: o que é, o que foi feito, quantos e alguns ids. */
+export interface ProblemaListado {
+  tipo:
+    | 'duplicado'
+    | 'autoparentesco'
+    | 'pai_ausente'
+    | 'nascimento_impossivel'
+    | 'ciclo'
+    | 'sexo_incoerente'
+    | 'pai_e_mae';
+  rotulo: string;
+  acao: 'corrigido' | 'apontado';
+  /** O que foi feito, em uma frase. */
+  efeito: string;
+  quantidade: number;
+  /** Até 5 ids de animal envolvidos, para a ficha mostrar quais são. */
+  exemplos: number[];
+}
+
+/** A lista do diagnóstico: só os tipos que aconteceram, na ordem das regras. */
+export function listarProblemasPedigree(p: ProblemasPedigree): ProblemaListado[] {
+  const saida: ProblemaListado[] = [];
+  const add = (
+    tipo: ProblemaListado['tipo'],
+    rotulo: string,
+    acao: ProblemaListado['acao'],
+    efeito: string,
+    ids: number[],
+  ) => {
+    if (ids.length > 0) saida.push({ tipo, rotulo, acao, efeito, quantidade: ids.length, exemplos: ids.slice(0, 5) });
+  };
+  add('duplicado', 'id repetido no cadastro', 'corrigido', 'fica a primeira linha', p.duplicados);
+  add('autoparentesco', 'animal que é pai ou mãe de si mesmo', 'corrigido', 'o vínculo vira desconhecido', p.autoparentesco);
+  add('pai_ausente', 'pai ou mãe fora do cadastro lido', 'corrigido', 'vira desconhecido', p.paisAusentes);
+  add(
+    'nascimento_impossivel',
+    'pai ou mãe mais novo que o filho (ou nascido menos de uma gestação antes)',
+    'corrigido',
+    'o vínculo vira desconhecido',
+    p.nascimentoImpossivel.map((x) => x[0]),
+  );
+  add('ciclo', 'ciclo (animal ancestral de si mesmo)', 'corrigido', 'o vínculo que fecha o ciclo é cortado', p.ciclosCortados.map((x) => x[0]));
+  add('sexo_incoerente', 'pai com sexo de fêmea ou mãe com sexo de macho', 'apontado', 'não muda a conta', p.sexoIncoerente);
+  add('pai_e_mae', 'animal que aparece como pai e como mãe', 'apontado', 'não muda a conta', p.paiEMae);
+  return saida;
 }
 
 /**
@@ -438,14 +517,85 @@ export function comoPedigreeDoMotor(ped: PedigreeMontado): Record<string, [strin
 }
 
 /**
- * Endogamia de cada animal por Meuwissen e Luo (1992, GSE 24:305), sem A.
+ * ENDOGAMIA SEM MONTAR A — Sargolzaei e Iwaisaki (2005, Anim. Sci. J.
+ * 76:401), o algoritmo que o pedigreemm usa (`pedigree_inbreeding`).
+ *
+ * É Meuwissen e Luo (F_i = Σ_j L_ij²·D_j − 1 sobre os ancestrais de i) com a
+ * fila trocada: em vez de um heap pela posição, os ancestrais vão para listas
+ * pelo MAIOR CAMINHO ANCESTRAL (LAP: 0 para fundador, 1 + o maior LAP dos
+ * pais). Um ancestral sempre tem LAP menor que o de qualquer descendente, então
+ * esvaziar as listas da maior para a menor garante que L_j está completo
+ * quando j é processado — sem comparação de posição. Memória O(n).
+ *
+ * D_j = ½ − ¼(F_pai + F_mãe), com F = −1 para pai desconhecido (D = 1 no
+ * fundador, ¾ − ¼F com um pai só). Irmão completo do anterior copia o F.
+ * Exige a ordem pais-antes-dos-filhos de montarPedigree.
+ */
+export function endogamia(ped: PedigreeMontado): Float64Array {
+  const n = ped.ids.length;
+  const F = new Float64Array(n);
+  const D = new Float64Array(n);
+  const L = new Float64Array(n);
+  const lap = new Int32Array(n);
+  const marcado = new Uint8Array(n);
+  let lapMax = 0;
+  for (let i = 0; i < n; i++) {
+    const s = ped.pai[i];
+    const d = ped.mae[i];
+    lap[i] = s < 0 && d < 0 ? 0 : 1 + Math.max(s >= 0 ? lap[s] : 0, d >= 0 ? lap[d] : 0);
+    if (lap[i] > lapMax) lapMax = lap[i];
+  }
+  const listas: number[][] = Array.from({ length: lapMax + 1 }, () => []);
+  const Fde = (p: number) => (p >= 0 ? F[p] : -1);
+  for (let i = 0; i < n; i++) {
+    const s = ped.pai[i];
+    const d = ped.mae[i];
+    D[i] = 0.5 - 0.25 * (Fde(s) + Fde(d));
+    if (s < 0 || d < 0) {
+      F[i] = 0;
+      continue;
+    }
+    if (i > 0 && s === ped.pai[i - 1] && d === ped.mae[i - 1]) {
+      F[i] = F[i - 1];
+      continue;
+    }
+    L[i] = 1;
+    marcado[i] = 1;
+    listas[lap[i]].push(i);
+    let fi = 0;
+    for (let t = lap[i]; t >= 0; t--) {
+      const lista = listas[t];
+      while (lista.length) {
+        const j = lista.pop()!;
+        const lj = L[j];
+        for (const p of [ped.pai[j], ped.mae[j]]) {
+          if (p < 0) continue;
+          if (!marcado[p]) {
+            marcado[p] = 1;
+            listas[lap[p]].push(p);
+          }
+          L[p] += 0.5 * lj;
+        }
+        fi += lj * lj * D[j];
+        L[j] = 0;
+        marcado[j] = 0;
+      }
+    }
+    F[i] = fi - 1;
+  }
+  return F;
+}
+
+/**
+ * Endogamia por Meuwissen e Luo (1992, GSE 24:305), sem A — a versão da
+ * etapa 1, mantida para conferir a de Sargolzaei e Iwaisaki nos testes.
  *
  * F_i = Σ_j L_ij²·D_j − 1, percorrendo os ancestrais de i do mais novo para o
  * mais velho; D_j = ½ − ¼(F_pai + F_mãe), com F = −1 para pai desconhecido (o
  * que devolve D = 1 para fundador e ¾ − ¼F para um pai só). Exige a ordem
  * pais-antes-dos-filhos de montarPedigree.
  */
-export function endogamia(ped: PedigreeMontado): Float64Array {
+export function endogamiaMeuwissenLuo(ped: PedigreeMontado): Float64Array {
   const n = ped.ids.length;
   const F = new Float64Array(n);
   const D = new Float64Array(n);

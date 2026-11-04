@@ -1394,6 +1394,23 @@ export const VIEWS_MELHORAMENTO = {
   resultado: 'melhoramento_resultado',
   validacao: 'melhoramento_validacao',
   diagnostico: 'melhoramento_diagnostico',
+  // melhoramento_03_vinculos.sql
+  vinculo: 'melhoramento_vinculo',
+  // melhoramento_04_corte.sql
+  bovinoAnimal: 'melhoramento_bovino_animal',
+  bovinoPesagem: 'melhoramento_bovino_pesagem',
+  bovinoFazenda: 'melhoramento_bovino_fazenda',
+} as const;
+
+/**
+ * A PORTA DE ESCRITA do script de rodadas (melhoramento_05_gravacao.sql).
+ * O painel NUNCA usa estas: ele lê pelas de VIEWS_MELHORAMENTO.
+ */
+export const VIEWS_GRAVACAO_MELHORAMENTO = {
+  rodada: 'melhoramento_grava_rodada',
+  resultado: 'melhoramento_grava_resultado',
+  validacao: 'melhoramento_grava_validacao',
+  diagnostico: 'melhoramento_grava_diagnostico',
 } as const;
 
 export type ViewMelhoramento = (typeof VIEWS_MELHORAMENTO)[keyof typeof VIEWS_MELHORAMENTO];
@@ -1447,6 +1464,114 @@ export interface LinhaMelhoramentoPedigree {
   mae_id: number | null;
   raca: string | null;
   status: string | null;
+}
+
+/** Um candidato a mesmo reprodutor — `adm.melhoramento_vinculo`. */
+export interface LinhaMelhoramentoVinculo {
+  id: number;
+  especie: string;
+  animal_a: number;
+  propriedade_a: number;
+  animal_b: number;
+  propriedade_b: number;
+  motivos: string[];
+  detalhe: Record<string, unknown>;
+  /** 'nao_confirmado' | 'confirmado' | 'rejeitado' */
+  confirmacao: string;
+  confirmado_por: string | null;
+  confirmado_em: string | null;
+  observacao: string | null;
+  gerado_em: string;
+  atualizado_em: string;
+}
+
+/** Um bovino de corte — `adm.melhoramento_bovino_animal`. */
+export interface LinhaMelhoramentoBovinoAnimal {
+  animal_id: number;
+  propriedade_id: number;
+  /** 'macho' | 'femea' */
+  sexo: string | null;
+  data_de_nascimento: string | null;
+  pai_id: number | null;
+  mae_id: number | null;
+  receptora_id: number | null;
+  numero: string | null;
+  nome: string | null;
+  apenas_genealogia: boolean;
+  status: string | null;
+  peso_ao_nascer: number | null;
+  peso_nascer_parto: number | null;
+  /** 'iatf' | 'te' | 'monta' */
+  origem_prenhez: string | null;
+  pais_candidatos: number;
+}
+
+/** Uma pesagem de 150 a 270 dias — `adm.melhoramento_bovino_pesagem`. */
+export interface LinhaMelhoramentoBovinoPesagem {
+  pesagem_id: number;
+  animal_id: number;
+  /** A fazenda ATUAL do animal. */
+  propriedade_id: number;
+  propriedade_pesagem: number;
+  data_pesagem: string;
+  peso_kg: number;
+  idade_dias: number;
+  lote_id: number | null;
+  condicao_criacao: string | null;
+}
+
+/** Uma fazenda com bovino de corte — `adm.melhoramento_bovino_fazenda`. */
+export interface LinhaMelhoramentoBovinoFazenda {
+  propriedade_id: number;
+  nome: string | null;
+  produtor_id: number | null;
+  teste: boolean;
+  animais: number;
+  com_nascimento: number;
+  com_pai: number;
+  com_mae: number;
+  apenas_genealogia: number;
+  pesagens: number;
+  pesagens_sem_nascimento: number;
+  pesagens_janela: number;
+  animais_janela: number;
+}
+
+/** Uma rodada gravada — `adm.melhoramento_rodada` (melhoramento_02). */
+export interface LinhaMelhoramentoRodada {
+  id: number;
+  criada_em: string;
+  especie: string;
+  propriedade_id: number | null;
+  modelo: string;
+  caracteristica: string;
+  parametros: Record<string, unknown>;
+  versao_motor: string;
+  status: string;
+  n_animais: number | null;
+  n_registros: number | null;
+  resumo: Record<string, unknown>;
+  observacao: string | null;
+}
+
+/** Uma métrica de validação gravada — `adm.melhoramento_validacao`. */
+export interface LinhaMelhoramentoValidacao {
+  rodada_id: number;
+  metrica: string;
+  valor: number | null;
+  n: number | null;
+  detalhe: Record<string, unknown>;
+}
+
+/** Um resultado por animal gravado — `adm.melhoramento_resultado`. */
+export interface LinhaMelhoramentoResultado {
+  rodada_id: number;
+  animal_id: number;
+  propriedade_id: number | null;
+  valor: number | null;
+  confiabilidade: number | null;
+  posicao: number | null;
+  extra: Record<string, unknown>;
 }
 
 /** Uma (propriedade, espécie) com rebanho — `adm.melhoramento_fazenda`. */

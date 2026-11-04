@@ -4,9 +4,11 @@
  *
  * As regras protegidas: ordem pais-antes-dos-filhos; pai ausente vira
  * desconhecido; id duplicado, autoparentesco e ciclo são corrigidos de forma
- * conservadora e SEMPRE reportados; Meuwissen-Luo e Henderson/Quaas esparsos
- * dão exatamente o F e a A⁻¹ da matriz A densa. Fixtures sintéticos — nenhum
- * animal de produtor.
+ * conservadora e SEMPRE reportados; pai ou mãe nascido depois do filho (ou
+ * menos de uma gestação antes) tem o vínculo cortado; sexo incoerente e
+ * pai-e-mãe são só apontados; Sargolzaei-Iwaisaki, Meuwissen-Luo e
+ * Henderson/Quaas esparsos dão exatamente o F e a A⁻¹ da matriz A densa e do
+ * motor Python. Fixtures sintéticos — nenhum animal de produtor.
  */
 
 import { test } from 'node:test';
@@ -17,7 +19,9 @@ import {
   comoPedigreeDoMotor,
   endogamia,
   inversaAEsparsa,
+  endogamiaMeuwissenLuo,
   inversa_A,
+  listarProblemasPedigree,
   montarPedigree,
   podarPedigree,
   type AnimalPedigreeEntrada,
@@ -103,17 +107,131 @@ test('montarPedigree: autoparentesco e ciclo são cortados, nunca em silêncio',
   for (let i = 0; i < ped.ids.length; i++) assert.ok(ped.pai[i] < i);
 });
 
-test('montarPedigree: sexo incoerente e pai mais novo que o filho são contados', () => {
+test('montarPedigree: pai e mãe mais novos que o filho têm o vínculo cortado e listado', () => {
   const ped = montarPedigree([
-    { id: 1, pai: null, mae: null, sexo: 'Fêmea', nascimento: '2020-01-01' },
-    { id: 2, pai: null, mae: null, sexo: 'macho', nascimento: '2020-01-01' },
+    { id: 1, pai: null, mae: null, sexo: 'macho', nascimento: '2020-01-01' },
+    { id: 2, pai: null, mae: null, sexo: 'fêmea', nascimento: '2020-01-01' },
     { id: 3, pai: 1, mae: 2, sexo: 'fêmea', nascimento: '2019-06-01' },
   ]);
-  assert.deepEqual(ped.problemas.sexoIncoerente, [1, 2]);
+  assert.deepEqual(ped.problemas.nascimentoImpossivel, [
+    [3, 1, -214],
+    [3, 2, -214],
+  ]);
   assert.equal(ped.problemas.nascimentoIncoerente, 2);
+  const i3 = ped.indice.get(3)!;
+  assert.equal(ped.pai[i3], -1);
+  assert.equal(ped.mae[i3], -1);
 });
 
-test('endogamia (Meuwissen-Luo) = diagonal de A − 1 da porta, num pedigree endogâmico de 300', () => {
+test('montarPedigree: menos de uma gestação entre os nascimentos é impossível; uma gestação ou mais, não', () => {
+  const linhas = [
+    { id: 1, pai: null, mae: null, nascimento: '2020-01-01' },
+    { id: 2, pai: null, mae: null, nascimento: '2020-01-01' },
+    { id: 3, pai: 1, mae: null, nascimento: '2020-05-30' }, // 150 dias depois do pai
+    { id: 4, pai: null, mae: 2, nascimento: '2020-05-29' }, // 149 dias depois da mãe
+    { id: 5, pai: 1, mae: 2, nascimento: null }, // sem data: nada a conferir
+  ];
+  const sem = montarPedigree(linhas);
+  assert.equal(sem.problemas.nascimentoIncoerente, 0, 'sem gestação, só nascer depois é cortado');
+  const com = montarPedigree(linhas, { gestacaoDias: 150 });
+  assert.deepEqual(com.problemas.nascimentoImpossivel, [[4, 2, 149]]);
+  assert.equal(com.pai[com.indice.get(3)!], com.indice.get(1)!);
+  assert.equal(com.mae[com.indice.get(4)!], -1);
+  assert.equal(com.mae[com.indice.get(5)!], com.indice.get(2)!);
+});
+
+test('montarPedigree: sexo incoerente e animal pai-e-mãe são apontados sem mudar a conta', () => {
+  const ped = montarPedigree([
+    { id: 1, pai: null, mae: null, sexo: 'Fêmea', nascimento: '2018-01-01' },
+    { id: 2, pai: null, mae: null, sexo: 'macho', nascimento: '2018-01-01' },
+    { id: 3, pai: 1, mae: 2, sexo: 'fêmea', nascimento: '2020-06-01' },
+    { id: 4, pai: 3, mae: null, nascimento: '2022-01-01' },
+    { id: 5, pai: null, mae: 3, nascimento: '2022-02-01' },
+  ]);
+  // 3 é fêmea e aparece como pai de 4: também incoerente.
+  assert.deepEqual(ped.problemas.sexoIncoerente, [1, 2, 3]);
+  assert.deepEqual(ped.problemas.paiEMae, [3]);
+  assert.equal(ped.pai[ped.indice.get(3)!], ped.indice.get(1)!, 'o vínculo fica');
+  const lista = listarProblemasPedigree(ped.problemas);
+  assert.deepEqual(
+    lista.map((x) => [x.tipo, x.acao, x.quantidade]),
+    [
+      ['sexo_incoerente', 'apontado', 3],
+      ['pai_e_mae', 'apontado', 1],
+    ],
+  );
+});
+
+test('listarProblemasPedigree: um item por tipo que aconteceu, na ordem das regras, com até 5 exemplos', () => {
+  const linhas: AnimalPedigreeEntrada[] = [
+    { id: 1, pai: null, mae: null },
+    { id: 1, pai: null, mae: null },
+    { id: 2, pai: 2, mae: null },
+    ...Array.from({ length: 7 }, (_, k) => ({ id: 10 + k, pai: 900 + k, mae: null })),
+  ];
+  const lista = listarProblemasPedigree(montarPedigree(linhas).problemas);
+  assert.deepEqual(lista.map((x) => x.tipo), ['duplicado', 'autoparentesco', 'pai_ausente']);
+  const ausentes = lista.find((x) => x.tipo === 'pai_ausente')!;
+  assert.equal(ausentes.quantidade, 7);
+  assert.equal(ausentes.exemplos.length, 5);
+  assert.ok(lista.every((x) => x.acao === 'corrigido'));
+});
+
+/**
+ * Pedigree determinístico (Park–Miller, só inteiros abaixo de 2⁵³), gerado
+ * IGUAL em Python: 20 fundadores e 380 animais com pai e mãe sorteados entre
+ * todos os anteriores (cerca de 1/7 sem pai). Os números esperados abaixo são a
+ * saída de `melhoramento.parentesco.coeficientes_F` (A densa) do motor Python
+ * de central-melhoramento/laboratorio, rodado em 04/11/2026.
+ */
+function pedigreeDoMotor(): AnimalPedigreeEntrada[] {
+  let s = 2026;
+  const rnd = () => (s = (s * 48271) % 2147483647);
+  const linhas: AnimalPedigreeEntrada[] = [];
+  for (let i = 1; i <= 20; i++) linhas.push({ id: i, pai: null, mae: null });
+  for (let i = 21; i <= 400; i++) {
+    let a: number | null = 1 + (rnd() % (i - 1));
+    let b: number | null = 1 + (rnd() % (i - 1));
+    if (a === b) b = null;
+    if (rnd() % 7 === 0) a = null;
+    linhas.push({ id: i, pai: a, mae: b });
+  }
+  return linhas;
+}
+
+test('endogamia (Sargolzaei-Iwaisaki) = motor Python (A densa) no pedigree determinístico de 400', () => {
+  const ped = montarPedigree(pedigreeDoMotor());
+  const F = endogamia(ped);
+  const v = Array.from({ length: 400 }, (_, k) => F[ped.indice.get(k + 1)!]);
+  const tol = 1e-12;
+  assert.ok(Math.abs(v.reduce((a, x) => a + x, 0) - 8.737163543701172) < tol, 'Σ F');
+  assert.ok(Math.abs(v.reduce((a, x) => a + x * x, 0) - 0.9183330731029855) < tol, 'Σ F²');
+  assert.ok(Math.abs(Math.max(...v) - 0.31640625) < tol, 'máx F');
+  assert.equal(v.filter((x) => x > 0).length, 180, 'animais endogâmicos');
+  assert.ok(Math.abs(v[399] - 0.013671875) < tol);
+  assert.ok(Math.abs(v[398] - 0.0316162109375) < tol);
+  assert.ok(Math.abs(v[299] - 0.03125) < tol);
+  assert.equal(v[249], 0);
+});
+
+test('Sargolzaei-Iwaisaki = Meuwissen-Luo = A densa, em vários pedigrees sintéticos', () => {
+  for (const [n, semente] of [
+    [300, 11],
+    [500, 3],
+    [120, 99],
+  ]) {
+    const ped = montarPedigree(pedigreeSintetico(n, semente));
+    const si = endogamia(ped);
+    const ml = endogamiaMeuwissenLuo(ped);
+    const esperado = coeficientes_F(comoPedigreeDoMotor(ped));
+    ped.ids.forEach((id, i) => {
+      assert.ok(Math.abs(si[i] - ml[i]) < 1e-13, `SI vs ML em ${id}`);
+      assert.ok(Math.abs(si[i] - esperado[String(id)]) < 1e-12, `SI vs denso em ${id}`);
+    });
+  }
+});
+
+test('endogamia = diagonal de A − 1 da porta, num pedigree endogâmico de 300', () => {
   const ped = montarPedigree(pedigreeSintetico(300, 11));
   const F = endogamia(ped);
   const esperado = coeficientes_F(comoPedigreeDoMotor(ped));

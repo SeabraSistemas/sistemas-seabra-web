@@ -90,24 +90,25 @@ export const ESPECIES_MELHORAMENTO: Record<EspecieChave, EspecieMelhoramento> = 
     rotulo: 'Ovinos',
     fonte: 'rebanho+lactacao',
     leDados: true,
-    rodaModelos: false,
-    motivo:
-      'Nesta versão os ovinos têm só o diagnóstico dos dados. Os parâmetros dos modelos (h² 0,20 e ' +
-      '0,30, repetibilidade 0,36) são de caprinos leiteiros; rodar os mesmos números em ovelhas ' +
-      'seria afirmar um parâmetro que ninguém revisou para a espécie.',
+    rodaModelos: true,
+    motivo: null,
   },
   bovino_corte: {
     chave: 'bovino_corte',
     rotulo: 'Bovinos de corte',
     fonte: 'rebanho_bovino+pesagem_bovino+parto_bovino',
-    leDados: false,
-    rodaModelos: false,
-    motivo:
-      'Fora desta versão. Os dados moram em outras tabelas (rebanho_bovino, pesagem_bovino, ' +
-      'parto_bovino), a característica é peso ajustado (não leite) e o grupo de contemporâneos é ' +
-      'de manejo e desmama — outro desenho, que entra na próxima etapa sem mexer nas views de hoje.',
+    leDados: true,
+    rodaModelos: true,
+    motivo: null,
   },
 };
+
+/** Espécies de leite (lactação repetida); bovino de corte tem desenho próprio (corte.ts). */
+export type EspecieLeite = Exclude<EspecieChave, 'bovino_corte'>;
+
+export function ehEspecieLeite(e: EspecieChave): e is EspecieLeite {
+  return e === 'caprino' || e === 'ovino';
+}
 
 export function especieValida(v: unknown): EspecieChave | null {
   return typeof v === 'string' && v in ESPECIES_MELHORAMENTO ? (v as EspecieChave) : null;
@@ -117,7 +118,7 @@ export function especieValida(v: unknown): EspecieChave | null {
 // Características
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type CaracteristicaChave = 'media_diaria' | 'total_lactacao';
+export type CaracteristicaChave = 'media_diaria' | 'total_lactacao' | 'p210';
 
 export interface CaracteristicaInfo {
   chave: CaracteristicaChave;
@@ -176,6 +177,19 @@ export const CARACTERISTICAS: Record<CaracteristicaChave, CaracteristicaInfo> = 
       'Litros do parto ao encerramento (lactacao.total_leite). Carrega a duração junto — que mistura ' +
       'genética (persistência) com manejo e com fim inferido pelo app.',
   },
+  p210: {
+    chave: 'p210',
+    rotulo: 'Peso padronizado aos 210 dias',
+    rotuloCurto: 'P210',
+    unidade: 'kg',
+    casas: 0,
+    principal: true,
+    // Bovino de corte não tem lactação: o valor vem de corte.ts (padronizarP210).
+    valor: () => null,
+    descricao:
+      'Peso à desmama padronizado aos 210 dias de idade, das pesagens entre 150 e 270 dias (janela do CDP ' +
+      'da ABCZ, 2023). Calculado em src/lib/melhoramento/corte.ts.',
+  },
 };
 
 export const ORDEM_CARACTERISTICAS: CaracteristicaChave[] = ['media_diaria', 'total_lactacao'];
@@ -184,6 +198,28 @@ export const ORDEM_CARACTERISTICAS: CaracteristicaChave[] = ['media_diaria', 'to
 // Configuração
 // ─────────────────────────────────────────────────────────────────────────────
 
+/** Um par (h², r) do BLUP e do índice da fêmea, com a fonte escrita ao lado. */
+export interface ParBlup {
+  h2: number;
+  r: number;
+  fonte: string;
+}
+
+/**
+ * O REML da fazenda (reml.ts). Os limiares de confiança são do MÓDULO, não da
+ * literatura: quem discordar muda o número aqui, e a tela mostra o motivo.
+ */
+export interface ConfigReml {
+  ativo: boolean;
+  /** Acima disto (incógnitas de [GC, a] depois de absorver o pe), não estima. */
+  limiteIncognitas: number;
+  /** Abaixo disto (lactações), a estimativa não é usada. */
+  registrosMinimos: number;
+  /** Abaixo disto (fêmeas com 2+ lactações), o ambiente permanente não se separa do resíduo. */
+  femeasRepetidasMinimas: number;
+  iteracoesMax: number;
+}
+
 export interface ConfigAnalise {
   /** Lactação mais curta que isto (dias) não é comparável: aborto, morte, venda. */
   duracaoMinima: number;
@@ -191,13 +227,24 @@ export interface ConfigAnalise {
   duracaoMaxima: number;
   /** Grupo de contemporâneas com menos lactações que isto sai da análise. */
   tamanhoMinimoGrupo: number;
-  /** Herdabilidades do BLUP e do índice da fêmea. */
-  h2: number[];
-  /** Repetibilidade do BLUP e do índice. */
-  rBlup: number;
+  /** Primeira lactação estimada com idade abaixo disto (dias) = primípara. */
+  idadeMaximaPrimiparaDias: number;
+  /**
+   * Gestação da espécie (dias), para a validação do pedigree: pai ou mãe que
+   * nasceu menos que isto antes do filho não pode ser pai ou mãe dele.
+   */
+  gestacaoDias: number;
+  /** Pares (h², r) do BLUP e do índice da fêmea. */
+  blup: ParBlup[];
   /** Repetibilidades da MPPA. */
   rMppa: number[];
-  /** Acima disto (incógnitas), Gauss-Seidel em vez de Cholesky. */
+  fonteMppa: string;
+  reml: ConfigReml;
+  /**
+   * Acima disto (incógnitas), Cholesky ESPARSO em vez do denso. Os dois dão a
+   * mesma solução e a mesma PEV (testes); o esparso foi 10× mais rápido numa
+   * fazenda de ovinos de 1.543 incógnitas (45 contra 480 ms, 04/11/2026).
+   */
   limiteDenso: number;
   /** Fêmeas na validação abaixo das quais nenhum modelo é declarado melhor. */
   minimoVencedor: number;
@@ -208,28 +255,100 @@ export interface ConfigAnalise {
 }
 
 /**
- * Os valores da literatura de caprinos leiteiros que o pedido do Felipe fixou:
- * h² 0,20 e 0,30 com r 0,36 no BLUP; MPPA com r 0,36, 0,44 e 0,50. Nenhum é
- * estimado com o rebanho.
+ * O REML usa o Cholesky esparso com a inversa seletiva (numerico.ts): numa
+ * fazenda de ovinos de 1.022 incógnitas, 11 voltas de AI levaram 0,1 s. O teto
+ * de 20.000 incógnitas só protege a requisição de um cadastro fora do comum.
+ */
+export const CONFIG_REML_PADRAO: ConfigReml = {
+  ativo: true,
+  limiteIncognitas: 20000,
+  registrosMinimos: 100,
+  femeasRepetidasMinimas: 30,
+  iteracoesMax: 40,
+};
+
+/**
+ * 150 dias: a mesma constante de gestação do pequeno ruminante que o app usa
+ * (comentário de public.parametros_reproducao_bovino: "A constante de 150 dias
+ * do pequeno ruminante NÃO muda").
+ */
+export const GESTACAO_PEQUENO_RUMINANTE = 150;
+
+/**
+ * CAPRINOS. Os valores da literatura de caprinos leiteiros que o pedido do
+ * Felipe fixou na etapa 1: h² 0,20 e 0,30 com r 0,36 no BLUP; MPPA com r 0,36,
+ * 0,44 e 0,50. Fonte: reports/Avaliação genética de caprinos leiteiros.md — a
+ * r 0,36 é a repetibilidade da PL305 da Saanen brasileira (Embrapa 2015, na
+ * tabela de parâmetros e no Exemplo 6); h² 0,20 é a do exemplo do relatório e
+ * 0,30 fica dentro da faixa de 0,10 a 0,41 da mesma tabela. Nenhum é estimado
+ * com o rebanho (o REML da fazenda é um modelo À PARTE, ver reml.ts).
  */
 export const CONFIG_PADRAO: ConfigAnalise = {
   duracaoMinima: 60,
   duracaoMaxima: 600,
   tamanhoMinimoGrupo: 5,
-  h2: [0.2, 0.3],
-  rBlup: 0.36,
+  idadeMaximaPrimiparaDias: Math.round(30 * 30.4375),
+  gestacaoDias: GESTACAO_PEQUENO_RUMINANTE,
+  blup: [
+    { h2: 0.2, r: 0.36, fonte: 'caprinos: h² do Exemplo 6 do relatório; r da PL305 Saanen (Embrapa 2015)' },
+    { h2: 0.3, r: 0.36, fonte: 'caprinos: h² dentro da faixa 0,10–0,41 do relatório; r da PL305 Saanen (Embrapa 2015)' },
+  ],
   rMppa: [0.36, 0.44, 0.5],
-  limiteDenso: 2000,
+  fonteMppa: 'caprinos: 0,36 (PL305 Saanen, Embrapa 2015) e a sensibilidade 0,44 e 0,50 do relatório',
+  reml: CONFIG_REML_PADRAO,
+  limiteDenso: 300,
   minimoVencedor: 30,
   minimoValidacao: 10,
   tamanhoRanking: 30,
 };
 
+/**
+ * OVINOS LEITEIROS. Fonte: reports/Avaliação genética de ovinos leiteiros.md,
+ * tabela "Herdabilidades de 0,10 a 0,37 para o leite e repetibilidades de 0,41
+ * a 0,50", e a regra da seção "Não estimar parâmetros e comparar com
+ * contemporâneas" ("quando a fonte deixa dúvida, com dois valores"):
+ *
+ *   h² 0,30 com r 0,50   avaliação nacional da Lacaune (Larroque 2011, p. 14);
+ *   h² 0,24 com r 0,41   Lacaune, ordenha de 2019–2022 (Vouraki et al. 2025).
+ *
+ * São os dois pares (h², r) publicados JUNTOS na mesma fonte — não se mistura
+ * a h² de uma com a r de outra. A MPPA usa as duas repetibilidades com fonte,
+ * 0,41 e 0,50, como o Exemplo 5 do relatório.
+ *
+ * O GRUPO DE CONTEMPORÂNEAS é o mesmo das cabras — fazenda × ano × estação do
+ * parto (trimestre) × primípara ou adulta —, que é o que o relatório recomenda
+ * para rebanhos pequenos ("juntar as ordens 2 em diante, agrupar a estação por
+ * trimestre"). O sistema de mamada (TMM × TMY), que o relatório também põe no
+ * grupo, não existe no app; fica escrito na tela como limitação.
+ *
+ * O CORTE DE PRIMÍPARA (30 meses) também é o das cabras, e foi conferido nos
+ * dados em 04/11/2026: das 2.244 primeiras lactações de ovelhas sem parto
+ * anterior no cadastro, 67% estão entre 12 e 24 meses e só 6,6% entre 24 e 30;
+ * a mesma depressão aparece nas cabras. Nada nos dados pede outro corte, e a
+ * literatura lida não dá um.
+ */
+export const CONFIG_OVINO: ConfigAnalise = {
+  ...CONFIG_PADRAO,
+  blup: [
+    { h2: 0.24, r: 0.41, fonte: 'ovinos: Lacaune, ordenha 2019–2022 (Vouraki et al. 2025)' },
+    { h2: 0.3, r: 0.5, fonte: 'ovinos: avaliação nacional da Lacaune (Larroque 2011, p. 14)' },
+  ],
+  rMppa: [0.41, 0.5],
+  fonteMppa: 'ovinos: 0,41 (Vouraki et al. 2025) e 0,50 (Larroque 2011), como no Exemplo 5 do relatório',
+};
+
+export function configDaEspecie(e: EspecieChave): ConfigAnalise {
+  return e === 'ovino' ? CONFIG_OVINO : CONFIG_PADRAO;
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Modelos
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type FamiliaModelo = 'desvio_gc' | 'mppa' | 'blup' | 'indice';
+export type FamiliaModelo = 'desvio_gc' | 'mppa' | 'blup' | 'indice' | 'blup_reml';
+
+/** A chave do modelo de variâncias estimadas na fazenda (uma por característica). */
+export const CHAVE_BLUP_REML = 'blup_reml';
 
 export interface ModeloInfo {
   chave: string;
@@ -271,27 +390,46 @@ export function modelosDaConfig(c: ConfigAnalise): ModeloInfo[] {
       previsao: 'a MPPA',
     });
   }
-  for (const h2 of c.h2) {
+  for (const { h2, r } of c.blup) {
     lista.push({
-      chave: `blup_h2${h2}_r${c.rBlup}`,
+      chave: chaveBlup(h2, r),
       familia: 'blup',
-      rotulo: `BLUP repetibilidade (h² ${dec(h2)}, r ${dec(c.rBlup)})`,
+      rotulo: `BLUP repetibilidade (h² ${dec(h2)}, r ${dec(r)})`,
       h2,
-      r: c.rBlup,
+      r,
       valorRanking: 'EBV do modelo animal (GC fixo, A⁻¹, ambiente permanente)',
       previsao: 'EBV + ambiente permanente (â + p̂)',
     });
   }
-  for (const h2 of c.h2) {
+  for (const { h2, r } of c.blup) {
     lista.push({
-      chave: `indice_h2${h2}_r${c.rBlup}`,
+      chave: chaveIndice(h2, r),
       familia: 'indice',
-      rotulo: `Índice da fêmea (h² ${dec(h2)}, r ${dec(c.rBlup)})`,
+      rotulo: `Índice da fêmea (h² ${dec(h2)}, r ${dec(r)})`,
       h2,
-      r: c.rBlup,
-      valorRanking: 'EBV por índice: registros próprios + EBV do pai tirado do BLUP de mesma h²',
+      r,
+      valorRanking: 'EBV por índice: registros próprios + EBV do pai tirado do BLUP de mesmo (h², r)',
       previsao: 'o mesmo índice com alvo na capacidade de produção (a + pe)',
     });
   }
+  if (c.reml.ativo) {
+    lista.push({
+      chave: CHAVE_BLUP_REML,
+      familia: 'blup_reml',
+      rotulo: 'BLUP com variâncias estimadas na fazenda (REML)',
+      h2: null,
+      r: null,
+      valorRanking: 'EBV do mesmo modelo animal, com σ²a, σ²pe e σ²e estimados por AI-REML nos dados da fazenda',
+      previsao: 'EBV + ambiente permanente (â + p̂), com as variâncias estimadas',
+    });
+  }
   return lista;
+}
+
+export function chaveBlup(h2: number, r: number): string {
+  return `blup_h2${h2}_r${r}`;
+}
+
+export function chaveIndice(h2: number, r: number): string {
+  return `indice_h2${h2}_r${r}`;
 }

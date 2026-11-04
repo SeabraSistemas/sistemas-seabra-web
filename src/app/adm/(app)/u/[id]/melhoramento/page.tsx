@@ -1,25 +1,39 @@
 import Link from 'next/link';
 import { EstadoVazio } from '@/components/adm/EstadoVazio';
+import { ComoLemosCorte, PainelDiagnosticoCorte } from '@/components/adm/melhoramento/BlocosCorte';
 import {
   AvisoInterno,
   ComoLemosMelhoramento,
+  ListaRankings,
   PainelDiagnostico,
+  PainelReml,
   Rankings,
   TabelaValidacao,
 } from '@/components/adm/melhoramento/BlocosMelhoramento';
-import { getMelhoramentoFazenda, listarFazendasMelhoramento } from '@/lib/adm/areas/melhoramento';
+import { HistoricoRodadasBloco } from '@/components/adm/melhoramento/BlocosRodadas';
+import {
+  getHistoricoRodadas,
+  getMelhoramentoCorte,
+  getMelhoramentoFazenda,
+  listarFazendasCorte,
+  listarFazendasMelhoramento,
+  type HistoricoRodadas,
+} from '@/lib/adm/areas/melhoramento';
 import { lerSelecaoParam } from '@/lib/adm/escopo';
-import { formatarDataHora, formatarInteiro } from '@/lib/adm/format';
+import { formatarDataHora, formatarInteiro, formatarNumero } from '@/lib/adm/format';
 import { getEscopo } from '@/lib/adm/queries';
-import type { PropriedadeEscopo } from '@/lib/adm/types';
-import type { AnaliseFazenda } from '@/lib/melhoramento/analise';
+import type { PropriedadeEscopo, Resultado } from '@/lib/adm/types';
+import type { AtualParaComparar } from '@/lib/melhoramento/rodada';
 import {
   CARACTERISTICAS,
   ESPECIES_MELHORAMENTO,
   ORDEM_CARACTERISTICAS,
+  ehEspecieLeite,
   especieValida,
   type CaracteristicaChave,
   type EspecieChave,
+  type EspecieLeite,
+  type ModeloInfo,
 } from '@/lib/melhoramento/tipos';
 import { cn } from '@/lib/utils';
 
@@ -36,11 +50,15 @@ import { cn } from '@/lib/utils';
  *
  * NADA DE OUTRA FAZENDA aparece aqui: a análise lê só as linhas desta
  * propriedade, e o resumo entre fazendas e os candidatos a mesmo reprodutor
- * moram em /adm/melhoramento, que é a única tela que junta clientes.
+ * moram em /adm/melhoramento, que é a única tela que junta clientes. (No
+ * corte, o pai ou a mãe transferido para outra fazenda entra só no pedigree,
+ * sem registro e sem o número aparecer.)
  *
- * Somente leitura e cálculo sob demanda: nada é gravado.
+ * Somente leitura e cálculo sob demanda: nada é gravado. O histórico de
+ * rodadas é LIDO de adm.melhoramento_rodada (gravado pelo script).
  */
 export const dynamic = 'force-dynamic';
+export const maxDuration = 60;
 
 const TETO_FAZENDAS = 15;
 
@@ -122,6 +140,11 @@ async function EscolherFazenda({
   );
 }
 
+interface OpcaoEspecie {
+  especie: EspecieChave;
+  rotulo: string;
+}
+
 async function UmaFazenda({
   propriedade,
   usuarioId,
@@ -133,8 +156,11 @@ async function UmaFazenda({
   especiePedida: EspecieChave | null;
   caracteristicaPedida: string | undefined;
 }) {
-  // Quais espécies desta fazenda têm rebanho — a fazenda pode ter cabras e ovelhas.
-  const fazRes = await listarFazendasMelhoramento({ propriedadeId: propriedade.id });
+  // Quais espécies desta fazenda têm rebanho — cabras, ovelhas e/ou bovinos de corte.
+  const [fazRes, corteRes] = await Promise.all([
+    listarFazendasMelhoramento({ propriedadeId: propriedade.id }),
+    listarFazendasCorte(propriedade.id),
+  ]);
   if (!fazRes.ok) {
     return (
       <div className="flex flex-col gap-4">
@@ -143,80 +169,112 @@ async function UmaFazenda({
       </div>
     );
   }
-  const especies = fazRes.dados
+  const opcoes: OpcaoEspecie[] = fazRes.dados
     .filter((f) => especieValida(f.especie) != null)
-    .sort((a, b) => b.lactacoes - a.lactacoes);
-  if (especies.length === 0) {
+    .sort((a, b) => b.lactacoes - a.lactacoes)
+    .map((f) => ({
+      especie: especieValida(f.especie)!,
+      rotulo: `${ESPECIES_MELHORAMENTO[especieValida(f.especie)!].rotulo} · ${formatarInteiro(f.lactacoes)} lactações`,
+    }));
+  // Corte: a view de corte pode faltar (melhoramento_04 não aplicado) sem derrubar a aba de leite.
+  const corte = corteRes.ok ? corteRes.dados.find((f) => f.animais > 0) : undefined;
+  if (corte) {
+    opcoes.push({
+      especie: 'bovino_corte',
+      rotulo: `${ESPECIES_MELHORAMENTO.bovino_corte.rotulo} · ${formatarInteiro(corte.animais_janela)} pesados na desmama`,
+    });
+  }
+  if (opcoes.length === 0) {
     return (
       <div className="flex flex-col gap-4">
         <AvisoInterno />
         <p className="painel text-sm text-muted-foreground">
-          {propriedade.nome} não tem cabras nem ovelhas cadastradas. Bovinos de corte ficam fora desta versão:{' '}
-          {ESPECIES_MELHORAMENTO.bovino_corte.motivo}
+          {propriedade.nome} não tem cabras, ovelhas nem bovinos de corte cadastrados.
+          {!corteRes.ok && ` (Bovinos de corte: ${corteRes.detalhe})`}
         </p>
       </div>
     );
   }
-  const especie =
-    (especiePedida && especies.find((e) => e.especie === especiePedida)?.especie) ?? especies[0].especie;
-  const esp = especieValida(especie)!;
+  const esp = (especiePedida && opcoes.find((e) => e.especie === especiePedida)?.especie) ?? opcoes[0].especie;
   const caracteristica: CaracteristicaChave = ORDEM_CARACTERISTICAS.includes(caracteristicaPedida as CaracteristicaChave)
     ? (caracteristicaPedida as CaracteristicaChave)
     : 'media_diaria';
-
-  const res = await getMelhoramentoFazenda(propriedade.id, esp);
   const base = `/adm/u/${usuarioId}/melhoramento?prop=${propriedade.id}`;
+  const historico = await getHistoricoRodadas(propriedade.id, esp);
 
   return (
     <div className="flex flex-col gap-5">
       <AvisoInterno />
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-2">
-          {especies.map((e) => (
-            <Pilula
-              key={e.especie}
-              href={`${base}&esp=${e.especie}&carac=${caracteristica}`}
-              ativa={e.especie === esp}
-            >
-              {ESPECIES_MELHORAMENTO[especieValida(e.especie)!].rotulo} · {formatarInteiro(e.lactacoes)} lactações
-            </Pilula>
-          ))}
-          <span className="mx-1 h-4 w-px bg-border" aria-hidden />
-          {ORDEM_CARACTERISTICAS.map((c) => (
-            <Pilula key={c} href={`${base}&esp=${esp}&carac=${c}`} ativa={c === caracteristica}>
-              {CARACTERISTICAS[c].rotulo}
-              {CARACTERISTICAS[c].principal ? ' (principal)' : ''}
-            </Pilula>
-          ))}
-        </div>
-        {res.ok && (
-          <p className="text-xs text-muted-foreground">
-            Calculado em {formatarDataHora(new Date(res.dados.calculadoEm))} · {res.dados.analise.versaoMotor} · cache
-            de 5 min
-          </p>
+      <div className="flex flex-wrap items-center gap-2">
+        {opcoes.map((e) => (
+          <Pilula key={e.especie} href={`${base}&esp=${e.especie}&carac=${caracteristica}`} ativa={e.especie === esp}>
+            {e.rotulo}
+          </Pilula>
+        ))}
+        {ehEspecieLeite(esp) && (
+          <>
+            <span className="mx-1 h-4 w-px bg-border" aria-hidden />
+            {ORDEM_CARACTERISTICAS.map((c) => (
+              <Pilula key={c} href={`${base}&esp=${esp}&carac=${c}`} ativa={c === caracteristica}>
+                {CARACTERISTICAS[c].rotulo}
+                {CARACTERISTICAS[c].principal ? ' (principal)' : ''}
+              </Pilula>
+            ))}
+          </>
         )}
       </div>
 
-      {!res.ok ? (
-        <EstadoVazio resultado={res} />
+      {ehEspecieLeite(esp) ? (
+        <Leite propriedadeId={propriedade.id} especie={esp} caracteristica={caracteristica} historico={historico} />
       ) : (
-        <Conteudo analise={res.dados.analise} caracteristica={caracteristica} />
+        <Corte propriedadeId={propriedade.id} historico={historico} />
       )}
     </div>
   );
 }
 
-function Conteudo({
-  analise: a,
-  caracteristica,
+function Hora({ calculadoEm, versao }: { calculadoEm: number; versao: string }) {
+  return (
+    <p className="text-xs text-muted-foreground">
+      Calculado em {formatarDataHora(new Date(calculadoEm))} · {versao} · cache de 5 min
+    </p>
+  );
+}
+
+function Historico({
+  historico,
+  atual,
+  modelos,
 }: {
-  analise: AnaliseFazenda;
-  caracteristica: CaracteristicaChave;
+  historico: Resultado<HistoricoRodadas>;
+  atual: AtualParaComparar[];
+  modelos: ModeloInfo[];
 }) {
+  if (!historico.ok) {
+    return <p className="painel text-xs text-muted-foreground">Rodadas gravadas indisponíveis: {historico.detalhe}</p>;
+  }
+  return <HistoricoRodadasBloco historico={historico.dados} atual={atual} modelos={modelos} />;
+}
+
+async function Leite({
+  propriedadeId,
+  especie,
+  caracteristica,
+  historico,
+}: {
+  propriedadeId: number;
+  especie: EspecieLeite;
+  caracteristica: CaracteristicaChave;
+  historico: Resultado<HistoricoRodadas>;
+}) {
+  const res = await getMelhoramentoFazenda(propriedadeId, especie);
+  if (!res.ok) return <EstadoVazio resultado={res} />;
+  const a = res.dados.analise;
   const c = a.caracteristicas.find((x) => x.caracteristica === caracteristica) ?? null;
   return (
     <>
+      <Hora calculadoEm={res.dados.calculadoEm} versao={a.versaoMotor} />
       <PainelDiagnostico diagnostico={a.diagnostico} />
 
       {!a.rodouModelos ? (
@@ -231,6 +289,12 @@ function Conteudo({
       ) : (
         <>
           <TabelaValidacao validacao={c.validacao} modelos={a.modelos} caracteristica={caracteristica} />
+          <PainelReml
+            completo={c.reml}
+            treino={c.validacao.reml}
+            caracteristica={caracteristica}
+            literatura={a.config.blup.map((p) => `h² ${formatarNumero(p.h2, 2)} e r ${formatarNumero(p.r, 2)}`).join('; ')}
+          />
           {c.avisos.length > 0 && (
             <ul className="painel list-disc pl-8 text-sm text-muted-foreground">
               {c.avisos.map((t) => (
@@ -241,17 +305,80 @@ function Conteudo({
           <Rankings caracteristica={c} modelos={a.modelos} tipo="femeas" />
           <Rankings caracteristica={c} modelos={a.modelos} tipo="reprodutores" />
           <p className="text-xs text-muted-foreground">
-            BLUP: {c.blup.map((b) => `${b.metodo === 'densa' ? 'Cholesky denso' : `Gauss-Seidel (${formatarInteiro(b.iteracoes)} voltas)`}, ${formatarInteiro(b.incognitas)} incógnitas`).join(' · ')}
+            BLUP: {c.blup.map((b) => `${ROTULO_SOLVER[b.metodo]}${b.iteracoes != null ? ` (${formatarInteiro(b.iteracoes)} voltas)` : ''}, ${formatarInteiro(b.incognitas)} incógnitas`).join(' · ')}
             . {formatarInteiro(c.registros)} lactações de {formatarInteiro(c.femeas)} fêmeas em{' '}
             {formatarInteiro(c.grupos)} grupos.
           </p>
         </>
       )}
 
+      <Historico
+        historico={historico}
+        modelos={a.modelos}
+        atual={a.caracteristicas.map((x) => ({ caracteristica: x.caracteristica, validacao: x.validacao, ranking: x.rankingFemeas }))}
+      />
       <ComoLemosMelhoramento config={a.config} modelos={a.modelos} />
     </>
   );
 }
+
+async function Corte({ propriedadeId, historico }: { propriedadeId: number; historico: Resultado<HistoricoRodadas> }) {
+  const res = await getMelhoramentoCorte(propriedadeId);
+  if (!res.ok) return <EstadoVazio resultado={res} />;
+  const a = res.dados.analise;
+  return (
+    <>
+      <Hora calculadoEm={res.dados.calculadoEm} versao={a.versaoMotor} />
+      <PainelDiagnosticoCorte diagnostico={a.diagnostico} />
+      {!a.rodouModelos || !a.validacao ? (
+        <p className="painel text-sm text-muted-foreground">
+          <strong className="font-medium text-foreground">Modelos não rodaram.</strong> {a.motivoSemModelos}
+        </p>
+      ) : (
+        <>
+          <TabelaValidacao
+            validacao={a.validacao}
+            modelos={a.modelos}
+            caracteristica="p210"
+            titulo="Validação para frente: quem prevê melhor o último bezerro de cada vaca"
+          />
+          {a.avisos.length > 0 && (
+            <ul className="painel list-disc pl-8 text-sm text-muted-foreground">
+              {a.avisos.map((t) => (
+                <li key={t}>{t}</li>
+              ))}
+            </ul>
+          )}
+          <ListaRankings titulo="Ranking dos bezerros" rankings={a.rankingBezerros} modelos={a.modelos} caracteristica="p210" tipo="bezerros" />
+          <ListaRankings titulo="Ranking dos touros" rankings={a.rankingTouros} modelos={a.modelos} caracteristica="p210" tipo="touros" />
+          <ListaRankings
+            titulo="Ranking das vacas (capacidade de desmama)"
+            rankings={a.rankingMatrizes}
+            modelos={a.modelos}
+            caracteristica="p210"
+            tipo="matrizes"
+          />
+          <p className="text-xs text-muted-foreground">
+            BLUP: {a.blup.map((b) => `${ROTULO_SOLVER[b.metodo]}${b.iteracoes != null ? ` (${formatarInteiro(b.iteracoes)} voltas)` : ''}, ${formatarInteiro(b.incognitas)} incógnitas`).join(' · ')}
+            . {formatarInteiro(a.diagnostico.registros)} bezerros com P210.
+          </p>
+        </>
+      )}
+      <Historico
+        historico={historico}
+        modelos={a.modelos}
+        atual={[{ caracteristica: 'p210', validacao: a.validacao, ranking: a.rankingBezerros }]}
+      />
+      <ComoLemosCorte config={a.config} modelos={a.modelos} />
+    </>
+  );
+}
+
+const ROTULO_SOLVER: Record<string, string> = {
+  densa: 'Cholesky denso',
+  esparsa: 'Cholesky esparso',
+  gauss_seidel: 'Gauss-Seidel',
+};
 
 function Pilula({ href, ativa, children }: { href: string; ativa: boolean; children: React.ReactNode }) {
   return (

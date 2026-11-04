@@ -13,13 +13,13 @@
  *   reprodutoresConectores   reprodutores (pelo id do app) com filhas em 2+
  *                            fazendas. É a conexão de verdade.
  *   candidatosMesmoAnimal    reprodutores de fazendas DIFERENTES com o mesmo
- *                            nome ou o mesmo número (normalizados). Hoje o app
- *                            não tem cadastro único de reprodutores, então o
- *                            mesmo bode comprado ou usado em IA vira um animal
- *                            novo em cada fazenda. Estes são CANDIDATOS: nome
- *                            repetido pode ser coincidência. Só a página
- *                            interna /adm/melhoramento os lista — nunca a ficha
- *                            de um cliente, que não pode ver animal de outro.
+ *                            nome ou o mesmo número (normalizados) — a regra
+ *                            de identidade da etapa 1, em memória. Desde a
+ *                            etapa 2 os candidatos GRAVADOS (com registro,
+ *                            pais, nascimento e confirmação) saem de
+ *                            melhoramento.gerar_vinculos() e são usados por
+ *                            vinculos.ts; esta função fica como a referência
+ *                            em TypeScript da normalização e dos mínimos.
  */
 
 import type { AnimalEntrada } from '@/lib/melhoramento/tipos';

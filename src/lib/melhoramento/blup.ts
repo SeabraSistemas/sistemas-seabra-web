@@ -18,11 +18,12 @@
  *    com o grupo de contemporâneas fixo, A⁻¹ de Henderson/Quaas sem montar A
  *    (parentesco.ts) e um nível de ambiente permanente por fêmea com registro.
  *    Até `limiteDenso` incógnitas, resolve por Cholesky denso e tira a PEV
- *    exata só dos animais pedidos; acima disso, Gauss-Seidel esparso, sem PEV
- *    (e a tela diz). Os testes conferem os dois caminhos contra a porta.
+ *    exata só dos animais pedidos; acima disso, Cholesky esparso com a PEV
+ *    exata pela inversa seletiva; Gauss-Seidel só se o fator não couber. Os
+ *    testes conferem os três caminhos contra a porta.
  *
  * As variâncias são SEMPRE parâmetros (h², r e a escala σ²P): nada aqui as
- * estima com o rebanho. EBV, ranking e confiabilidade não dependem de σ²P —
+ * estima com o rebanho — quem estima é reml.ts, num modelo à parte. EBV, ranking e confiabilidade não dependem de σ²P —
  * só das razões λ —, e por isso a escala pode vir do próprio dado sem que isso
  * seja "estimar parâmetro": ela só põe a PEV em litros².
  */
@@ -32,9 +33,12 @@ import {
   choleskyDiagonalInversa,
   choleskyEmLugar,
   choleskyResolver,
+  fatorarEsparso,
   gaussSeidelEsparso,
   inversa,
+  inversaSeletiva,
   resolver,
+  resolverEsparso,
 } from '@/lib/melhoramento/numerico';
 import { bif_de_rel, rel_de_pev } from '@/lib/melhoramento/indices';
 import {
@@ -223,25 +227,39 @@ export interface RegistroRepetibilidade {
   /** Índice do grupo de contemporâneas, 0..nGrupos−1. Todo grupo precisa de registro. */
   grupo: number;
   y: number;
+  /**
+   * Dono do nível do efeito ambiental (posição em `ped.ids`). Padrão: o próprio
+   * animal — o ambiente permanente das lactações repetidas. No corte, a MÃE do
+   * bezerro: o ambiente comum de Mrode et al. (2023), Exemplo 5.2.
+   */
+  nivelPe?: number;
 }
+
+export type SolverMme = 'auto' | 'densa' | 'esparsa' | 'gauss_seidel';
 
 export interface OpcoesRepetibilidade {
   /** Posições (em `ped.ids`) dos animais que precisam de PEV. Vazio = nenhuma. */
   pevPara?: readonly number[];
-  /** Acima disto (incógnitas), Gauss-Seidel em vez de Cholesky. */
+  /** Acima disto (incógnitas), 'auto' troca o Cholesky denso pelo esparso. */
   limiteDenso?: number;
+  /**
+   * 'auto' (padrão): denso até `limiteDenso`, esparso acima; Gauss-Seidel só
+   * se o fator esparso passar do teto de memória. 'gauss_seidel' força o
+   * caminho iterativo (sem PEV), para conferência.
+   */
+  solver?: SolverMme;
 }
 
 export interface ResultadoRepetibilidade {
-  metodo: 'densa' | 'gauss_seidel';
+  metodo: 'densa' | 'esparsa' | 'gauss_seidel';
   incognitas: number;
-  /** Voltas do Gauss-Seidel; null no caminho denso. */
+  /** Voltas do Gauss-Seidel; null nos caminhos diretos. */
   iteracoes: number | null;
   convergiu: boolean;
   grupos: Float64Array;
   /** EBV de cada animal de `ped.ids`. */
   ebv: Float64Array;
-  /** Ambiente permanente de cada animal de `ped.ids` (0 para quem não tem registro). */
+  /** Efeito ambiental no dono de cada nível (0 para quem não é dono de nível). */
   pe: Float64Array;
   F: Float64Array;
   /** PEV e REL por animal de `ped.ids`; NaN onde não foi pedida ou não dá para calcular. */
@@ -251,24 +269,37 @@ export interface ResultadoRepetibilidade {
   pevCalculada: boolean;
 }
 
-/** 2.000 incógnitas: 32 MB de matriz e ~3 × 10⁹ operações no Cholesky — o teto de uma requisição. */
+/** 2.000 incógnitas: 32 MB de matriz e ~3 × 10⁹ operações no Cholesky denso. */
 export const LIMITE_DENSO_PADRAO = 2000;
 
+interface NivelPe {
+  n: number;
+  soma: number;
+  grupos: Map<number, number>;
+  animais: Map<number, number>;
+}
+
 /**
- * O modelo de repetibilidade de uma fazenda.
+ * O modelo de repetibilidade de uma fazenda (ou o animal com ambiente comum
+ * da mãe, no corte: muda só o dono do nível, `nivelPe`).
  *
- * ABSORÇÃO DO AMBIENTE PERMANENTE. O bloco pe-pe das MME é DIAGONAL (cada
- * registro tem um nível só, o da própria fêmea): W'W + λpe·I. Dá para
- * eliminá-lo exatamente antes de fatorar — o complemento de Schur
+ * ABSORÇÃO DO EFEITO AMBIENTAL. O bloco pe-pe das MME é DIAGONAL (cada
+ * registro tem um nível só): W'W + λpe·I. Dá para eliminá-lo exatamente antes
+ * de fatorar — o complemento de Schur
  *
  *     M* = M₁₁ − M₁₂·D⁻¹·M₂₁ ,  b* = b₁ − M₁₂·D⁻¹·b₂ ,  D = W'W + λpe·I
  *
  * tem as mesmas soluções de GC e de â, e a inversa de M* é EXATAMENTE o bloco
- * [GC, a] da inversa completa, então a PEV não muda. Numa fazenda de 350
- * cabras isso tira 350 incógnitas de um sistema de 1.100 — o Cholesky fica
- * três vezes mais barato. Depois, p̂_j = (b_pe,j − Σ_g n_jg·ĝ_g − n_j·â_j)/D_j.
- * O Exemplo 5.1 de Mrode confere tudo isso a 1e-9 contra a porta densa, que
- * não absorve nada.
+ * [GC, a] da inversa completa, então a PEV não muda. Depois,
+ * p̂_j = (b_pe,j − Σ_g n_jg·ĝ_g − Σ_a n_ja·â_a)/D_j. O Exemplo 5.1 de Mrode
+ * confere tudo isso a 1e-9 contra a porta densa, que não absorve nada; o 5.2
+ * (ambiente comum da mãe) confere o dono trocado.
+ *
+ * TRÊS CAMINHOS. Até `limiteDenso` incógnitas, Cholesky denso com a PEV dos
+ * animais pedidos. Acima, Cholesky esparso com grau mínimo e PEV pela inversa
+ * seletiva de Takahashi (numerico.ts) — exata, como a densa. Gauss-Seidel só
+ * quando o fator esparso não cabe no teto de memória (ou é pedido), e aí sem
+ * PEV, e a tela diz.
  */
 export function modeloRepetibilidade(
   ped: PedigreeMontado,
@@ -284,9 +315,7 @@ export function modeloRepetibilidade(
   const M = new MatrizEsparsa(n);
   const b = new Float64Array(n);
   const comRegistro = new Uint8Array(nGrupos);
-  // Por fêmea: registros (n_j), soma de y (b_pe,j) e registros por grupo (n_jg).
-  const porFemea = new Map<number, { n: number; soma: number; grupos: Map<number, number> }>();
-  // T'T e T'y do bloco [GC, a], registro a registro: 1 no grupo e 1 no animal.
+  const niveis = new Map<number, NivelPe>();
   for (const r of registros) {
     comRegistro[r.grupo] = 1;
     const a = offA + r.animal;
@@ -295,11 +324,13 @@ export function modeloRepetibilidade(
     M.somarSimetrico(a, a, 1);
     b[r.grupo] += r.y;
     b[a] += r.y;
-    const f = porFemea.get(r.animal) ?? { n: 0, soma: 0, grupos: new Map<number, number>() };
+    const dono = r.nivelPe ?? r.animal;
+    const f = niveis.get(dono) ?? { n: 0, soma: 0, grupos: new Map<number, number>(), animais: new Map<number, number>() };
     f.n += 1;
     f.soma += r.y;
     f.grupos.set(r.grupo, (f.grupos.get(r.grupo) ?? 0) + 1);
-    porFemea.set(r.animal, f);
+    f.animais.set(r.animal, (f.animais.get(r.animal) ?? 0) + 1);
+    niveis.set(dono, f);
   }
   for (let g = 0; g < nGrupos; g++) {
     if (!comRegistro[g]) throw new Error(`grupo de contemporâneas ${g} sem registro: a matriz seria singular`);
@@ -311,12 +342,14 @@ export function modeloRepetibilidade(
   inversaAEsparsa(ped, F, (i, j, valor) => {
     if (i <= j) M.somarSimetrico(offA + i, offA + j, lambdaA * valor);
   });
-  // Absorção do pe: para cada fêmea, c = coluna do pe dela em [GC, a].
+  // Absorção do efeito ambiental: c = coluna do nível em [GC, a].
   const lambdaPe = v.sigma2_e / v.sigma2_pe;
-  for (const [animal, f] of porFemea) {
+  const colunas = new Map<number, [number, number][]>();
+  for (const [dono, f] of niveis) {
     const D = f.n + lambdaPe;
     const c: [number, number][] = [...f.grupos.entries()];
-    c.push([offA + animal, f.n]);
+    for (const [a, na_] of f.animais) c.push([offA + a, na_]);
+    colunas.set(dono, c);
     for (let u = 0; u < c.length; u++) {
       b[c[u][0]] -= (c[u][1] * f.soma) / D;
       for (let w = u; w < c.length; w++) M.somarSimetrico(c[u][0], c[w][0], -(c[u][1] * c[w][1]) / D);
@@ -324,16 +357,24 @@ export function modeloRepetibilidade(
   }
 
   const limite = opcoes.limiteDenso ?? LIMITE_DENSO_PADRAO;
+  const pedido = opcoes.solver ?? 'auto';
   const pedidos = opcoes.pevPara ?? [];
   const pev = new Float64Array(na).fill(Number.NaN);
   const rel = new Float64Array(na).fill(Number.NaN);
-  let solucao: Float64Array;
-  let metodo: ResultadoRepetibilidade['metodo'];
+  let solucao: Float64Array | null = null;
+  let metodo: ResultadoRepetibilidade['metodo'] = 'densa';
   let iteracoes: number | null = null;
   let convergiu = true;
   let pevCalculada = pedidos.length === 0;
+  const guardarPev = (diag: (i: number) => number) => {
+    pedidos.forEach((i) => {
+      pev[i] = diag(offA + i) * v.sigma2_e;
+      rel[i] = Math.min(1, Math.max(0, rel_de_pev(pev[i], v.sigma2_a, F[i])));
+    });
+    pevCalculada = true;
+  };
 
-  if (n <= limite) {
+  if (pedido === 'densa' || (pedido === 'auto' && n <= limite)) {
     metodo = 'densa';
     const L = M.densa();
     choleskyEmLugar(L, n);
@@ -344,31 +385,40 @@ export function modeloRepetibilidade(
         n,
         pedidos.map((i) => offA + i),
       );
-      pedidos.forEach((i, q) => {
-        pev[i] = diag[q] * v.sigma2_e;
-        rel[i] = Math.min(1, Math.max(0, rel_de_pev(pev[i], v.sigma2_a, F[i])));
-      });
-      pevCalculada = true;
+      const porPos = new Map(pedidos.map((i, q) => [offA + i, diag[q]]));
+      guardarPev((k) => porPos.get(k)!);
     }
-  } else {
+  } else if (pedido === 'esparsa' || pedido === 'auto') {
+    const fator = fatorarEsparso(M);
+    if (fator) {
+      metodo = 'esparsa';
+      solucao = resolverEsparso(fator, b);
+      if (pedidos.length > 0) {
+        const Z = inversaSeletiva(fator);
+        guardarPev((k) => Z.diagonal(k));
+      }
+    }
+  }
+  if (!solucao) {
     metodo = 'gauss_seidel';
     const gs = gaussSeidelEsparso(M, b);
     solucao = gs.solucao;
     iteracoes = gs.iteracoes;
     convergiu = gs.convergiu;
+    pevCalculada = pedidos.length === 0;
   }
 
-  // p̂ de volta, da equação do pe que foi absorvida.
+  // p̂ de volta, da equação absorvida.
   const pe = new Float64Array(na);
-  for (const [animal, f] of porFemea) {
-    let s = f.soma - f.n * solucao[offA + animal];
-    for (const [g, ng] of f.grupos) s -= ng * solucao[g];
-    pe[animal] = s / (f.n + lambdaPe);
+  for (const [dono, f] of niveis) {
+    let s = f.soma;
+    for (const [u, c] of colunas.get(dono)!) s -= c * solucao[u];
+    pe[dono] = s / (f.n + lambdaPe);
   }
   return {
     metodo,
     /** Do sistema completo [GC, a, pe], antes da absorção — o que o modelo tem de fato. */
-    incognitas: n + porFemea.size,
+    incognitas: n + niveis.size,
     iteracoes,
     convergiu,
     grupos: solucao.slice(0, nGrupos),

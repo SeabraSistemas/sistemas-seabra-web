@@ -14,7 +14,7 @@ import {
   type MotivoExclusao,
   type Preparacao,
 } from '@/lib/melhoramento/contemporaneas';
-import type { PedigreeMontado } from '@/lib/melhoramento/parentesco';
+import { endogamia, listarProblemasPedigree, type PedigreeMontado, type ProblemaListado } from '@/lib/melhoramento/parentesco';
 import type { CaracteristicaChave, ConfigAnalise, LactacaoEntrada } from '@/lib/melhoramento/tipos';
 
 export const LIMIARES = {
@@ -54,6 +54,33 @@ export interface CaracteristicaDiagnostico {
   paresConsecutivos: number;
 }
 
+/** F (Sargolzaei e Iwaisaki, sem montar A) das fêmeas com registro aproveitável. */
+export interface ResumoEndogamia {
+  animais: number;
+  media: number | null;
+  maxima: number | null;
+  /** Com F > 0. */
+  endogamicos: number;
+  /** Com F ≥ 6,25% (meio-irmãos, o limite de acasalamento dos relatórios de caprinos e ovinos). */
+  acima625: number;
+}
+
+export function resumirEndogamia(ped: PedigreeMontado, animais: Iterable<number>): ResumoEndogamia {
+  const F = endogamia(ped);
+  const fs: number[] = [];
+  for (const a of animais) {
+    const i = ped.indice.get(a);
+    if (i != null) fs.push(F[i]);
+  }
+  return {
+    animais: fs.length,
+    media: fs.length ? fs.reduce((s, x) => s + x, 0) / fs.length : null,
+    maxima: fs.length ? Math.max(...fs) : null,
+    endogamicos: fs.filter((x) => x > 1e-12).length,
+    acima625: fs.filter((x) => x >= 0.0625 - 1e-12).length,
+  };
+}
+
 export interface TomConclusao {
   tom: 'ok' | 'atencao' | 'bloqueio';
   texto: string;
@@ -80,8 +107,13 @@ export interface DiagnosticoFazenda {
     paisAusentes: number;
     ciclosCortados: number;
     sexoIncoerente: number;
+    paiEMae: number;
+    /** Vínculos cortados por nascimento impossível (pai ou mãe mais novo, ou menos de uma gestação). */
     nascimentoIncoerente: number;
+    /** A lista da tela: cada tipo que aconteceu, o que foi feito e alguns ids. */
+    problemas: ProblemaListado[];
   };
+  endogamia: ResumoEndogamia;
   nivel: 'bom' | 'limitado' | 'insuficiente';
   conclusoes: TomConclusao[];
 }
@@ -245,8 +277,11 @@ export function diagnosticar(
     paisAusentes: pr.paisAusentes.length,
     ciclosCortados: pr.ciclosCortados.length,
     sexoIncoerente: pr.sexoIncoerente.length,
+    paiEMae: pr.paiEMae.length,
     nascimentoIncoerente: pr.nascimentoIncoerente,
+    problemas: listarProblemasPedigree(pr),
   };
+  const endog = resumirEndogamia(ped, femeas);
 
   // ── Veredito ────────────────────────────────────────────────────────────────
   const conclusoes: TomConclusao[] = [];
@@ -307,15 +342,27 @@ export function diagnosticar(
       texto: `${pct(perda)} das lactações caíram em grupos com menos de ${config.tamanhoMinimoGrupo} contemporâneas e ficaram de fora.`,
     });
   }
-  const problemasPed =
-    pedigree.duplicados + pedigree.autoparentesco + pedigree.paisAusentes + pedigree.ciclosCortados + pedigree.sexoIncoerente;
-  if (problemasPed > 0) {
+  const corrigidos = pedigree.problemas.filter((x) => x.acao === 'corrigido');
+  const apontados = pedigree.problemas.filter((x) => x.acao === 'apontado');
+  if (corrigidos.length > 0) {
     conclusoes.push({
       tom: 'atencao',
       texto:
-        `Pedigree com problemas corrigidos de forma conservadora: ${pedigree.duplicados} id(s) duplicado(s), ` +
-        `${pedigree.autoparentesco} autoparentesco, ${pedigree.paisAusentes} pai(s)/mãe(s) fora do cadastro, ` +
-        `${pedigree.ciclosCortados} ciclo(s) cortado(s), ${pedigree.sexoIncoerente} com sexo incoerente.`,
+        'Pedigree com vínculos corrigidos de forma conservadora: ' +
+        corrigidos.map((x) => `${x.quantidade} ${x.rotulo} (${x.efeito})`).join('; ') +
+        '.',
+    });
+  }
+  if (apontados.length > 0) {
+    conclusoes.push({
+      tom: 'atencao',
+      texto: 'Cadastro com incoerências que não mudam a conta: ' + apontados.map((x) => `${x.quantidade} ${x.rotulo}`).join('; ') + '.',
+    });
+  }
+  if (endog.acima625 > 0) {
+    conclusoes.push({
+      tom: 'atencao',
+      texto: `${endog.acima625} fêmea(s) com endogamia de 6,25% ou mais (o F de filha de meios-irmãos); a maior é ${pct(endog.maxima ?? 0)}.`,
     });
   }
 
@@ -339,6 +386,7 @@ export function diagnosticar(
     reprodutores,
     procedencia,
     pedigree,
+    endogamia: endog,
     nivel,
     conclusoes,
   };

@@ -43,11 +43,11 @@ export function ordemEstimada(l: LactacaoEntrada): number {
  * meses). Idade negativa é erro de cadastro (nascimento lançado depois do
  * parto) e conta como desconhecida — não decide nada.
  */
-export function classificarParto(l: LactacaoEntrada): ClasseParto {
+export function classificarParto(l: LactacaoEntrada, idadeMaxima = IDADE_MAXIMA_PRIMIPARA_DIAS): ClasseParto {
   if (ordemEstimada(l) !== 1) return 'adulta';
   const idade = l.idadePartoDias;
   if (idade == null || idade < 0) return 'primipara';
-  return idade < IDADE_MAXIMA_PRIMIPARA_DIAS ? 'primipara' : 'adulta';
+  return idade < idadeMaxima ? 'primipara' : 'adulta';
 }
 
 const ROTULO_ESTACAO: Record<string, string> = {
@@ -184,7 +184,7 @@ export function prepararRegistros(
       excluidas.duracao_longa += 1;
       continue;
     }
-    const classe = classificarParto(l);
+    const classe = classificarParto(l, config.idadeMaximaPrimiparaDias);
     candidatos.push({
       lactacaoId: l.lactacaoId,
       animalId: l.animalId,

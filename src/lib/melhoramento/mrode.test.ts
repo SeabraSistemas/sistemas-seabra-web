@@ -113,7 +113,7 @@ test('Mrode 5.1 (Chapter_05_1.R): repetibilidade pela porta densa do motor', () 
   assert.ok(Math.abs(r.F[7] - 0.125) < 1e-12);
 });
 
-function exemplo51Esparso(limiteDenso?: number) {
+function exemplo51Esparso(solver?: 'densa' | 'esparsa' | 'gauss_seidel') {
   const ped = montarPedigree(
     Object.entries(PED5).map(([a, [p, m]]) => ({
       id: Number(a),
@@ -132,7 +132,7 @@ function exemplo51Esparso(limiteDenso?: number) {
     registros,
     niveis.length,
     { sigma2_a: 20, sigma2_pe: 12, sigma2_e: 28 },
-    { pevPara: ped.ids.map((_, i) => i), limiteDenso },
+    { pevPara: ped.ids.map((_, i) => i), solver },
   );
   const porId = (vetor: Float64Array) => [1, 2, 3, 4, 5, 6, 7, 8].map((id) => vetor[ped.indice.get(id)!]);
   return { res, porId };
@@ -154,11 +154,59 @@ test('Mrode 5.1: o caminho esparso (Cholesky) reproduz o livro e a porta a 1e-9'
 
 test('Mrode 5.1: o caminho Gauss-Seidel converge para a mesma solução, e diz que não tem PEV', () => {
   const denso = exemplo51Esparso();
-  const gs = exemplo51Esparso(0);
+  const gs = exemplo51Esparso('gauss_seidel');
   assert.equal(gs.res.metodo, 'gauss_seidel');
   assert.equal(gs.res.convergiu, true);
   assert.equal(gs.res.pevCalculada, false);
   perto(gs.porId(gs.res.ebv), denso.porId(denso.res.ebv), 1e-5, 'EBV GS vs denso');
   perto(gs.porId(gs.res.pe), denso.porId(denso.res.pe), 1e-5, 'pe GS vs denso');
   assert.ok(gs.porId(gs.res.pev).every(Number.isNaN), 'sem PEV no Gauss-Seidel');
+});
+
+test('Mrode 5.1: o Cholesky ESPARSO (grau mínimo + Takahashi) dá a mesma solução e a mesma PEV do denso', () => {
+  const denso = exemplo51Esparso('densa');
+  const esp = exemplo51Esparso('esparsa');
+  assert.equal(esp.res.metodo, 'esparsa');
+  assert.equal(esp.res.pevCalculada, true);
+  perto(esp.porId(esp.res.ebv), denso.porId(denso.res.ebv), 1e-10, 'EBV esparso vs denso');
+  perto(esp.porId(esp.res.pe), denso.porId(denso.res.pe), 1e-10, 'pe esparso vs denso');
+  perto(esp.porId(esp.res.pev), denso.porId(denso.res.pev), 1e-9, 'PEV esparso vs denso');
+});
+
+// Exemplo 5.2 (Chapter_05_2.R): leitões com o ambiente comum da família de
+// irmãos completos — aqui, o nível do pe é a MÃE (nivelPe), como no corte.
+const PED52 = {
+  ...Object.fromEntries([1, 2, 3, 4, 5].map((i) => [String(i), ['0', '0']])),
+  '6': ['1', '2'], '7': ['1', '2'], '8': ['1', '2'],
+  '9': ['3', '4'], '10': ['3', '4'], '11': ['3', '4'], '12': ['3', '4'],
+  '13': ['1', '5'], '14': ['1', '5'], '15': ['1', '5'],
+} as Record<string, [string, string]>;
+const SEXO52 = ['Male', 'Female', 'Female', 'Female', 'Male', 'Female', 'Female', 'Male', 'Female', 'Male'];
+const WW52 = [90, 70, 65, 98, 106, 60, 80, 100, 85, 68];
+
+test('Mrode 5.2: ambiente comum da mãe pelo nivelPe = livro e porta densa (rotulos_pe)', () => {
+  const ped = montarPedigree(
+    Object.entries(PED52).map(([a, [p, m]]) => ({ id: Number(a), pai: p === '0' ? null : Number(p), mae: m === '0' ? null : Number(m) })),
+  );
+  const animais = [6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
+  const registros = animais.map((id, i) => ({
+    animal: ped.indice.get(id)!,
+    grupo: SEXO52[i] === 'Male' ? 0 : 1,
+    y: WW52[i],
+    nivelPe: ped.indice.get(Number(PED52[String(id)][1]))!,
+  }));
+  for (const solver of ['densa', 'esparsa'] as const) {
+    const r = modeloRepetibilidade(ped, registros, 2, { sigma2_a: 20, sigma2_pe: 15, sigma2_e: 65 }, {
+      pevPara: ped.ids.map((_, i) => i),
+      solver,
+    });
+    publicados(Array.from(r.grupos), [91.493, 75.764], 3, `sexo (${solver})`);
+    const ebv = Array.from({ length: 15 }, (_, i) => r.ebv[ped.indice.get(i + 1)!]);
+    publicados(ebv, [-1.441, -1.175, 1.441, 1.441, -0.266, -1.098, -1.667, -2.334, 3.925, 2.895, -1.141, 1.525, 0.448, 0.545, -3.819], 3, `EBV (${solver})`);
+    publicados([2, 4, 5].map((m) => r.pe[ped.indice.get(m)!]), [-1.762, 2.161, -0.399], 3, `ambiente comum (${solver})`);
+    const familia = animais.map((id) => PED52[String(id)][1]);
+    const porta = modelo_animal(PED52, animais.map(String), WW52, SEXO52, 20, 65, 15, null, null, familia);
+    perto(ebv, porta.ebv, 1e-9, `EBV vs porta (${solver})`);
+    perto(Array.from({ length: 15 }, (_, i) => r.pev[ped.indice.get(i + 1)!]), porta.pev, 1e-9, `PEV vs porta (${solver})`);
+  }
 });

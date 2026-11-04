@@ -215,7 +215,9 @@ test('BLUP recupera o valor genético simulado melhor que a linha de base e que 
   const reps = [...aj.reprodutor.get('blup_h20.3_r0.36')!.values()].sort((a, b) => b.filhas - a.filhas);
   assert.equal(reps.length, 6);
   assert.ok(reps[0].confiabilidade! >= reps[reps.length - 1].confiabilidade!);
-  assert.equal(aj.blup[0].metodo, 'densa');
+  // Acima de 300 incógnitas, o Cholesky esparso: a mesma PEV exata do denso.
+  assert.ok(aj.blup[0].metodo === 'esparsa' || aj.blup[0].metodo === 'densa');
+  assert.ok(aj.blup.every((b) => b.pevCalculada));
 });
 
 test('validação para frente: mesmo conjunto de fêmeas em todos os modelos, e a MPPA corrige a dispersão do desvio cru', () => {
@@ -239,29 +241,60 @@ test('analisarFazenda com ranking: rankings limitados, ordenados e com o animal 
   assert.equal(a.rodouModelos, true);
   assert.equal(a.caracteristicas.length, 2);
   const c = a.caracteristicas[0];
-  assert.equal(c.rankingFemeas!.length, a.modelos.length);
+  assert.equal(c.rankingFemeas!.length, a.modelos.length - c.naoRodaram.length);
   for (const rk of c.rankingFemeas!) {
     assert.ok(rk.linhas.length <= CONFIG_PADRAO.tamanhoRanking);
     for (let i = 1; i < rk.linhas.length; i++) assert.ok(rk.linhas[i - 1].valor >= rk.linhas[i].valor);
     assert.ok(rk.linhas.every((l) => l.numero != null));
   }
   assert.deepEqual(
-    c.rankingReprodutores!.map((r) => r.modelo),
+    c.rankingReprodutores!.map((r) => r.modelo).filter((m) => m !== 'blup_reml'),
     ['desvio_gc', 'blup_h20.2_r0.36', 'blup_h20.3_r0.36'],
   );
   // Tudo serializável: o objeto atravessa o RSC.
   assert.doesNotThrow(() => JSON.stringify(a));
 });
 
-test('analisarFazenda: ovinos têm diagnóstico e nenhum modelo, com o motivo', () => {
+test('analisarFazenda: ovinos rodam os mesmos modelos com os pares (h², r) da espécie, com a fonte', () => {
   const ovinos = SIM.lactacoes.map((l) => ({ ...l, especie: 'ovino' }));
   const a = analisarFazenda(
     { propriedadeId: 1, especie: 'ovino', lactacoes: ovinos, animais: SIM.animais.map((x) => ({ ...x, especie: 'ovino' })) },
     { ranking: true },
   );
-  assert.equal(a.rodouModelos, false);
-  assert.match(a.motivoSemModelos!, /ovinos/);
-  assert.ok(a.diagnostico.caracteristicas[0].registros > 0);
+  assert.equal(a.rodouModelos, true);
+  assert.deepEqual(a.config.blup.map((p) => [p.h2, p.r]), [[0.24, 0.41], [0.3, 0.5]]);
+  assert.ok(a.config.blup.every((p) => /Vouraki|Larroque/.test(p.fonte)));
+  assert.deepEqual(a.config.rMppa, [0.41, 0.5]);
+  const chaves = a.modelos.map((m) => m.chave);
+  for (const k of ['desvio_gc', 'mppa_r0.41', 'mppa_r0.5', 'blup_h20.24_r0.41', 'blup_h20.3_r0.5', 'indice_h20.3_r0.5']) {
+    assert.ok(chaves.includes(k), k);
+  }
+  const c = a.caracteristicas[0];
+  assert.equal(c.validacao.rodou, true);
+  assert.ok(c.validacao.porModelo.some((m) => m.modelo === 'blup_h20.3_r0.5'));
+});
+
+test('REML da fazenda: estima perto do simulado, e o modelo de variâncias estimadas entra na validação', () => {
+  const a = analisarFazenda({ propriedadeId: 1, especie: 'caprino', lactacoes: SIM.lactacoes, animais: SIM.animais }, { ranking: true });
+  const c = a.caracteristicas[0];
+  assert.ok(c.reml && c.reml.estimou && c.reml.convergiu, JSON.stringify(c.reml?.motivos));
+  // O simulador usa h² 0,30 e r 0,45 na escala da lactação (o grupo é fixo).
+  assert.ok(Math.abs(c.reml.h2! - 0.3) < 3 * c.reml.epH2! + 0.05, `h² ${c.reml.h2} ± ${c.reml.epH2}`);
+  if (c.reml.usar) {
+    assert.ok(c.validacao.porModelo.some((m) => m.modelo === 'blup_reml'));
+    assert.ok(c.rankingFemeas!.some((r) => r.modelo === 'blup_reml'));
+  } else {
+    assert.ok(c.naoRodaram.some((m) => m.modelo === 'blup_reml'));
+  }
+});
+
+test('REML não confiável: o modelo some da validação e o motivo vai junto', () => {
+  // Um terço das cabras só: poucas fêmeas repetidas para o critério do módulo.
+  const poucas = SIM.lactacoes.filter((l) => l.animalId % 9 === 0);
+  const a = analisarFazenda({ propriedadeId: 1, especie: 'caprino', lactacoes: poucas, animais: SIM.animais }, { ranking: false });
+  const c = a.caracteristicas[0];
+  assert.ok(c.validacao.naoRodaram.some((m) => m.modelo === 'blup_reml' && /fêmeas com 2\+ lactações|lactações/.test(m.motivo)));
+  assert.ok(!c.validacao.porModelo.some((m) => m.modelo === 'blup_reml'));
 });
 
 test('analisarFazenda: fazenda pequena não roda modelo e diz por quê', () => {
@@ -281,6 +314,6 @@ test('resumirEntreFazendas: abaixo de 7 fazendas não publica nada; teste não c
   assert.deepEqual(r6.porModelo, []);
   const r7 = resumirEntreFazendas([...seis, { teste: false, analise: a }], 'media_diaria', 7);
   assert.equal(r7.publicavel, true);
-  assert.equal(r7.porModelo.length, a.modelos.length);
+  assert.equal(r7.porModelo.length, a.caracteristicas[0].validacao.porModelo.length);
   assert.ok(r7.porModelo.every((m) => m.fazendas === 7));
 });

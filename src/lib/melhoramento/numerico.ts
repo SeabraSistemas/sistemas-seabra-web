@@ -501,3 +501,245 @@ export function gaussSeidelEsparso(
   }
   return { solucao: x, iteracoes: iteracoesMax, convergiu: false };
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Cholesky ESPARSO com ordenação de grau mínimo e inversa seletiva (Takahashi)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * O fator L de P·M·Pᵀ = L·Lᵀ guardado por colunas, nas posições da ordenação.
+ *
+ * POR QUE EXISTE. As MME de uma fazenda são muito esparsas: cada fêmea liga ao
+ * pai, à mãe e aos poucos grupos em que pariu. Eliminadas primeiro (grau
+ * mínimo), elas deixam um bloco pequeno de reprodutores, mães sem registro e
+ * grupos — e o custo cai de n³/3 para quase nada. É o que deixa o REML e a PEV
+ * exata rodarem numa fazenda de milhares de animais dentro de uma requisição.
+ *
+ * Três peças, todas clássicas e escritas aqui sem dependência:
+ *   ordenação     grau mínimo sobre o grafo de eliminação (Tinney; George e
+ *                 Liu), com o resto tratado como bloco denso quando o grau
+ *                 mínimo passa da metade dos nós que faltam;
+ *   fatoração     Cholesky "left-looking" por colunas, com a estrutura de L
+ *                 tirada da própria eliminação;
+ *   inversa       recorrência de Takahashi, Fagan e Chen (1973): os elementos
+ *   seletiva      de M⁻¹ no padrão de L (e na diagonal) saem de trás para a
+ *                 frente sem formar a inversa inteira — é o que dá a PEV e os
+ *                 traços do REML (a mesma ideia do FSPAK do BLUPF90).
+ */
+export interface FatorEsparso {
+  n: number;
+  /** perm[k] = índice original na posição k; pos é a inversa. */
+  perm: Int32Array;
+  pos: Int32Array;
+  /** Parte estritamente inferior de L por coluna (posições), linhas em ordem crescente. */
+  colPtr: Int32Array;
+  rowIdx: Int32Array;
+  vals: Float64Array;
+  diag: Float64Array;
+  logDet: number;
+  naoNulos: number;
+}
+
+/** Ordenação de grau mínimo; devolve a ordem e a estrutura (linhas abaixo da diagonal) de cada coluna. */
+function ordemGrauMinimo(M: MatrizEsparsa): { perm: Int32Array; estrutura: number[][] } {
+  const n = M.n;
+  const adj: Set<number>[] = Array.from({ length: n }, () => new Set<number>());
+  for (let i = 0; i < n; i++) {
+    for (const [j, v] of M.linhas[i]) {
+      if (j !== i && v !== 0) {
+        adj[i].add(j);
+        adj[j].add(i);
+      }
+    }
+  }
+  const eliminado = new Uint8Array(n);
+  const perm = new Int32Array(n);
+  const estruturaOrig: number[][] = new Array(n);
+  let passo = 0;
+  while (passo < n) {
+    let v = -1;
+    let grau = Number.POSITIVE_INFINITY;
+    for (let i = 0; i < n; i++) {
+      if (!eliminado[i] && adj[i].size < grau) {
+        grau = adj[i].size;
+        v = i;
+        if (grau === 0) break;
+      }
+    }
+    const restam = n - passo;
+    if (grau > 0.5 * (restam - 1) && restam > 64) {
+      // O resto é praticamente denso: ordem qualquer, estrutura completa.
+      const resto: number[] = [];
+      for (let i = 0; i < n; i++) if (!eliminado[i]) resto.push(i);
+      resto.forEach((r, k) => {
+        perm[passo + k] = r;
+        estruturaOrig[passo + k] = resto.slice(k + 1);
+      });
+      break;
+    }
+    const viz = [...adj[v]];
+    estruturaOrig[passo] = viz;
+    perm[passo] = v;
+    eliminado[v] = 1;
+    for (const a of viz) {
+      const sa = adj[a];
+      sa.delete(v);
+      for (const b of viz) if (b !== a) sa.add(b);
+    }
+    adj[v].clear();
+    passo += 1;
+  }
+  return { perm, estrutura: estruturaOrig };
+}
+
+/**
+ * Fatora M (simétrica, positiva definida, com as duas metades em `linhas`).
+ * Devolve null se o fator passar de `limiteNaoNulos` (quem chama cai para
+ * Gauss-Seidel) e lança se M não for positiva definida.
+ */
+export function fatorarEsparso(M: MatrizEsparsa, limiteNaoNulos = 6_000_000): FatorEsparso | null {
+  const n = M.n;
+  const { perm, estrutura } = ordemGrauMinimo(M);
+  const pos = new Int32Array(n);
+  for (let k = 0; k < n; k++) pos[perm[k]] = k;
+  const colPtr = new Int32Array(n + 1);
+  for (let k = 0; k < n; k++) colPtr[k + 1] = colPtr[k] + estrutura[k].length;
+  const nnz = colPtr[n];
+  if (nnz > limiteNaoNulos) return null;
+  const rowIdx = new Int32Array(nnz);
+  for (let k = 0; k < n; k++) {
+    const linhas = estrutura[k].map((o) => pos[o]).sort((a, b) => a - b);
+    rowIdx.set(linhas, colPtr[k]);
+  }
+  // Listas de linha: para cada linha j, as colunas k < j em que L[j,k] ≠ 0.
+  const contaLinha = new Int32Array(n + 1);
+  for (let q = 0; q < nnz; q++) contaLinha[rowIdx[q] + 1] += 1;
+  for (let j = 0; j < n; j++) contaLinha[j + 1] += contaLinha[j];
+  const linhaCols = new Int32Array(nnz);
+  const preenche = contaLinha.slice(0, n);
+  for (let k = 0; k < n; k++) {
+    for (let q = colPtr[k]; q < colPtr[k + 1]; q++) linhaCols[preenche[rowIdx[q]]++] = k;
+  }
+  const vals = new Float64Array(nnz);
+  const diag = new Float64Array(n);
+  const proximo = colPtr.slice(0, n); // ponteiro da próxima linha ainda não usada em cada coluna
+  const x = new Float64Array(n);
+  let logDet = 0;
+  for (let j = 0; j < n; j++) {
+    for (const [c, v] of M.linhas[perm[j]]) {
+      const p = pos[c];
+      if (p >= j) x[p] += v;
+    }
+    for (let t = contaLinha[j]; t < contaLinha[j + 1]; t++) {
+      const k = linhaCols[t];
+      const q0 = proximo[k];
+      const ljk = vals[q0];
+      for (let q = q0; q < colPtr[k + 1]; q++) x[rowIdx[q]] -= vals[q] * ljk;
+      proximo[k] = q0 + 1;
+    }
+    const d = x[j];
+    if (!(d > 1e-12)) throw new Error('matriz não é positiva definida: confira os dados');
+    const ljj = Math.sqrt(d);
+    diag[j] = ljj;
+    logDet += 2 * Math.log(ljj);
+    x[j] = 0;
+    for (let q = colPtr[j]; q < colPtr[j + 1]; q++) {
+      const i = rowIdx[q];
+      vals[q] = x[i] / ljj;
+      x[i] = 0;
+    }
+  }
+  return { n, perm, pos, colPtr, rowIdx, vals, diag, logDet, naoNulos: nnz };
+}
+
+/** Resolve M·x = b com o fator (b e x nos índices originais). */
+export function resolverEsparso(f: FatorEsparso, b: ArrayLike<number>): Float64Array {
+  const { n, perm, colPtr, rowIdx, vals, diag } = f;
+  const y = new Float64Array(n);
+  for (let k = 0; k < n; k++) y[k] = b[perm[k]];
+  for (let j = 0; j < n; j++) {
+    const yj = (y[j] /= diag[j]);
+    if (yj !== 0) for (let q = colPtr[j]; q < colPtr[j + 1]; q++) y[rowIdx[q]] -= vals[q] * yj;
+  }
+  for (let j = n - 1; j >= 0; j--) {
+    let s = y[j];
+    for (let q = colPtr[j]; q < colPtr[j + 1]; q++) s -= vals[q] * y[rowIdx[q]];
+    y[j] = s / diag[j];
+  }
+  const x = new Float64Array(n);
+  for (let k = 0; k < n; k++) x[perm[k]] = y[k];
+  return x;
+}
+
+function buscar(rowIdx: Int32Array, ini: number, fim: number, alvo: number): number {
+  let lo = ini;
+  let hi = fim - 1;
+  while (lo <= hi) {
+    const m = (lo + hi) >> 1;
+    const v = rowIdx[m];
+    if (v === alvo) return m;
+    if (v < alvo) lo = m + 1;
+    else hi = m - 1;
+  }
+  return -1;
+}
+
+export interface InversaSeletiva {
+  /** Elemento (i, j) de M⁻¹, índices originais. Lança se (i, j) não está no padrão de L. */
+  elemento(i: number, j: number): number;
+  diagonal(i: number): number;
+}
+
+/**
+ * Takahashi sobre L·Lᵀ: com L = L̃·D^½ (L̃ unitária, D = diag(lⱼⱼ²)),
+ *   Z_jj = 1/D_j − Σ_{k∈S(j)} L̃_kj·Z_kj ;  Z_ij = −Σ_{k∈S(j)} L̃_kj·Z_ik (i ∈ S(j)),
+ * de j = n−1 até 0. S(j) é um clique do grafo preenchido, então todo Z_ik
+ * pedido já está no padrão.
+ */
+export function inversaSeletiva(f: FatorEsparso): InversaSeletiva {
+  const { n, pos, colPtr, rowIdx, vals, diag } = f;
+  const Zv = new Float64Array(vals.length);
+  const Zd = new Float64Array(n);
+  const z = (a: number, b: number): number => {
+    if (a === b) return Zd[a];
+    const lo = a < b ? a : b;
+    const hi = a < b ? b : a;
+    const q = buscar(rowIdx, colPtr[lo], colPtr[lo + 1], hi);
+    if (q < 0) throw new Error('elemento fora do padrão do fator');
+    return Zv[q];
+  };
+  const acc = new Float64Array(n);
+  for (let j = n - 1; j >= 0; j--) {
+    const ini = colPtr[j];
+    const fim = colPtr[j + 1];
+    const ljj = diag[j];
+    // Σ_t L̃_tj·Z(i_q, k_t) para cada q, percorrendo cada par (q < t) uma vez:
+    // Z(i_q, k_t) mora na coluna i_q, e as linhas de S(j) acima de i_q
+    // aparecem nela em ordem crescente — basta caminhar junto.
+    for (let q = ini; q < fim; q++) acc[q - ini] = (vals[q] / ljj) * Zd[rowIdx[q]];
+    for (let q = ini; q < fim; q++) {
+      const i = rowIdx[q];
+      const lq = vals[q] / ljj;
+      let c = colPtr[i];
+      const cFim = colPtr[i + 1];
+      for (let t = q + 1; t < fim; t++) {
+        const k = rowIdx[t];
+        while (c < cFim && rowIdx[c] < k) c++;
+        if (c >= cFim || rowIdx[c] !== k) throw new Error('elemento fora do padrão do fator');
+        const zik = Zv[c];
+        acc[q - ini] += (vals[t] / ljj) * zik;
+        acc[t - ini] += lq * zik;
+      }
+    }
+    let s = 0;
+    for (let q = ini; q < fim; q++) {
+      Zv[q] = -acc[q - ini];
+      s += (vals[q] / ljj) * Zv[q];
+    }
+    Zd[j] = 1 / (ljj * ljj) - s;
+  }
+  return {
+    elemento: (i, j) => z(pos[i], pos[j]),
+    diagonal: (i) => Zd[pos[i]],
+  };
+}

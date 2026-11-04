@@ -4,14 +4,19 @@
  *   a) desvio das contemporâneas — a linha de base: média dos desvios da
  *      fêmea, sem encolhimento nenhum. Se um modelo não bate isto, não serve.
  *   b) MPPA com r 0,36, 0,44 e 0,50 — o desvio encolhido por n·r/[1+(n−1)r].
- *   c) BLUP de repetibilidade com h² 0,20 e 0,30 (r 0,36): GC fixo, valor
- *      genético com A⁻¹ e ambiente permanente. EBV, PEV e confiabilidade.
+ *   c) BLUP de repetibilidade com os pares (h², r) da espécie (tipos.ts):
+ *      GC fixo, valor genético com A⁻¹ e ambiente permanente. EBV, PEV e
+ *      confiabilidade.
  *   d) índice da fêmea: registros próprios + o EBV do pai tirado do BLUP de
  *      mesma h² (e a REL dele). Atenção a uma limitação conhecida, escrita
  *      aqui para não ser esquecida: o EBV do pai já contém as lactações da
  *      própria filha, então o índice conta essa informação duas vezes. É a
  *      leitura de "índice com o EBV do pai" que se usa no campo; o BLUP é a
  *      versão sem dupla contagem, e a validação mostra quanto isso pesa.
+ *   e) BLUP com variâncias estimadas na fazenda (AI-REML, reml.ts) — o mesmo
+ *      modelo do c), com σ²a, σ²pe e σ²e dos próprios dados. Só roda quando o
+ *      julgamento do REML diz que a estimativa é usável; senão entra em
+ *      `naoRodaram` com o motivo, e a tela mostra.
  *
  * Cada modelo devolve, por fêmea, duas coisas diferentes:
  *   `valor`     o que o ranking ordena (EBV para BLUP e índice, MPPA para a
@@ -22,12 +27,20 @@
  *               produção (ver capacidade_producao_femea em indices.ts).
  */
 
-import { modeloRepetibilidade, variancias, type ResultadoRepetibilidade } from '@/lib/melhoramento/blup';
+import { modeloRepetibilidade, variancias, type ResultadoRepetibilidade, type Variancias } from '@/lib/melhoramento/blup';
 import { desviosDasContemporaneas, type Registro } from '@/lib/melhoramento/contemporaneas';
 import { capacidade_producao_femea, fator_mppa, indice_femea } from '@/lib/melhoramento/indices';
 import { media } from '@/lib/melhoramento/numerico';
 import { podarPedigree, type PedigreeMontado } from '@/lib/melhoramento/parentesco';
-import { modelosDaConfig, type ConfigAnalise, type ModeloInfo } from '@/lib/melhoramento/tipos';
+import { estimarReml, julgarReml, type JulgamentoReml, type ResultadoReml } from '@/lib/melhoramento/reml';
+import {
+  CHAVE_BLUP_REML,
+  chaveBlup,
+  chaveIndice,
+  modelosDaConfig,
+  type ConfigAnalise,
+  type ModeloInfo,
+} from '@/lib/melhoramento/tipos';
 
 export interface ResultadoFemea {
   valor: number;
@@ -55,6 +68,30 @@ export interface ResumoBlup {
   pevCalculada: boolean;
 }
 
+/** O REML da fazenda, serializável, com o julgamento ao lado. */
+export interface ResumoReml {
+  estimou: boolean;
+  convergiu: boolean;
+  iteracoes: number;
+  incognitas: number;
+  h2: number | null;
+  r: number | null;
+  epH2: number | null;
+  epR: number | null;
+  variancias: Variancias | null;
+  logL: number | null;
+  /** Passos AI e EM usados (o caminho até a estimativa). */
+  passos: { ai: number; em: number };
+  usar: boolean;
+  motivos: string[];
+}
+
+/** Um modelo da lista que não rodou nesta característica, e por quê. */
+export interface ModeloNaoRodou {
+  modelo: string;
+  motivo: string;
+}
+
 export interface AjusteModelos {
   modelos: ModeloInfo[];
   registros: number;
@@ -67,6 +104,10 @@ export interface AjusteModelos {
   /** Por modelo (só desvio_gc e BLUP) → por reprodutor. */
   reprodutor: Map<string, Map<number, ResultadoReprodutor>>;
   blup: ResumoBlup[];
+  /** O REML desta característica, quando o modelo de variâncias estimadas está ligado. */
+  reml: ResumoReml | null;
+  /** Modelos da lista que não rodaram (o REML não confiável, por exemplo). */
+  naoRodaram: ModeloNaoRodou[];
   /** Por que algum modelo não rodou (sem variação, por exemplo). */
   avisos: string[];
 }
@@ -87,6 +128,7 @@ export function ajustarModelos(
   const reprodutor = new Map<string, Map<number, ResultadoReprodutor>>();
   const avisos: string[] = [];
   const blup: ResumoBlup[] = [];
+  const naoRodaram: ModeloNaoRodou[] = [];
   for (const m of modelos) femea.set(m.chave, new Map());
 
   const d = desviosDasContemporaneas(registros);
@@ -147,11 +189,16 @@ export function ajustarModelos(
     femea,
     reprodutor,
     blup,
+    reml: null as ResumoReml | null,
+    naoRodaram,
     avisos,
   };
 
   if (d.sigma2p == null) {
     avisos.push('Sem variação dentro dos grupos de contemporâneas: BLUP e índice não rodam.');
+    for (const m of modelos) if (m.familia !== 'desvio_gc' && m.familia !== 'mppa') {
+      naoRodaram.push({ modelo: m.chave, motivo: 'sem variação dentro dos grupos de contemporâneas' });
+    }
     return base;
   }
 
@@ -169,24 +216,22 @@ export function ajustarModelos(
   const sigmaP = Math.sqrt(d.sigma2p);
   const finitoOuNull = (x: number) => (Number.isFinite(x) ? x : null);
 
-  for (const h2 of config.h2) {
-    const chaveBlup = `blup_h2${h2}_r${config.rBlup}`;
-    const chaveIndice = `indice_h2${h2}_r${config.rBlup}`;
-    const res = modeloRepetibilidade(ped, regsBlup, indiceGrupo.size, variancias(h2, config.rBlup, d.sigma2p), {
+  const ajustarBlup = (chave: string, v: Variancias) => {
+    const res = modeloRepetibilidade(ped, regsBlup, indiceGrupo.size, v, {
       pevPara,
       limiteDenso: config.limiteDenso,
     });
     blup.push({
-      modelo: chaveBlup,
+      modelo: chave,
       metodo: res.metodo,
       incognitas: res.incognitas,
       iteracoes: res.iteracoes,
       convergiu: res.convergiu,
       pevCalculada: res.pevCalculada,
     });
-    if (!res.convergiu) avisos.push(`${chaveBlup}: Gauss-Seidel não convergiu no teto de voltas.`);
+    if (!res.convergiu) avisos.push(`${chave}: Gauss-Seidel não convergiu no teto de voltas.`);
 
-    const porFemea = femea.get(chaveBlup)!;
+    const porFemea = femea.get(chave)!;
     for (const [animal, n] of nDe) {
       const i = ped.indice.get(animal)!;
       porFemea.set(animal, {
@@ -207,10 +252,15 @@ export function ajustarModelos(
         lactacoesFilhas: filhas.reduce((s, f) => s + (nDe.get(f) ?? 0), 0),
       });
     }
-    reprodutor.set(chaveBlup, porRep);
+    reprodutor.set(chave, porRep);
+    return res;
+  };
+
+  for (const { h2, r } of config.blup) {
+    const res = ajustarBlup(chaveBlup(h2, r), variancias(h2, r, d.sigma2p));
 
     // d) índice da fêmea com o EBV do pai deste BLUP.
-    const porIndice = femea.get(chaveIndice)!;
+    const porIndice = femea.get(chaveIndice(h2, r))!;
     for (const [animal, ds] of desviosDe) {
       const pai = paiDe.get(animal);
       const ip = pai != null ? ped.indice.get(pai) : undefined;
@@ -218,16 +268,62 @@ export function ajustarModelos(
       const temPai = ip != null && Number.isFinite(relPai) && relPai > 0;
       const ebvPai = temPai ? res.ebv[ip!] : null;
       const rel = temPai ? relPai : 0;
-      const ind = indice_femea(ds, h2, config.rBlup, sigmaP, ebvPai, rel, 'EBV');
-      const pa = capacidade_producao_femea(ds, h2, config.rBlup, sigmaP, ebvPai, rel, 'EBV');
+      const ind = indice_femea(ds, h2, r, sigmaP, ebvPai, rel, 'EBV');
+      const pa = capacidade_producao_femea(ds, h2, r, sigmaP, ebvPai, rel, 'EBV');
       porIndice.set(animal, { valor: ind.ebv, previsao: pa.ebv, confiabilidade: ind.confiabilidade, n: ds.length });
+    }
+  }
+
+  // e) BLUP com variâncias estimadas na fazenda: só se o REML for usável.
+  if (config.reml.ativo) {
+    const inicio = config.blup[0];
+    const inicial = variancias(inicio.h2, inicio.r, d.sigma2p);
+    const est = estimarReml(ped, regsBlup, indiceGrupo.size, inicial, {
+      iteracoesMax: config.reml.iteracoesMax,
+      limiteIncognitas: config.reml.limiteIncognitas,
+    });
+    const femeasRepetidas = [...nDe.values()].filter((n) => n >= 2).length;
+    const julg = julgarReml(est, { registros: registros.length, femeasRepetidas }, config.reml);
+    base.reml = resumirReml(est, julg);
+    if (julg.usar && est.variancias?.sigma2_pe != null) {
+      ajustarBlup(CHAVE_BLUP_REML, {
+        sigma2_a: est.variancias.sigma2_a,
+        sigma2_pe: est.variancias.sigma2_pe,
+        sigma2_e: est.variancias.sigma2_e,
+      });
+    } else {
+      naoRodaram.push({ modelo: CHAVE_BLUP_REML, motivo: `estimativa não usada: ${julg.motivos.join('; ')}` });
     }
   }
   if (blup.some((b) => !b.pevCalculada)) {
     avisos.push(
-      'Fazenda grande demais para a matriz densa: o BLUP foi resolvido por Gauss-Seidel e a PEV não foi ' +
+      'Fazenda grande demais até para o fator esparso: o BLUP foi resolvido por Gauss-Seidel e a PEV não foi ' +
         'calculada — sem confiabilidade do BLUP, e o índice da fêmea usa só os registros próprios.',
     );
   }
   return base;
+}
+
+export function resumirReml(est: ResultadoReml, julg: JulgamentoReml): ResumoReml {
+  return {
+    estimou: est.estimou,
+    convergiu: est.convergiu,
+    iteracoes: est.iteracoes,
+    incognitas: est.incognitas,
+    h2: est.h2,
+    r: est.r,
+    epH2: est.ep?.h2 ?? null,
+    epR: est.ep?.r ?? null,
+    variancias:
+      est.variancias && est.variancias.sigma2_pe != null
+        ? { sigma2_a: est.variancias.sigma2_a, sigma2_pe: est.variancias.sigma2_pe, sigma2_e: est.variancias.sigma2_e }
+        : null,
+    logL: est.logL,
+    passos: {
+      ai: est.historico.filter((p) => p.passo === 'ai').length,
+      em: est.historico.filter((p) => p.passo === 'em').length,
+    },
+    usar: julg.usar,
+    motivos: julg.motivos,
+  };
 }
