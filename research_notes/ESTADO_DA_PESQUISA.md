@@ -1,6 +1,6 @@
 # Estado da pesquisa: Central de Melhoramento Seabra
 
-**Atualizado em 15/10/2026.** Central publicada: https://claude.ai/artifact/BQpgXroEwwnREhz2XbuiR9. A página vem de `central-melhoramento/index.html`; para atualizá-la a partir de outra conversa, passe esse link como `url`.
+**Atualizado em 04/11/2026.** Central publicada: https://claude.ai/artifact/BQpgXroEwwnREhz2XbuiR9. A página vem de `central-melhoramento/index.html`; para atualizá-la a partir de outra conversa, passe esse link como `url`.
 
 ## Visão
 Montar uma **central de modelos e conteúdo para melhoramento genético**, aplicada conforme a demanda:
@@ -24,6 +24,13 @@ A central também terá um **laboratório de testes dos modelos**. Os modelos s�
 |---|---|---|
 | Motor em Python | 8 módulos, 142 testes, 137 vetores de teste, com modo estrito da Section 16 do ICAR. Validado contra os 24 scripts R oficiais de Mrode et al. (2023, 4ª ed.): 44 comparações, 3.146 valores, diferença máxima de 8,5e-14; inclui grupos de pais desconhecidos e Gauss-Seidel | `central-melhoramento/laboratorio/` (`python3 -m unittest discover -s tests`) |
 | Calculadoras da central | 8 calculadoras em JavaScript; 125 vetores e 112 números dos relatórios conferidos | `central-melhoramento/lab/` (`node lab/testar_calculadoras.mjs`) |
+
+## Módulo interno no painel (/adm/melhoramento)
+Só o admin vê; nada aparece para os produtores. Biblioteca em `src/lib/melhoramento/` (119 testes; instruções no `README.md` de lá), SQL em `supabase/melhoramento/` (schema `melhoramento` e views `adm.melhoramento_*`, só a `service_role` acessa).
+- **v1 (30/10/2026):** caprinos. BLUP animal e de repetibilidade, MPPA, desvio das contemporâneas, validação para frente, benchmark entre fazendas (mínimo de 7).
+- **Etapa 2 (04/11/2026):** ovinos com parâmetros próprios; candidatos a mesmo reprodutor entre fazendas (`melhoramento.reprodutor_vinculo`, nada ligado sem confirmação); endogamia sem montar A e limpeza do pedigree (vínculo com nascimento impossível é cortado, o que muda um pouco os EBVs de caprinos); AI-REML por fazenda; bovinos de corte (P210, modelo com ambiente comum da mãe); script `scripts/melhoramento/rodar.ts` para gravar rodadas, com histórico na tela.
+- **Resultados com dados reais (sem vencedor declarado):** cabras, correlação de 0,24 a 0,33 conforme a característica; ovelhas, BLUP 0,355 contra 0,325 do desvio; corte, 0,08 a 0,10 (intervalo inclui zero).
+- **Falta:** gravar a primeira rodada (precisa da chave `service_role` no ambiente), confirmar os vínculos de reprodutores, conferir as telas em produção.
 
 ## Equipe de IA (modelos por fase)
 
@@ -54,5 +61,5 @@ Pasta "soft melhoramento" no Google Drive do usuário (86 arquivos): manuais e a
 1. Documentos bloqueados para robôs, que o usuário pode anexar: fórmula oficial do ISOL (Idele/Lacaune), catálogos Latxa (ASLANA), relatório MAPA/INIA de ovinos de leite, PDFs da HAL citados nas notas de ovinos e os 9 artigos de ovinos abertos mas bloqueados (lista em `artigos_para_obter.md`).
 2. Ler os PDFs pagos que o usuário anexar e confirmar as equações clássicas (Henderson, Quaas, Willham, Gilmour, Wood, Wilmink, Ali & Schaeffer, Ptak & Schaeffer, Schaeffer 2004).
 3. Decidir com a equipe os 13 pontos "a definir" do guia (seção 9.2).
-4. Laboratório: rodar o motor com dados anonimizados do SeabraApp e começar a porta em Dart pela ordem da seção 6.5 do guia.
+4. Módulo interno: o usuário confere `/adm/melhoramento`, confirma os vínculos de reprodutores e decide a licença do BLUPF90 antes de qualquer uso comercial. Depois, a porta em Dart pela ordem da seção 6.5 do guia.
 5. Ao final, voltar a rede para **Confiável**.
