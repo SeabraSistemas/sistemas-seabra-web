@@ -181,6 +181,18 @@
         .bc-cta a { display: inline-block; background: var(--ocre-text); color: #fff; text-decoration: none; font-weight: 700; font-size: 14px; padding: 12px 24px; border-radius: 8px; }
         .bc-cta a:hover { background: #8a5726; }
 
+        /* ===== PLANO GRÁTIS ===== */
+        .free-plan { border: 1px dashed var(--ink-faint); border-radius: 8px; padding: 18px 20px; margin: 0 0 16px; background: var(--surface); page-break-inside: avoid; }
+        .free-plan .free-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 6px; }
+        .free-plan .free-name { font-family: var(--font-serif); font-size: 21px; font-weight: 600; color: var(--ink); }
+        .free-plan .free-price { font-size: 22px; font-weight: 700; color: var(--ink); white-space: nowrap; }
+        .free-plan p { font-size: 13px; color: var(--ink-soft); }
+        .free-plan ul { list-style: none; display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0 10px; padding: 0; }
+        .free-plan li { font-size: 12px; color: var(--ink); background: #fff; border: 1px solid var(--line); border-radius: 999px; padding: 3px 11px; }
+        .free-plan .free-note { font-size: 11.5px; color: var(--ink-faint); }
+        .live-banner { border: 1px solid var(--line); border-left: 4px solid var(--ocre); border-radius: 0 8px 8px 0; background: var(--surface); padding: 16px 20px; margin: 0 0 22px; font-size: 13.5px; color: var(--ink-soft); }
+        .live-banner strong { color: var(--ink); }
+
         /* ===== COMO CONTRATAR ===== */
         .how-to { background: var(--surface); border: 1px solid var(--line); padding: 22px; border-radius: 8px; margin: 28px 0; }
         .how-to h2 { margin: 0 0 14px; border: none; padding: 0; }
@@ -252,7 +264,7 @@
     <div class="subtitle">SeabraApp — Herd Management System</div>
     <div class="seg-switch" role="tablist" aria-label="Segment">
         <button type="button" role="tab" id="tab-pr" data-seg-tab="pequenos-ruminantes" aria-controls="painel-pr" aria-selected="true">Small Ruminants</button>
-        <button type="button" role="tab" id="tab-bc" data-seg-tab="bovinos-corte" aria-controls="painel-bc" aria-selected="false" tabindex="-1">Beef Cattle <span class="soon">coming soon</span></button>
+        <button type="button" role="tab" id="tab-bc" data-seg-tab="bovinos-corte" aria-controls="painel-bc" aria-selected="false" tabindex="-1">Beef Cattle</button>
     </div>
 </div>
 
@@ -261,9 +273,22 @@
 <!-- ================================================================== -->
 <div id="painel-pr" role="tabpanel" aria-labelledby="tab-pr" data-seg-panel="pequenos-ruminantes">
 
-<p class="intro">Goats and sheep, dairy and meat. Three plans for the producer, from the essentials of the daily routine to complete management with data intelligence — plus dedicated models for associations and institutions. Choose a monthly or annual cycle, with no lock-in.</p>
+<p class="intro">Goats and sheep, dairy and meat. A free plan to get started and three plans for the producer, from the essentials of the daily routine to complete management with data intelligence — plus dedicated models for associations and institutions. Choose a monthly or annual cycle, with no lock-in.</p>
 
 <!-- ===== THREE PLANS ===== -->
+<div class="free-plan">
+    <div class="free-head"><span class="free-name">Free</span><span class="free-price">US$ 0</span></div>
+    <p>To get started without paying. You register the herd and record what comes in and what goes out; when you want to record the rest of the routine, pick one of the plans below.</p>
+    <ul>
+        <li>Animal registration, one by one or from a spreadsheet</li>
+        <li>Births</li>
+        <li>Receive an animal transferred by code</li>
+        <li>Death, sale and culling</li>
+        <li>Herd list and each animal's profile</li>
+    </ul>
+    <p class="free-note">No staff accounts and no export. Also available for Beef Cattle.</p>
+</div>
+
 <div class="plans-grid">
 
     <div class="tier">
@@ -278,7 +303,7 @@
             <li>Reproduction, breeding season and births</li>
             <li>Weaning, sale, death, culling and drying off</li>
             <li>PDF, Excel and CSV on every list</li>
-            <li>Voice dictation, Performance Mode and offline use</li>
+            <li>Voice dictation and offline use</li>
         </ul>
     </div>
 
@@ -294,7 +319,7 @@
             <li>Dashboards, charts and production analytics</li>
             <li>Abortion, clinical records and milk analyses</li>
             <li>Technical visits and requests</li>
-            <li>Animal-science assistant and human support on WhatsApp</li>
+            <li>Record entries on WhatsApp through a menu, plus human support</li>
             <li>Up to 2 staff members with permissions</li>
         </ul>
     </div>
@@ -302,7 +327,7 @@
     <div class="tier featured">
         <div class="tier-flag">Most complete</div>
         <div class="tier-name">Pro</div>
-        <div class="tier-for">For those who decide with data: genetics, financials, AI and an unlimited team.</div>
+        <div class="tier-for">For those who decide with data: genetics, financials, nutrition and an unlimited team.</div>
         <div class="tier-price"><span class="cur">US$</span>29<span class="per">per month · per farm</span></div>
         <div class="tier-annual">On the annual plan, US$ 24.65/mo <span>(US$ 295.80/yr — save 15%)</span></div>
         <div class="tier-base">Everything in Intermediario, plus:</div>
@@ -311,8 +336,7 @@
             <li>Linear Type Evaluation, measurements and nutrition</li>
             <li>Cost per kg produced and feed ordering<span class="new">new</span></li>
             <li>Financials and full history per staff member</li>
-            <li>AI Assistant that answers and records data, in the app and on WhatsApp</li>
-            <li>Photo registration, Embryo Transfer and titles</li>
+            <li>Embryo Transfer, mating planner and titles</li>
             <li>WhatsApp notifications and unlimited staff</li>
         </ul>
     </div>
@@ -340,7 +364,6 @@
         <tr><td>Animal transfer to another producer, by code<span class="new">new</span></td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
         <tr><td>Breeders' showcase</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
         <tr><td>Profile photo and closed lactations</td><td class="no">–</td><td class="yes">✓</td><td class="yes">✓</td></tr>
-        <tr><td>Photo registration (AI reads the record sheet)</td><td class="no">–</td><td class="no">–</td><td class="yes">✓</td></tr>
         <tr><td>Share animal profile and titles</td><td class="no">–</td><td class="no">–</td><td class="yes">✓</td></tr>
 
         <tr class="group"><td colspan="4">Routine and production</td></tr>
@@ -355,6 +378,7 @@
         <tr><td>Breeding season, with the sire suggested by the kidding date<span class="new">new</span></td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
         <tr><td>Births (including stillbirths), death, sale, culling and drying off</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
         <tr><td>Birth notification to ABCC (goats, Brazil)<span class="new">new</span></td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+        <tr><td>Semen tank: semen doses and embryos<span class="new">new</span></td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
         <tr><td>Abortion and clinical records</td><td class="no">–</td><td class="yes">✓</td><td class="yes">✓</td></tr>
         <tr><td>Embryo Transfer (ET)</td><td class="no">–</td><td class="no">–</td><td class="yes">✓</td></tr>
         <tr><td>Mating planner: pairing suggestions with relatedness</td><td class="no">–</td><td class="no">–</td><td class="yes">✓</td></tr>
@@ -380,9 +404,9 @@
         <tr><td>Linear Type Evaluation (LTE) and measurements</td><td class="no">–</td><td class="no">–</td><td class="yes">✓</td></tr>
         <tr><td>LTE by photo: guided camera, scored by the Seabra team<span class="new">new</span></td><td class="no">–</td><td class="no">–</td><td class="yes">✓</td></tr>
 
-        <tr class="group"><td colspan="4">Intelligence and alerts</td></tr>
-        <tr><td>Animal-science assistant and human support on WhatsApp</td><td class="no">–</td><td class="yes">✓</td><td class="yes">✓</td></tr>
-        <tr><td>AI Assistant that answers and records herd data (app and WhatsApp)</td><td class="no">–</td><td class="no">–</td><td class="yes">✓</td></tr>
+        <tr class="group"><td colspan="4">WhatsApp and alerts</td></tr>
+        <tr><td>Record entries and look up animal profiles on WhatsApp, through a menu<span class="new">new</span></td><td class="no">–</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+        <tr><td>Human support on WhatsApp</td><td class="no">–</td><td class="yes">✓</td><td class="yes">✓</td></tr>
         <tr><td>In-app notifications</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
         <tr><td>WhatsApp notifications and reminders</td><td class="no">–</td><td class="no">–</td><td class="yes">✓</td></tr>
 
@@ -390,7 +414,6 @@
         <tr><td>Staff with permissions</td><td class="val">—</td><td class="val">Up to 2</td><td class="val">Unlimited</td></tr>
         <tr><td>Export to PDF, Excel and CSV<span class="new">new</span></td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
         <tr><td>On the computer: herd as a spreadsheet and split screen<span class="new">new</span></td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
-        <tr><td>Performance Mode (quick entry)</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
         <tr><td>Works offline, with sync</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
     </tbody>
 </table>
@@ -478,7 +501,7 @@
         <li>White-label (colors, logo, own domain)</li>
     </ul>
     <div class="use-cases">
-        <strong>How it works:</strong> you describe what you need, we scope it, send a fixed quote and build the implementation.
+        <strong>How it works:</strong> you describe what you need, I scope it, send a fixed quote and build the implementation.
     </div>
 </div>
 
@@ -489,8 +512,8 @@
 <!-- ================================================================== -->
 <div id="painel-bc" role="tabpanel" aria-labelledby="tab-bc" data-seg-panel="bovinos-corte" hidden>
 
-<div class="soon-banner">
-    <span class="soon">coming soon</span><strong>Seabra Beef Cattle is coming to SeabraApp.</strong> The prices below are already set. Get in touch to be notified at launch.
+<div class="live-banner">
+    <strong>Beef Cattle is now live in SeabraApp.</strong> When you create your account, choose the Beef Cattle segment. You can start on the free plan: herd registration (also from a spreadsheet), births, exits and each animal's profile.
 </div>
 
 <p class="intro">One plan, everything included. What changes from one tier to the next is the number of farms you run under the same account.</p>
@@ -516,9 +539,9 @@
     </div>
 
 </div>
-<p class="bc-note"><strong>Every tier includes every feature.</strong> The Beef Cattle subscription is separate from the Small Ruminants one. More than 10 farms? Get in touch.</p>
+<p class="bc-note"><strong>Every tier includes every feature.</strong> The Beef Cattle subscription is separate from the Small Ruminants one. More than 10 farms? Get in touch with me.</p>
 
-<h2>What's coming in Beef Cattle</h2>
+<h2>What Beef Cattle does</h2>
 <div class="coming-grid">
     <div class="coming">
         <h3>Herd and spreadsheets</h3>
@@ -526,11 +549,11 @@
     </div>
     <div class="coming">
         <h3>Weighing and weight gain</h3>
-        <p>Chute-side weighing at the pace of the work, average daily gain per animal and per lot, and batch operations.</p>
+        <p>Chute-side weighing at the pace of the work, average daily gain per animal and per lot, feedlot lots and tracking of each lot's gain over time.</p>
     </div>
     <div class="coming">
         <h3>Reproduction</h3>
-        <p>Breeding season, palpation, FTAI and embryo transfer, with semen and tank control and protocols that remind you of the next step.</p>
+        <p>Breeding season, palpation, FTAI and embryo transfer, breeding lots, semen and tank control, protocols that remind you of the next step and the performance of each bull's offspring.</p>
     </div>
     <div class="coming">
         <h3>Handling and animal life cycle</h3>
@@ -538,7 +561,7 @@
     </div>
     <div class="coming">
         <h3>Management and indicators</h3>
-        <p>Financials, value per arroba (15 kg carcass unit) and nine indicator dashboards, exportable to CSV, Excel and PDF. Clinical records and rain gauge in the same app.</p>
+        <p>Financials with recurring costs, monthly balance and rearing cost, value per arroba (15 kg carcass unit) by category and eleven indicator dashboards, exportable to CSV, Excel and PDF. Clinical records and rain gauge in the same app.</p>
     </div>
     <div class="coming">
         <h3>Several farms, one account</h3>
@@ -547,7 +570,7 @@
 </div>
 
 <div class="bc-cta">
-    <a href="https://wa.me/5521999366784?text=I%20would%20like%20to%20be%20notified%20when%20Seabra%20Beef%20Cattle%20launches">Notify me at launch &rarr;</a>
+    <a href="https://wa.me/5521999366784?text=I%20would%20like%20to%20learn%20about%20Seabra%20Beef%20Cattle">I want to see Beef Cattle &rarr;</a>
 </div>
 
 </div>
@@ -577,7 +600,7 @@
 <!-- ===== CONTACT ===== -->
 <div class="contact">
     <h2>Let's talk</h2>
-    <p>Tap the button below: it opens a WhatsApp chat with our team right away.</p>
+    <p>Tap the button below: it opens a WhatsApp chat with me right away.</p>
     <div class="channels">
         <a class="contact-btn wa" href="https://wa.me/5521999366784?text=I%20would%20like%20to%20learn%20about%20Seabra%20plans">
             <span class="cb-top">Open WhatsApp chat &rarr;</span>
@@ -588,7 +611,7 @@
             <span class="cb-sub">sistemaseabra@gmail.com</span>
         </a>
     </div>
-    <div class="hint">We reply during business hours. No obligation.</div>
+    <div class="hint">I reply during business hours. No obligation.</div>
 </div>
 
 <div class="footer">

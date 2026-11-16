@@ -181,6 +181,18 @@
         .bc-cta a { display: inline-block; background: var(--ocre-text); color: #fff; text-decoration: none; font-weight: 700; font-size: 14px; padding: 12px 24px; border-radius: 8px; }
         .bc-cta a:hover { background: #8a5726; }
 
+        /* ===== PLANO GRÁTIS ===== */
+        .free-plan { border: 1px dashed var(--ink-faint); border-radius: 8px; padding: 18px 20px; margin: 0 0 16px; background: var(--surface); page-break-inside: avoid; }
+        .free-plan .free-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 6px; }
+        .free-plan .free-name { font-family: var(--font-serif); font-size: 21px; font-weight: 600; color: var(--ink); }
+        .free-plan .free-price { font-size: 22px; font-weight: 700; color: var(--ink); white-space: nowrap; }
+        .free-plan p { font-size: 13px; color: var(--ink-soft); }
+        .free-plan ul { list-style: none; display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0 10px; padding: 0; }
+        .free-plan li { font-size: 12px; color: var(--ink); background: #fff; border: 1px solid var(--line); border-radius: 999px; padding: 3px 11px; }
+        .free-plan .free-note { font-size: 11.5px; color: var(--ink-faint); }
+        .live-banner { border: 1px solid var(--line); border-left: 4px solid var(--ocre); border-radius: 0 8px 8px 0; background: var(--surface); padding: 16px 20px; margin: 0 0 22px; font-size: 13.5px; color: var(--ink-soft); }
+        .live-banner strong { color: var(--ink); }
+
         /* ===== COMO CONTRATAR ===== */
         .how-to { background: var(--surface); border: 1px solid var(--line); padding: 22px; border-radius: 8px; margin: 28px 0; }
         .how-to h2 { margin: 0 0 14px; border: none; padding: 0; }
@@ -252,7 +264,7 @@
     <div class="subtitle">SeabraApp — Sistema de Gestión de Rebaños</div>
     <div class="seg-switch" role="tablist" aria-label="Segmento">
         <button type="button" role="tab" id="tab-pr" data-seg-tab="pequenos-ruminantes" aria-controls="painel-pr" aria-selected="true">Pequeños Rumiantes</button>
-        <button type="button" role="tab" id="tab-bc" data-seg-tab="bovinos-corte" aria-controls="painel-bc" aria-selected="false" tabindex="-1">Bovinos de Carne <span class="soon">próximamente</span></button>
+        <button type="button" role="tab" id="tab-bc" data-seg-tab="bovinos-corte" aria-controls="painel-bc" aria-selected="false" tabindex="-1">Bovinos de Carne</button>
     </div>
 </div>
 
@@ -261,9 +273,22 @@
 <!-- ================================================================== -->
 <div id="painel-pr" role="tabpanel" aria-labelledby="tab-pr" data-seg-panel="pequenos-ruminantes">
 
-<p class="intro">Caprinos y ovinos, leche y carne. Tres planes para el productor, desde lo esencial de la rutina hasta la gestión completa con inteligencia de datos — más modelos dedicados para asociaciones e instituciones. Elija el ciclo mensual o anual, sin permanencia.</p>
+<p class="intro">Caprinos y ovinos, leche y carne. Un plan gratuito para empezar y tres planes para el productor, desde lo esencial de la rutina hasta la gestión completa con inteligencia de datos — más modelos dedicados para asociaciones e instituciones. Elija el ciclo mensual o anual, sin permanencia.</p>
 
 <!-- ===== TRES PLANES ===== -->
+<div class="free-plan">
+    <div class="free-head"><span class="free-name">Gratis</span><span class="free-price">US$ 0</span></div>
+    <p>Para empezar sin pagar. Usted registra el rebaño y anota quién entra y quién sale; cuando quiera cargar el resto de la rutina, elige uno de los planes de abajo.</p>
+    <ul>
+        <li>Alta de animales, uno a uno o por planilla</li>
+        <li>Nacimientos</li>
+        <li>Recibir un animal transferido por código</li>
+        <li>Muerte, venta y descarte</li>
+        <li>Rebaño y ficha de cada animal</li>
+    </ul>
+    <p class="free-note">Sin colaboradores y sin exportación. También vale en Bovinos de Carne.</p>
+</div>
+
 <div class="plans-grid">
 
     <div class="tier">
@@ -278,7 +303,7 @@
             <li>Reproducción, estación de monta y nacimientos</li>
             <li>Destete, venta, muerte, descarte y secado</li>
             <li>PDF, Excel y CSV en todas las listas</li>
-            <li>Dictado por voz, Modo Rendimiento y uso offline</li>
+            <li>Dictado por voz y uso offline</li>
         </ul>
     </div>
 
@@ -294,7 +319,7 @@
             <li>Dashboards, gráficos y análisis de producción</li>
             <li>Aborto, clínica y análisis de leche</li>
             <li>Visitas técnicas y solicitudes</li>
-            <li>Asistente zootécnico y soporte humano en WhatsApp</li>
+            <li>Registros por WhatsApp, con menú, y soporte humano</li>
             <li>Hasta 2 colaboradores con permisos</li>
         </ul>
     </div>
@@ -302,7 +327,7 @@
     <div class="tier featured">
         <div class="tier-flag">Más completo</div>
         <div class="tier-name">Pro</div>
-        <div class="tier-for">Para quien decide con datos: genética, finanzas, inteligencia artificial y equipo sin límite.</div>
+        <div class="tier-for">Para quien decide con datos: genética, finanzas, nutrición y equipo sin límite.</div>
         <div class="tier-price"><span class="cur">US$</span>29<span class="per">por mes · por establecimiento</span></div>
         <div class="tier-annual">En el plan anual, US$ 24.65/mes <span>(US$ 295.80/año — ahorre 15%)</span></div>
         <div class="tier-base">Todo lo del Intermedio, más:</div>
@@ -311,8 +336,7 @@
             <li>Evaluación Morfológica Lineal, medidas y nutrición</li>
             <li>Costo por kg producido y pedido de insumos<span class="new">nuevo</span></li>
             <li>Finanzas e historial completo por colaborador</li>
-            <li>Asistente IA que consulta y registra datos, en la app y en WhatsApp</li>
-            <li>Registro por foto, Transferencia de Embriones y títulos</li>
+            <li>Transferencia de Embriones, apareamiento y títulos</li>
             <li>Notificaciones por WhatsApp y colaboradores ilimitados</li>
         </ul>
     </div>
@@ -340,7 +364,6 @@
         <tr><td>Transferencia de animal a otro productor, por código<span class="new">nuevo</span></td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
         <tr><td>Vitrina de criadores</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
         <tr><td>Foto en el perfil y lactancias cerradas</td><td class="no">–</td><td class="yes">✓</td><td class="yes">✓</td></tr>
-        <tr><td>Registro por foto (lectura de ficha por IA)</td><td class="no">–</td><td class="no">–</td><td class="yes">✓</td></tr>
         <tr><td>Compartir perfil y títulos del animal</td><td class="no">–</td><td class="no">–</td><td class="yes">✓</td></tr>
 
         <tr class="group"><td colspan="4">Rutina y producción</td></tr>
@@ -355,6 +378,7 @@
         <tr><td>Estación de monta, con el padre sugerido por la fecha del parto<span class="new">nuevo</span></td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
         <tr><td>Nacimientos (con mortinatos), muerte, venta, descarte y secado</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
         <tr><td>Comunicación de nacimientos a la ABCC (caprinos, Brasil)<span class="new">nuevo</span></td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+        <tr><td>Termo: dosis de semen y embriones<span class="new">nuevo</span></td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
         <tr><td>Aborto y clínica</td><td class="no">–</td><td class="yes">✓</td><td class="yes">✓</td></tr>
         <tr><td>Transferencia de Embriones (TE)</td><td class="no">–</td><td class="no">–</td><td class="yes">✓</td></tr>
         <tr><td>Apareamiento: sugerencia de cruzamiento con parentesco</td><td class="no">–</td><td class="no">–</td><td class="yes">✓</td></tr>
@@ -380,9 +404,9 @@
         <tr><td>Evaluación Morfológica Lineal (EML) y medidas</td><td class="no">–</td><td class="no">–</td><td class="yes">✓</td></tr>
         <tr><td>EML por foto: cámara guiada, evaluación por el equipo Seabra<span class="new">nuevo</span></td><td class="no">–</td><td class="no">–</td><td class="yes">✓</td></tr>
 
-        <tr class="group"><td colspan="4">Inteligencia y avisos</td></tr>
-        <tr><td>Asistente zootécnico y soporte humano en WhatsApp</td><td class="no">–</td><td class="yes">✓</td><td class="yes">✓</td></tr>
-        <tr><td>Asistente IA que consulta y registra datos del rebaño (app y WhatsApp)</td><td class="no">–</td><td class="no">–</td><td class="yes">✓</td></tr>
+        <tr class="group"><td colspan="4">WhatsApp y avisos</td></tr>
+        <tr><td>Registros y consulta de la ficha por WhatsApp, con menú<span class="new">nuevo</span></td><td class="no">–</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+        <tr><td>Soporte humano en WhatsApp</td><td class="no">–</td><td class="yes">✓</td><td class="yes">✓</td></tr>
         <tr><td>Notificaciones en la app</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
         <tr><td>Notificaciones y recordatorios por WhatsApp</td><td class="no">–</td><td class="no">–</td><td class="yes">✓</td></tr>
 
@@ -390,7 +414,6 @@
         <tr><td>Colaboradores con permisos</td><td class="val">—</td><td class="val">Hasta 2</td><td class="val">Ilimitado</td></tr>
         <tr><td>Exportación en PDF, Excel y CSV<span class="new">nuevo</span></td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
         <tr><td>En la computadora: rebaño en planilla y pantalla dividida<span class="new">nuevo</span></td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
-        <tr><td>Modo Rendimiento (registro rápido)</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
         <tr><td>Funciona offline, con sincronización</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
     </tbody>
 </table>
@@ -478,7 +501,7 @@
         <li>White-label (colores, logo, dominio propio)</li>
     </ul>
     <div class="use-cases">
-        <strong>Cómo funciona:</strong> usted describe lo que necesita, relevamos el alcance, enviamos un presupuesto cerrado y desarrollamos la implementación.
+        <strong>Cómo funciona:</strong> usted describe lo que necesita, yo relevo el alcance, envío un presupuesto cerrado y desarrollo la implementación.
     </div>
 </div>
 
@@ -489,8 +512,8 @@
 <!-- ================================================================== -->
 <div id="painel-bc" role="tabpanel" aria-labelledby="tab-bc" data-seg-panel="bovinos-corte" hidden>
 
-<div class="soon-banner">
-    <span class="soon">próximamente</span><strong>Seabra Bovinos de Carne está llegando a SeabraApp.</strong> Los valores de abajo ya están definidos. Escríbanos para recibir el aviso del lanzamiento.
+<div class="live-banner">
+    <strong>Bovinos de Carne ya está en SeabraApp.</strong> Al crear la cuenta, elija el segmento Bovinos de Carne. Puede empezar en el plan gratuito: alta del rebaño (también por planilla), nacimientos, bajas y la ficha de cada animal.
 </div>
 
 <p class="intro">Un solo plan, con todo incluido. Lo que cambia de un rango a otro es la cantidad de establecimientos que usted administra en la misma cuenta.</p>
@@ -516,9 +539,9 @@
     </div>
 
 </div>
-<p class="bc-note"><strong>Todos los rangos incluyen todas las funcionalidades.</strong> La suscripción de Bovinos de Carne es independiente de la de Pequeños Rumiantes. ¿Más de 10 establecimientos? Escríbanos.</p>
+<p class="bc-note"><strong>Todos los rangos incluyen todas las funcionalidades.</strong> La suscripción de Bovinos de Carne es independiente de la de Pequeños Rumiantes. ¿Más de 10 establecimientos? Escríbame.</p>
 
-<h2>Lo que trae Bovinos de Carne</h2>
+<h2>Lo que hace Bovinos de Carne</h2>
 <div class="coming-grid">
     <div class="coming">
         <h3>Rebaño y planilla</h3>
@@ -526,11 +549,11 @@
     </div>
     <div class="coming">
         <h3>Pesaje y ganancia de peso</h3>
-        <p>Pesaje en la manga al ritmo del manejo, ganancia media diaria por animal y por lote, y operaciones por lote.</p>
+        <p>Pesaje en la manga al ritmo del manejo, ganancia media diaria por animal y por lote, lotes de engorde y seguimiento de la ganancia de cada lote a lo largo del tiempo.</p>
     </div>
     <div class="coming">
         <h3>Reproducción</h3>
-        <p>Estación de monta, tacto, IATF y transferencia de embriones, con control de semen y termo, y protocolos que recuerdan la próxima etapa.</p>
+        <p>Estación de monta, tacto, IATF y transferencia de embriones, lotes de reproducción, control de semen y termo, protocolos que recuerdan la próxima etapa y el desempeño de los hijos de cada toro.</p>
     </div>
     <div class="coming">
         <h3>Manejo y ciclo del animal</h3>
@@ -538,7 +561,7 @@
     </div>
     <div class="coming">
         <h3>Gestión e indicadores</h3>
-        <p>Finanzas, valor de la arroba y nueve paneles de indicadores, exportables en CSV, Excel y PDF. Clínica y pluviómetro en la misma app.</p>
+        <p>Finanzas con gastos recurrentes, balance mensual y costo de formación, valor de la arroba por categoría y once paneles de indicadores, exportables en CSV, Excel y PDF. Clínica y pluviómetro en la misma app.</p>
     </div>
     <div class="coming">
         <h3>Varios establecimientos, una cuenta</h3>
@@ -547,7 +570,7 @@
 </div>
 
 <div class="bc-cta">
-    <a href="https://wa.me/5521999366784?text=Quiero%20recibir%20el%20aviso%20del%20lanzamiento%20de%20Seabra%20Bovinos%20de%20Carne">Quiero recibir el aviso del lanzamiento &rarr;</a>
+    <a href="https://wa.me/5521999366784?text=Quiero%20conocer%20Seabra%20Bovinos%20de%20Carne">Quiero conocer Bovinos de Carne &rarr;</a>
 </div>
 
 </div>
@@ -577,7 +600,7 @@
 <!-- ===== CONTACTO ===== -->
 <div class="contact">
     <h2>Conversemos</h2>
-    <p>Toque el botón de abajo: abre directamente una conversación de WhatsApp con nuestro equipo.</p>
+    <p>Toque el botón de abajo: abre directamente una conversación conmigo en WhatsApp.</p>
     <div class="channels">
         <a class="contact-btn wa" href="https://wa.me/5521999366784?text=Quisiera%20conocer%20los%20planes%20de%20Seabra">
             <span class="cb-top">Abrir conversación en WhatsApp &rarr;</span>
@@ -588,7 +611,7 @@
             <span class="cb-sub">sistemaseabra@gmail.com</span>
         </a>
     </div>
-    <div class="hint">Respondemos en horario comercial. Sin compromiso.</div>
+    <div class="hint">Respondo en horario comercial. Sin compromiso.</div>
 </div>
 
 <div class="footer">
