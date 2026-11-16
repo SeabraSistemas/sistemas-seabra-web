@@ -27,7 +27,7 @@ export default async function NutricaoPage({ searchParams }: { searchParams: Pro
     <div className="flex min-h-screen items-center justify-center px-4">
       <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-6 sm:p-8">
         <h1 className="text-2xl">Laboratório de nutrição</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Uso pessoal. Entre com o e-mail e a senha do SeabraApp.</p>
+        <p className="mt-1 text-sm text-muted-foreground">Uso pessoal. Entre com o e-mail e a senha do Sistema Seabra.</p>
 
         <form action="/nutricao/api/login" method="POST" className="mt-6 flex flex-col gap-3">
           <label htmlFor="email" className="text-sm font-medium">

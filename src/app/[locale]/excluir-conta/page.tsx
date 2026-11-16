@@ -11,7 +11,7 @@ interface PageProps {
 export async function generateMetadata() {
   return {
     title: 'Excluir minha conta',
-    description: 'Como pedir a exclusão da sua conta do SeabraApp e dos dados dela.',
+    description: 'Como pedir a exclusão da sua conta do Sistema Seabra e dos dados dela.',
     robots: { index: true, follow: true },
   };
 }
@@ -27,7 +27,7 @@ export default async function ExcluirContaPage({ params }: PageProps) {
           <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl text-foreground">
             Excluir minha conta
           </h1>
-          <p className="text-sm text-muted-foreground mt-3">SeabraApp · Seabra</p>
+          <p className="text-sm text-muted-foreground mt-3">Sistema Seabra</p>
         </header>
 
         <div className="space-y-6 text-foreground leading-relaxed">
@@ -35,7 +35,7 @@ export default async function ExcluirContaPage({ params }: PageProps) {
             Pelo app
           </h2>
           <ol className="list-decimal pl-6 space-y-2">
-            <li>Abra o SeabraApp e entre na sua conta.</li>
+            <li>Abra o aplicativo do Sistema Seabra e entre na sua conta.</li>
             <li>Toque em <strong>Perfil</strong>.</li>
             <li>
               No fim da tela, toque em <strong>Excluir minha conta</strong>,

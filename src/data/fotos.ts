@@ -46,62 +46,62 @@ export interface SlideCarrossel {
 export const heroCarousel: SlideCarrossel[] = [
   {
     src: '/images/campo/carrossel-padronizado/cadastro.jpg',
-    alt: 'Cadastro de animais no SeabraApp — telas do aplicativo e ícone de cadastro',
+    alt: 'Cadastro de animais no Sistema Seabra Pequenos Ruminantes — telas do aplicativo e ícone de cadastro',
     funcionalidade: 'Cadastro de Animais',
     briefing:
       'Curral ou capril ao fundo, celular com a tela de cadastro de animal em primeiro plano.',
   },
   {
     src: '/images/campo/carrossel-padronizado/controle-leiteiro-v5.jpg',
-    alt: 'Controle leiteiro no SeabraApp — telas do aplicativo e ícone de controle leiteiro',
+    alt: 'Controle leiteiro no Sistema Seabra Pequenos Ruminantes — telas do aplicativo e ícone de controle leiteiro',
     funcionalidade: 'Controle Leiteiro',
     briefing:
       'Ordenha em andamento, celular registrando volume de produção na hora.',
   },
   {
     src: '/images/campo/carrossel-padronizado/reproducao.jpg',
-    alt: 'Manejo reprodutivo no SeabraApp — telas do aplicativo e ícone de reprodução',
+    alt: 'Manejo reprodutivo no Sistema Seabra Pequenos Ruminantes — telas do aplicativo e ícone de reprodução',
     funcionalidade: 'Manejo Reprodutivo',
     briefing:
       'Avaliação de fêmea prenha ou registro de cobertura, celular com a tela de manejo reprodutivo.',
   },
   {
     src: '/images/campo/carrossel-padronizado/financeiro.jpg',
-    alt: 'Controle financeiro do rebanho no SeabraApp — telas do aplicativo e ícone financeiro',
+    alt: 'Controle financeiro do rebanho no Sistema Seabra Pequenos Ruminantes — telas do aplicativo e ícone financeiro',
     funcionalidade: 'Controle Financeiro',
     briefing:
       'Ambiente de trabalho da fazenda (escritório rural ou galpão), celular com a tela financeira.',
   },
   {
     src: '/images/campo/carrossel-padronizado/lista-de-animais-v2.jpg',
-    alt: 'Lista de animais no SeabraApp — telas do aplicativo e visão do rebanho',
+    alt: 'Lista de animais no Sistema Seabra Pequenos Ruminantes — telas do aplicativo e visão do rebanho',
     funcionalidade: 'Lista de Animais',
     briefing:
       'Rebanho ao fundo, celular com a lista de animais e seus dados principais.',
   },
   {
     src: '/images/campo/carrossel-padronizado/pesagem.jpg',
-    alt: 'Pesagem de animais no SeabraApp — telas do aplicativo e ícone de pesagem',
+    alt: 'Pesagem de animais no Sistema Seabra Pequenos Ruminantes — telas do aplicativo e ícone de pesagem',
     funcionalidade: 'Pesagem',
     briefing:
       'Pesagem de animal no curral, celular com a tela de pesagem/GMD aberta.',
   },
   {
     src: '/images/campo/carrossel-padronizado/avaliacao-morfologica.jpg',
-    alt: 'Avaliação morfológica linear no SeabraApp — telas do aplicativo e ícone de avaliação',
+    alt: 'Avaliação morfológica linear no Sistema Seabra Pequenos Ruminantes — telas do aplicativo e ícone de avaliação',
     funcionalidade: 'Avaliação Morfológica Linear',
     briefing:
       'Avaliação linear de conformação do animal no curral, celular com a tela de avaliação aberta.',
   },
   {
     src: '/images/campo/carrossel-padronizado/manejo.jpg',
-    alt: 'Manejo de animais no SeabraApp — telas do aplicativo e ícone de manejo',
+    alt: 'Manejo de animais no Sistema Seabra Pequenos Ruminantes — telas do aplicativo e ícone de manejo',
     funcionalidade: 'Manejo',
     briefing: 'Manejo de animal no curral, celular com a tela de manejo aberta.',
   },
   {
     src: '/images/campo/carrossel-padronizado/colaboradores.jpg',
-    alt: 'Gestão de colaboradores no SeabraApp — telas do aplicativo e equipe em campo',
+    alt: 'Gestão de colaboradores no Sistema Seabra Pequenos Ruminantes — telas do aplicativo e equipe em campo',
     funcionalidade: 'Colaboradores',
     briefing:
       'Equipe em atividade no campo, celular com a tela de colaboradores e permissões.',
