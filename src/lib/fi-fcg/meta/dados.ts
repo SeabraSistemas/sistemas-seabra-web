@@ -23,7 +23,16 @@ export async function lerMeta(): Promise<
     fazendas.push(data as DadosFazenda);
   }
 
-  // campos gravados: paginado (teto de 1000 linhas), o mais recente de cada chave vale
+  const g = await lerParametros();
+  if (!g.ok) return g;
+  const { parametros, gravacoes } = g;
+  return { ok: true, fazendas, parametros, gravacoes };
+}
+
+/** Campos e respostas gravados pelo produtor no painel. Paginado (teto de 1000 linhas); vale a gravação mais recente de cada chave. */
+export async function lerParametros(): Promise<{ ok: true; parametros: Parametros; gravacoes: Record<string, Gravacao> } | { ok: false; erro: string }> {
+  const supa = publicClient();
+  if (!supa) return { ok: false, erro: 'Falta configurar o acesso ao banco neste servidor.' };
   const linhas: { chave: string; propriedade_id: number | null; valor: unknown; gravado_por: string; gravado_em: string }[] = [];
   for (let de = 0; ; de += 1000) {
     const { data, error } = await supa
@@ -46,5 +55,5 @@ export async function lerMeta(): Promise<
     gravacoes[k] = { valor: v, gravado_por: l.gravado_por, gravado_em: l.gravado_em };
     if (v != null) parametros[k] = v;
   }
-  return { ok: true, fazendas, parametros, gravacoes };
+  return { ok: true, parametros, gravacoes };
 }

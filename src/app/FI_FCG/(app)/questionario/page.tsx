@@ -1,8 +1,13 @@
 import { exigirSessao } from '@/lib/fi-fcg/sessao';
-import { SECOES, TODAS, contagem, type Citacao, type Estado, type Pergunta } from '@/lib/fi-fcg/questionario/perguntas';
+import { SECOES, TODAS, chaveResposta, contagem, temCampoDeResposta, type Citacao, type Estado, type Pergunta } from '@/lib/fi-fcg/questionario/perguntas';
 import { ANEXO_A, ANEXO_A_LIDO_EM, ANEXO_B, ANEXO_C } from '@/lib/fi-fcg/questionario/anexos';
 import { REFERENCIAS } from '@/lib/fi-fcg/questionario/referencias';
-import { SUGESTOES, sugestoesDe, type Sugestao } from '@/lib/fi-fcg/questionario/sugestoes';
+import { SUGESTOES, sugestoesDe } from '@/lib/fi-fcg/questionario/sugestoes';
+import { lerParametros, type Gravacao } from '@/lib/fi-fcg/meta/dados';
+import { RespostaPergunta } from '@/components/fi-fcg/questionario/RespostaPergunta';
+import { PassoAPasso } from '@/components/fi-fcg/PassoAPasso';
+
+export const dynamic = 'force-dynamic';
 
 export const metadata = { title: 'Questionário da cria' };
 
@@ -10,6 +15,7 @@ const ROTULO: Record<Estado, string> = {
   banco: 'Respondida pelo banco',
   literatura: 'Indicada pela literatura',
   felipe: 'Resposta minha',
+  sistema: 'Respondida pelo sistema',
   sergio: 'Para ser respondido pelo proprietário',
 };
 
@@ -17,6 +23,7 @@ const COR: Record<Estado, string> = {
   banco: 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300',
   literatura: 'border-sky-500/40 bg-sky-500/10 text-sky-300',
   felipe: 'border-violet-500/40 bg-violet-500/10 text-violet-300',
+  sistema: 'border-teal-500/40 bg-teal-500/10 text-teal-300',
   sergio: 'border-amber-500/50 bg-amber-500/15 text-amber-300',
 };
 
@@ -24,10 +31,11 @@ const BARRA: Record<Estado, string> = {
   banco: 'bg-emerald-500',
   literatura: 'bg-sky-500',
   felipe: 'bg-violet-500',
+  sistema: 'bg-teal-500',
   sergio: 'bg-amber-500',
 };
 
-const ORDEM: Estado[] = ['sergio', 'banco', 'literatura', 'felipe'];
+const ORDEM: Estado[] = ['sergio', 'sistema', 'banco', 'literatura', 'felipe'];
 
 function Fontes({ fontes }: { fontes: Citacao[] }) {
   return (
@@ -47,31 +55,7 @@ function Fontes({ fontes }: { fontes: Citacao[] }) {
   );
 }
 
-function Sugestoes({ lista }: { lista: Sugestao[] }) {
-  if (!lista.length) return null;
-  return (
-    <div className="mt-3 rounded-lg border border-dashed border-zinc-500/70 bg-zinc-500/10 p-3">
-      <p className="text-xs font-semibold text-zinc-300">Valor inicial sugerido · sugestão, não é resposta: confirme ou troque</p>
-      <ul className="mt-2 space-y-2">
-        {lista.map((s, i) => (
-          <li key={i} className="max-w-prose text-sm text-zinc-300">
-            <span
-              className={`mr-1.5 rounded-full border px-1.5 py-px text-[10px] font-semibold ${
-                s.origem === 'banco' ? 'border-emerald-500/40 text-emerald-300' : 'border-sky-500/40 text-sky-300'
-              }`}
-            >
-              {s.origem === 'banco' ? `Estimado pelo banco em ${s.lidoEm}` : 'Referência da literatura'}
-            </span>
-            <span className="italic">{s.valor}.</span> <span className="text-muted-foreground">{s.base}</span>
-            {s.fontes && s.fontes.length > 0 && <Fontes fontes={s.fontes} />}
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-function CartaoPergunta({ p }: { p: Pergunta }) {
+function CartaoPergunta({ p, gravada }: { p: Pergunta; gravada: Gravacao | null }) {
   return (
     <article id={`p${p.n}`} className="scroll-mt-4 rounded-xl border border-border bg-card p-4">
       <div className="flex flex-wrap items-start justify-between gap-2">
@@ -83,14 +67,13 @@ function CartaoPergunta({ p }: { p: Pergunta }) {
       </div>
       {p.opcoes && <p className="mt-1.5 text-xs text-muted-foreground">{p.opcoes}</p>}
 
-      {p.resposta && <p className="mt-3 max-w-prose text-sm">{p.resposta}</p>}
+      {p.resposta && p.estado !== 'sistema' && <p className="mt-3 max-w-prose text-sm">{p.resposta}</p>}
       {p.falta && (
         <p className="mt-3 max-w-prose text-sm">
           <span className="font-semibold text-amber-300">Falta: </span>
           {p.falta}
         </p>
       )}
-      {p.estado === 'sergio' && <Sugestoes lista={sugestoesDe(p.n)} />}
 
       {p.dados && p.dados.length > 0 && (
         <ul className="mt-3 space-y-1.5 text-sm">
@@ -120,19 +103,31 @@ function CartaoPergunta({ p }: { p: Pergunta }) {
           </ul>
         </div>
       )}
+      {temCampoDeResposta(p) && (
+        <RespostaPergunta
+          n={p.n}
+          proposta={p.estado === 'sistema' ? p.resposta : undefined}
+          sugestoes={p.estado === 'sergio' ? sugestoesDe(p.n) : []}
+          gravada={gravada ? { valor: typeof gravada.valor === 'string' ? gravada.valor : null, gravado_por: gravada.gravado_por, gravado_em: gravada.gravado_em } : null}
+        />
+      )}
     </article>
   );
 }
 
 export default async function QuestionarioPage() {
   await exigirSessao();
+  const lidas = await lerParametros();
+  const gravacoes = lidas.ok ? lidas.gravacoes : {};
+  const resposta = (n: number) => gravacoes[chaveResposta(n)] ?? null;
   const c = contagem();
+  const doProprietario = TODAS.filter(temCampoDeResposta);
+  const respondidas = doProprietario.filter((p) => typeof resposta(p.n)?.valor === 'string').length;
   const total = TODAS.length;
   const citadas = new Set([
     ...TODAS.flatMap((p) => (p.literatura ?? []).flatMap((l) => l.fontes.map((f) => f.ref))),
     ...Object.values(SUGESTOES).flatMap((l) => l.flatMap((s) => (s.fontes ?? []).map((f) => f.ref))),
   ]);
-  const comSugestao = TODAS.filter((p) => p.estado === 'sergio' && sugestoesDe(p.n).length > 0).length;
   const refs = REFERENCIAS.filter((r) => citadas.has(r.id));
   const faltam = TODAS.filter((p) => p.estado === 'sergio');
 
@@ -140,15 +135,12 @@ export default async function QuestionarioPage() {
     <div className="space-y-10">
       <header className="space-y-3">
         <h1 className="text-2xl font-semibold">Questionário da cria</h1>
-        <p className="max-w-prose text-sm text-muted-foreground">
-          Respondi as {total} perguntas até onde o banco e a literatura deixam. O que é decisão do proprietário ficou marcado em amarelo,
-          com o que falta. Onde o banco ou a literatura dão um número, deixei um valor inicial sugerido, sombreado: sugestão, não é
-          resposta, e não conta como respondida.
-        </p>
+        <PassoAPasso />
+        {!lidas.ok && <p className="text-sm text-rose-300">Não consegui ler as respostas salvas: {lidas.erro}</p>}
       </header>
 
       <section aria-label="Resumo" className="space-y-3">
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
           {ORDEM.map((e) => (
             <div key={e} className={`rounded-xl border p-4 ${COR[e]}`}>
               <div className="text-3xl font-semibold tabular-nums">{c[e]}</div>
@@ -162,7 +154,7 @@ export default async function QuestionarioPage() {
           ))}
         </div>
         <p className="text-sm text-muted-foreground">
-          {c.banco + c.literatura + c.felipe} de {total} já têm resposta ou indicação. Faltam {c.sergio} para ser respondidas pelo proprietário; {comSugestao} delas já têm um valor inicial sugerido para confirmar ou trocar:{' '}
+          <strong className="text-foreground">Respondidas por você: {respondidas} de {doProprietario.length}.</strong> Das {doProprietario.length}, {c.sistema} o sistema já responde e você só confirma, e {c.sergio} são para você responder:{' '}
           {faltam.map((p, i) => (
             <span key={p.n}>
               {i > 0 && ', '}
@@ -195,7 +187,7 @@ export default async function QuestionarioPage() {
             <span className="text-muted-foreground">{s.numero}</span> {s.titulo}
           </h2>
           {s.perguntas.map((p) => (
-            <CartaoPergunta key={p.n} p={p} />
+            <CartaoPergunta key={p.n} p={p} gravada={resposta(p.n)} />
           ))}
         </section>
       ))}

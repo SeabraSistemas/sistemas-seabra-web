@@ -28,6 +28,7 @@ import {
 import { REFERENCIAS } from '@/lib/fi-fcg/questionario/referencias';
 import type { Citacao } from '@/lib/fi-fcg/questionario/perguntas';
 import { CamposMeta } from '@/components/fi-fcg/meta/CamposMeta';
+import { PassoAPasso } from '@/components/fi-fcg/PassoAPasso';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Meta do rebanho' };
@@ -252,8 +253,9 @@ export default async function MetaPage({ searchParams }: { searchParams: Promise
   const vacas = vacasPorIdade(fazendas);
   const totalVacas = [...vacas.values()].reduce((a, b) => a + b, 0);
   const maxV = Math.max(1, ...vacas.values());
-  const nGrav = Object.keys(lido.gravacoes).length;
-  const ultimaGrav = Object.values(lido.gravacoes)
+  const camposGravados = Object.entries(lido.gravacoes).filter(([k]) => !k.startsWith('questionario.')).map(([, g]) => g);
+  const nGrav = camposGravados.length;
+  const ultimaGrav = camposGravados
     .map((g) => g.gravado_em)
     .sort()
     .at(-1);
@@ -300,6 +302,7 @@ export default async function MetaPage({ searchParams }: { searchParams: Promise
     <div className="space-y-10">
       <header className="space-y-3">
         <h1 className="text-2xl font-semibold">Meta do rebanho</h1>
+        <PassoAPasso />
         <nav aria-label="Fazenda" className="flex flex-wrap gap-2 text-sm">
           {[{ id: 'grupo', nome: 'As duas fazendas' }, ...FAZENDAS.map((x) => ({ id: String(x.id), nome: x.nome }))].map((o) => (
             <Link
