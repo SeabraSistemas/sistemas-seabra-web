@@ -12,7 +12,10 @@ export function spreadsheetId(): string | null {
  * já está no Sistema Seabra, que o Sérgio usa. As páginas antigas redirecionam
  * para a Meta e o código continua no repositório (ver ABAS_OCULTAS).
  */
-export const LINKS: NavLink[] = [{ href: '/FI_FCG/meta', label: 'Meta' }];
+export const LINKS: NavLink[] = [
+  { href: '/FI_FCG/meta', label: 'Meta' },
+  { href: '/FI_FCG/questionario', label: 'Questionário' },
+];
 
 /** Abas tiradas do header em 18/11/2026; a página de cada uma redireciona para HOME_HREF. */
 export const ABAS_OCULTAS = [

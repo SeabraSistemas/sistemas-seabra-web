@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import { ABAS_OCULTAS, HOME_HREF, LINKS } from '@/lib/fi-fcg/config';
 import { MENSAGEM_DESATIVADO, rotaDesativada } from '@/lib/fi-fcg/desativado';
 
-test('header do /FI_FCG mostra só a Meta', () => {
-  assert.deepEqual(LINKS.map((l) => l.href), ['/FI_FCG/meta']);
+test('header do /FI_FCG mostra só a Meta e o Questionário', () => {
+  assert.deepEqual(LINKS.map((l) => l.href), ['/FI_FCG/meta', '/FI_FCG/questionario']);
   assert.equal(HOME_HREF, '/FI_FCG/meta');
 });
 
