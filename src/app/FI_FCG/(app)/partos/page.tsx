@@ -1,10 +1,7 @@
-import { PartosView } from '@/components/fi-fcg/PartosView';
-import { CAMPOS_PARTO, empacotarLeitura } from '@/lib/fi-fcg/pacotes';
-import { getPartos } from '@/lib/fi-fcg/queries';
-import { exigirSessao } from '@/lib/fi-fcg/sessao';
+import { redirect } from 'next/navigation';
+import { HOME_HREF } from '@/lib/fi-fcg/config';
 
-export default async function PartosPage() {
-  await exigirSessao();
-  const dados = empacotarLeitura(await getPartos(), CAMPOS_PARTO);
-  return <PartosView dados={dados} />;
+/** Aba oculta em 18/11/2026: já está no Sistema Seabra. O código antigo está no histórico do git. */
+export default function PartosPage() {
+  redirect(HOME_HREF);
 }

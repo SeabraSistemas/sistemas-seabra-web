@@ -1,10 +1,7 @@
-import { RebanhoView } from '@/components/fi-fcg/RebanhoView';
-import { CAMPOS_REBANHO, empacotarLeitura } from '@/lib/fi-fcg/pacotes';
-import { getRebanho } from '@/lib/fi-fcg/queries';
-import { exigirSessao } from '@/lib/fi-fcg/sessao';
+import { redirect } from 'next/navigation';
+import { HOME_HREF } from '@/lib/fi-fcg/config';
 
-export default async function RebanhoPage() {
-  await exigirSessao();
-  const dados = empacotarLeitura(await getRebanho(), CAMPOS_REBANHO);
-  return <RebanhoView dados={dados} />;
+/** Aba oculta em 18/11/2026: já está no Sistema Seabra. O código antigo está no histórico do git. */
+export default function RebanhoPage() {
+  redirect(HOME_HREF);
 }

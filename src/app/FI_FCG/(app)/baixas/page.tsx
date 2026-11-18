@@ -1,10 +1,7 @@
-import { BaixasView } from '@/components/fi-fcg/BaixasView';
-import { CAMPOS_BAIXA, empacotarLeitura } from '@/lib/fi-fcg/pacotes';
-import { getBaixas } from '@/lib/fi-fcg/queries';
-import { exigirSessao } from '@/lib/fi-fcg/sessao';
+import { redirect } from 'next/navigation';
+import { HOME_HREF } from '@/lib/fi-fcg/config';
 
-export default async function BaixasPage() {
-  await exigirSessao();
-  const dados = empacotarLeitura(await getBaixas(), CAMPOS_BAIXA);
-  return <BaixasView dados={dados} />;
+/** Aba oculta em 18/11/2026: já está no Sistema Seabra. O código antigo está no histórico do git. */
+export default function BaixasPage() {
+  redirect(HOME_HREF);
 }

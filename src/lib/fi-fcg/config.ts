@@ -6,18 +6,26 @@ export function spreadsheetId(): string | null {
   return id && id.trim() ? id.trim() : null;
 }
 
-/** Ordem das abas do header — mesma ordem dos dashboards no Looker (Rebanho é a home). */
-export const LINKS: NavLink[] = [
-  { href: '/FI_FCG/rebanho', label: 'Rebanho' },
-  { href: '/FI_FCG/iatf', label: 'IATF' },
-  { href: '/FI_FCG/toque', label: 'Toque' },
-  { href: '/FI_FCG/partos', label: 'Partos' },
-  { href: '/FI_FCG/pesagem', label: 'Pesagem' },
-  { href: '/FI_FCG/baixas', label: 'Baixas' },
-  { href: '/FI_FCG/financeiro', label: 'Financeiro' },
-  { href: '/FI_FCG/projecao', label: 'Projeção' },
-  { href: '/FI_FCG/monitorar', label: 'Monitorar' },
-];
+/**
+ * Abas do header. Em 18/11/2026 as nove abas antigas (Rebanho, IATF, Toque,
+ * Partos, Pesagem, Baixas, Financeiro, Projeção, Monitorar) saíram: tudo isso
+ * já está no Sistema Seabra, que o Sérgio usa. As páginas antigas redirecionam
+ * para a Meta e o código continua no repositório (ver ABAS_OCULTAS).
+ */
+export const LINKS: NavLink[] = [{ href: '/FI_FCG/meta', label: 'Meta' }];
+
+/** Abas tiradas do header em 18/11/2026; a página de cada uma redireciona para HOME_HREF. */
+export const ABAS_OCULTAS = [
+  'rebanho',
+  'iatf',
+  'toque',
+  'partos',
+  'pesagem',
+  'baixas',
+  'financeiro',
+  'projecao',
+  'monitorar',
+] as const;
 
 export const LOGIN_HREF = '/FI_FCG';
-export const HOME_HREF = '/FI_FCG/rebanho';
+export const HOME_HREF = '/FI_FCG/meta';
