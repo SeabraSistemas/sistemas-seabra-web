@@ -125,6 +125,30 @@ function GrupoForm({ titulo, campos, gravacoes }: { titulo: string; campos: Camp
                   placeholder="Em branco"
                 />
               )}
+              {l.campo.sugestoes && l.campo.sugestoes.length > 0 && !g && (
+                <div className="rounded-md border border-dashed border-zinc-500/70 bg-zinc-500/10 p-2 text-xs text-zinc-300">
+                  <p className="font-semibold">Sugestão, não é resposta: confirme ou troque. Não entra nas contas até você gravar.</p>
+                  <ul className="mt-1 space-y-1">
+                    {l.campo.sugestoes.map((sg, i) => (
+                      <li key={i} className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                        <span className={sg.origem === 'banco' ? 'text-emerald-300' : 'text-sky-300'}>
+                          {sg.origem === 'banco' ? `Estimado pelo banco em ${sg.lidoEm}` : `Referência da literatura [${sg.fontes}]`}
+                        </span>
+                        <span className="italic">{sg.texto}</span>
+                        {sg.preencher != null && (
+                          <button
+                            type="button"
+                            onClick={() => setValores({ ...valores, [k]: sg.preencher as string })}
+                            className="rounded border border-zinc-500/70 px-1.5 py-px hover:text-foreground"
+                          >
+                            Usar
+                          </button>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
               {g && <span className="text-xs text-muted-foreground">Gravado por {g.gravado_por} em {quando(g.gravado_em)}</span>}
             </div>
           );

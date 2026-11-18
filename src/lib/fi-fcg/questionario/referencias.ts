@@ -1,4 +1,4 @@
-/** As 56 fontes do levantamento de literatura (17/11/2026). Gerado de docs/planos/PAINEL_BENONI_1_LITERATURA.md, no repositório do app. */
+/** As fontes do levantamento de literatura (R1–R56 em 17/11/2026; R57 em 18/11/2026). Gerado de docs/planos/PAINEL_BENONI_1_LITERATURA.md, no repositório do app. */
 export interface Referencia {
   id: string;
   texto: string;
@@ -285,5 +285,10 @@ export const REFERENCIAS: Referencia[] = [
     "id": "R56",
     "texto": "CAVALCANTE, A. C. R. Orçamento forrageiro anual: orientações para o planejamento do uso dos recursos forrageiros disponíveis na propriedade rural. Sobral: Embrapa Caprinos e Ovinos, 2015.",
     "url": "https://www.infoteca.cnptia.embrapa.br/infoteca/bitstream/doc/1028086/1/CNPC2015Orcamento.pdf"
+  },
+  {
+    "id": "R57",
+    "texto": "CARDOSO, E. L. (ed. téc.). Gado de corte no Pantanal: o produtor pergunta, a Embrapa responde. 2. ed. rev. atual. e ampl. Brasília, DF: Embrapa, 2012. 272 p. (Coleção 500 perguntas, 500 respostas). Unidade responsável pelo conteúdo: Embrapa Pantanal. Consultado em 18/11/2026.",
+    "url": "https://www.infoteca.cnptia.embrapa.br/infoteca/bitstream/doc/938069/1/500perguntasgadodecortepantanal.pdf"
   }
 ];
