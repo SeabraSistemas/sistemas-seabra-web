@@ -147,6 +147,7 @@ export interface Indicador {
   chave: ChaveIndicador;
   nome: string;
   unidade: '%' | 'kg' | 'kg/ha' | 'UA/ha';
+  periodo: 'estação' | 'ano' | 'hoje';
   maiorMelhor: boolean | null;
   pontos: Ponto[];
   atual: Ponto | null;
@@ -194,7 +195,8 @@ function somaAnual(fazendas: DadosFazenda[]): Anual[] {
 function resumir(pontos: Ponto[]): Pick<Indicador, 'atual' | 'anterior' | 'media'> {
   const completos = pontos.filter((p) => p.completude === 'completa' && p.valor != null);
   const atual = completos.at(-1) ?? null;
-  const antes = atual ? pontos.filter((p) => p.y < atual.y && p.valor != null) : [];
+  // só estação completa é comparável; 2024 é parcial (o histórico começa em jun/2024)
+  const antes = atual ? completos.filter((p) => p.y < atual.y) : [];
   const anterior = antes.at(-1) ?? null;
   const ult3 = completos.slice(-3);
   const media = ult3.length ? ult3.reduce((a, p) => a + (p.valor as number), 0) / ult3.length : null;
@@ -234,7 +236,20 @@ export function indicadores(ctx: Contexto): Indicador[] {
     ficha: Ficha,
     faltam: string[] = [],
     avisos: string[] = [],
-  ) => out.push({ chave, nome, unidade, maiorMelhor, pontos, ...resumir(pontos), meta: metaDe(chave, p, unidade), ficha, faltam, avisos });
+  ) =>
+    out.push({
+      chave,
+      nome,
+      unidade,
+      periodo: chave === 'descarte' || chave === 'reposicao' ? 'ano' : chave === 'lotacao' ? 'hoje' : 'estação',
+      maiorMelhor,
+      pontos,
+      ...resumir(pontos),
+      meta: metaDe(chave, p, unidade),
+      ficha,
+      faltam,
+      avisos,
+    });
 
   const FONTE = 'Banco do Sistema Seabra (cópia da planilha Produção - Benoni), contado dentro do banco';
 
@@ -398,6 +413,13 @@ export function indicadores(ctx: Contexto): Indicador[] {
       fonte: FONTE,
     },
   );
+
+  // meta da reposição = a saída de vacas do mesmo ano (rebanho estável) [R51 p.21]
+  const desc = out.find((i) => i.chave === 'descarte');
+  const repo = out.find((i) => i.chave === 'reposicao');
+  if (desc && repo && repo.meta.origem === 'sugerida' && desc.atual?.valor != null) {
+    repo.meta = { ...repo.meta, valor: desc.atual.valor, texto: `${Math.round(desc.atual.valor * 1000) / 10}%: igual às saídas de vacas de ${desc.atual.y} (descarte + mortes), para o número de vacas ficar estável` };
+  }
 
   const ua = uaAtual(ctx.fazendas);
   mk(
