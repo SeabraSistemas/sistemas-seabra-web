@@ -61,6 +61,21 @@ describe('indicadores', () => {
     assert.ok(Math.abs((i.atual?.valor ?? 0) - 1164 / 1458) < 1e-9);
     assert.equal(i.anterior?.y, 2025);
     assert.equal(i.media.n, 2);
+  });
+
+  test('estação parcial nunca vira "anterior"', () => {
+    const i = by(ctx(), 'nascidos');
+    assert.equal(i.atual?.y, 2025);
+    assert.equal(i.anterior, null);
+  });
+
+  test('meta da reposição = saídas de vacas do ano', () => {
+    const d = by(ctx(), 'descarte');
+    assert.equal(by(ctx(), 'reposicao').meta.valor, d.atual?.valor);
+  });
+
+  test('sem nada a esconder: meta sugerida da prenhez com fonte', () => {
+    const i = by(ctx(), 'prenhez');
     assert.equal(i.meta.origem, 'sugerida');
     assert.ok(i.meta.fontes.length > 0, 'meta sugerida sempre com fonte');
   });

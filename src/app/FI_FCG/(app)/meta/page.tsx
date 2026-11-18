@@ -93,12 +93,12 @@ function CartaoIndicador({ ind }: { ind: Indicador }) {
         <>
           <div className="flex items-baseline gap-2">
             <span className="text-3xl font-semibold tabular-nums">{fmt(ind.atual?.valor ?? null, ind.unidade)}</span>
-            <span className="text-xs text-muted-foreground">{ind.atual ? `estação ${ind.atual.y}` : 'sem estação completa'}</span>
+            <span className="text-xs text-muted-foreground">{ind.atual ? (ind.periodo === 'hoje' ? 'hoje' : `${ind.periodo} ${ind.atual.y}`) : `sem ${ind.periodo} completo`}</span>
           </div>
           <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 text-xs">
             <dt className="text-muted-foreground">Anterior</dt>
             <dd className="tabular-nums">
-              {ind.anterior ? `${fmt(ind.anterior.valor, ind.unidade)} · ${rotuloPonto(ind.anterior)}` : '—'}
+              {ind.anterior ? `${fmt(ind.anterior.valor, ind.unidade)} · ${rotuloPonto(ind.anterior)}` : ind.periodo === 'hoje' ? '—' : `sem ${ind.periodo} completo antes (2024 é parcial: o histórico começa em jun/2024)`}
             </dd>
             <dt className="text-muted-foreground">Média</dt>
             <dd className="tabular-nums">
@@ -158,7 +158,7 @@ function CartaoIndicador({ ind }: { ind: Indicador }) {
         <table className="mt-2 w-full text-left tabular-nums">
           <thead className="text-muted-foreground">
             <tr>
-              <th className="font-normal">Estação</th>
+              <th className="font-normal">{ind.periodo === 'ano' ? 'Ano' : 'Estação'}</th>
               <th className="font-normal">Valor</th>
               <th className="font-normal">Conta</th>
             </tr>
