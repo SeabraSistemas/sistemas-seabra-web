@@ -24,11 +24,6 @@ const lit = (valor: string, base: string, fontes: Citacao[]): Sugestao => ({ ori
 const r = (ref: string, pagina?: string): Citacao => ({ ref, pagina });
 
 export const SUGESTOES: Record<number, Sugestao[]> = {
-  1: [banco('Inhumas e Campina', 'As duas fazendas estão no mesmo cadastro e na mesma planilha. Fêmeas jovens por vaca: 0,34 na Inhumas e 1,50 na Campina Grande; as novilhas que faltam numa sobram na outra.', D17)],
-  7: [banco('Reposição/descarte e composição de categorias', '277 vacas com 12 anos ou mais seguem no rebanho, e as fêmeas jovens sobram na Campina Grande e faltam na Inhumas.')],
-  9: [banco('Todas da lista', 'O banco já separa cada uma: hoje há 2.489 vacas, 1.001 bezerras, 832 bezerros, 613 novilhas, 607 fêmeas de recria e 26 touros ativos; primípara, multípara, prenha e vazia saem dos partos e do último toque.')],
-  10: [banco('Lote de manejo', '45% dos animais ativos têm lote no banco; nenhum tem pasto ou piquete cadastrado.')],
-  12: [banco('Por ambas', 'O banco tem a data de nascimento de 99,6% dos animais e o toque e o parto de cada fêmea.')],
   18: [
     banco('Entoure por volta dos 24–27 meses, com cerca de 360 kg', 'Primeiro parto aos 38–39 meses; novilhas de 2–3 anos pesam hoje 364–369 kg.', D17),
     lit('230 kg e boa condição corporal; 270 kg se o pasto depois do toque não for bom', 'Recomendação da Embrapa Pantanal para entrada de novilhas na estação (pergunta 32).', [r('R57', 'p.29–30')]),
@@ -44,9 +39,14 @@ export const SUGESTOES: Record<number, Sugestao[]> = {
     lit('Descarte quando solteira em dois trabalhos de gado seguidos e vazia no toque', 'Critério de descarte por desempenho da Embrapa Pantanal (pergunta 53).', [r('R57', 'p.38'), r('R5', 'p.11–12')]),
   ],
   23: [banco('Sim, todos', 'Aborto (151 lançados) e intervalo entre partos já saem do banco. Natimorto e morte de bezerro dependem de lançamento: hoje há zero natimorto e 1,2% de mortalidade, abaixo do esperado.')],
-  26: [banco('Ambas, com comparação', 'Em 2025, nas duas fazendas: entraram novilhas equivalentes a 20,7% das vacas e saíram 12,5% das vacas.')],
-  27: [lit('Desmama e sobreano', 'Avaliar na desmama e descartar cerca de 10% das fêmeas (o fundo do lote); reavaliar ao sobreano e reservar novilhas para repor as vacas descartadas no ano (pergunta 152).', [r('R57', 'p.84')])],
-  28: [lit('Desenvolvimento, defeitos físicos, padrão racial e valor da cria da mãe', 'Critérios da Embrapa Pantanal para a novilha de reposição (pergunta 152).', [r('R57', 'p.84')])],
+  27: [
+    banco('Desmama', 'O sistema tem a pesagem de desmama (210 a 300 dias) de 91% das crias de 2025 das duas fazendas: dá para escolher pelo peso já na desmama.'),
+    lit('Desmama e sobreano', 'Avaliar na desmama e descartar cerca de 10% das fêmeas (o fundo do lote); reavaliar ao sobreano e reservar novilhas para repor as vacas descartadas no ano (pergunta 152).', [r('R57', 'p.84')]),
+  ],
+  28: [
+    banco('Peso, histórico da mãe e genealogia', 'O sistema tem o peso de desmama de 91% das crias de 2025, a mãe de 55% dos animais e o pai de 38%, e o toque e os partos de cada vaca. A ordem de prioridade é sua.'),
+    lit('Desenvolvimento, defeitos físicos, padrão racial e valor da cria da mãe', 'Critérios da Embrapa Pantanal para a novilha de reposição (pergunta 152).', [r('R57', 'p.84')]),
+  ],
   30: [
     banco('Vaca adulta: 1 falha', 'Das 555 vazias de 2025, 93% já saíram; das 52 que foram tocadas de novo em 2026, 25 estavam vazias outra vez.'),
     lit('2 falhas seguidas', 'Embrapa Pantanal: solteira em dois trabalhos de gado seguidos e vazia no toque (pergunta 53).', [r('R57', 'p.38')]),
@@ -67,14 +67,14 @@ export const SUGESTOES: Record<number, Sugestao[]> = {
     banco('Machos 211–229 kg; fêmeas 180–229 kg', 'Peso real aos ~245 dias nas duas fazendas.', D17),
     lit('Machos 180 kg; fêmeas 165 kg', 'Peso aos 8 meses na fazenda típica do Pantanal em 2023.', [r('R2', 'p.5')]),
   ],
-  41: [lit('Sim', 'Medida no Pantanal: 0,48 UP/ha da área pastejável contra 0,30 UP/ha da invernada inteira. Contar a área que o gado não usa superestima a área.', [r('R27', 'p.5')])],
   43: [lit('Humidícola: cerca de 5.000 kg de matéria seca por ha no ano e 0,8 UA/ha', 'Para o pasto nativo: campo limpo e baixadas 3.000, caronal 4.500, campo cerrado 2.200 kg/ha/ano.', [r('R29', 'p.141'), r('R33', 'p.5'), r('R34', 'p.21'), r('R25', 'p.20')])],
   45: [lit('Cerca de 30% da área alaga por 3 a 4 meses', 'Valor da Nhecolândia; na cheia, a invernada estudada perdeu 27% da capacidade.', [r('R41', 'p.104'), r('R25', 'p.20–21')])],
-  46: [lit('Avaliação visual pela cobertura do capim principal', 'O guia da Embrapa Pantanal estima a matéria seca pela cobertura da forrageira em cada ambiente.', [r('R28', 'p.8–14')])],
+  46: [
+    banco('Nenhum', 'O sistema não tem nenhum dado de forragem nem de chuva das duas fazendas.'),
+    lit('Avaliação visual pela cobertura do capim principal', 'O guia da Embrapa Pantanal estima a matéria seca pela cobertura da forrageira em cada ambiente.', [r('R28', 'p.8–14')]),
+  ],
+  49: [banco('Só sal mineral', 'O sistema tem o sal mineral cadastrado como insumo, sem consumo lançado; nenhum proteinado ou ração.')],
   50: [lit('Suplementação e vedação; depois transferência ou venda antecipada', 'Regra da Embrapa Pantanal para cheia longa ou seca extrema.', [r('R25', 'p.27')])],
-  60: [lit('Sugeridas pela literatura e depois aprovadas', 'Pantanal melhorado: natalidade 65–70%, desmama 60–68%, mortalidade até a desmama 5–10%, primeiro parto aos 36–40 meses, vida útil da vaca de 12 anos.', [r('R39', 'p.12'), r('R45')])],
-  61: [banco('Estação atual × anterior e meta definida', 'O banco tem duas estações completas (2025 e 2026); a média de 3 anos só fecha com a estação de 2027.')],
-  66: [banco('5 anos', 'A bezerra retida hoje só pare com 38–39 meses, e 26% das vacas da Inhumas têm 11 anos ou mais: a troca dessas vacas passa de 3 anos.', D17)],
 };
 
 export function sugestoesDe(n: number): Sugestao[] {

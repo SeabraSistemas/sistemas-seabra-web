@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { SECOES, TODAS, contagem } from '@/lib/fi-fcg/questionario/perguntas';
+import { SECOES, TODAS, chaveResposta, contagem, temCampoDeResposta } from '@/lib/fi-fcg/questionario/perguntas';
 import { REFERENCIAS } from '@/lib/fi-fcg/questionario/referencias';
 import { SUGESTOES } from '@/lib/fi-fcg/questionario/sugestoes';
 import { ANEXO_A, ANEXO_B, ANEXO_C } from '@/lib/fi-fcg/questionario/anexos';
@@ -12,12 +12,14 @@ test('86 perguntas, na ordem, em 11 seções', () => {
 
 test('a contagem por estado fecha 86', () => {
   const c = contagem();
-  assert.equal(c.banco + c.literatura + c.felipe + c.sergio, 86);
+  assert.equal(c.banco + c.literatura + c.felipe + c.sistema + c.sergio, 86);
+  assert.deepEqual([c.banco, c.literatura, c.felipe, c.sistema, c.sergio], [13, 3, 11, 22, 37]);
 });
 
 test('quem tem resposta tem texto; o que é do Sérgio diz o que falta', () => {
   for (const p of TODAS) {
     if (p.estado === 'sergio') assert.ok(p.falta, `pergunta ${p.n} sem "falta"`);
+    else if (p.estado === 'sistema') assert.ok(p.resposta && !p.falta, `pergunta ${p.n}`);
     else assert.ok(p.resposta, `pergunta ${p.n} sem resposta`);
   }
 });
@@ -65,6 +67,10 @@ test('sugestão só nas perguntas do proprietário, com data ou fonte', () => {
   }
 });
 
-test('sugestão não muda a contagem: 59 continuam com o proprietário', () => {
-  assert.equal(contagem().sergio, 59);
+test('sugestão não muda a contagem: 22 do sistema + 37 dele = 59 com campo de resposta', () => {
+  assert.equal(TODAS.filter(temCampoDeResposta).length, 59);
+});
+
+test('chave da resposta cabe no formato da tabela', () => {
+  for (const p of TODAS) assert.match(chaveResposta(p.n), /^[a-z0-9_.]{1,80}$/);
 });

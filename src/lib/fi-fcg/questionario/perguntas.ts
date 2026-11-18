@@ -7,7 +7,7 @@
  * linhas — o teto de 1000 linhas do PostgREST não se aplica.
  */
 
-export type Estado = 'banco' | 'literatura' | 'felipe' | 'sergio';
+export type Estado = 'banco' | 'literatura' | 'felipe' | 'sistema' | 'sergio';
 
 export interface Citacao {
   ref: string;
@@ -494,10 +494,53 @@ export const SECOES: Secao[] = [
   },
 ];
 
-export const TODAS: Pergunta[] = SECOES.flatMap((s) => s.perguntas);
+/**
+ * O sistema propõe, o proprietário confirma (correção do Felipe em 18/11/2026):
+ * perguntas cuja resposta o sistema ou o desenho do painel já define.
+ */
+export const RESPOSTAS_DO_SISTEMA: Record<number, string> = {
+  1: 'As duas, Inhumas e Campina Grande: o sistema já tem as duas fazendas, e o painel mostra cada uma e as duas juntas.',
+  7: 'Reposição e descarte, composição das categorias e lotação: foi o que você pediu na ligação de 17/11.',
+  9: 'As categorias do sistema, que o painel já separa: Vaca (2.489 hoje), Novilha (613), Recria (607), Bezerra (1.001), Bezerro (832), Garrote (184), Boi (91), Touro (26) e Leiteira (8). Prenha e vazia saem do último toque; primípara e multípara, do número de partos.',
+  10: 'Por fazenda e por lote, que já existem no sistema (45% dos animais ativos têm lote). Pasto e invernada ainda não estão cadastrados: posso cadastrar os pastos se você quiser.',
+  12: 'Por idade e sexo, como o sistema já faz. A condição reprodutiva (prenha, vazia, primípara) vem do último toque e dos partos.',
+  26: 'Calculada pelo painel e comparada com a real: a reposição necessária sai das saídas de vacas do ano, ao lado da que aconteceu (20,7% das vacas em 2025, nas duas fazendas).',
+  39: 'O painel projeta cabeças e desmamados por ano. Peso, arrobas, receita e mês de venda entram quando você preencher os preços.',
+  41: 'Sim: área útil, sem APP e sem reserva legal, é a regra do painel.',
+  42: 'Por fazenda e por tipo de pasto, no painel. Invernada e piquete posso cadastrar no sistema se você quiser; hoje não há nenhum.',
+  55: 'Por UA, como o sistema já rateia os custos.',
+  59: 'O painel já mostra no topo os 8 que você marcou na lista: prenhez, nascidos vivos, desmama, mortalidade, kg desmamados por matriz e por hectare, reposição e descarte, e lotação.',
+  60: 'Sugeridas pela literatura e aprovadas por você: cada meta aparece com a fonte e a marca "aguardando sua aprovação" até você gravar a sua.',
+  61: 'Todos: o painel compara a estação atual, a anterior, a média de 3 anos e a meta.',
+  62: 'O painel já alerta: prenhez abaixo da meta, mortalidade acima, descarte represado, falta de novilhas, lotação acima do limite e custo acima da meta (os dois últimos quando houver área e custo).',
+  63: 'Exibe o alerta com a conta e o que falta. Nada muda no rebanho sem você.',
+  64: 'Diário, assim que a cópia automática da planilha estiver ligada. Hoje a cópia para o sistema é feita quando é pedida.',
+  66: '1, 3 e 5 anos: é o horizonte da projeção do painel.',
+  67: 'Os 7: como estou, com as metas, melhora da prenhez, seca severa, queda do preço do bezerro, redução de área e aumento de lotação. Os quatro últimos dependem da área e dos preços.',
+  72: 'Hoje entram no painel 4 e-mails: o seu, mais dois da fazenda, e o meu. Todos veem e podem gravar os dados do painel. Diga quem mais deve entrar.',
+  74: 'As duas fazendas juntas, cada fazenda e cada categoria. O animal individual e a comparação de safras ficam no app.',
+  76: 'No app, as listas e os painéis do rebanho exportam para Excel e PDF. Este painel pode ser impresso ou salvo em PDF pelo navegador.',
+  78: 'Por estação de monta: depois do toque final, em julho.',
+};
+
+export const TODAS: Pergunta[] = SECOES.flatMap((s) => s.perguntas).map((p) =>
+  RESPOSTAS_DO_SISTEMA[p.n] ? { ...p, estado: 'sistema' as Estado, resposta: RESPOSTAS_DO_SISTEMA[p.n], falta: undefined } : p,
+);
+
+for (const s of SECOES) s.perguntas = s.perguntas.map((p) => TODAS.find((t) => t.n === p.n)!);
+
+/** Pergunta que o proprietário responde ou confirma no próprio painel. */
+export function temCampoDeResposta(p: Pergunta): boolean {
+  return p.estado === 'sergio' || p.estado === 'sistema';
+}
 
 export function contagem(): Record<Estado, number> {
-  const c: Record<Estado, number> = { banco: 0, literatura: 0, felipe: 0, sergio: 0 };
+  const c: Record<Estado, number> = { banco: 0, literatura: 0, felipe: 0, sistema: 0, sergio: 0 };
   for (const p of TODAS) c[p.estado] += 1;
   return c;
+}
+
+/** Chave da resposta do proprietário em painel_parametro_bovino. */
+export function chaveResposta(n: number): string {
+  return `questionario.p${String(n).padStart(2, '0')}`;
 }
