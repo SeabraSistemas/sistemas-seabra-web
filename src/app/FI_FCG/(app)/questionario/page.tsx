@@ -2,6 +2,7 @@ import { exigirSessao } from '@/lib/fi-fcg/sessao';
 import { SECOES, TODAS, contagem, type Citacao, type Estado, type Pergunta } from '@/lib/fi-fcg/questionario/perguntas';
 import { ANEXO_A, ANEXO_A_LIDO_EM, ANEXO_B, ANEXO_C } from '@/lib/fi-fcg/questionario/anexos';
 import { REFERENCIAS } from '@/lib/fi-fcg/questionario/referencias';
+import { SUGESTOES, sugestoesDe, type Sugestao } from '@/lib/fi-fcg/questionario/sugestoes';
 
 export const metadata = { title: 'Questionário da cria' };
 
@@ -9,7 +10,7 @@ const ROTULO: Record<Estado, string> = {
   banco: 'Respondida pelo banco',
   literatura: 'Indicada pela literatura',
   felipe: 'Resposta minha',
-  sergio: 'Só você pode responder',
+  sergio: 'Para ser respondido pelo proprietário',
 };
 
 const COR: Record<Estado, string> = {
@@ -46,6 +47,30 @@ function Fontes({ fontes }: { fontes: Citacao[] }) {
   );
 }
 
+function Sugestoes({ lista }: { lista: Sugestao[] }) {
+  if (!lista.length) return null;
+  return (
+    <div className="mt-3 rounded-lg border border-dashed border-zinc-500/70 bg-zinc-500/10 p-3">
+      <p className="text-xs font-semibold text-zinc-300">Valor inicial sugerido · sugestão, não é resposta: confirme ou troque</p>
+      <ul className="mt-2 space-y-2">
+        {lista.map((s, i) => (
+          <li key={i} className="max-w-prose text-sm text-zinc-300">
+            <span
+              className={`mr-1.5 rounded-full border px-1.5 py-px text-[10px] font-semibold ${
+                s.origem === 'banco' ? 'border-emerald-500/40 text-emerald-300' : 'border-sky-500/40 text-sky-300'
+              }`}
+            >
+              {s.origem === 'banco' ? `Estimado pelo banco em ${s.lidoEm}` : 'Referência da literatura'}
+            </span>
+            <span className="italic">{s.valor}.</span> <span className="text-muted-foreground">{s.base}</span>
+            {s.fontes && s.fontes.length > 0 && <Fontes fontes={s.fontes} />}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 function CartaoPergunta({ p }: { p: Pergunta }) {
   return (
     <article id={`p${p.n}`} className="scroll-mt-4 rounded-xl border border-border bg-card p-4">
@@ -61,10 +86,11 @@ function CartaoPergunta({ p }: { p: Pergunta }) {
       {p.resposta && <p className="mt-3 max-w-prose text-sm">{p.resposta}</p>}
       {p.falta && (
         <p className="mt-3 max-w-prose text-sm">
-          <span className="font-semibold text-amber-300">Falta você: </span>
+          <span className="font-semibold text-amber-300">Falta: </span>
           {p.falta}
         </p>
       )}
+      {p.estado === 'sergio' && <Sugestoes lista={sugestoesDe(p.n)} />}
 
       {p.dados && p.dados.length > 0 && (
         <ul className="mt-3 space-y-1.5 text-sm">
@@ -102,7 +128,11 @@ export default async function QuestionarioPage() {
   await exigirSessao();
   const c = contagem();
   const total = TODAS.length;
-  const citadas = new Set(TODAS.flatMap((p) => (p.literatura ?? []).flatMap((l) => l.fontes.map((f) => f.ref))));
+  const citadas = new Set([
+    ...TODAS.flatMap((p) => (p.literatura ?? []).flatMap((l) => l.fontes.map((f) => f.ref))),
+    ...Object.values(SUGESTOES).flatMap((l) => l.flatMap((s) => (s.fontes ?? []).map((f) => f.ref))),
+  ]);
+  const comSugestao = TODAS.filter((p) => p.estado === 'sergio' && sugestoesDe(p.n).length > 0).length;
   const refs = REFERENCIAS.filter((r) => citadas.has(r.id));
   const faltam = TODAS.filter((p) => p.estado === 'sergio');
 
@@ -111,8 +141,9 @@ export default async function QuestionarioPage() {
       <header className="space-y-3">
         <h1 className="text-2xl font-semibold">Questionário da cria</h1>
         <p className="max-w-prose text-sm text-muted-foreground">
-          Respondi as {total} perguntas até onde o banco e a literatura deixam. O que é decisão sua ou só você sabe ficou marcado em
-          amarelo, com o que falta.
+          Respondi as {total} perguntas até onde o banco e a literatura deixam. O que é decisão do proprietário ficou marcado em amarelo,
+          com o que falta. Onde o banco ou a literatura dão um número, deixei um valor inicial sugerido, sombreado: sugestão, não é
+          resposta, e não conta como respondida.
         </p>
       </header>
 
@@ -131,7 +162,7 @@ export default async function QuestionarioPage() {
           ))}
         </div>
         <p className="text-sm text-muted-foreground">
-          {c.banco + c.literatura + c.felipe} de {total} já têm resposta ou indicação. Faltam {c.sergio}, que só você pode responder:{' '}
+          {c.banco + c.literatura + c.felipe} de {total} já têm resposta ou indicação. Faltam {c.sergio} para ser respondidas pelo proprietário; {comSugestao} delas já têm um valor inicial sugerido para confirmar ou trocar:{' '}
           {faltam.map((p, i) => (
             <span key={p.n}>
               {i > 0 && ', '}

@@ -195,3 +195,19 @@ describe('campos', () => {
     for (const k of ks) assert.match(k, /^[a-z0-9_.]{1,80}$/);
   });
 });
+
+describe('sugestões nos campos', () => {
+  test('toda sugestão diz a origem: banco com data, literatura com fonte', () => {
+    for (const c of CAMPOS)
+      for (const s of c.sugestoes ?? []) {
+        if (s.origem === 'banco') assert.match(s.lidoEm ?? '', /^\d{2}\/\d{2}\/\d{4}$/, c.chave);
+        else assert.ok(s.fontes && /R\d+/.test(s.fontes), c.chave);
+        if (s.preencher != null) assert.equal(validarValor(c, s.preencher).ok, true, `${c.chave}: ${s.preencher}`);
+      }
+  });
+
+  test('sem gravação, a sugestão não entra na conta: área continua faltando', () => {
+    assert.deepEqual(by(ctx(), 'lotacao').faltam, ['Área de pasto útil']);
+    assert.equal(projetar(ctx(), 'seca'), null);
+  });
+});
