@@ -1,10 +1,7 @@
-import { ToqueView } from '@/components/fi-fcg/ToqueView';
-import { CAMPOS_TOQUE, empacotarLeitura } from '@/lib/fi-fcg/pacotes';
-import { getToque } from '@/lib/fi-fcg/queries';
-import { exigirSessao } from '@/lib/fi-fcg/sessao';
+import { redirect } from 'next/navigation';
+import { HOME_HREF } from '@/lib/fi-fcg/config';
 
-export default async function ToquePage() {
-  await exigirSessao();
-  const dados = empacotarLeitura(await getToque(), CAMPOS_TOQUE);
-  return <ToqueView dados={dados} />;
+/** Aba oculta em 18/11/2026: já está no Sistema Seabra. O código antigo está no histórico do git. */
+export default function ToquePage() {
+  redirect(HOME_HREF);
 }

@@ -1,10 +1,7 @@
-import { IatfView } from '@/components/fi-fcg/IatfView';
-import { CAMPOS_IATF, empacotarLeitura } from '@/lib/fi-fcg/pacotes';
-import { getIatf } from '@/lib/fi-fcg/queries';
-import { exigirSessao } from '@/lib/fi-fcg/sessao';
+import { redirect } from 'next/navigation';
+import { HOME_HREF } from '@/lib/fi-fcg/config';
 
-export default async function IatfPage() {
-  await exigirSessao();
-  const dados = empacotarLeitura(await getIatf(), CAMPOS_IATF);
-  return <IatfView dados={dados} />;
+/** Aba oculta em 18/11/2026: já está no Sistema Seabra. O código antigo está no histórico do git. */
+export default function IatfPage() {
+  redirect(HOME_HREF);
 }
