@@ -418,7 +418,7 @@ export function indicadores(ctx: Contexto): Indicador[] {
   const desc = out.find((i) => i.chave === 'descarte');
   const repo = out.find((i) => i.chave === 'reposicao');
   if (desc && repo && repo.meta.origem === 'sugerida' && desc.atual?.valor != null) {
-    repo.meta = { ...repo.meta, valor: desc.atual.valor, texto: `${Math.round(desc.atual.valor * 1000) / 10}%: igual às saídas de vacas de ${desc.atual.y} (descarte + mortes), para o número de vacas ficar estável` };
+    repo.meta = { ...repo.meta, valor: desc.atual.valor, texto: `${(Math.round(desc.atual.valor * 1000) / 10).toLocaleString('pt-BR')}%: igual às saídas de vacas de ${desc.atual.y} (descarte + mortes), para o número de vacas ficar estável` };
   }
 
   const ua = uaAtual(ctx.fazendas);
