@@ -104,7 +104,7 @@ function CartaoIndicador({ ind }: { ind: Indicador }) {
             <dd className="tabular-nums">
               {ind.media.valor == null
                 ? '—'
-                : `${fmt(ind.media.valor, ind.unidade)} · ${ind.media.n === 3 ? '3 estações' : `${ind.media.n} ${ind.media.n === 1 ? 'estação' : 'estações'}; faltam ${3 - ind.media.n} para 3 (o histórico começa em jun/2024)`}`}
+                : `${fmt(ind.media.valor, ind.unidade)} · ${ind.media.n === 3 ? (ind.periodo === 'ano' ? '3 anos' : '3 estações') : `${ind.media.n} ${ind.periodo === 'ano' ? (ind.media.n === 1 ? 'ano' : 'anos') : ind.media.n === 1 ? 'estação' : 'estações'}; faltam ${3 - ind.media.n} para 3 (o histórico começa em jun/2024)`}`}
             </dd>
             <dt className="text-muted-foreground">Meta</dt>
             <dd>
