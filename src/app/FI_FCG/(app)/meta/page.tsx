@@ -28,7 +28,7 @@ import {
 import { REFERENCIAS } from '@/lib/fi-fcg/questionario/referencias';
 import type { Citacao } from '@/lib/fi-fcg/questionario/perguntas';
 import { CamposMeta } from '@/components/fi-fcg/meta/CamposMeta';
-import { PassoAPasso } from '@/components/fi-fcg/PassoAPasso';
+import { IndicadorInfo, type ExplicaIndicador } from '@/components/fi-fcg/meta/IndicadorInfo';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Meta do rebanho' };
@@ -80,11 +80,63 @@ function rotuloPonto(p: Ponto | null) {
   return `${p.y}${extra}`;
 }
 
+/** O "i" de cada indicador: o que é, para que serve e a base do cálculo, curto e simples. */
+const EXPLICA: Record<Indicador['chave'], ExplicaIndicador> = {
+  prenhez: {
+    oQue: 'De cada 100 fêmeas que passaram pelo toque, quantas estavam prenhes.',
+    serve: 'Mostra se a estação de monta funcionou e quantos bezerros vêm por aí.',
+    calculo: 'Fêmeas prenhes no último toque do ano ÷ fêmeas tocadas no ano. Dado do toque lançado na planilha e copiado para o sistema.',
+  },
+  nascidos: {
+    oQue: 'De cada 100 fêmeas tocadas, quantos bezerros nasceram vivos.',
+    serve: 'Mostra quanto da prenhez virou bezerro, depois de abortos e perdas.',
+    calculo: 'Crias nascidas vivas nos partos de julho a junho ÷ fêmeas tocadas no ano da estação. Dado dos partos lançados.',
+  },
+  desmama: {
+    oQue: 'De cada 100 fêmeas tocadas, quantos bezerros chegaram vivos à desmama.',
+    serve: 'É o número de bezerros que a fazenda de fato tem para vender ou reter.',
+    calculo: 'Crias nascidas vivas, menos as que morreram antes de 210 dias ÷ fêmeas tocadas. A desmama não é lançada, então conto a cria viva aos 7 meses.',
+  },
+  mortalidade: {
+    oQue: 'De cada 100 bezerros nascidos vivos, quantos morreram antes da desmama.',
+    serve: 'Aponta perda de bezerro novo; número muito baixo costuma ser morte não lançada.',
+    calculo: 'Crias com baixa por morte ou matula antes de 210 dias ÷ crias nascidas vivas na estação.',
+  },
+  kg_matriz: {
+    oQue: 'Quantos quilos de bezerro desmamado cada fêmea tocada produziu.',
+    serve: 'Junta prenhez, sobrevivência e peso num número só: é a produção da vaca.',
+    calculo: 'Soma do peso das crias na pesagem entre 210 e 300 dias ÷ fêmeas tocadas. Só mostro se 80% ou mais das crias têm essa pesagem.',
+  },
+  kg_ha: {
+    oQue: 'Quantos quilos de bezerro desmamado cada hectare de pasto produziu.',
+    serve: 'Compara a produção com a área, para ver se o pasto está bem usado.',
+    calculo: 'Soma do peso de desmama das crias ÷ área de pasto útil que você informa. Sem a área, fica em branco.',
+  },
+  descarte: {
+    oQue: 'De cada 100 vacas no começo do ano, quantas saíram do rebanho.',
+    serve: 'Mostra o ritmo de renovação: quantas vacas precisam ser repostas.',
+    calculo: 'Fêmeas com 3 anos ou mais com baixa no ano (venda, morte ou matula) ÷ fêmeas com 3 anos ou mais em 1º de janeiro.',
+  },
+  reposicao: {
+    oQue: 'De cada 100 vacas no começo do ano, quantas novilhas entraram no lugar.',
+    serve: 'Comparada com o descarte, diz se o número de vacas sobe, cai ou fica estável [R51 p.21].',
+    calculo: 'Fêmeas que fizeram 3 anos no ano e seguem no rebanho ÷ fêmeas com 3 anos ou mais em 1º de janeiro.',
+  },
+  lotacao: {
+    oQue: 'Quanto gado há por hectare, em unidades animais (1 UA = 450 kg) [R51 p.19].',
+    serve: 'Comparada com a capacidade do pasto, diz se há gado demais ou de menos.',
+    calculo: 'Peso da última pesagem de cada animal ÷ 450, somado (sem pesagem, pela tabela de UA por idade [R50 p.8]) ÷ área de pasto útil que você informa.',
+  },
+};
+
 function CartaoIndicador({ ind }: { ind: Indicador }) {
   const semNumero = ind.faltam.length > 0;
   return (
     <article className={`flex flex-col gap-2 rounded-xl border-2 bg-card p-4 ${semNumero ? 'border-border' : cor(ind)}`}>
-      <h3 className="text-sm font-medium text-muted-foreground">{ind.nome}</h3>
+      <h3 className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground">
+        {ind.nome}
+        <IndicadorInfo nome={ind.nome} info={EXPLICA[ind.chave]} />
+      </h3>
       {semNumero ? (
         <p className="text-sm">
           <span className="font-semibold text-amber-300">Faltam estes dados: </span>
@@ -302,7 +354,6 @@ export default async function MetaPage({ searchParams }: { searchParams: Promise
     <div className="space-y-10">
       <header className="space-y-3">
         <h1 className="text-2xl font-semibold">Meta do rebanho</h1>
-        <PassoAPasso />
         <nav aria-label="Fazenda" className="flex flex-wrap gap-2 text-sm">
           {[{ id: 'grupo', nome: 'As duas fazendas' }, ...FAZENDAS.map((x) => ({ id: String(x.id), nome: x.nome }))].map((o) => (
             <Link
