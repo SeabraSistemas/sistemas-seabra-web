@@ -5,7 +5,6 @@ import { REFERENCIAS } from '@/lib/fi-fcg/questionario/referencias';
 import { SUGESTOES, sugestoesDe } from '@/lib/fi-fcg/questionario/sugestoes';
 import { lerParametros, type Gravacao } from '@/lib/fi-fcg/meta/dados';
 import { RespostaPergunta } from '@/components/fi-fcg/questionario/RespostaPergunta';
-import { PassoAPasso } from '@/components/fi-fcg/PassoAPasso';
 
 export const dynamic = 'force-dynamic';
 
@@ -135,7 +134,6 @@ export default async function QuestionarioPage() {
     <div className="space-y-10">
       <header className="space-y-3">
         <h1 className="text-2xl font-semibold">Questionário da cria</h1>
-        <PassoAPasso />
         {!lidas.ok && <p className="text-sm text-rose-300">Não consegui ler as respostas salvas: {lidas.erro}</p>}
       </header>
 
