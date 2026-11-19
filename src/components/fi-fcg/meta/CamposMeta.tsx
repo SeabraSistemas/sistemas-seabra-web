@@ -48,7 +48,7 @@ function GrupoForm({ titulo, campos, gravacoes }: { titulo: string; campos: Camp
   const inicial = Object.fromEntries(
     linhas.map((l) => {
       const g = gravacoes[chaveParam(l.campo.chave, l.propriedadeId)];
-      return [chaveParam(l.campo.chave, l.propriedadeId), g?.valor == null ? '' : String(g.valor).replace('.', ',')];
+      return [chaveParam(l.campo.chave, l.propriedadeId), g?.valor == null ? '' : typeof g.valor === 'number' ? g.valor.toLocaleString('pt-BR', { maximumFractionDigits: 6 }) : String(g.valor)];
     }),
   );
   const [valores, setValores] = useState<Record<string, string>>(inicial);
