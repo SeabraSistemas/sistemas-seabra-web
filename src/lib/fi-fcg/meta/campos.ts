@@ -154,7 +154,12 @@ export function validarValor(campo: Campo, bruto: unknown): { ok: true; valor: n
   if (bruto === null || bruto === undefined || (typeof bruto === 'string' && bruto.trim() === '')) return { ok: true, valor: null };
   if (campo.tipo === 'numero') {
     const t = String(bruto).trim();
-    const n = typeof bruto === 'number' ? bruto : Number(t.includes(',') ? t.replace(/\./g, '').replace(',', '.') : t);
+    // pt-BR: vírgula é decimal e ponto é milhar ("2.400" = 2400; "2.400,5" = 2400,5). Só "12.5" (um ponto e 1–2 casas) vale como decimal.
+    const milhar = /^\d{1,3}(\.\d{3})+(,\d+)?$/.test(t);
+    const n =
+      typeof bruto === 'number'
+        ? bruto
+        : Number(t.includes(',') || milhar ? t.replace(/\./g, '').replace(',', '.') : t);
     if (!Number.isFinite(n)) return { ok: false, erro: `${campo.rotulo}: número inválido` };
     if (campo.min != null && n < campo.min) return { ok: false, erro: `${campo.rotulo}: mínimo ${campo.min}` };
     if (campo.max != null && n > campo.max) return { ok: false, erro: `${campo.rotulo}: máximo ${campo.max}` };

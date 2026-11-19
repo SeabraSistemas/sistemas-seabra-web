@@ -183,6 +183,14 @@ describe('campos', () => {
     assert.equal(validarValor(c, '999').ok, false);
   });
 
+  test('ponto de milhar: "2.400" é 2400 ha, não 2,4', () => {
+    const a = CAMPOS.find((x) => x.chave === 'area_util_ha')!;
+    assert.deepEqual(validarValor(a, '2.400'), { ok: true, valor: 2400 });
+    assert.deepEqual(validarValor(a, '12.400,5'), { ok: true, valor: 12400.5 });
+    assert.deepEqual(validarValor(a, '2,4'), { ok: true, valor: 2.4 });
+    assert.deepEqual(validarValor(a, '1800'), { ok: true, valor: 1800 });
+  });
+
   test('opção fora da lista é recusada', () => {
     const c = CAMPOS.find((x) => x.chave === 'vazia_regra')!;
     assert.equal(validarValor(c, 'qualquer').ok, false);
